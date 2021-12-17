@@ -37,7 +37,7 @@ namespace TEN::Entities::Doors
 		ITEM_INFO* item = &g_Level.Items[itemNum];
 
 		if (TrInput & IN_ACTION
-			&& l->currentAnimState == LS_IDLE
+			&& l->currentAnimState == LS_STOP
 			&& l->animNumber == LA_STAND_IDLE
 			&& !(item->status && item->gravityStatus)
 			&& !(l->hitStatus)
@@ -72,7 +72,7 @@ namespace TEN::Entities::Doors
 				if (Lara.isMoving && Lara.interactedItem == itemNum)
 				{
 					Lara.isMoving = false;
-					Lara.gunStatus = LG_HANDS_FREE;
+					Lara.gunStatus = LG_NO_ARMS;
 				}
 				item->pos.yRot ^= ANGLE(180);
 			}

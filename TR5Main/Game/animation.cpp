@@ -198,13 +198,13 @@ void TranslateItem(ITEM_INFO* item, int x, int y, int z)
 	item->pos.zPos += -s * x + c * z;
 }
 
-bool GetChange(ITEM_INFO* item, ANIM_STRUCT* anim)
+int GetChange(ITEM_INFO* item, ANIM_STRUCT* anim)
 {
 	if (item->currentAnimState == item->goalAnimState)
-		return false;
+		return 0;
 
 	if (anim->numberChanges <= 0)
-		return false;
+		return 0;
 
 	for (int i = 0; i < anim->numberChanges; i++)
 	{
@@ -219,13 +219,13 @@ bool GetChange(ITEM_INFO* item, ANIM_STRUCT* anim)
 					item->animNumber = range->linkAnimNum;
 					item->frameNumber = range->linkFrameNum;
 
-					return true;
+					return 1;
 				}
 			}
 		}
 	}
 
-	return false;
+	return 0;
 }
 
 BOUNDING_BOX* GetBoundsAccurate(ITEM_INFO* item)

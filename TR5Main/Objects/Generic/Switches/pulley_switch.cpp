@@ -43,8 +43,8 @@ namespace TEN::Entities::Switches
 		ITEM_INFO* item = &g_Level.Items[itemNum];
 
 		if ((TrInput & IN_ACTION)
-			&& Lara.gunStatus == LG_HANDS_FREE
-			&& l->currentAnimState == LS_IDLE
+			&& Lara.gunStatus == LG_NO_ARMS
+			&& l->currentAnimState == LS_STOP
 			&& l->animNumber == LA_STAND_IDLE
 			&& l->gravityStatus == false
 			|| Lara.isMoving && Lara.interactedItem == itemNum)
@@ -93,7 +93,7 @@ namespace TEN::Entities::Switches
 				if (Lara.isMoving && Lara.interactedItem == itemNum)
 				{
 					Lara.isMoving = false;
-					Lara.gunStatus = LG_HANDS_FREE;
+					Lara.gunStatus = LG_NO_ARMS;
 				}
 				item->pos.yRot = oldYrot;
 			}

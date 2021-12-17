@@ -1758,44 +1758,34 @@ void LookUpDown()
 	}
 }
 
-void ResetLook(ITEM_INFO* item)
+void ResetLook()
 {
-	LaraInfo*& info = item->data;
-
 	if (Camera.type != CAMERA_TYPE::LOOK_CAMERA)
 	{
-		if (abs(info->headXrot) > ANGLE(0.1f))
-			info->headXrot += info->headXrot / -8;
+		if (Lara.headXrot <= -ANGLE(2.0f) || Lara.headXrot >= ANGLE(2.0f))
+			Lara.headXrot = Lara.headXrot / -8 + Lara.headXrot;
 		else
-			info->headXrot = 0;
+			Lara.headXrot = 0;
 
-		if (abs(info->headYrot) > ANGLE(0.1f))
-			info->headYrot += info->headYrot / -8;
+		if (Lara.headYrot <= -ANGLE(2.0f) || Lara.headYrot >= ANGLE(2.0f))
+			Lara.headYrot = Lara.headYrot / -8 + Lara.headYrot;
 		else
-			info->headYrot = 0;
+			Lara.headYrot = 0;
 
-		if (abs(info->headZrot) > ANGLE(0.1f))
-			info->headZrot += info->headZrot / -8;
-		else
-			info->headZrot = 0;
-
-		if (info->gunStatus != LG_HANDS_BUSY &&
-			!info->leftArm.lock &&
-			!info->rightArm.lock &&
-			 info->Vehicle == NO_ITEM)
+		if (Lara.gunStatus != LG_HANDS_BUSY &&
+			!Lara.leftArm.lock &&
+			!Lara.rightArm.lock &&
+			 Lara.Vehicle == NO_ITEM)
 		{
-			info->torsoXrot = info->headXrot;
-			info->torsoYrot = info->headYrot;
-			info->torsoZrot = info->headZrot;
+			Lara.torsoYrot = Lara.headYrot;
+			Lara.torsoXrot = Lara.headXrot;
 		}
 		else
 		{
-			if (!info->headXrot)
-				info->torsoXrot = 0;
-			if (!info->headYrot)
-				info->torsoYrot = 0;
-			if (!info->headZrot)
-				info->torsoZrot = 0;
+			if (!Lara.headXrot)
+				Lara.torsoXrot = 0;
+			if (!Lara.headYrot)
+				Lara.torsoYrot = 0;
 		}
 	}
 }

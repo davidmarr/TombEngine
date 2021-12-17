@@ -47,7 +47,7 @@ namespace TEN::Entities::Doors
 		ITEM_INFO* item = &g_Level.Items[itemNum];
 
 		if (TrInput & IN_ACTION
-			&& l->currentAnimState == LS_IDLE
+			&& l->currentAnimState == LS_STOP
 			&& l->animNumber == LA_STAND_IDLE
 			&& item->status != ITEM_ACTIVE
 			&& !(l->hitStatus)
@@ -115,7 +115,7 @@ namespace TEN::Entities::Doors
 
 					item->status = ITEM_ACTIVE;
 					l->currentAnimState = LS_MISC_CONTROL;
-					l->goalAnimState = LS_IDLE;
+					l->goalAnimState = LS_STOP;
 					Lara.isMoving = false;
 					Lara.gunStatus = LG_HANDS_BUSY;
 				}
@@ -123,7 +123,7 @@ namespace TEN::Entities::Doors
 			else if (Lara.isMoving && Lara.interactedItem == itemNum)
 			{
 				Lara.isMoving = false;
-				Lara.gunStatus = LG_HANDS_FREE;
+				Lara.gunStatus = LG_NO_ARMS;
 			}
 
 			if (pull)

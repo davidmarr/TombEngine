@@ -10,12 +10,11 @@ New custom animations which Lara can perform.
 void GameScriptAnimations::Register(sol::state* lua)
 {
 	lua->new_usertype<GameScriptAnimations>("Animations",
-		"crawlExtended", &GameScriptAnimations::CrawlExtended,
+		"crawlExtra", &GameScriptAnimations::CrawlExtra,
 		"crouchRoll", &GameScriptAnimations::CrouchRoll,
-		"crawlspaceSwandive", &GameScriptAnimations::CrawlspaceSwandive,
-		"monkeyTurn180", &GameScriptAnimations::MonkeyTurn180,
-		"monkeyAutoJump", &GameScriptAnimations::MonkeyAutoJump,
-		"oscillateHang", &GameScriptAnimations::OscillateHang,
-		"pose", &GameScriptAnimations::Pose
+		"monkeyRoll", &GameScriptAnimations::MonkeyRoll,
+		"monkeyVault", &GameScriptAnimations::MonkeyVault,
+		"oscillateHanging", &GameScriptAnimations::OscillateHanging,
+		"swandiveRollRun", &GameScriptAnimations::SwandiveRollRun
 		);
 }

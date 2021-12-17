@@ -96,7 +96,7 @@ static bool CanUseGun(ITEM_INFO* lara, ITEM_INFO* bigGun)
 	//LaraInfo*& laraInfo = lara->data; // This function is presumably called before Lara is initialised, so global must be used. @Sezz 2021.11.16
 
 	if (!(TrInput & IN_ACTION) ||
-		Lara.gunStatus != LG_HANDS_FREE ||
+		Lara.gunStatus != LG_NO_ARMS ||
 		lara->gravityStatus) // BUG: Lara can still mount when jumping up. @Sezz 2021.11.16
 	{
 		return false;
@@ -255,7 +255,7 @@ bool BigGunControl(ITEM_INFO* lara, COLL_INFO* coll)
 		{
 			SetAnimation(lara, LA_STAND_IDLE);
 			laraInfo->Vehicle = NO_ITEM;
-			laraInfo->gunStatus = LG_HANDS_FREE;
+			laraInfo->gunStatus = LG_NO_ARMS;
 			bigGun->hitPoints = 0;
 		}
 

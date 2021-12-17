@@ -14,10 +14,7 @@
 #include "GameFlowScript.h"
 #include "GameScriptLevel.h"
 
-// -----------------------------
-// COLLISION TEST FUNCTIONS
-// For State Control & Collision
-// -----------------------------
+/*this file has all the generic **collision** test functions called in lara's state code*/
 
 bool LaraDeflectEdge(ITEM_INFO* item, COLL_INFO* coll)
 {
@@ -25,7 +22,7 @@ bool LaraDeflectEdge(ITEM_INFO* item, COLL_INFO* coll)
 	{
 		ShiftItem(item, coll);
 
-		item->goalAnimState = LS_IDLE;
+		item->goalAnimState = LS_STOP;
 		item->speed = 0;
 		item->gravityStatus = false;
 
@@ -46,40 +43,46 @@ bool LaraDeflectEdge(ITEM_INFO* item, COLL_INFO* coll)
 	return false;
 }
 
-bool LaraDeflectEdgeJump(ITEM_INFO* item, COLL_INFO* coll)
+void LaraDeflectEdgeJump(ITEM_INFO* item, COLL_INFO* coll)
 {
 	ShiftItem(item, coll);
 
-	if (coll->CollisionType == CT_FRONT || coll->CollisionType == CT_TOP_FRONT)
+	switch (coll->CollisionType)
 	{
+	case CT_FRONT:
+	case CT_TOP_FRONT:
 		if (!Lara.climbStatus || item->speed != 2)
 		{
-			if (coll->Middle.Floor <= STEP_SIZE)
-				SetAnimation(item, LA_LAND);
+			if (coll->Middle.Floor <= 512)
+			{
+				if (coll->Middle.Floor <= 128)
+					SetAnimation(item, LA_JUMP_UP_LAND);
+			}
 			else
+			{
 				SetAnimation(item, LA_JUMP_WALL_SMASH_START, 1);
+			}
 
 			item->speed /= 4;
-			Lara.moveAngle += ANGLE(180.0f);
+			Lara.moveAngle += ANGLE(180);
 
 			if (item->fallspeed <= 0)
 				item->fallspeed = 1;
 		}
 
-		return true;
-	}
-
-	if (coll->CollisionType == CT_TOP)
-	{
+		break;
+	case CT_TOP:
 		if (item->fallspeed <= 0)
 			item->fallspeed = 1;
-	}
-	else if (coll->CollisionType == CT_LEFT)
+
+		break;
+	case CT_LEFT:
 		item->pos.yRot += ANGLE(5.0f);
-	else if (coll->CollisionType == CT_RIGHT)
+		break;
+	case CT_RIGHT:
 		item->pos.yRot -= ANGLE(5.0f);
-	else if (coll->CollisionType == CT_CLAMP)
-	{
+		break;
+	case CT_CLAMP:
 		item->pos.xPos -= 400 * phd_sin(coll->Setup.ForwardAngle);
 		item->pos.zPos -= 400 * phd_cos(coll->Setup.ForwardAngle);
 
@@ -88,14 +91,13 @@ bool LaraDeflectEdgeJump(ITEM_INFO* item, COLL_INFO* coll)
 
 		if (item->fallspeed <= 0)
 			item->fallspeed = 16;
-	}
 
-	return false;
+		break;
+	}
 }
 
 bool LaraDeflectEdgeCrawl(ITEM_INFO* item, COLL_INFO* coll)
 {
-	// Useless in the best case; Lara does not have to embed in order to perform climbing actions in crawl states. Keeping for security. @Sezz 2021.11.26
 	if (coll->CollisionType == CT_FRONT || coll->CollisionType == CT_TOP_FRONT)
 	{
 		ShiftItem(item, coll);
@@ -109,43 +111,17 @@ bool LaraDeflectEdgeCrawl(ITEM_INFO* item, COLL_INFO* coll)
 	if (coll->CollisionType == CT_LEFT)
 	{
 		ShiftItem(item, coll);
-		item->pos.yRot += ANGLE(coll->DiagonalStepAtLeft() ? DEFLECT_DIAGONAL_ANGLE_CRAWL : DEFLECT_STRAIGHT_ANGLE_CRAWL);
+		item->pos.yRot += ANGLE(2.0f);
 	}
 	else if (coll->CollisionType == CT_RIGHT)
 	{
 		ShiftItem(item, coll);
-		item->pos.yRot -= ANGLE(coll->DiagonalStepAtRight() ? DEFLECT_DIAGONAL_ANGLE_CRAWL : DEFLECT_STRAIGHT_ANGLE_CRAWL);
+		item->pos.yRot -= ANGLE(2.0f);
 	}
 
 	return false;
 }
 
-// TODO: Move the following two functions to lara_tests.cpp and lara_helpers.cpp?
-// @Sezz 2021.09.26
-bool TestLaraHitCeiling(COLL_INFO* coll)
-{
-	if (coll->CollisionType == CT_TOP ||
-		coll->CollisionType == CT_CLAMP)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-void SetLaraHitCeiling(ITEM_INFO* item, COLL_INFO* coll)
-{
-	item->pos.xPos = coll->Setup.OldPosition.x;
-	item->pos.yPos = coll->Setup.OldPosition.y;
-	item->pos.zPos = coll->Setup.OldPosition.z;
-
-	item->speed = 0;
-	item->fallspeed = 0;
-	item->gravityStatus = false;
-}
-
-// LEGACY
-// TODO: Gradually replace usage with TestLaraHitCeiling() and SetLaraHitCeiling(). @Sezz 2021.09.27
 bool LaraHitCeiling(ITEM_INFO* item, COLL_INFO* coll)
 {
 	if (coll->CollisionType == CT_TOP || coll->CollisionType == CT_CLAMP)
@@ -170,84 +146,33 @@ void LaraCollideStop(ITEM_INFO* item, COLL_INFO* coll)
 {
 	switch (coll->Setup.OldAnimState)
 	{
-	case LS_IDLE:
+	case LS_STOP:
 	case LS_TURN_RIGHT_SLOW:
 	case LS_TURN_LEFT_SLOW:
-	case LS_TURN_RIGHT_FAST:
-	case LS_TURN_LEFT_FAST:
+	case LS_TURN_FAST:
 		item->currentAnimState = coll->Setup.OldAnimState;
 		item->animNumber = coll->Setup.OldAnimNumber;
 		item->frameNumber = coll->Setup.OldFrameNumber;
-
 		if (TrInput & IN_LEFT)
 		{
-			// Prevent turn lock against walls.
-			if (item->currentAnimState == LS_TURN_RIGHT_SLOW ||
-				item->currentAnimState == LS_TURN_RIGHT_FAST)
-			{
-				item->goalAnimState = LS_IDLE;
-			}
-			else
-				item->goalAnimState = LS_TURN_LEFT_SLOW;
+			item->goalAnimState = LS_TURN_LEFT_SLOW;
 		}
 		else if (TrInput & IN_RIGHT)
 		{
-			if (item->currentAnimState == LS_TURN_LEFT_SLOW ||
-				item->currentAnimState == LS_TURN_LEFT_FAST)
-			{
-				item->goalAnimState = LS_IDLE;
-			}
-			else
-				item->goalAnimState = LS_TURN_RIGHT_SLOW;
+			item->goalAnimState = LS_TURN_RIGHT_SLOW;
 		}
 		else
-			item->goalAnimState = LS_IDLE;
-
+		{
+			item->goalAnimState = LS_STOP;
+		}
 		AnimateLara(item);
-
 		break;
-
 	default:
-		item->goalAnimState = LS_IDLE;
-
+		item->goalAnimState = LS_STOP;
 		if (item->animNumber != LA_STAND_SOLID)
-			SetAnimation(item, LA_STAND_SOLID);
-
-		break;
-	}
-}
-
-void LaraCollideStopCrawl(ITEM_INFO* item, COLL_INFO* coll)
-{
-	switch (coll->Setup.OldAnimState)
-	{
-	case LS_CRAWL_IDLE:
-	case LS_CRAWL_TURN_LEFT:
-	case LS_CRAWL_TURN_RIGHT:
-		item->currentAnimState = coll->Setup.OldAnimState;
-		item->animNumber = coll->Setup.OldAnimNumber;
-		item->frameNumber = coll->Setup.OldFrameNumber;
-
-		if (TrInput & IN_LEFT)
-			item->goalAnimState = LS_CRAWL_TURN_LEFT;
-		else if (TrInput & IN_RIGHT)
-			item->goalAnimState = LS_CRAWL_TURN_RIGHT;
-		else
-			item->goalAnimState = LS_CRAWL_IDLE;
-
-		AnimateLara(item);
-		break;
-
-	default:
-		item->currentAnimState = LS_CRAWL_IDLE;
-		item->goalAnimState = LS_CRAWL_IDLE;
-
-		if (item->animNumber != LA_CRAWL_IDLE)
 		{
-			item->animNumber = LA_CRAWL_IDLE;
-			item->frameNumber = GetFrameNumber(item, 0);
+			SetAnimation(item, LA_STAND_SOLID);
 		}
-
 		break;
 	}
 }
@@ -334,35 +259,6 @@ void GetLaraDeadlyBounds()
 	DeadlyBounds[3] = LaraItem->pos.yPos + tbounds.Y2;
 	DeadlyBounds[4] = LaraItem->pos.zPos + tbounds.Z1;
 	DeadlyBounds[5] = LaraItem->pos.zPos + tbounds.Z2;
-}
-
-void LaraJumpCollision(ITEM_INFO* item, COLL_INFO* coll)
-{
-	LaraInfo*& info = item->data;
-
-	/*states 25, 26, 27*/
-	/*state code: none, but is called in lara_col_backjump, lara_col_rightjump and lara_col_leftjump*/
-	coll->Setup.BadHeightDown = NO_BAD_POS;
-	coll->Setup.BadHeightUp = -STEPUP_HEIGHT;
-	coll->Setup.BadCeilingHeight = BAD_JUMP_CEILING;
-	coll->Setup.ForwardAngle = info->moveAngle;
-
-	GetCollisionInfo(coll, item);
-	LaraDeflectEdgeJump(item, coll);
-
-	if (item->fallspeed > 0 && coll->Middle.Floor <= 0)
-	{
-		if (LaraLandedBad(item, coll))
-			item->goalAnimState = LS_DEATH;
-		else
-			item->goalAnimState = LS_IDLE;
-
-		item->fallspeed = 0;
-		item->gravityStatus = 0;
-
-		if (coll->Middle.Floor != NO_HEIGHT)
-			item->pos.yPos += coll->Middle.Floor;
-	}
 }
 
 void LaraSurfaceCollision(ITEM_INFO* item, COLL_INFO* coll)
@@ -543,19 +439,4 @@ void LaraSwimCollision(ITEM_INFO* item, COLL_INFO* coll)
 
 	if (Lara.waterStatus != LW_FLYCHEAT && Lara.ExtraAnim == NO_ITEM)
 		TestLaraWaterDepth(item, coll);
-}
-
-bool TestLaraObjectCollision(ITEM_INFO* item, short angle, int dist, int height)
-{
-	auto oldPos = item->pos;
-
-	item->pos.xPos += dist * phd_sin(item->pos.yRot + angle);
-	item->pos.yPos += height;
-	item->pos.zPos += dist * phd_cos(item->pos.yRot + angle);
-
-	auto result = GetCollidedObjects(item, LARA_RAD, 1, CollidedItems, CollidedMeshes, 0);
-
-	item->pos = oldPos;
-
-	return result;
 }

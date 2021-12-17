@@ -243,7 +243,7 @@ void PushableBlockControl(short itemNumber)
 					MoveStackXZ(itemNumber);
 					//SoundEffect(pushable->stopSound, &item->pos, 2);
 					DoPushPull = 0;
-					LaraItem->goalAnimState = LS_IDLE;
+					LaraItem->goalAnimState = LS_STOP;
 
 					item->gravityStatus = true; // do fall
 					return;
@@ -255,7 +255,7 @@ void PushableBlockControl(short itemNumber)
 			{
 				if (!TestBlockPush(item, blockHeight, quadrant))
 				{
-					LaraItem->goalAnimState = LS_IDLE;
+					LaraItem->goalAnimState = LS_STOP;
 				}
 				else
 				{
@@ -266,7 +266,7 @@ void PushableBlockControl(short itemNumber)
 			}
 			else
 			{
-				LaraItem->goalAnimState = LS_IDLE;
+				LaraItem->goalAnimState = LS_STOP;
 			}
 		}
 		break;
@@ -317,7 +317,7 @@ void PushableBlockControl(short itemNumber)
 			{
 				if (!TestBlockPull(item, blockHeight, quadrant))
 				{
-					LaraItem->goalAnimState = LS_IDLE;
+					LaraItem->goalAnimState = LS_STOP;
 				}
 				else
 				{
@@ -328,7 +328,7 @@ void PushableBlockControl(short itemNumber)
 			}
 			else
 			{
-				LaraItem->goalAnimState = LS_IDLE;
+				LaraItem->goalAnimState = LS_STOP;
 			}
 		}
 		break;
@@ -375,7 +375,7 @@ void PushableBlockCollision(short itemNum, ITEM_INFO* l, COLL_INFO* coll)
 	int blockHeight = GetStackHeight(item);
 	
 	if ((!(TrInput & IN_ACTION)
-		|| l->currentAnimState != LS_IDLE
+		|| l->currentAnimState != LS_STOP
 		|| l->animNumber != LA_STAND_IDLE
 		|| l->gravityStatus
 		|| Lara.gunStatus
@@ -515,7 +515,7 @@ void PushableBlockCollision(short itemNum, ITEM_INFO* l, COLL_INFO* coll)
 			if (Lara.isMoving && Lara.interactedItem == itemNum)
 			{
 				Lara.isMoving = false;
-				Lara.gunStatus = LG_HANDS_FREE;
+				Lara.gunStatus = LG_NO_ARMS;
 			}
 			item->pos.yRot = rot;
 		}

@@ -1817,7 +1817,7 @@ void undraw_shotgun(int weapon)
 
 	if (item->status == ITEM_DEACTIVATED)
 	{
-		Lara.gunStatus = LG_HANDS_FREE;
+		Lara.gunStatus = LG_NO_ARMS;
 		Lara.target = nullptr;
 		Lara.rightArm.lock = false;
 		Lara.leftArm.lock = false;

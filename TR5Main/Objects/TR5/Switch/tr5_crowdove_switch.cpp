@@ -38,7 +38,7 @@ namespace TEN::Entities::TR5
 			|| !(item->meshBits & 4)
 			|| (!(TrInput & IN_ACTION)
 				|| Lara.gunStatus
-				|| l->currentAnimState != LS_IDLE
+				|| l->currentAnimState != LS_STOP
 				|| l->animNumber != LA_STAND_IDLE
 				|| l->gravityStatus)
 			&& (!Lara.isMoving || Lara.interactedItem != itemNum))
@@ -85,7 +85,7 @@ namespace TEN::Entities::TR5
 				if (Lara.isMoving && Lara.interactedItem == itemNum)
 				{
 					Lara.isMoving = false;
-					Lara.gunStatus = LG_HANDS_FREE;
+					Lara.gunStatus = LG_NO_ARMS;
 				}
 				item->pos.yRot = oldYrot;
 			}

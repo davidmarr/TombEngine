@@ -16,11 +16,10 @@ settings.errorMode = ErrorMode.WARN;
 SetSettings(settings);
 
 local anims = Animations.new();
-anims.crawlExtended = true;
+anims.crawlExtra = true;
 anims.crouchRoll = true;
-anims.crawlspaceSwandive = true;
-anims.monkeyTurn180 = true;
-anims.monkeyAutoJump = false;
-anims.oscillateHang = true;
-anims.pose = false;
+anims.monkeyRoll = true;
+anims.monkeyVault = true;
+anims.oscillateHanging = true;
+anims.swandiveRollRun = true;
 SetAnimations(anims);

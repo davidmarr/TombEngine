@@ -106,7 +106,7 @@ void TightRopeCollision(short itemNum, ITEM_INFO* l, COLL_INFO* coll)
 	ITEM_INFO* item = &g_Level.Items[itemNum];
 	
 	if (((TrInput & IN_ACTION) == 0
-		|| l->currentAnimState != LS_IDLE
+		|| l->currentAnimState != LS_STOP
 		|| l->animNumber != LA_STAND_IDLE
 		|| l->status == ITEM_INVISIBLE
 		|| Lara.gunStatus)
