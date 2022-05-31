@@ -287,6 +287,7 @@ namespace TEN::Renderer
 						light->In = oldLight->in;
 						light->Out = oldLight->out;
 						light->Type = LIGHT_TYPE_POINT;
+						light->CastShadows = oldLight->castShadows;
 					}
 					else if (oldLight->type == LIGHT_TYPE_SHADOW)
 					{
@@ -312,6 +313,7 @@ namespace TEN::Renderer
 						light->Out = oldLight->out;
 						light->Range = oldLight->length;
 						light->Type = LIGHT_TYPE_SPOT;
+						light->CastShadows = oldLight->castShadows;
 					}
 
 					oldLight++;

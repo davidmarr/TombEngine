@@ -614,7 +614,9 @@ namespace TEN::Renderer
 					light->LocalIntensity = intensity;
 
 					// If Lara, try to collect shadow casting light
-					if (nativeItem->ObjectNumber == ID_LARA && light->Type == LIGHT_TYPE_POINT)
+					if (nativeItem->ObjectNumber == ID_LARA 
+						&& light->Type == LIGHT_TYPE_POINT
+						&& light->CastShadows)
 					{
 						if (intensity >= brightest)
 						{
@@ -645,7 +647,7 @@ namespace TEN::Renderer
 					light->LocalIntensity = intensity;
 
 					// If Lara, try to collect shadow casting light
-					if (nativeItem->ObjectNumber == ID_LARA)
+					if (nativeItem->ObjectNumber == ID_LARA && light->CastShadows)
 					{
 						if (intensity >= brightest)
 						{
