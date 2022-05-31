@@ -264,6 +264,7 @@ namespace TEN::Renderer
 			break;
 
 		case SAMPLER_SHADOW_MAP:
+		case SAMPLER_SHADOW_MAP_CUBE:
 			samplerState = m_shadowSampler.Get();
 			break;
 

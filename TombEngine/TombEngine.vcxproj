@@ -194,6 +194,7 @@ CALL gen.bat</Command>
     <ClInclude Include="Game\Lara\lara_struct.h" />
     <ClInclude Include="Game\Lara\lara_tests.h" />
     <ClInclude Include="Renderer\ConstantBuffers\AlphaTestBuffer.h" />
+    <ClInclude Include="Renderer\ConstantBuffers\DualParaboloidShadowBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\PostProcessBuffer.h" />
     <ClInclude Include="Renderer\Structures\RendererBone.h" />
     <ClInclude Include="Renderer\Structures\RendererDisplayMode.h" />
@@ -1089,6 +1090,15 @@ CALL gen.bat</Command>
       <FileType>Document</FileType>
     </None>
     <None Include="Shaders\DX11_Statics.fx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\DX11_DualParaboloidShadowMap.fx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>

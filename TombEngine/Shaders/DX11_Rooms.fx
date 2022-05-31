@@ -66,6 +66,12 @@ Texture2D CausticsTexture : register(t2);
 Texture2D ShadowMap : register(t3);
 SamplerComparisonState ShadowMapSampler : register(s3);
 
+TextureCube ShadowMapCube : register(t7);
+SamplerComparisonState ShadowMapSamplerCube : register(s7);
+
+Texture2D ShadowMapFront : register(t8);
+Texture2D ShadowMapBack : register(t9);
+
 float hash(float3 n)
 {
 	float x = n.x;
@@ -180,28 +186,91 @@ PixelShaderOutput PS(PixelShaderInput input) : SV_TARGET
 
 	if (CastShadows)
 	{
-		// Transform clip space coords to texture space coords (-1:1 to 0:1)
-		input.LightPosition.xyz /= input.LightPosition.w;
-
-		if (input.LightPosition.x >= -1.0f && input.LightPosition.x <= 1.0f &&
-			input.LightPosition.y >= -1.0f && input.LightPosition.y <= 1.0f &&
-			input.LightPosition.z >= 0.0f && input.LightPosition.z <= 1.0f)
+		if (Light.Type == LT_POINT)
 		{
-			input.LightPosition.x = input.LightPosition.x / 2 + 0.5;
-			input.LightPosition.y = input.LightPosition.y / -2 + 0.5;
+			float3 vPosDP = input.LightPosition;
+			float fLength = length(vPosDP);
+			// normalize
+			vPosDP /= fLength;
 
-			//PCF sampling for shadow map
-			float sum = 0;
-			float x, y;
-			//perform PCF filtering on a 4 x 4 texel neighborhood
-			for (y = -1.5; y <= 1.5; y += 1.0) {
-				for (x = -1.5; x <= 1.5; x += 1.0) {
-					sum += ShadowMap.SampleCmpLevelZero(ShadowMapSampler, input.LightPosition.xy + texOffset(x, y), input.LightPosition.z);
+			// compute and read according depth
+			float fDPDepth;
+			float fSceneDepth;
+			float g_fNear = 32.0f;
+			float g_fFar = 102400.0f;
+
+			if (vPosDP.z >= 0.0f)
+			{
+				float2 vTexFront;
+				vTexFront.x = (vPosDP.x / (1.0f + vPosDP.z)) * 0.5f + 0.5f;
+				vTexFront.y = 1.0f - ((vPosDP.y / (1.0f + vPosDP.z)) * 0.5f + 0.5f);
+
+				fSceneDepth = (fLength - g_fNear) / (g_fFar - g_fNear);
+
+				//PCF sampling for shadow map
+				float sum = 0;
+				float x, y;
+
+				//perform PCF filtering on a 4 x 4 texel neighborhood
+				for (y = -1.5; y <= 1.5; y += 1.0) {
+					for (x = -1.5; x <= 1.5; x += 1.0) {
+						sum += ShadowMapFront.SampleCmpLevelZero(ShadowMapSampler, vTexFront + texOffset(x, y), fSceneDepth);
+					}
 				}
-			}
 
-			float shadowFactor = sum / 16.0;
-			lighting = lerp(lighting, min(AmbientColor,lighting), 1 - saturate(shadowFactor));
+				float shadowFactor = sum / 16.0;
+				lighting = lerp(lighting, min(AmbientColor, lighting), 1 - saturate(shadowFactor));
+			}
+			else
+			{
+				// for the back the z has to be inverted		
+				float2 vTexBack;
+				vTexBack.x = (vPosDP.x / (1.0f - vPosDP.z)) * 0.5f + 0.5f;
+				vTexBack.y = 1.0f - ((vPosDP.y / (1.0f - vPosDP.z)) * 0.5f + 0.5f);
+
+				fSceneDepth = (fLength - g_fNear) / (g_fFar - g_fNear);
+
+				//PCF sampling for shadow map
+				float sum = 0;
+				float x, y;
+
+				//perform PCF filtering on a 4 x 4 texel neighborhood
+				for (y = -1.5; y <= 1.5; y += 1.0) {
+					for (x = -1.5; x <= 1.5; x += 1.0) {
+						sum += ShadowMapBack.SampleCmpLevelZero(ShadowMapSampler, vTexBack + texOffset(x, y), fSceneDepth);
+					}
+				}
+
+				float shadowFactor = sum / 16.0;
+				lighting = lerp(lighting, min(AmbientColor, lighting), 1 - saturate(shadowFactor));
+			}
+		}
+		else
+		{
+			// Transform clip space coords to texture space coords (-1:1 to 0:1)
+			input.LightPosition.xyz /= input.LightPosition.w;
+
+			if (input.LightPosition.x >= -1.0f && input.LightPosition.x <= 1.0f &&
+				input.LightPosition.y >= -1.0f && input.LightPosition.y <= 1.0f &&
+				input.LightPosition.z >= 0.0f && input.LightPosition.z <= 1.0f)
+			{
+				input.LightPosition.x = input.LightPosition.x / 2 + 0.5;
+				input.LightPosition.y = input.LightPosition.y / -2 + 0.5;
+
+				//PCF sampling for shadow map
+				float sum = 0;
+				float x, y;
+
+				//perform PCF filtering on a 4 x 4 texel neighborhood
+				for (y = -1.5; y <= 1.5; y += 1.0) {
+					for (x = -1.5; x <= 1.5; x += 1.0) {
+						sum += ShadowMap.SampleCmpLevelZero(ShadowMapSampler, input.LightPosition.xy + texOffset(x, y), input.LightPosition.z);
+					}
+				}
+
+				float shadowFactor = sum / 16.0;
+				lighting = lerp(lighting, min(AmbientColor, lighting), 1 - saturate(shadowFactor));
+			}
 		}
 	}
 

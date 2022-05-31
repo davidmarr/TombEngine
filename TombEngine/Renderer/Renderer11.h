@@ -39,6 +39,7 @@
 #include "Renderer/Structures/RendererLight.h"
 #include "Renderer/Structures/RendererStringToDraw.h"
 #include "Renderer/Structures/RendererRoom.h"
+#include <Renderer\ConstantBuffers\DualParaboloidShadowBuffer.h>
 
 struct CAMERA_INFO;
 
@@ -261,6 +262,8 @@ namespace TEN::Renderer
 		RenderTarget2D m_renderTarget;
 		RenderTarget2D m_currentRenderTarget;
 		RenderTarget2D m_shadowMap;
+		RenderTarget2D m_shadowMapFront;
+		RenderTarget2D m_shadowMapBack;
 		RenderTarget2D m_depthMap;
 		RenderTargetCube m_reflectionCubemap;
 
@@ -293,6 +296,8 @@ namespace TEN::Renderer
 		ComPtr<ID3D11SamplerState> m_shadowSampler;
 		ComPtr<ID3D11VertexShader> m_vsFinalPass;
 		ComPtr<ID3D11PixelShader> m_psFinalPass;
+		ComPtr<ID3D11VertexShader> m_vsDualParaboloidShadowMap;
+		ComPtr<ID3D11PixelShader> m_psDualParaboloidShadowMap;
 
 		// Constant buffers
 		RenderView gameCamera;
@@ -321,6 +326,8 @@ namespace TEN::Renderer
 		ConstantBuffer<CPostProcessBuffer> m_cbPostProcessBuffer;
 		CAlphaTestBuffer m_stAlphaTest;
 		ConstantBuffer<CAlphaTestBuffer> m_cbAlphaTest;
+		CDualParaboloidShadowBuffer m_stDualParaboloidShadowBuffer;
+		ConstantBuffer<CDualParaboloidShadowBuffer> m_cbDualParaboloidShadowBuffer;
 
 		// Text and sprites
 		std::unique_ptr<SpriteFont> m_gameFont;

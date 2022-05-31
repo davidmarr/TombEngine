@@ -501,7 +501,7 @@ namespace TEN::Renderer
 	{
 		item->LightsToDraw.clear();
 
-		if (m_rooms.size() < roomNumber)
+ 		if (m_rooms.size() < roomNumber)
 			return;
 
 		RendererRoom& room = m_rooms[roomNumber];
@@ -701,8 +701,6 @@ namespace TEN::Renderer
 		
 		RendererRoom& room = m_rooms[roomNumber];
 		ROOM_INFO* r = &g_Level.Rooms[roomNumber];
-
-		int numLights = room.Lights.size();
 
 		// Collect dynamic lights for rooms
 		for (int i = 0; i < dynamicLights.size(); i++)

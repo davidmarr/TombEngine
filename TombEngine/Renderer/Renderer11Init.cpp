@@ -94,10 +94,14 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	m_psHUDBarColor = Utils::compilePixelShader(m_device.Get(), L"Shaders\\HUD\\DX11_PS_HUDBar.hlsl", "PSTextured", "ps_4_0", nullptr, blob);
 	m_vsFinalPass = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_FinalPass.fx", "VS", "vs_4_0", nullptr, blob);
 	m_psFinalPass = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_FinalPass.fx", "PS", "ps_4_0", nullptr, blob);
-	
-	m_shadowMap = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT,DXGI_FORMAT_D16_UNORM);
-	m_depthMap = RenderTarget2D(m_device.Get(), w, h, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
+	m_vsDualParaboloidShadowMap = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_DualParaboloidShadowMap.fx", "VS", "vs_4_0", nullptr, blob);
+	m_psDualParaboloidShadowMap = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_DualParaboloidShadowMap.fx", "PS", "ps_4_0", nullptr, blob);
 
+	m_shadowMap = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT,DXGI_FORMAT_D16_UNORM);
+	m_shadowMapFront = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
+	m_shadowMapBack = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
+	m_depthMap = RenderTarget2D(m_device.Get(), w, h, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
+	
 	// Initialise constant buffers
 	m_cbCameraMatrices = CreateConstantBuffer<CCameraMatrixBuffer>();
 	m_cbItem = CreateConstantBuffer<CItemBuffer>();
@@ -109,6 +113,7 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	m_cbAnimated = CreateConstantBuffer<CAnimatedBuffer>();
 	m_cbPostProcessBuffer = CreateConstantBuffer<CPostProcessBuffer>();
 	m_cbAlphaTest = CreateConstantBuffer<CAlphaTestBuffer>();
+	m_cbDualParaboloidShadowBuffer = CreateConstantBuffer<CDualParaboloidShadowBuffer>();
 
 	//Prepare HUD Constant buffer
 	m_cbHUDBar = CreateConstantBuffer<CHUDBarBuffer>();
