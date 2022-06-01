@@ -27,8 +27,6 @@ table Item {
     after_death: int32;
     item_flags: [int32];
 	position: Position;
-	next_item: int32;
-	next_item_active: int32;
 	triggered: bool;
 	active: bool;
 	status: int32;
@@ -44,6 +42,26 @@ table Item {
 	lua_on_hit_name: string;
 	lua_on_collided_with_object_name: string;
 	lua_on_collided_with_room_name: string;
+}
+
+table Effect {
+	active: bool;
+	position: Position;
+	room_number: int32;
+	object_number: int32;
+	speed: int32;
+	fall_speed: int32;
+	frame_number: int32;
+	counter: int32;
+	shade: int32;
+	flag1: int32;
+	flag2: int32;
+}
+
+table Room {
+	static_meshes: [int32];
+	items: [int32];
+	effects: [int32];
 }
 
 table AmmoInfo {
@@ -398,12 +416,12 @@ table SaveGame {
 	level: SaveGameStatistics;
 	lara: Lara;
 	items: [Item];
-	next_item_free: int32;
-	next_item_active: int32;
-	room_items: [int32];
+	effects: [Effect];
+	active_items: [int32];
+	active_effects: [int32];
+	rooms: [Room];
 	fixed_cameras: [FixedCamera];
 	sinks: [Sink];
-	static_meshes: [StaticMeshInfo];
 	flyby_cameras: [FlyByCamera];
 	rats: [RatInfo];
 	spiders: [SpiderInfo];

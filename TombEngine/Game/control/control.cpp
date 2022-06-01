@@ -84,10 +84,12 @@ int LevelComplete;
 bool  InItemControlLoop;
 short ItemNewRoomNo;
 short ItemNewRooms[MAX_ROOMS];
-short NextItemActive;
+
 short NextItemFree;
-short NextFxActive;
 short NextFxFree;
+
+std::vector<short> ActiveItems;
+std::vector<short> ActiveEffects;
 
 int WeaponDelay;
 int WeaponEnemyTimer;
@@ -273,28 +275,14 @@ GameStatus ControlPhase(int numFrames, int demoMode)
 		// Update all items
 		InItemControlLoop = true;
 
-		short itemNumber = NextItemActive;
-		while (itemNumber != NO_ITEM)
+		for (short itemNumber : ActiveItems)
 		{
 			auto* item = &g_Level.Items[itemNumber];
-			short nextItem = item->NextActive;
 
-			if (item->AfterDeath <= 128)
-			{
-				if (Objects[item->ObjectNumber].control)
-					Objects[item->ObjectNumber].control(itemNumber);
+			if (Objects[item->ObjectNumber].control)
+				Objects[item->ObjectNumber].control(itemNumber);
 
-				TEN::Control::Volumes::TestVolumes(itemNumber);
-
-				if (item->AfterDeath > 0 && item->AfterDeath < 128 && !(Wibble & 3))
-					item->AfterDeath++;
-				if (item->AfterDeath == 128)
-					KillItem(itemNumber);
-			}
-			else
-				KillItem(itemNumber);
-
-			itemNumber = nextItem;
+			TEN::Control::Volumes::TestVolumes(itemNumber);
 		}
 
 		InItemControlLoop = false;
@@ -303,15 +291,12 @@ GameStatus ControlPhase(int numFrames, int demoMode)
 		// Update all effects
 		InItemControlLoop = true;
 
-		short fxNumber = NextFxActive;
-		while (fxNumber != NO_ITEM)
+		for (short fxNumber : ActiveEffects)
 		{
-			short nextFx = EffectList[fxNumber].nextActive;
 			auto* fx = &EffectList[fxNumber];
+
 			if (Objects[fx->objectNumber].control)
 				Objects[fx->objectNumber].control(fxNumber);
-
-			fxNumber = nextFx;
 		}
 
 		InItemControlLoop = false;

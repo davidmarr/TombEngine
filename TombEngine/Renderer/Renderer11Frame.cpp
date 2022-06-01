@@ -325,13 +325,9 @@ namespace TEN::Renderer
 		RendererRoom& room = m_rooms[roomNumber];
 		ROOM_INFO* r = &g_Level.Rooms[room.RoomNumber];
 
-		short itemNum = NO_ITEM;
-		for (itemNum = r->itemNumber; itemNum != NO_ITEM; itemNum = g_Level.Items[itemNum].NextItem)
+		for (short currentItemNumber : r->Items)
 		{
-			ItemInfo* item = &g_Level.Items[itemNum];
-
-			if (item->ObjectNumber == ID_LARA && itemNum == g_Level.Items[itemNum].NextItem)
-				break;
+			ItemInfo* item = &g_Level.Items[currentItemNumber];
 
 			if (item->ObjectNumber == ID_LARA)
 				continue;
@@ -349,9 +345,9 @@ namespace TEN::Renderer
 			if (!renderView.camera.frustum.AABBInFrustum(min, max))
 				continue;
 
-			auto newItem = &m_items[itemNum];
+			auto newItem = &m_items[currentItemNumber];
 
-			newItem->ItemNumber = itemNum;
+			newItem->ItemNumber = currentItemNumber;
 			newItem->Translation = Matrix::CreateTranslation(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z);
 			newItem->Rotation = Matrix::CreateFromYawPitchRoll(TO_RAD(item->Pose.Orientation.y),
 															   TO_RAD(item->Pose.Orientation.x),
@@ -727,8 +723,7 @@ namespace TEN::Renderer
 		RendererRoom& room = m_rooms[roomNumber];
 		ROOM_INFO* r = &g_Level.Rooms[room.RoomNumber];
 
-		short fxNum = NO_ITEM;
-		for (fxNum = r->fxNumber; fxNum != NO_ITEM; fxNum = EffectList[fxNum].nextFx)
+		for (short fxNum : r->Effects)
 		{
 			FX_INFO *fx = &EffectList[fxNum];
 
@@ -744,7 +739,7 @@ namespace TEN::Renderer
 			newEffect->World = Matrix::CreateFromYawPitchRoll(fx->pos.Orientation.y, fx->pos.Position.x, fx->pos.Position.z) * Matrix::CreateTranslation(fx->pos.Position.x, fx->pos.Position.y, fx->pos.Position.z);
 			newEffect->Mesh = GetMesh(obj->nmeshes ? obj->meshIndex : fx->frameNumber);
 
-			CollectLightsForEffect(fx->roomNumber, newEffect, renderView);
+			CollectLightsForEffect(fx->RoomNumber, newEffect, renderView);
 
 			room.EffectsToDraw.push_back(newEffect);
 		}

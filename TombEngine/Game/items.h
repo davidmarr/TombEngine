@@ -73,8 +73,6 @@ struct ItemInfo
 	GAME_OBJECT_ID ObjectNumber;
 	int Status;	// ItemStatus enum.
 	bool Active;
-	short NextItem;
-	short NextActive;
 
 	ITEM_DATA Data;
 	EntityAnimationData Animation;
@@ -104,7 +102,7 @@ struct ItemInfo
 
 	// TODO: Move to CreatureInfo?
 	uint8_t AIBits; // AIObjectType enum.
-	short AfterDeath;
+	short AlphaOverride;
 	short CarriedItem;
 
 	// Lua
@@ -133,3 +131,5 @@ void UpdateItemRoom(ItemInfo* item, int height, int xOffset = 0, int zOffset = 0
 std::vector<int> FindAllItems(short objectNumber);
 ItemInfo* FindItem(int objectNumber);
 int FindItem(ItemInfo* item);
+short TryGetNextFreeItem();
+short TryGetNextFreeEffect();

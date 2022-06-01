@@ -633,7 +633,6 @@ namespace TEN::Entities::TR4
 			if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase)
 			{
 				someFlag = true;
-
 				item->Pose.Position = enemy->Pose.Position;
 			}
 			else if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + 35)
@@ -643,8 +642,7 @@ namespace TEN::Entities::TR4
 				auto* room = &g_Level.Rooms[item->RoomNumber];
 				ItemInfo* currentItem = NULL;
 
-				short currentitemNumber = room->itemNumber;
-				while (currentitemNumber != NO_ITEM)
+				for (short currentitemNumber = 0; currentitemNumber < room->Items.size(); currentitemNumber++)
 				{
 					currentItem = &g_Level.Items[currentitemNumber];
 
@@ -655,8 +653,6 @@ namespace TEN::Entities::TR4
 					{
 						break;
 					}
-
-					currentitemNumber = currentItem->NextItem;
 				}
 
 				if (currentItem != NULL)

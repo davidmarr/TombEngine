@@ -33,68 +33,9 @@ int EnableBaddyAI(short itemNum, int always, bool makeTarget)
 
 	if (item->Data.is<CreatureInfo>())
 		return true;
-	   	
-	/*
-	if (SlotsUsed >= NUM_SLOTS)
-	{
-		int cameraDistance = 0;
-		if (!always)
-		{
-			int deltaX = (item->pos.Position.x - Camera.pos.x) >> 8;
-			int deltaY = (item->pos.Position.y - Camera.pos.y) >> 8;
-			int deltaZ = (item->pos.Position.z - Camera.pos.z) >> 8;
-			cameraDistance = SQUARE(deltaX) + SQUARE(deltaY) + SQUARE(deltaZ);
-		}
 
-		int slotToDisable = -1;
-
-
-		for (int slot = 0; slot < ActiveCreatures.size(); slot++)
-		{
-			CREATURE_INFO* creature = ActiveCreatures[slot];
-			item = &g_Level.Items[creature->itemNum];
-
-			int deltaX = (item->pos.Position.x - Camera.pos.x) >> 8;
-			int deltaY = (item->pos.Position.y - Camera.pos.y) >> 8;
-			int deltaZ = (item->pos.Position.z - Camera.pos.z) >> 8;
-			int distance = SQUARE(deltaX) + SQUARE(deltaY) + SQUARE(deltaZ);
-
-			if (distance > cameraDistance)
-			{
-				cameraDistance = distance;
-				slotToDisable = slot;
-			}
-		}
-
-		if (slotToDisable < 0 || slotToDisable > NUM_SLOTS)
-			return false;
-
-		ItemInfo* itemToDisable = &g_Level.Items[ActiveCreatures[slotToDisable].itemNum];
-		CREATURE_INFO* creatureToDisable = &ActiveCreatures[slotToDisable];
-
-		itemToDisable->status = ITEM_INVISIBLE;
-		DisableBaddyAI(creatureToDisable->itemNum);
-		InitialiseSlot(itemNum, slotToDisable);
-		return true;
-	}
-	else*/
-	{
-		/*
-		CREATURE_INFO* creature = ActiveCreatures.data();
-		for (int slot = 0; slot < NUM_SLOTS; slot++, creature++)
-		{
-			if (creature->itemNum == NO_ITEM)
-			{
-				InitialiseSlot(itemNum, slot);
-				return true;
-			}
-		}
-		*/
-		InitialiseSlot(itemNum, 0, makeTarget);
-		ActiveCreatures.push_back(item->Data);
-	}
-
-	return true;
+	InitialiseSlot(itemNum, 0, makeTarget);
+	ActiveCreatures.push_back(item->Data);
 }
 
 void DisableEntityAI(short itemNumber)

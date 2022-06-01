@@ -568,9 +568,9 @@ void ReadRooms()
 		for (int j = 0; j < numVertices; j++)
 			room.colors.push_back(ReadVector3());
 
-		room.effects.reserve(numVertices);
+		room.verticesEffects.reserve(numVertices);
 		for (int j = 0; j < numVertices; j++)
-			room.effects.push_back(ReadVector3());
+			room.verticesEffects.push_back(ReadVector3());
 
 		int numBuckets = ReadInt32();
 		room.buckets.reserve(numBuckets);
@@ -795,9 +795,6 @@ void ReadRooms()
 		room.meshEffect = ReadInt32();
 		room.reverbType = ReadInt32();
 		room.flipNumber = ReadInt32();
-
-		room.itemNumber = NO_ITEM;
-		room.fxNumber = NO_ITEM;
 	}
 }
 
@@ -1317,9 +1314,9 @@ void GetCarriedItems()
 		auto* item = &g_Level.Items[i];
 		if (Objects[item->ObjectNumber].intelligent || item->ObjectNumber >= ID_SEARCH_OBJECT1 && item->ObjectNumber <= ID_SEARCH_OBJECT3)
 		{
-			for (short linkNumber = g_Level.Rooms[item->RoomNumber].itemNumber; linkNumber != NO_ITEM; linkNumber = g_Level.Items[linkNumber].NextItem)
+			for (short itemNumber : g_Level.Rooms[item->RoomNumber].Items)
 			{
-				auto* item2 = &g_Level.Items[linkNumber];
+				auto* item2 = &g_Level.Items[itemNumber];
 
 				if (abs(item2->Pose.Position.x - item->Pose.Position.x) < CLICK(2) &&
 					abs(item2->Pose.Position.z - item->Pose.Position.z) < CLICK(2) &&
@@ -1327,8 +1324,8 @@ void GetCarriedItems()
 					Objects[item2->ObjectNumber].isPickup)
 				{
 					item2->CarriedItem = item->CarriedItem;
-					item->CarriedItem = linkNumber;
-					RemoveDrawnItem(linkNumber);
+					item->CarriedItem = itemNumber;
+					RemoveDrawnItem(itemNumber);
 					item2->RoomNumber = NO_ROOM;
 				}
 			}

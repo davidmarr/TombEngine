@@ -29,6 +29,7 @@
 #include "ScriptInterfaceLevel.h"
 #include "ScriptInterfaceGame.h"
 #include "Objects/ScriptInterfaceObjectsHandler.h"
+#include <Game\effects\effects.h>
 
 
 using namespace TEN::Effects::Lara;
@@ -84,6 +85,7 @@ bool SaveGame::Save(int slot)
 	FlatBufferBuilder fbb{};
 
 	std::vector<flatbuffers::Offset< Save::Item>> serializedItems{};
+	std::vector<flatbuffers::Offset< Save::Effect>> serializedEffects{};
 
 	// Savegame header
 	auto levelNameOffset = fbb.CreateString(g_GameFlow->GetString(g_GameFlow->GetLevel(CurrentLevel)->NameStringKey.c_str()));
@@ -490,10 +492,8 @@ bool SaveGame::Save(int slot)
 
 		Save::ItemBuilder serializedItem{ fbb };
 
-		serializedItem.add_next_item(itemToSerialize.NextItem);
-		serializedItem.add_next_item_active(itemToSerialize.NextActive);
 		serializedItem.add_anim_number(itemToSerialize.Animation.AnimNumber - obj->animIndex);
-		serializedItem.add_after_death(itemToSerialize.AfterDeath);
+		serializedItem.add_after_death(itemToSerialize.AlphaOverride);
 		serializedItem.add_box_number(itemToSerialize.BoxNumber);
 		serializedItem.add_carried_item(itemToSerialize.CarriedItem);
 		serializedItem.add_active_state(itemToSerialize.Animation.ActiveState);
@@ -554,6 +554,39 @@ bool SaveGame::Save(int slot)
 
 	auto serializedItemsOffset = fbb.CreateVector(serializedItems);
 
+	int currentFxIndex = 0;
+	for (auto& fx : EffectList)
+	{
+		Save::EffectBuilder serializedFx{ fbb };
+
+		Save::Position position = Save::Position(
+			(int32_t)fx.pos.Position.x,
+			(int32_t)fx.pos.Position.y,
+			(int32_t)fx.pos.Position.z,
+			(int32_t)fx.pos.Orientation.x,
+			(int32_t)fx.pos.Orientation.y,
+			(int32_t)fx.pos.Orientation.z);
+
+		serializedFx.add_active(fx.Active);
+		serializedFx.add_position(&position);
+		serializedFx.add_counter(fx.counter);
+		serializedFx.add_fall_speed(fx.fallspeed);
+		serializedFx.add_flag1(fx.flag1);
+		serializedFx.add_flag2(fx.flag2);
+		serializedFx.add_frame_number(fx.frameNumber);
+		serializedFx.add_object_number(fx.objectNumber);
+		serializedFx.add_room_number(fx.RoomNumber);
+		serializedFx.add_shade(fx.shade);
+		serializedFx.add_speed(fx.speed);
+
+		auto serializedFxOffset = serializedFx.Finish();
+		serializedEffects.push_back(serializedFxOffset);
+
+		currentFxIndex++;
+	}
+
+	auto serializedEffectsOffset = fbb.CreateVector(serializedEffects);
+
 	// Soundtrack playheads
 	auto bgmTrackData = GetSoundTrackNameAndPosition(SOUNDTRACK_PLAYTYPE::BGM);
 	auto oneshotTrackData = GetSoundTrackNameAndPosition(SOUNDTRACK_PLAYTYPE::OneShot);
@@ -576,10 +609,19 @@ bool SaveGame::Save(int slot)
 		flipStats.push_back(FlipStats[i]);
 	auto flipStatsOffset = fbb.CreateVector(flipStats);
 
-	std::vector<int> roomItems;
-	for (auto const& r : g_Level.Rooms)
-		roomItems.push_back(r.itemNumber);
-	auto roomItemsOffset = fbb.CreateVector(roomItems);
+	std::vector<int> activeItems;
+	for (short activeItem : ActiveItems)
+	{
+		activeItems.push_back(activeItem);
+	}
+	auto activeItemsOffset = fbb.CreateVector(activeItems);
+
+	std::vector<int> activeEffects;
+	for (short activeFx : ActiveEffects)
+	{
+		activeEffects.push_back(activeFx);
+	}
+	auto activeEffectsOffset = fbb.CreateVector(activeEffects);
 
 	// Cameras
 	std::vector<flatbuffers::Offset<Save::FixedCamera>> cameras;
@@ -611,21 +653,42 @@ bool SaveGame::Save(int slot)
 	}
 	auto flybyCamerasOffset = fbb.CreateVector(flybyCameras);
 
-	// Static meshes
-	std::vector<flatbuffers::Offset<Save::StaticMeshInfo>> staticMeshes;
+	// Rooms data
+	std::vector<flatbuffers::Offset<Save::Room>> rooms;
 	for (int i = 0; i < g_Level.Rooms.size(); i++)
 	{
 		auto* room = &g_Level.Rooms[i];
 
+		std::vector<int> staticMeshes;
 		for (int j = 0; j < room->mesh.size(); j++)
 		{
-			Save::StaticMeshInfoBuilder staticMesh{ fbb };
-			staticMesh.add_flags(room->mesh[j].flags);
-			staticMesh.add_room_number(i);
-			staticMeshes.push_back(staticMesh.Finish());
+			staticMeshes.push_back(room->mesh[j].flags);
 		}
+		auto staticMeshesOffset = fbb.CreateVector(staticMeshes);
+
+		std::vector<int> roomItems;
+		for (int j = 0; j < room->Items.size(); j++)
+		{
+			roomItems.push_back(room->Items[j]);
+		}
+		auto roomItemsOffset = fbb.CreateVector(roomItems);
+
+		std::vector<int> roomEffects;
+		for (int j = 0; j < room->Effects.size(); j++)
+		{
+			roomEffects.push_back(room->Effects[j]);
+		}
+		auto roomEffectsOffset = fbb.CreateVector(roomEffects);
+
+		Save::RoomBuilder roomInfo{ fbb };
+
+		roomInfo.add_static_meshes(staticMeshesOffset);
+		roomInfo.add_items(roomItemsOffset);
+		roomInfo.add_effects(roomEffectsOffset);
+
+		rooms.push_back(roomInfo.Finish());
 	}
-	auto staticMeshesOffset = fbb.CreateVector(staticMeshes);
+	auto roomsOffset = fbb.CreateVector(rooms);
 
 	// Particle enemies
 	std::vector<flatbuffers::Offset<Save::BatInfo>> bats;
@@ -889,9 +952,10 @@ bool SaveGame::Save(int slot)
 	sgb.add_level(levelStatisticsOffset);
 	sgb.add_game(gameStatisticsOffset);
 	sgb.add_lara(laraOffset);
-	sgb.add_next_item_free(NextItemFree);
-	sgb.add_next_item_active(NextItemActive);
+	sgb.add_active_items(activeItemsOffset);
+	sgb.add_active_effects(activeEffectsOffset);
 	sgb.add_items(serializedItemsOffset);
+	sgb.add_effects(serializedEffectsOffset);
 	sgb.add_ambient_track(bgmTrackOffset);
 	sgb.add_ambient_position(bgmTrackData.second);
 	sgb.add_oneshot_track(oneshotTrackOffset);
@@ -899,11 +963,10 @@ bool SaveGame::Save(int slot)
 	sgb.add_cd_flags(soundtrackMapOffset);
 	sgb.add_flip_maps(flipMapsOffset);
 	sgb.add_flip_stats(flipStatsOffset);
-	sgb.add_room_items(roomItemsOffset);
+	sgb.add_rooms(roomsOffset);
 	sgb.add_flip_effect(FlipEffect);
 	sgb.add_flip_status(FlipStatus);
 	sgb.add_flip_timer(0);
-	sgb.add_static_meshes(staticMeshesOffset);
 	sgb.add_fixed_cameras(camerasOffset);
 	sgb.add_bats(batsOffset);
 	sgb.add_rats(ratsOffset);
@@ -982,22 +1045,32 @@ bool SaveGame::Load(int slot)
 		SoundTracks[i].Mask = s->cd_flags()->Get(i);
 	}
 
-	// Static objects
-	for (int i = 0; i < s->static_meshes()->size(); i++)
+	// Rooms
+	for (int i = 0; i < s->rooms()->size(); i++)
 	{
-		auto staticMesh = s->static_meshes()->Get(i);
-		auto room = &g_Level.Rooms[staticMesh->room_number()];
+		auto roomInfo = s->rooms()->Get(i);
+		auto room = &g_Level.Rooms[i];
 
-		if (i >= room->mesh.size())
-			break;
-
-		room->mesh[i].flags = staticMesh->flags();
-		if (!room->mesh[i].flags)
+		for (int j = 0; j < roomInfo->static_meshes()->size(); j++)
 		{
-			short roomNumber = staticMesh->room_number();
-			FloorInfo* floor = GetFloor(room->mesh[i].pos.Position.x, room->mesh[i].pos.Position.y, room->mesh[i].pos.Position.z, &roomNumber);
-			TestTriggers(room->mesh[i].pos.Position.x, room->mesh[i].pos.Position.y, room->mesh[i].pos.Position.z, staticMesh->room_number(), true, 0);
-			floor->Stopper = false;
+			room->mesh[j].flags=roomInfo->static_meshes()->Get(j);
+			if (!room->mesh[j].flags)
+			{
+				short roomNumber = i;
+				FloorInfo* floor = GetFloor(room->mesh[i].pos.Position.x, room->mesh[i].pos.Position.y, room->mesh[i].pos.Position.z, &roomNumber);
+				TestTriggers(room->mesh[i].pos.Position.x, room->mesh[i].pos.Position.y, room->mesh[i].pos.Position.z, i, true, 0);
+				floor->Stopper = false;
+			}
+		}
+
+		for (int j = 0; j < roomInfo->items()->size(); j++)
+		{
+			room->Items.push_back(roomInfo->items()->Get(j));
+		}
+
+		for (int j = 0; j < roomInfo->effects()->size(); j++)
+		{
+			room->Effects.push_back(roomInfo->effects()->Get(j));
 		}
 	}
 
@@ -1027,12 +1100,6 @@ bool SaveGame::Load(int slot)
 	// Items
 	InitialiseItemArray(NUM_ITEMS);
 
-	NextItemFree = s->next_item_free();
-	NextItemActive = s->next_item_active();
-
-	for(int i = 0; i < s->room_items()->size(); ++i)
-		g_Level.Rooms[i].itemNumber = s->room_items()->Get(i);
-
 	for (int i = 0; i < s->items()->size(); i++)
 	{
 		const Save::Item* savedItem = s->items()->Get(i);
@@ -1041,9 +1108,6 @@ bool SaveGame::Load(int slot)
 
 		ItemInfo* item = &g_Level.Items[i];
 		item->ObjectNumber = static_cast<GAME_OBJECT_ID>(savedItem->object_id());
-
-		item->NextItem = savedItem->next_item();
-		item->NextActive = savedItem->next_item_active();
 
 		ObjectInfo* obj = &Objects[item->ObjectNumber];
 		
@@ -1187,6 +1251,42 @@ bool SaveGame::Load(int slot)
 		if (obj->floor != nullptr)
 			UpdateBridgeItem(i);
 	}
+
+	for (int i = 0; i < s->effects()->size(); i++)
+	{
+		const Save::Effect* savedEffect = s->effects()->Get(i);
+		auto& fx = EffectList[i];
+
+		fx.Active = savedEffect->active();
+		fx.counter = savedEffect->counter();
+		fx.fallspeed = savedEffect->fall_speed();
+		fx.flag1 = savedEffect->flag1();
+		fx.flag2 = savedEffect->flag2();
+		fx.frameNumber = savedEffect->frame_number();
+		fx.objectNumber = savedEffect->object_number();
+		fx.RoomNumber = savedEffect->room_number();
+		fx.shade = savedEffect->shade();
+		fx.speed = savedEffect->speed();
+		fx.pos.Position.x = savedEffect->position()->x_pos();
+		fx.pos.Position.y = savedEffect->position()->y_pos();
+		fx.pos.Position.z = savedEffect->position()->z_pos();
+		fx.pos.Orientation.x = savedEffect->position()->x_rot();
+		fx.pos.Orientation.y = savedEffect->position()->y_rot();
+		fx.pos.Orientation.z = savedEffect->position()->z_rot();
+	}
+
+	for (int i = 0; i < s->active_items()->size(); i++)
+	{
+		ActiveItems.push_back(s->active_items()->Get(i));
+	}
+
+	for (int i = 0; i < s->active_effects()->size(); i++)
+	{
+		ActiveEffects.push_back(s->active_effects()->Get(i));
+	}
+
+	NextItemFree = NO_ITEM;
+	NextFxFree = NO_ITEM;
 
 	for (int i = 0; i < s->bats()->size(); i++)
 	{

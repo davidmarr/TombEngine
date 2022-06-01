@@ -17,6 +17,14 @@ struct Item;
 struct ItemBuilder;
 struct ItemT;
 
+struct Effect;
+struct EffectBuilder;
+struct EffectT;
+
+struct Room;
+struct RoomBuilder;
+struct RoomT;
+
 struct AmmoInfo;
 struct AmmoInfoBuilder;
 struct AmmoInfoT;
@@ -402,8 +410,6 @@ struct ItemT : public flatbuffers::NativeTable {
   int32_t after_death = 0;
   std::vector<int32_t> item_flags{};
   std::unique_ptr<TEN::Save::Position> position{};
-  int32_t next_item = 0;
-  int32_t next_item_active = 0;
   bool triggered = false;
   bool active = false;
   int32_t status = 0;
@@ -447,24 +453,22 @@ struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_AFTER_DEATH = 40,
     VT_ITEM_FLAGS = 42,
     VT_POSITION = 44,
-    VT_NEXT_ITEM = 46,
-    VT_NEXT_ITEM_ACTIVE = 48,
-    VT_TRIGGERED = 50,
-    VT_ACTIVE = 52,
-    VT_STATUS = 54,
-    VT_AIRBORNE = 56,
-    VT_HIT_STAUTS = 58,
-    VT_COLLIDABLE = 60,
-    VT_LOOKED_AT = 62,
-    VT_AI_BITS = 64,
-    VT_SWAP_MESH_FLAGS = 66,
-    VT_DATA_TYPE = 68,
-    VT_DATA = 70,
-    VT_LUA_NAME = 72,
-    VT_LUA_ON_KILLED_NAME = 74,
-    VT_LUA_ON_HIT_NAME = 76,
-    VT_LUA_ON_COLLIDED_WITH_OBJECT_NAME = 78,
-    VT_LUA_ON_COLLIDED_WITH_ROOM_NAME = 80
+    VT_TRIGGERED = 46,
+    VT_ACTIVE = 48,
+    VT_STATUS = 50,
+    VT_AIRBORNE = 52,
+    VT_HIT_STAUTS = 54,
+    VT_COLLIDABLE = 56,
+    VT_LOOKED_AT = 58,
+    VT_AI_BITS = 60,
+    VT_SWAP_MESH_FLAGS = 62,
+    VT_DATA_TYPE = 64,
+    VT_DATA = 66,
+    VT_LUA_NAME = 68,
+    VT_LUA_ON_KILLED_NAME = 70,
+    VT_LUA_ON_HIT_NAME = 72,
+    VT_LUA_ON_COLLIDED_WITH_OBJECT_NAME = 74,
+    VT_LUA_ON_COLLIDED_WITH_ROOM_NAME = 76
   };
   int32_t floor() const {
     return GetField<int32_t>(VT_FLOOR, 0);
@@ -528,12 +532,6 @@ struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   const TEN::Save::Position *position() const {
     return GetStruct<const TEN::Save::Position *>(VT_POSITION);
-  }
-  int32_t next_item() const {
-    return GetField<int32_t>(VT_NEXT_ITEM, 0);
-  }
-  int32_t next_item_active() const {
-    return GetField<int32_t>(VT_NEXT_ITEM_ACTIVE, 0);
   }
   bool triggered() const {
     return GetField<uint8_t>(VT_TRIGGERED, 0) != 0;
@@ -674,8 +672,6 @@ struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_ITEM_FLAGS) &&
            verifier.VerifyVector(item_flags()) &&
            VerifyField<TEN::Save::Position>(verifier, VT_POSITION) &&
-           VerifyField<int32_t>(verifier, VT_NEXT_ITEM) &&
-           VerifyField<int32_t>(verifier, VT_NEXT_ITEM_ACTIVE) &&
            VerifyField<uint8_t>(verifier, VT_TRIGGERED) &&
            VerifyField<uint8_t>(verifier, VT_ACTIVE) &&
            VerifyField<int32_t>(verifier, VT_STATUS) &&
@@ -860,12 +856,6 @@ struct ItemBuilder {
   void add_position(const TEN::Save::Position *position) {
     fbb_.AddStruct(Item::VT_POSITION, position);
   }
-  void add_next_item(int32_t next_item) {
-    fbb_.AddElement<int32_t>(Item::VT_NEXT_ITEM, next_item, 0);
-  }
-  void add_next_item_active(int32_t next_item_active) {
-    fbb_.AddElement<int32_t>(Item::VT_NEXT_ITEM_ACTIVE, next_item_active, 0);
-  }
   void add_triggered(bool triggered) {
     fbb_.AddElement<uint8_t>(Item::VT_TRIGGERED, static_cast<uint8_t>(triggered), 0);
   }
@@ -948,8 +938,6 @@ inline flatbuffers::Offset<Item> CreateItem(
     int32_t after_death = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> item_flags = 0,
     const TEN::Save::Position *position = 0,
-    int32_t next_item = 0,
-    int32_t next_item_active = 0,
     bool triggered = false,
     bool active = false,
     int32_t status = 0,
@@ -976,8 +964,6 @@ inline flatbuffers::Offset<Item> CreateItem(
   builder_.add_swap_mesh_flags(swap_mesh_flags);
   builder_.add_ai_bits(ai_bits);
   builder_.add_status(status);
-  builder_.add_next_item_active(next_item_active);
-  builder_.add_next_item(next_item);
   builder_.add_position(position);
   builder_.add_item_flags(item_flags);
   builder_.add_after_death(after_death);
@@ -1037,8 +1023,6 @@ inline flatbuffers::Offset<Item> CreateItemDirect(
     int32_t after_death = 0,
     const std::vector<int32_t> *item_flags = nullptr,
     const TEN::Save::Position *position = 0,
-    int32_t next_item = 0,
-    int32_t next_item_active = 0,
     bool triggered = false,
     bool active = false,
     int32_t status = 0,
@@ -1084,8 +1068,6 @@ inline flatbuffers::Offset<Item> CreateItemDirect(
       after_death,
       item_flags__,
       position,
-      next_item,
-      next_item_active,
       triggered,
       active,
       status,
@@ -1105,6 +1087,272 @@ inline flatbuffers::Offset<Item> CreateItemDirect(
 }
 
 flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb, const ItemT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct EffectT : public flatbuffers::NativeTable {
+  typedef Effect TableType;
+  bool active = false;
+  std::unique_ptr<TEN::Save::Position> position{};
+  int32_t room_number = 0;
+  int32_t object_number = 0;
+  int32_t speed = 0;
+  int32_t fall_speed = 0;
+  int32_t frame_number = 0;
+  int32_t counter = 0;
+  int32_t shade = 0;
+  int32_t flag1 = 0;
+  int32_t flag2 = 0;
+};
+
+struct Effect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef EffectT NativeTableType;
+  typedef EffectBuilder Builder;
+  struct Traits;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ACTIVE = 4,
+    VT_POSITION = 6,
+    VT_ROOM_NUMBER = 8,
+    VT_OBJECT_NUMBER = 10,
+    VT_SPEED = 12,
+    VT_FALL_SPEED = 14,
+    VT_FRAME_NUMBER = 16,
+    VT_COUNTER = 18,
+    VT_SHADE = 20,
+    VT_FLAG1 = 22,
+    VT_FLAG2 = 24
+  };
+  bool active() const {
+    return GetField<uint8_t>(VT_ACTIVE, 0) != 0;
+  }
+  const TEN::Save::Position *position() const {
+    return GetStruct<const TEN::Save::Position *>(VT_POSITION);
+  }
+  int32_t room_number() const {
+    return GetField<int32_t>(VT_ROOM_NUMBER, 0);
+  }
+  int32_t object_number() const {
+    return GetField<int32_t>(VT_OBJECT_NUMBER, 0);
+  }
+  int32_t speed() const {
+    return GetField<int32_t>(VT_SPEED, 0);
+  }
+  int32_t fall_speed() const {
+    return GetField<int32_t>(VT_FALL_SPEED, 0);
+  }
+  int32_t frame_number() const {
+    return GetField<int32_t>(VT_FRAME_NUMBER, 0);
+  }
+  int32_t counter() const {
+    return GetField<int32_t>(VT_COUNTER, 0);
+  }
+  int32_t shade() const {
+    return GetField<int32_t>(VT_SHADE, 0);
+  }
+  int32_t flag1() const {
+    return GetField<int32_t>(VT_FLAG1, 0);
+  }
+  int32_t flag2() const {
+    return GetField<int32_t>(VT_FLAG2, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_ACTIVE) &&
+           VerifyField<TEN::Save::Position>(verifier, VT_POSITION) &&
+           VerifyField<int32_t>(verifier, VT_ROOM_NUMBER) &&
+           VerifyField<int32_t>(verifier, VT_OBJECT_NUMBER) &&
+           VerifyField<int32_t>(verifier, VT_SPEED) &&
+           VerifyField<int32_t>(verifier, VT_FALL_SPEED) &&
+           VerifyField<int32_t>(verifier, VT_FRAME_NUMBER) &&
+           VerifyField<int32_t>(verifier, VT_COUNTER) &&
+           VerifyField<int32_t>(verifier, VT_SHADE) &&
+           VerifyField<int32_t>(verifier, VT_FLAG1) &&
+           VerifyField<int32_t>(verifier, VT_FLAG2) &&
+           verifier.EndTable();
+  }
+  EffectT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(EffectT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Effect> Pack(flatbuffers::FlatBufferBuilder &_fbb, const EffectT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+};
+
+struct EffectBuilder {
+  typedef Effect Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_active(bool active) {
+    fbb_.AddElement<uint8_t>(Effect::VT_ACTIVE, static_cast<uint8_t>(active), 0);
+  }
+  void add_position(const TEN::Save::Position *position) {
+    fbb_.AddStruct(Effect::VT_POSITION, position);
+  }
+  void add_room_number(int32_t room_number) {
+    fbb_.AddElement<int32_t>(Effect::VT_ROOM_NUMBER, room_number, 0);
+  }
+  void add_object_number(int32_t object_number) {
+    fbb_.AddElement<int32_t>(Effect::VT_OBJECT_NUMBER, object_number, 0);
+  }
+  void add_speed(int32_t speed) {
+    fbb_.AddElement<int32_t>(Effect::VT_SPEED, speed, 0);
+  }
+  void add_fall_speed(int32_t fall_speed) {
+    fbb_.AddElement<int32_t>(Effect::VT_FALL_SPEED, fall_speed, 0);
+  }
+  void add_frame_number(int32_t frame_number) {
+    fbb_.AddElement<int32_t>(Effect::VT_FRAME_NUMBER, frame_number, 0);
+  }
+  void add_counter(int32_t counter) {
+    fbb_.AddElement<int32_t>(Effect::VT_COUNTER, counter, 0);
+  }
+  void add_shade(int32_t shade) {
+    fbb_.AddElement<int32_t>(Effect::VT_SHADE, shade, 0);
+  }
+  void add_flag1(int32_t flag1) {
+    fbb_.AddElement<int32_t>(Effect::VT_FLAG1, flag1, 0);
+  }
+  void add_flag2(int32_t flag2) {
+    fbb_.AddElement<int32_t>(Effect::VT_FLAG2, flag2, 0);
+  }
+  explicit EffectBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<Effect> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<Effect>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Effect> CreateEffect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    bool active = false,
+    const TEN::Save::Position *position = 0,
+    int32_t room_number = 0,
+    int32_t object_number = 0,
+    int32_t speed = 0,
+    int32_t fall_speed = 0,
+    int32_t frame_number = 0,
+    int32_t counter = 0,
+    int32_t shade = 0,
+    int32_t flag1 = 0,
+    int32_t flag2 = 0) {
+  EffectBuilder builder_(_fbb);
+  builder_.add_flag2(flag2);
+  builder_.add_flag1(flag1);
+  builder_.add_shade(shade);
+  builder_.add_counter(counter);
+  builder_.add_frame_number(frame_number);
+  builder_.add_fall_speed(fall_speed);
+  builder_.add_speed(speed);
+  builder_.add_object_number(object_number);
+  builder_.add_room_number(room_number);
+  builder_.add_position(position);
+  builder_.add_active(active);
+  return builder_.Finish();
+}
+
+struct Effect::Traits {
+  using type = Effect;
+  static auto constexpr Create = CreateEffect;
+};
+
+flatbuffers::Offset<Effect> CreateEffect(flatbuffers::FlatBufferBuilder &_fbb, const EffectT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct RoomT : public flatbuffers::NativeTable {
+  typedef Room TableType;
+  std::vector<int32_t> static_meshes{};
+  std::vector<int32_t> items{};
+  std::vector<int32_t> effects{};
+};
+
+struct Room FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef RoomT NativeTableType;
+  typedef RoomBuilder Builder;
+  struct Traits;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_STATIC_MESHES = 4,
+    VT_ITEMS = 6,
+    VT_EFFECTS = 8
+  };
+  const flatbuffers::Vector<int32_t> *static_meshes() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_STATIC_MESHES);
+  }
+  const flatbuffers::Vector<int32_t> *items() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_ITEMS);
+  }
+  const flatbuffers::Vector<int32_t> *effects() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_EFFECTS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_STATIC_MESHES) &&
+           verifier.VerifyVector(static_meshes()) &&
+           VerifyOffset(verifier, VT_ITEMS) &&
+           verifier.VerifyVector(items()) &&
+           VerifyOffset(verifier, VT_EFFECTS) &&
+           verifier.VerifyVector(effects()) &&
+           verifier.EndTable();
+  }
+  RoomT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(RoomT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Room> Pack(flatbuffers::FlatBufferBuilder &_fbb, const RoomT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+};
+
+struct RoomBuilder {
+  typedef Room Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_static_meshes(flatbuffers::Offset<flatbuffers::Vector<int32_t>> static_meshes) {
+    fbb_.AddOffset(Room::VT_STATIC_MESHES, static_meshes);
+  }
+  void add_items(flatbuffers::Offset<flatbuffers::Vector<int32_t>> items) {
+    fbb_.AddOffset(Room::VT_ITEMS, items);
+  }
+  void add_effects(flatbuffers::Offset<flatbuffers::Vector<int32_t>> effects) {
+    fbb_.AddOffset(Room::VT_EFFECTS, effects);
+  }
+  explicit RoomBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<Room> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<Room>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Room> CreateRoom(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> static_meshes = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> items = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> effects = 0) {
+  RoomBuilder builder_(_fbb);
+  builder_.add_effects(effects);
+  builder_.add_items(items);
+  builder_.add_static_meshes(static_meshes);
+  return builder_.Finish();
+}
+
+struct Room::Traits {
+  using type = Room;
+  static auto constexpr Create = CreateRoom;
+};
+
+inline flatbuffers::Offset<Room> CreateRoomDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<int32_t> *static_meshes = nullptr,
+    const std::vector<int32_t> *items = nullptr,
+    const std::vector<int32_t> *effects = nullptr) {
+  auto static_meshes__ = static_meshes ? _fbb.CreateVector<int32_t>(*static_meshes) : 0;
+  auto items__ = items ? _fbb.CreateVector<int32_t>(*items) : 0;
+  auto effects__ = effects ? _fbb.CreateVector<int32_t>(*effects) : 0;
+  return TEN::Save::CreateRoom(
+      _fbb,
+      static_meshes__,
+      items__,
+      effects__);
+}
+
+flatbuffers::Offset<Room> CreateRoom(flatbuffers::FlatBufferBuilder &_fbb, const RoomT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
 struct AmmoInfoT : public flatbuffers::NativeTable {
   typedef AmmoInfo TableType;
@@ -5528,12 +5776,12 @@ struct SaveGameT : public flatbuffers::NativeTable {
   std::unique_ptr<TEN::Save::SaveGameStatisticsT> level{};
   std::unique_ptr<TEN::Save::LaraT> lara{};
   std::vector<std::unique_ptr<TEN::Save::ItemT>> items{};
-  int32_t next_item_free = 0;
-  int32_t next_item_active = 0;
-  std::vector<int32_t> room_items{};
+  std::vector<std::unique_ptr<TEN::Save::EffectT>> effects{};
+  std::vector<int32_t> active_items{};
+  std::vector<int32_t> active_effects{};
+  std::vector<std::unique_ptr<TEN::Save::RoomT>> rooms{};
   std::vector<std::unique_ptr<TEN::Save::FixedCameraT>> fixed_cameras{};
   std::vector<std::unique_ptr<TEN::Save::SinkT>> sinks{};
-  std::vector<std::unique_ptr<TEN::Save::StaticMeshInfoT>> static_meshes{};
   std::vector<std::unique_ptr<TEN::Save::FlyByCameraT>> flyby_cameras{};
   std::vector<std::unique_ptr<TEN::Save::RatInfoT>> rats{};
   std::vector<std::unique_ptr<TEN::Save::SpiderInfoT>> spiders{};
@@ -5565,12 +5813,12 @@ struct SaveGame FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_LEVEL = 8,
     VT_LARA = 10,
     VT_ITEMS = 12,
-    VT_NEXT_ITEM_FREE = 14,
-    VT_NEXT_ITEM_ACTIVE = 16,
-    VT_ROOM_ITEMS = 18,
-    VT_FIXED_CAMERAS = 20,
-    VT_SINKS = 22,
-    VT_STATIC_MESHES = 24,
+    VT_EFFECTS = 14,
+    VT_ACTIVE_ITEMS = 16,
+    VT_ACTIVE_EFFECTS = 18,
+    VT_ROOMS = 20,
+    VT_FIXED_CAMERAS = 22,
+    VT_SINKS = 24,
     VT_FLYBY_CAMERAS = 26,
     VT_RATS = 28,
     VT_SPIDERS = 30,
@@ -5606,23 +5854,23 @@ struct SaveGame FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Item>> *items() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Item>> *>(VT_ITEMS);
   }
-  int32_t next_item_free() const {
-    return GetField<int32_t>(VT_NEXT_ITEM_FREE, 0);
+  const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Effect>> *effects() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Effect>> *>(VT_EFFECTS);
   }
-  int32_t next_item_active() const {
-    return GetField<int32_t>(VT_NEXT_ITEM_ACTIVE, 0);
+  const flatbuffers::Vector<int32_t> *active_items() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_ACTIVE_ITEMS);
   }
-  const flatbuffers::Vector<int32_t> *room_items() const {
-    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_ROOM_ITEMS);
+  const flatbuffers::Vector<int32_t> *active_effects() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_ACTIVE_EFFECTS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Room>> *rooms() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Room>> *>(VT_ROOMS);
   }
   const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FixedCamera>> *fixed_cameras() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FixedCamera>> *>(VT_FIXED_CAMERAS);
   }
   const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Sink>> *sinks() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Sink>> *>(VT_SINKS);
-  }
-  const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>> *static_meshes() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>> *>(VT_STATIC_MESHES);
   }
   const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FlyByCamera>> *flyby_cameras() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FlyByCamera>> *>(VT_FLYBY_CAMERAS);
@@ -5694,19 +5942,22 @@ struct SaveGame FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_ITEMS) &&
            verifier.VerifyVector(items()) &&
            verifier.VerifyVectorOfTables(items()) &&
-           VerifyField<int32_t>(verifier, VT_NEXT_ITEM_FREE) &&
-           VerifyField<int32_t>(verifier, VT_NEXT_ITEM_ACTIVE) &&
-           VerifyOffset(verifier, VT_ROOM_ITEMS) &&
-           verifier.VerifyVector(room_items()) &&
+           VerifyOffset(verifier, VT_EFFECTS) &&
+           verifier.VerifyVector(effects()) &&
+           verifier.VerifyVectorOfTables(effects()) &&
+           VerifyOffset(verifier, VT_ACTIVE_ITEMS) &&
+           verifier.VerifyVector(active_items()) &&
+           VerifyOffset(verifier, VT_ACTIVE_EFFECTS) &&
+           verifier.VerifyVector(active_effects()) &&
+           VerifyOffset(verifier, VT_ROOMS) &&
+           verifier.VerifyVector(rooms()) &&
+           verifier.VerifyVectorOfTables(rooms()) &&
            VerifyOffset(verifier, VT_FIXED_CAMERAS) &&
            verifier.VerifyVector(fixed_cameras()) &&
            verifier.VerifyVectorOfTables(fixed_cameras()) &&
            VerifyOffset(verifier, VT_SINKS) &&
            verifier.VerifyVector(sinks()) &&
            verifier.VerifyVectorOfTables(sinks()) &&
-           VerifyOffset(verifier, VT_STATIC_MESHES) &&
-           verifier.VerifyVector(static_meshes()) &&
-           verifier.VerifyVectorOfTables(static_meshes()) &&
            VerifyOffset(verifier, VT_FLYBY_CAMERAS) &&
            verifier.VerifyVector(flyby_cameras()) &&
            verifier.VerifyVectorOfTables(flyby_cameras()) &&
@@ -5771,23 +6022,23 @@ struct SaveGameBuilder {
   void add_items(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Item>>> items) {
     fbb_.AddOffset(SaveGame::VT_ITEMS, items);
   }
-  void add_next_item_free(int32_t next_item_free) {
-    fbb_.AddElement<int32_t>(SaveGame::VT_NEXT_ITEM_FREE, next_item_free, 0);
+  void add_effects(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Effect>>> effects) {
+    fbb_.AddOffset(SaveGame::VT_EFFECTS, effects);
   }
-  void add_next_item_active(int32_t next_item_active) {
-    fbb_.AddElement<int32_t>(SaveGame::VT_NEXT_ITEM_ACTIVE, next_item_active, 0);
+  void add_active_items(flatbuffers::Offset<flatbuffers::Vector<int32_t>> active_items) {
+    fbb_.AddOffset(SaveGame::VT_ACTIVE_ITEMS, active_items);
   }
-  void add_room_items(flatbuffers::Offset<flatbuffers::Vector<int32_t>> room_items) {
-    fbb_.AddOffset(SaveGame::VT_ROOM_ITEMS, room_items);
+  void add_active_effects(flatbuffers::Offset<flatbuffers::Vector<int32_t>> active_effects) {
+    fbb_.AddOffset(SaveGame::VT_ACTIVE_EFFECTS, active_effects);
+  }
+  void add_rooms(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Room>>> rooms) {
+    fbb_.AddOffset(SaveGame::VT_ROOMS, rooms);
   }
   void add_fixed_cameras(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FixedCamera>>> fixed_cameras) {
     fbb_.AddOffset(SaveGame::VT_FIXED_CAMERAS, fixed_cameras);
   }
   void add_sinks(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Sink>>> sinks) {
     fbb_.AddOffset(SaveGame::VT_SINKS, sinks);
-  }
-  void add_static_meshes(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>>> static_meshes) {
-    fbb_.AddOffset(SaveGame::VT_STATIC_MESHES, static_meshes);
   }
   void add_flyby_cameras(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FlyByCamera>>> flyby_cameras) {
     fbb_.AddOffset(SaveGame::VT_FLYBY_CAMERAS, flyby_cameras);
@@ -5864,12 +6115,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(
     flatbuffers::Offset<TEN::Save::SaveGameStatistics> level = 0,
     flatbuffers::Offset<TEN::Save::Lara> lara = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Item>>> items = 0,
-    int32_t next_item_free = 0,
-    int32_t next_item_active = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int32_t>> room_items = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Effect>>> effects = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> active_items = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> active_effects = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Room>>> rooms = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FixedCamera>>> fixed_cameras = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Sink>>> sinks = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>>> static_meshes = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::FlyByCamera>>> flyby_cameras = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::RatInfo>>> rats = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SpiderInfo>>> spiders = 0,
@@ -5909,12 +6160,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(
   builder_.add_spiders(spiders);
   builder_.add_rats(rats);
   builder_.add_flyby_cameras(flyby_cameras);
-  builder_.add_static_meshes(static_meshes);
   builder_.add_sinks(sinks);
   builder_.add_fixed_cameras(fixed_cameras);
-  builder_.add_room_items(room_items);
-  builder_.add_next_item_active(next_item_active);
-  builder_.add_next_item_free(next_item_free);
+  builder_.add_rooms(rooms);
+  builder_.add_active_effects(active_effects);
+  builder_.add_active_items(active_items);
+  builder_.add_effects(effects);
   builder_.add_items(items);
   builder_.add_lara(lara);
   builder_.add_level(level);
@@ -5935,12 +6186,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGameDirect(
     flatbuffers::Offset<TEN::Save::SaveGameStatistics> level = 0,
     flatbuffers::Offset<TEN::Save::Lara> lara = 0,
     const std::vector<flatbuffers::Offset<TEN::Save::Item>> *items = nullptr,
-    int32_t next_item_free = 0,
-    int32_t next_item_active = 0,
-    const std::vector<int32_t> *room_items = nullptr,
+    const std::vector<flatbuffers::Offset<TEN::Save::Effect>> *effects = nullptr,
+    const std::vector<int32_t> *active_items = nullptr,
+    const std::vector<int32_t> *active_effects = nullptr,
+    const std::vector<flatbuffers::Offset<TEN::Save::Room>> *rooms = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::FixedCamera>> *fixed_cameras = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::Sink>> *sinks = nullptr,
-    const std::vector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>> *static_meshes = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::FlyByCamera>> *flyby_cameras = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::RatInfo>> *rats = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::SpiderInfo>> *spiders = nullptr,
@@ -5961,10 +6212,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGameDirect(
     flatbuffers::Offset<TEN::Save::Pendulum> alternate_pendulum = 0,
     flatbuffers::Offset<TEN::Save::UnionVec> script_vars = 0) {
   auto items__ = items ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Item>>(*items) : 0;
-  auto room_items__ = room_items ? _fbb.CreateVector<int32_t>(*room_items) : 0;
+  auto effects__ = effects ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Effect>>(*effects) : 0;
+  auto active_items__ = active_items ? _fbb.CreateVector<int32_t>(*active_items) : 0;
+  auto active_effects__ = active_effects ? _fbb.CreateVector<int32_t>(*active_effects) : 0;
+  auto rooms__ = rooms ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Room>>(*rooms) : 0;
   auto fixed_cameras__ = fixed_cameras ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::FixedCamera>>(*fixed_cameras) : 0;
   auto sinks__ = sinks ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Sink>>(*sinks) : 0;
-  auto static_meshes__ = static_meshes ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>>(*static_meshes) : 0;
   auto flyby_cameras__ = flyby_cameras ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::FlyByCamera>>(*flyby_cameras) : 0;
   auto rats__ = rats ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::RatInfo>>(*rats) : 0;
   auto spiders__ = spiders ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SpiderInfo>>(*spiders) : 0;
@@ -5982,12 +6235,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGameDirect(
       level,
       lara,
       items__,
-      next_item_free,
-      next_item_active,
-      room_items__,
+      effects__,
+      active_items__,
+      active_effects__,
+      rooms__,
       fixed_cameras__,
       sinks__,
-      static_meshes__,
       flyby_cameras__,
       rats__,
       spiders__,
@@ -6041,8 +6294,6 @@ inline void Item::UnPackTo(ItemT *_o, const flatbuffers::resolver_function_t *_r
   { auto _e = after_death(); _o->after_death = _e; }
   { auto _e = item_flags(); if (_e) { _o->item_flags.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->item_flags[_i] = _e->Get(_i); } } }
   { auto _e = position(); if (_e) _o->position = std::unique_ptr<TEN::Save::Position>(new TEN::Save::Position(*_e)); }
-  { auto _e = next_item(); _o->next_item = _e; }
-  { auto _e = next_item_active(); _o->next_item_active = _e; }
   { auto _e = triggered(); _o->triggered = _e; }
   { auto _e = active(); _o->active = _e; }
   { auto _e = status(); _o->status = _e; }
@@ -6090,8 +6341,6 @@ inline flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb
   auto _after_death = _o->after_death;
   auto _item_flags = _fbb.CreateVector(_o->item_flags);
   auto _position = _o->position ? _o->position.get() : 0;
-  auto _next_item = _o->next_item;
-  auto _next_item_active = _o->next_item_active;
   auto _triggered = _o->triggered;
   auto _active = _o->active;
   auto _status = _o->status;
@@ -6131,8 +6380,6 @@ inline flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb
       _after_death,
       _item_flags,
       _position,
-      _next_item,
-      _next_item_active,
       _triggered,
       _active,
       _status,
@@ -6149,6 +6396,94 @@ inline flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb
       _lua_on_hit_name,
       _lua_on_collided_with_object_name,
       _lua_on_collided_with_room_name);
+}
+
+inline EffectT *Effect::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  auto _o = std::make_unique<EffectT>();
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Effect::UnPackTo(EffectT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = active(); _o->active = _e; }
+  { auto _e = position(); if (_e) _o->position = std::unique_ptr<TEN::Save::Position>(new TEN::Save::Position(*_e)); }
+  { auto _e = room_number(); _o->room_number = _e; }
+  { auto _e = object_number(); _o->object_number = _e; }
+  { auto _e = speed(); _o->speed = _e; }
+  { auto _e = fall_speed(); _o->fall_speed = _e; }
+  { auto _e = frame_number(); _o->frame_number = _e; }
+  { auto _e = counter(); _o->counter = _e; }
+  { auto _e = shade(); _o->shade = _e; }
+  { auto _e = flag1(); _o->flag1 = _e; }
+  { auto _e = flag2(); _o->flag2 = _e; }
+}
+
+inline flatbuffers::Offset<Effect> Effect::Pack(flatbuffers::FlatBufferBuilder &_fbb, const EffectT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateEffect(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Effect> CreateEffect(flatbuffers::FlatBufferBuilder &_fbb, const EffectT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const EffectT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _active = _o->active;
+  auto _position = _o->position ? _o->position.get() : 0;
+  auto _room_number = _o->room_number;
+  auto _object_number = _o->object_number;
+  auto _speed = _o->speed;
+  auto _fall_speed = _o->fall_speed;
+  auto _frame_number = _o->frame_number;
+  auto _counter = _o->counter;
+  auto _shade = _o->shade;
+  auto _flag1 = _o->flag1;
+  auto _flag2 = _o->flag2;
+  return TEN::Save::CreateEffect(
+      _fbb,
+      _active,
+      _position,
+      _room_number,
+      _object_number,
+      _speed,
+      _fall_speed,
+      _frame_number,
+      _counter,
+      _shade,
+      _flag1,
+      _flag2);
+}
+
+inline RoomT *Room::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  auto _o = std::make_unique<RoomT>();
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Room::UnPackTo(RoomT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = static_meshes(); if (_e) { _o->static_meshes.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->static_meshes[_i] = _e->Get(_i); } } }
+  { auto _e = items(); if (_e) { _o->items.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->items[_i] = _e->Get(_i); } } }
+  { auto _e = effects(); if (_e) { _o->effects.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->effects[_i] = _e->Get(_i); } } }
+}
+
+inline flatbuffers::Offset<Room> Room::Pack(flatbuffers::FlatBufferBuilder &_fbb, const RoomT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateRoom(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Room> CreateRoom(flatbuffers::FlatBufferBuilder &_fbb, const RoomT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const RoomT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _static_meshes = _fbb.CreateVector(_o->static_meshes);
+  auto _items = _fbb.CreateVector(_o->items);
+  auto _effects = _fbb.CreateVector(_o->effects);
+  return TEN::Save::CreateRoom(
+      _fbb,
+      _static_meshes,
+      _items,
+      _effects);
 }
 
 inline AmmoInfoT *AmmoInfo::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
@@ -7625,12 +7960,12 @@ inline void SaveGame::UnPackTo(SaveGameT *_o, const flatbuffers::resolver_functi
   { auto _e = level(); if (_e) _o->level = std::unique_ptr<TEN::Save::SaveGameStatisticsT>(_e->UnPack(_resolver)); }
   { auto _e = lara(); if (_e) _o->lara = std::unique_ptr<TEN::Save::LaraT>(_e->UnPack(_resolver)); }
   { auto _e = items(); if (_e) { _o->items.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->items[_i] = std::unique_ptr<TEN::Save::ItemT>(_e->Get(_i)->UnPack(_resolver)); } } }
-  { auto _e = next_item_free(); _o->next_item_free = _e; }
-  { auto _e = next_item_active(); _o->next_item_active = _e; }
-  { auto _e = room_items(); if (_e) { _o->room_items.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->room_items[_i] = _e->Get(_i); } } }
+  { auto _e = effects(); if (_e) { _o->effects.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->effects[_i] = std::unique_ptr<TEN::Save::EffectT>(_e->Get(_i)->UnPack(_resolver)); } } }
+  { auto _e = active_items(); if (_e) { _o->active_items.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->active_items[_i] = _e->Get(_i); } } }
+  { auto _e = active_effects(); if (_e) { _o->active_effects.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->active_effects[_i] = _e->Get(_i); } } }
+  { auto _e = rooms(); if (_e) { _o->rooms.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->rooms[_i] = std::unique_ptr<TEN::Save::RoomT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = fixed_cameras(); if (_e) { _o->fixed_cameras.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->fixed_cameras[_i] = std::unique_ptr<TEN::Save::FixedCameraT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = sinks(); if (_e) { _o->sinks.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->sinks[_i] = std::unique_ptr<TEN::Save::SinkT>(_e->Get(_i)->UnPack(_resolver)); } } }
-  { auto _e = static_meshes(); if (_e) { _o->static_meshes.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->static_meshes[_i] = std::unique_ptr<TEN::Save::StaticMeshInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = flyby_cameras(); if (_e) { _o->flyby_cameras.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->flyby_cameras[_i] = std::unique_ptr<TEN::Save::FlyByCameraT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = rats(); if (_e) { _o->rats.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->rats[_i] = std::unique_ptr<TEN::Save::RatInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = spiders(); if (_e) { _o->spiders.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->spiders[_i] = std::unique_ptr<TEN::Save::SpiderInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
@@ -7665,12 +8000,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(flatbuffers::FlatBufferBuild
   auto _level = _o->level ? CreateSaveGameStatistics(_fbb, _o->level.get(), _rehasher) : 0;
   auto _lara = _o->lara ? CreateLara(_fbb, _o->lara.get(), _rehasher) : 0;
   auto _items = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Item>> (_o->items.size(), [](size_t i, _VectorArgs *__va) { return CreateItem(*__va->__fbb, __va->__o->items[i].get(), __va->__rehasher); }, &_va );
-  auto _next_item_free = _o->next_item_free;
-  auto _next_item_active = _o->next_item_active;
-  auto _room_items = _fbb.CreateVector(_o->room_items);
+  auto _effects = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Effect>> (_o->effects.size(), [](size_t i, _VectorArgs *__va) { return CreateEffect(*__va->__fbb, __va->__o->effects[i].get(), __va->__rehasher); }, &_va );
+  auto _active_items = _fbb.CreateVector(_o->active_items);
+  auto _active_effects = _fbb.CreateVector(_o->active_effects);
+  auto _rooms = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Room>> (_o->rooms.size(), [](size_t i, _VectorArgs *__va) { return CreateRoom(*__va->__fbb, __va->__o->rooms[i].get(), __va->__rehasher); }, &_va );
   auto _fixed_cameras = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::FixedCamera>> (_o->fixed_cameras.size(), [](size_t i, _VectorArgs *__va) { return CreateFixedCamera(*__va->__fbb, __va->__o->fixed_cameras[i].get(), __va->__rehasher); }, &_va );
   auto _sinks = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Sink>> (_o->sinks.size(), [](size_t i, _VectorArgs *__va) { return CreateSink(*__va->__fbb, __va->__o->sinks[i].get(), __va->__rehasher); }, &_va );
-  auto _static_meshes = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::StaticMeshInfo>> (_o->static_meshes.size(), [](size_t i, _VectorArgs *__va) { return CreateStaticMeshInfo(*__va->__fbb, __va->__o->static_meshes[i].get(), __va->__rehasher); }, &_va );
   auto _flyby_cameras = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::FlyByCamera>> (_o->flyby_cameras.size(), [](size_t i, _VectorArgs *__va) { return CreateFlyByCamera(*__va->__fbb, __va->__o->flyby_cameras[i].get(), __va->__rehasher); }, &_va );
   auto _rats = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::RatInfo>> (_o->rats.size(), [](size_t i, _VectorArgs *__va) { return CreateRatInfo(*__va->__fbb, __va->__o->rats[i].get(), __va->__rehasher); }, &_va );
   auto _spiders = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SpiderInfo>> (_o->spiders.size(), [](size_t i, _VectorArgs *__va) { return CreateSpiderInfo(*__va->__fbb, __va->__o->spiders[i].get(), __va->__rehasher); }, &_va );
@@ -7697,12 +8032,12 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(flatbuffers::FlatBufferBuild
       _level,
       _lara,
       _items,
-      _next_item_free,
-      _next_item_active,
-      _room_items,
+      _effects,
+      _active_items,
+      _active_effects,
+      _rooms,
       _fixed_cameras,
       _sinks,
-      _static_meshes,
       _flyby_cameras,
       _rats,
       _spiders,

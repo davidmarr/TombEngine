@@ -547,7 +547,7 @@ namespace TEN::Entities::TR4
 			fx->pos.Orientation.x = pos->Orientation.x;
 			fx->pos.Orientation.y = pos->Orientation.y;
 			fx->pos.Orientation.z = 0;
-			fx->roomNumber = roomNumber;
+			fx->RoomNumber = roomNumber;
 			fx->counter = 2 * GetRandomControl() + -ANGLE(180);
 			fx->flag1 = mesh;
 			fx->objectNumber = ID_BODY_PART;
