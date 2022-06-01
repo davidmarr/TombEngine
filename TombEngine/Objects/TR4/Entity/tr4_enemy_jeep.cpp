@@ -33,7 +33,7 @@ namespace TEN::Entities::TR4
 			InitialiseItem(grenadeItemNumber);
 
 			grenadeItem->Pose.Orientation.x = item->Pose.Orientation.x;
-			grenadeItem->Pose.Orientation.y = item->Pose.Orientation.y + -ANGLE(180.0f);
+			grenadeItem->Pose.Orientation.y = item->Pose.Orientation.y - ANGLE(180.0f);
 			grenadeItem->Pose.Orientation.z = 0;
 
 			grenadeItem->Pose.Position.x = item->Pose.Position.x + SECTOR(1) * phd_sin(grenadeItem->Pose.Orientation.y);
@@ -377,7 +377,7 @@ namespace TEN::Entities::TR4
 				item->Animation.VerticalVelocity = 0;
 			}
 
-			SoundEffect(SFX_TR4_JEEP_MOVE, &item->Pose, (item->ItemFlags[0] * 1024) + 16777220);
+			SoundEffect(SFX_TR4_JEEP_MOVE, &item->Pose, SoundEnvironment::Land, 1.0f + (float)item->ItemFlags[0] / SECTOR(8)); // TODO: Check actual sound!
 		}
 	}
 }

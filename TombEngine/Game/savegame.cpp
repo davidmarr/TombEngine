@@ -588,8 +588,8 @@ bool SaveGame::Save(int slot)
 	auto serializedEffectsOffset = fbb.CreateVector(serializedEffects);
 
 	// Soundtrack playheads
-	auto bgmTrackData = GetSoundTrackNameAndPosition(SOUNDTRACK_PLAYTYPE::BGM);
-	auto oneshotTrackData = GetSoundTrackNameAndPosition(SOUNDTRACK_PLAYTYPE::OneShot);
+	auto bgmTrackData = GetSoundTrackNameAndPosition(SoundTrackType::BGM);
+	auto oneshotTrackData = GetSoundTrackNameAndPosition(SoundTrackType::OneShot);
 	auto bgmTrackOffset = fbb.CreateString(bgmTrackData.first);
 	auto oneshotTrackOffset = fbb.CreateString(oneshotTrackData.first);
 
@@ -1032,8 +1032,8 @@ bool SaveGame::Load(int slot)
 	//FlipTimer = s->flip_timer();
 
 	// Restore soundtracks
-	PlaySoundTrack(s->ambient_track()->str(), SOUNDTRACK_PLAYTYPE::BGM, s->ambient_position());
-	PlaySoundTrack(s->oneshot_track()->str(), SOUNDTRACK_PLAYTYPE::OneShot, s->oneshot_position());
+	PlaySoundTrack(s->ambient_track()->str(), SoundTrackType::BGM, s->ambient_position());
+	PlaySoundTrack(s->oneshot_track()->str(), SoundTrackType::OneShot, s->oneshot_position());
 
 	// Legacy soundtrack map
 	for (int i = 0; i < s->cd_flags()->size(); i++)

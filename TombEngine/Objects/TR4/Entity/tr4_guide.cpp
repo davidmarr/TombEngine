@@ -73,14 +73,11 @@ namespace TEN::Entities::TR4
 		// Ignite torch
 		if (item->ItemFlags[1] == 2)
 		{
-			Vector3Int pos;
-			pos.x = GuideBite1.x;
-			pos.y = GuideBite1.y;
-			pos.z = GuideBite1.z;
+			auto pos = Vector3Int(GuideBite1.x, GuideBite1.y, GuideBite1.z);
 			GetJointAbsPosition(item, &pos, GuideBite1.meshNum);
 
 			AddFire(pos.x, pos.y, pos.z, 0, item->RoomNumber, 0);
-			SoundEffect(SFX_TR4_LOOP_FOR_SMALL_FIRES, &item->Pose, 0);
+			SoundEffect(SFX_TR4_LOOP_FOR_SMALL_FIRES, &item->Pose);
 			TriggerFireFlame(pos.x, pos.y - 40, pos.z, -1, 7);
 
 			short random = GetRandomControl();
@@ -673,11 +670,7 @@ namespace TEN::Entities::TR4
 
 		case 38:
 			if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase)
-			{
-				item->Pose.Position.x = enemy->Pose.Position.x;
-				item->Pose.Position.y = enemy->Pose.Position.y;
-				item->Pose.Position.z = enemy->Pose.Position.z;
-			}
+				item->Pose.Position = enemy->Pose.Position;
 			else
 			{
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + 42)
@@ -725,7 +718,7 @@ namespace TEN::Entities::TR4
 				{
 					item->Animation.RequiredState = GUIDE_STATE_RUN;
 					item->SwapMeshFlags |= 0x200000;
-					SoundEffect(SFX_TR4_GUIDE_SCARE, &item->Pose, 0);
+					SoundEffect(SFX_TR4_GUIDE_SCARE, &item->Pose);
 				}
 			}
 			else if (enemy->Pose.Orientation.y - item->Pose.Orientation.y <= ANGLE(2.0f))
