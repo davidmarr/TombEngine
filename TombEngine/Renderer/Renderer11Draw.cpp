@@ -2133,8 +2133,9 @@ namespace TEN::Renderer
 				PrintDebugMessage("Rooms: %d", view.roomsToDraw.size());
 
 				m_spriteBatch->Begin();
-				m_spriteBatch->Draw(m_shadowMapFront.ShaderResourceView.Get(), Vector2(512, 0), Colors::White);
-				m_spriteBatch->Draw(m_shadowMapBack.ShaderResourceView.Get(), Vector2(1024, 0), Colors::White);
+				m_spriteBatch->Draw(m_shadowMap.ShaderResourceView.Get(), Vector2(512, 0), Colors::White);
+				m_spriteBatch->Draw(m_shadowMapFront.ShaderResourceView.Get(), Vector2(1024, 0), Colors::White);
+				m_spriteBatch->Draw(m_shadowMapBack.ShaderResourceView.Get(), Vector2(1536, 0), Colors::White);
 				m_spriteBatch->End();
 
 
@@ -3245,7 +3246,7 @@ namespace TEN::Renderer
 		int meshIndex = Objects[ID_CAUSTICS_TEXTURES].meshIndex;
 		int causticsFrame = nmeshes ? meshIndex + ((GlobalCounter) % nmeshes) : 0;
 
-		// BindTexture(TEXTURE_CAUSTICS, m_sprites[causticsFrame].Texture, SAMPLER_NONE);
+		BindTexture(TEXTURE_CAUSTICS, m_sprites[causticsFrame].Texture, SAMPLER_NONE);
 
 		// Set shadow map data
 		if (shadowLight != nullptr)
@@ -3266,7 +3267,7 @@ namespace TEN::Renderer
 		else
 		{
 			m_stShadowMap.CastShadows = false;
-		}
+		}          
 		m_cbShadowMap.updateData(m_stShadowMap, m_context.Get());
 		BindConstantBufferVS(CB_SHADOW_LIGHT, m_cbShadowMap.get());
 		BindConstantBufferPS(CB_SHADOW_LIGHT, m_cbShadowMap.get());
@@ -3288,14 +3289,15 @@ namespace TEN::Renderer
 			m_cbLights.updateData(m_stLights, m_context.Get());
 			BindConstantBufferPS(CB_LIGHTS, m_cbLights.get());
 
-			// TODO: make caustics optional in Tomb Editor
-			m_stMisc.Caustics = false; // (nativeRoom->flags & ENV_FLAG_WATER);
-
 			m_stRoom.AmbientColor = room->AmbientLight;
-			m_stRoom.Water = (nativeRoom->flags & ENV_FLAG_WATER) != 0 ? 1 : 0;
+			m_stRoom.Water = IsRoomUnderwater(room->RoomNumber) ? 1 : 0;
 			m_cbRoom.updateData(m_stRoom, m_context.Get());
 			BindConstantBufferVS(CB_ROOM, m_cbRoom.get());
 			BindConstantBufferPS(CB_ROOM, m_cbRoom.get());
+
+			m_stMisc.Caustics = IsRoomUnderwater(room->RoomNumber) ? 1 : 0;
+			m_cbMisc.updateData(m_stMisc, m_context.Get());
+			BindConstantBufferPS(CB_MISC, m_cbMisc.get());
 
 			SetScissor(room->Clip);
 
