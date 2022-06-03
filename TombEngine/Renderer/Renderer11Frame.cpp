@@ -423,8 +423,8 @@ namespace TEN::Renderer
 
 		int numLights = room.Lights.size();
 
-		shadowLight = NULL;
-		RendererLight* brightestLight = NULL;
+		shadowLight = nullptr;
+		RendererLight* brightestLight = nullptr;
 		float brightest = 0.0f;
 
 		for (int j = 0; j < numLights; j++)

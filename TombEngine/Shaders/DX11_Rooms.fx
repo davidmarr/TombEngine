@@ -126,7 +126,9 @@ PixelShaderInput VS(VertexShaderInput input)
 	output.Position = screenPos;
 	output.Normal = input.Normal;
 	output.Color = col;
+
 	output.PositionCopy = screenPos;
+	output.PositionCopy.z = output.PositionCopy.z * output.PositionCopy.w / FarPlane;
 
 #ifdef ANIMATED
 	int frame = (Frame / 2) % numAnimFrames;

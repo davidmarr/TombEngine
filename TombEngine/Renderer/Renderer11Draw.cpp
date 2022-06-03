@@ -2137,7 +2137,7 @@ namespace TEN::Renderer
 				m_spriteBatch->Draw(m_shadowMapFront.ShaderResourceView.Get(), Vector2(1024, 0), Colors::White);
 				m_spriteBatch->Draw(m_shadowMapBack.ShaderResourceView.Get(), Vector2(1536, 0), Colors::White);
 				m_spriteBatch->End();
-
+				 
 
 				break;
 
@@ -2744,7 +2744,9 @@ namespace TEN::Renderer
 		view.fillConstantBuffer(cameraConstantBuffer);
 		cameraConstantBuffer.Frame = GlobalCounter;
 		cameraConstantBuffer.CameraUnderwater = g_Level.Rooms[cameraConstantBuffer.RoomNumber].flags & ENV_FLAG_WATER;
-		
+		cameraConstantBuffer.NearPlane = view.camera.NearPlane;
+		cameraConstantBuffer.FarPlane = view.camera.FarPlane;
+
 		if (!cameraConstantBuffer.CameraUnderwater)
 		{
 			if (level->GetFogEnabled())

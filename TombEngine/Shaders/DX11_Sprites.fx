@@ -42,6 +42,7 @@ PixelShaderInput VS(VertexShaderInput input)
 	}
 
 	output.PositionCopy = output.Position;
+	output.PositionCopy.z = output.PositionCopy.z * output.PositionCopy.w / FarPlane;
 	
 	output.Normal = input.Normal;
 	output.Color = input.Color * color;
@@ -60,18 +61,19 @@ float4 PS(PixelShaderInput input) : SV_TARGET
 {
 	float4 output = Texture.Sample(Sampler, input.UV) * input.Color;
 
-	DoAlphaTest(output);
+	//DoAlphaTest(output);
 
 	float particleDepth = input.PositionCopy.z / input.PositionCopy.w;
 	input.PositionCopy.xy /= input.PositionCopy.w;
 	float2 texCoord = 0.5f * (float2(input.PositionCopy.x, -input.PositionCopy.y) + 1);
 	float sceneDepth = DepthMap.Sample(DepthMapSampler, texCoord).r;
 
-	if (particleDepth > sceneDepth)
-		discard;
+	//if (particleDepth > sceneDepth)
+	//	discard;
 
-	float fade = (sceneDepth - particleDepth) * 300.0F;
-	output.w = min(output.w, fade);
+	// FIXME: soft particles after beta because we can't handle properly magic number yet
+	//float fade = saturate((sceneDepth - particleDepth) * 50.0f);
+	//output.w = min(output.w, fade);
 
 	if (FogMaxDistance != 0)
 		output.xyz = lerp(output.xyz, FogColor, input.Fog);

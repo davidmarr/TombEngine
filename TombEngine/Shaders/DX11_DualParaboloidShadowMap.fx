@@ -12,8 +12,8 @@ cbuffer ItemBuffer : register(b1)
 
 cbuffer DualParaboloidShadowBuffer : register(b13)
 {
-	float NearPlane;
-	float FarPlane;
+	float ShadowNearPlane;
+	float ShadowFarPlane;
 	int ParaboloidDirection;
 }
 
@@ -57,7 +57,7 @@ PixelShaderInput VS(VertexShaderInput input)
 	output.Position.y /= output.Position.z + 1.0f;
 
 	// set z for z-buffering and neutralize w
-	output.Position.z = (fLength - NearPlane) / (FarPlane - NearPlane);
+	output.Position.z = (fLength - ShadowNearPlane) / (ShadowFarPlane - ShadowNearPlane);
 	output.Position.w = 1.0f;
 
 	// DP-depth

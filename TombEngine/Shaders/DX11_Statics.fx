@@ -38,7 +38,9 @@ PixelShaderInput VS(VertexShaderInput input)
 	output.Normal = input.Normal;
 	output.Color = input.Color * Color;
 	output.UV = input.UV;
+
 	output.PositionCopy = output.Position;
+	output.PositionCopy.z = output.PositionCopy.z * output.PositionCopy.w / FarPlane;
 
 	// Apply distance fog
 	float4 d = length(CamPositionWS - worldPosition);

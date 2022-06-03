@@ -104,6 +104,7 @@ PixelShaderInput VS(VertexShaderInput input)
 		output.Fog = clamp((d - FogMinDistance * 1024) / (FogMaxDistance * 1024 - FogMinDistance * 1024), 0, 1);
 	
 	output.PositionCopy = output.Position;
+	output.PositionCopy.z = output.PositionCopy.z * output.PositionCopy.w / FarPlane;
 
 	return output;
 }

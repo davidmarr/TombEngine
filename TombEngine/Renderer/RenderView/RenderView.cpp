@@ -70,6 +70,9 @@ namespace TEN::Renderer
 		ViewSize = { (float)w,(float)h };
 		InvViewSize = { 1.0f / w,1.0f / h };
 		frustum.Update(View, Projection);
+
+		NearPlane = n;
+		FarPlane = f;
 	}
 
 	RenderViewCamera::RenderViewCamera(const Vector3& pos, const Vector3& dir, const Vector3& up, int room, int width, int height, float fov, float n, float f) 
@@ -84,5 +87,8 @@ namespace TEN::Renderer
 		ViewSize = { (float)width,(float)height };
 		InvViewSize = { 1.0f / width,1.0f / height };
 		frustum.Update(View, Projection);
+
+		NearPlane = n;
+		FarPlane = f;
 	}
 }

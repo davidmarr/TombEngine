@@ -13,4 +13,6 @@ cbuffer CameraMatrixBuffer : register(b0)
 	float4 FogColor;
 	int FogMinDistance;
 	int FogMaxDistance;
+	float NearPlane;
+	float FarPlane;
 };
