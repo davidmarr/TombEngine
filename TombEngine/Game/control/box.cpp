@@ -40,7 +40,7 @@ constexpr auto FRAME_PRIO_EXP = 1.5;
 
 void DropEntityPickups(ItemInfo* item)
 {
-	ItemInfo* pickup = NULL;
+	ItemInfo* pickup = nullptr;
 
 	for (short pickupNumber = item->CarriedItem; pickupNumber != NO_ITEM; pickupNumber = pickup->CarriedItem)
 	{
@@ -86,41 +86,46 @@ bool MoveCreature3DPos(PHD_3DPOS* origin, PHD_3DPOS* target, int velocity, short
 	return false;
 }
 
-void CreatureYRot2(PHD_3DPOS* srcPos, short angle, short angleAdd) 
+void CreatureYRot2(PHD_3DPOS* srcPos, short angle, short angleAdd)
 {
 	if (angleAdd < angle)
 	{
 		srcPos->Orientation.y += angleAdd;
-		return;
-	} 
-
-	if (angle < -angleAdd)
+	}
+	else if (angle < -angleAdd)
 	{
 		srcPos->Orientation.y -= angleAdd;
-		return;
-	} 
-
-	srcPos->Orientation.y += angle;
+	}
+	else
+	{
+		srcPos->Orientation.y += angle;
+	}
 }
 
 bool SameZone(CreatureInfo* creature, ItemInfo* target)
 {
+	if (creature->LOT.Fly != NO_FLYING)
+	{
+		return true;
+	}
+
 	int* zone = g_Level.Zones[creature->LOT.Zone][FlipStatus].data();
 	auto* item = &g_Level.Items[creature->ItemNumber];
 
 	auto* room = &g_Level.Rooms[item->RoomNumber];
 	FloorInfo* floor = GetSector(room, item->Pose.Position.x - room->x, item->Pose.Position.z - room->z);
 	if (floor->Box == NO_BOX)
+	{
 		return false;
-
+	}
 	item->BoxNumber = floor->Box;
 
 	room = &g_Level.Rooms[target->RoomNumber];
 	floor = GetSector(room, target->Pose.Position.x - room->x, target->Pose.Position.z - room->z);
-
 	if (floor->Box == NO_BOX)
+	{
 		return false;
-
+	}
 	target->BoxNumber = floor->Box;
 
 	return (zone[item->BoxNumber] == zone[target->BoxNumber]);
@@ -129,45 +134,58 @@ bool SameZone(CreatureInfo* creature, ItemInfo* target)
 short AIGuard(CreatureInfo* creature) 
 {
 	auto* item = &g_Level.Items[creature->ItemNumber];
+	// FIXME: MODIFY? MontyTRC, checked original code
 	if (item->AIBits & (GUARD | PATROL1))
+	{
 		return 0;
+	}
 
 	int random = GetRandomControl();
 
-	if (random < 256)
+	if (random < 0x100)
 	{
 		creature->HeadRight = true;
 		creature->HeadLeft = true;
 	}
-	else if (random < 384)
+	else if (random < 0x180)
 	{
 		creature->HeadRight = false;
 		creature->HeadLeft = true;
 	}
-	else if (random < 512)
+	else if (random < 0x200)
 	{
 		creature->HeadRight = true;
 		creature->HeadLeft = false;
 	}
 
-	if (!creature->HeadLeft)
-		return (creature->HeadRight) << 12;
-
-	if (creature->HeadRight)
+	if (creature->HeadLeft && creature->HeadRight)
+	{
 		return 0;
-
-	return -ANGLE(90.0f);
+	} 
+	else if (creature->HeadLeft)
+	{
+		return -ANGLE(90.0f);
+	}
+	else if (creature->HeadRight)
+	{
+		return ANGLE(90.0f);
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void AlertNearbyGuards(ItemInfo* item) 
 {
-	for (int i = 0; i < ActiveCreatures.size(); i++)
+	for (auto currentCreature : ActiveCreatures)
 	{
-		auto* currentCreature = ActiveCreatures[i];
 		if (currentCreature->ItemNumber == NO_ITEM)
+		{
 			continue;
+		}
 
-		auto* currentTarget = &g_Level.Items[currentCreature->ItemNumber + i];
+		auto* currentTarget = &g_Level.Items[currentCreature->ItemNumber];
 		if (item->RoomNumber == currentTarget->RoomNumber)
 		{
 			currentCreature->Alerted = true;
@@ -180,24 +198,29 @@ void AlertNearbyGuards(ItemInfo* item)
 
 		int distance = (pow(x, 2) + pow(y, 2) + pow(z, 2));
 		if (distance < SECTOR(8))
+		{
 			currentCreature->Alerted = true;
+		}
 	}
 }
 
 void AlertAllGuards(short itemNumber) 
 {
-	for (int i = 0; i < ActiveCreatures.size(); i++)
+	for (auto currentCreature : ActiveCreatures)
 	{
-		auto* creature = ActiveCreatures[i];
-		if (creature->ItemNumber == NO_ITEM)
+		if (currentCreature->ItemNumber == NO_ITEM)
+		{
 			continue;
+		}
 
-		auto* target = &g_Level.Items[creature->ItemNumber];
+		auto* target = &g_Level.Items[currentCreature->ItemNumber];
 		short objNumber = g_Level.Items[itemNumber].ObjectNumber;
 		if (objNumber == target->ObjectNumber)
 		{
 			if (target->Status == ITEM_ACTIVE)
-				creature->Alerted = true;
+			{
+				currentCreature->Alerted = true;
+			}
 		}
 	}
 }
@@ -272,7 +295,9 @@ void CreatureUnderwater(ItemInfo* item, int depth)
 		waterLevel = 0;
 	}
 	else
+	{
 		waterHeight = GetWaterHeight(item);
+	}
 
 	int y = waterHeight + waterLevel;
 
@@ -282,12 +307,18 @@ void CreatureUnderwater(ItemInfo* item, int depth)
 
 		item->Pose.Position.y = y;
 		if (y > height)
+		{
 			item->Pose.Position.y = height;
+		}
 
 		if (item->Pose.Orientation.x > ANGLE(2.0f))
+		{
 			item->Pose.Orientation.x -= ANGLE(2.0f);
+		}
 		else if (item->Pose.Orientation.x > 0)
+		{
 			item->Pose.Orientation.x = 0;
+		}
 	}
 }
 
@@ -301,27 +332,33 @@ void CreatureFloat(short itemNumber)
 
 	int y = item->Pose.Position.y;
 	if (y > waterLevel)
+	{
 		item->Pose.Position.y = y - 32;
+	}
 	if (item->Pose.Position.y < waterLevel)
+	{
 		item->Pose.Position.y = waterLevel;
+	}
 
 	AnimateItem(item);
 
 	auto probe = GetCollision(item);
 	item->Floor = probe.Position.Floor;
-	
 	if (probe.RoomNumber != item->RoomNumber)
+	{
 		ItemNewRoom(itemNumber, probe.RoomNumber);
+	}
 
 	if (item->Pose.Position.y <= waterLevel)
 	{
-		if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase)
+		if (item->Pose.Position.y <= waterLevel &&
+			item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase)
 		{
 			item->Pose.Position.y = waterLevel;
 			item->Collidable = false;
 			item->Status = ITEM_DEACTIVATED;
-			RemoveActiveItem(itemNumber);
 			DisableEntityAI(itemNumber);
+			RemoveActiveItem(itemNumber);
 		}
 	}
 }
@@ -329,22 +366,32 @@ void CreatureFloat(short itemNumber)
 void CreatureJoint(ItemInfo* item, short joint, short required) 
 {
 	if (!item->Data)
+	{
 		return;
+	}
 
 	auto* creature = GetCreatureInfo(item);
 
 	short change = required - creature->JointRotation[joint];
 	if (change > ANGLE(3.0f))
+	{
 		change = ANGLE(3.0f);
+	}
 	else if (change < -ANGLE(3.0f))
+	{
 		change = -ANGLE(3.0f);
+	}
 
 	creature->JointRotation[joint] += change;
 
 	if (creature->JointRotation[joint] > ANGLE(70.0f))
+	{
 		creature->JointRotation[joint] = ANGLE(70.0f);
+	}
 	else if (creature->JointRotation[joint] < -ANGLE(70.0f))
+	{
 		creature->JointRotation[joint] = -ANGLE(70.0f);
+	}
 }
 
 void CreatureTilt(ItemInfo* item, short angle) 
@@ -352,23 +399,31 @@ void CreatureTilt(ItemInfo* item, short angle)
 	angle = (angle << 2) - item->Pose.Orientation.z;
 
 	if (angle < -ANGLE(3.0f))
+	{
 		angle = -ANGLE(3.0f);
+	}
 	else if (angle > ANGLE(3.0f))
+	{
 		angle = ANGLE(3.0f);
+	}
 
 	short theAngle = -ANGLE(3.0f);
 
 	short absRot = abs(item->Pose.Orientation.z);
 	if (absRot < ANGLE(15.0f) || absRot > ANGLE(30.0f))
+	{
 		angle >>= 1;
-	
+	}
+
 	item->Pose.Orientation.z += angle;
 }
 
 short CreatureTurn(ItemInfo* item, short maxTurn)
 {
 	if (!item->Data || maxTurn == 0)
+	{
 		return 0;
+	}
 
 	auto* creature = GetCreatureInfo(item);
 	short angle = 0;
@@ -380,26 +435,33 @@ short CreatureTurn(ItemInfo* item, short maxTurn)
 	int distance = pow(x, 2) + pow(z, 2);
 
 	if (angle > FRONT_ARC || angle < -FRONT_ARC && distance < pow(range, 2))
+	{
 		maxTurn >>= 1;
+	}
 
 	if (angle > maxTurn)
+	{
 		angle = maxTurn;
+	}
 	else if (angle < -maxTurn)
+	{
 		angle = -maxTurn;
-
+	}
 	item->Pose.Orientation.y += angle;
 
 	return angle;
 }
 
-int CreatureAnimation(short itemNumber, short angle, short tilt)
+bool CreatureAnimation(short itemNumber, short angle, short tilt)
 {
 	int xPos, zPos, ceiling, shiftX, shiftZ;
 	short top;
 
 	auto* item = &g_Level.Items[itemNumber];
 	if (!item->Data)
+	{
 		return false;
+	}
 
 	auto* creature = GetCreatureInfo(item);
 	auto* LOT = &creature->LOT;
@@ -424,7 +486,7 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 	AnimateItem(item);
 	if (item->Status == ITEM_DEACTIVATED)
 	{
-		CreatureDie(itemNumber, FALSE);
+		CreatureDie(itemNumber, false);
 		return false;
 	}
 
@@ -437,14 +499,18 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 
 	// TODO: Check why some blocks have box = -1 assigned to them -- Lwmte, 10.11.21
 	if (floor->Box == NO_BOX)
+	{
 		return false;
+	}
 
 	int height = g_Level.Boxes[floor->Box].height;
 	int nextHeight = 0;
 
 	int nextBox;
 	if (!Objects[item->ObjectNumber].nonLot)
+	{
 		nextBox = LOT->Node[floor->Box].exitBox;
+	}
 	else
 	{
 		floor = GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &roomNumber);
@@ -453,31 +519,52 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 	}
 
 	if (nextBox == NO_BOX)
+	{
 		nextHeight = height;
+	}
 	else
+	{
 		nextHeight = g_Level.Boxes[nextBox].height;
+	}
 
-	if (floor->Box == NO_BOX || !LOT->IsJumping && (LOT->Fly == NO_FLYING && item->BoxNumber != NO_BOX && zone[item->BoxNumber] != zone[floor->Box] ||  boxHeight - height > LOT->Step ||  boxHeight - height < LOT->Drop))
+	if (floor->Box == NO_BOX 
+		|| !LOT->IsJumping 
+		&& (LOT->Fly == NO_FLYING
+			&& item->BoxNumber != NO_BOX 
+			&& zone[item->BoxNumber] != zone[floor->Box] 
+			||  boxHeight - height > LOT->Step 
+			||  boxHeight - height < LOT->Drop))
 	{
 		xPos = item->Pose.Position.x / SECTOR(1);
 		zPos = item->Pose.Position.z / SECTOR(1);
+
 		shiftX = old.x / SECTOR(1);
 		shiftZ = old.z / SECTOR(1);
 
 		if (xPos < shiftX)
+		{
 			item->Pose.Position.x = old.x & (~(SECTOR(1) - 1));
+		}
 		else if (xPos > shiftX)
+		{
 			item->Pose.Position.x = old.x | (SECTOR(1) - 1);
+		}
 
 		if (zPos < shiftZ)
+		{
 			item->Pose.Position.z = old.z & (~(SECTOR(1) - 1));
+		}
 		else if (zPos > shiftZ)
+		{
 			item->Pose.Position.z = old.z | (SECTOR(1) - 1);
+		}
 
 		floor = GetFloor(item->Pose.Position.x, y, item->Pose.Position.z, &roomNumber);
 		height = g_Level.Boxes[floor->Box].height;
 		if (!Objects[item->ObjectNumber].nonLot)
-			nextHeight = LOT->Node[floor->Box].exitBox;
+		{
+			nextBox = LOT->Node[floor->Box].exitBox;
+		}
 		else
 		{
 			floor = GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &roomNumber);
@@ -486,88 +573,127 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 		}
 
 		if (nextBox == NO_BOX)
+		{
 			nextHeight = height;
+		}
 		else
+		{
 			nextHeight = g_Level.Boxes[nextBox].height;
+		}
 	}
 
 	int x = item->Pose.Position.x;
 	int z = item->Pose.Position.z;
+
 	xPos = x & (SECTOR(1) - 1);
 	zPos = z & (SECTOR(1) - 1);
+	
 	short radius = Objects[item->ObjectNumber].radius;
+	
 	shiftX = 0;
 	shiftZ = 0;
 
 	if (zPos < radius)
 	{
 		if (BadFloor(x, y, z - radius, height, nextHeight, roomNumber, LOT))
+		{
 			shiftZ = radius - zPos;
+		}
 
 		if (xPos < radius)
 		{
-			if (BadFloor(x-radius, y, z, height, nextHeight, roomNumber, LOT))
+			if (BadFloor(x - radius, y, z, height, nextHeight, roomNumber, LOT))
+			{
 				shiftX = radius - xPos;
+			}
 			else if (!shiftZ && BadFloor(x - radius, y, z - radius, height, nextHeight, roomNumber, LOT))
 			{
 				if (item->Pose.Orientation.y > -ANGLE(135.0f) && item->Pose.Orientation.y < ANGLE(45.0f))
+				{
 					shiftZ = radius - zPos;
+				}
 				else
+				{
 					shiftX = radius - xPos;
+				}
 			}
 		}
 		else if (xPos > SECTOR(1) - radius)
 		{
 			if (BadFloor(x + radius, y, z, height, nextHeight, roomNumber, LOT))
+			{
 				shiftX = SECTOR(1) - radius - xPos;
+			}
 			else if (!shiftZ && BadFloor(x + radius, y, z - radius, height, nextHeight, roomNumber, LOT))
 			{
 				if (item->Pose.Orientation.y > -ANGLE(45.0f) && item->Pose.Orientation.y < ANGLE(135.0f))
+				{
 					shiftZ = radius - zPos;
+				}
 				else
+				{
 					shiftX = SECTOR(1) - radius - xPos;
+				}
 			}
 		}
 	}
 	else if (zPos > SECTOR(1) - radius)
 	{
 		if (BadFloor(x, y, z + radius, height, nextHeight, roomNumber, LOT))
+		{
 			shiftZ = SECTOR(1) - radius - zPos;
+		}
 
 		if (xPos < radius)
 		{
 			if (BadFloor(x - radius, y, z, height, nextHeight, roomNumber, LOT))
+			{
 				shiftX = radius - xPos;
+			}
 			else if (!shiftZ && BadFloor(x - radius, y, z + radius, height, nextHeight, roomNumber, LOT))
 			{
 				if (item->Pose.Orientation.y > -ANGLE(45.0f) && item->Pose.Orientation.y < ANGLE(135.0f))
+				{
 					shiftX = radius - xPos;
+				}
 				else
+				{
 					shiftZ = SECTOR(1) - radius - zPos;
+				}
 			}
 		}
 		else if (xPos > SECTOR(1) - radius)
 		{
 			if (BadFloor(x + radius, y, z, height, nextHeight, roomNumber, LOT))
+			{
 				shiftX = SECTOR(1) - radius - xPos;
+			}
 			else if (!shiftZ && BadFloor(x + radius, y, z + radius, height, nextHeight, roomNumber, LOT))
 			{
 				if (item->Pose.Orientation.y > -ANGLE(135.0f) && item->Pose.Orientation.y < ANGLE(45.0f))
+				{
 					shiftX = SECTOR(1) - radius - xPos;
+				}
 				else
+				{
 					shiftZ = SECTOR(1) - radius - zPos;
+				}
 			}
 		}
 	}
 	else if (xPos < radius)
 	{
 		if (BadFloor(x - radius, y, z, height, nextHeight, roomNumber, LOT))
+		{
 			shiftX = radius - xPos;
+		}
 	}
 	else if (xPos > SECTOR(1) - radius)
 	{
 		if (BadFloor(x + radius, y, z, height, nextHeight, roomNumber, LOT))
+		{
 			shiftX = SECTOR(1) - radius - xPos;
+		}
 	}
 
 	item->Pose.Position.x += shiftX;
@@ -579,23 +705,31 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 		item->Pose.Orientation.y += angle;
 
 		if (tilt)
+		{
 			CreatureTilt(item, (tilt * 2));
+		}
 	}
 
-	short biffAngle;
+	short biffAngle = 0;
 	if (item->ObjectNumber != ID_TYRANNOSAUR && item->Animation.Velocity && item->HitPoints > 0)
+	{
 		biffAngle = CreatureCreature(itemNumber);
-	else
-		biffAngle = 0;
+	}
 
 	if (biffAngle)
 	{
 		if (abs(biffAngle) < BIFF_AVOID_TURN)
+		{
 			item->Pose.Orientation.y -= BIFF_AVOID_TURN;
+		}
 		else if (biffAngle > 0)
+		{
 			item->Pose.Orientation.y -= BIFF_AVOID_TURN;
+		}
 		else
+		{
 			item->Pose.Orientation.y += BIFF_AVOID_TURN;
+		}
 
 		return true;
 	}
@@ -604,9 +738,13 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 	{
 		int dy = creature->Target.y - item->Pose.Position.y;
 		if (dy > LOT->Fly)
+		{
 			dy = LOT->Fly;
+		}
 		else if (dy < -LOT->Fly)
+		{
 			dy = -LOT->Fly;
+		}
 
 		height = GetFloorHeight(floor, item->Pose.Position.x, y, item->Pose.Position.z);
 		if (item->Pose.Position.y + dy <= height)
@@ -616,9 +754,13 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 				ceiling = GetCeiling(floor, item->Pose.Position.x, y, item->Pose.Position.z);
 
 				if (item->ObjectNumber == ID_WHALE)
+				{
 					top = CLICK(0.5f);
+				}
 				else
+				{
 					top = bounds->Y1;
+				}
 
 				if (item->Pose.Position.y + top + dy < ceiling)
 				{
@@ -629,7 +771,9 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 						dy = LOT->Fly;
 					}
 					else
+					{
 						dy = 0;
+					}
 				}
 			}
 			else
@@ -660,16 +804,26 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
  
 		angle = (item->Animation.Velocity) ? phd_atan(item->Animation.Velocity, -dy) : 0;
 		if (angle < -ANGLE(20.0f))
+		{
 			angle = -ANGLE(20.0f);
+		}
 		else if (angle > ANGLE(20.0f))
+		{
 			angle = ANGLE(20.0f);
+		}
 
 		if (angle < item->Pose.Orientation.x - ANGLE(1.0f))
+		{
 			item->Pose.Orientation.x -= ANGLE(1.0f);
+		}
 		else if (angle > item->Pose.Orientation.x + ANGLE(1.0f))
+		{
 			item->Pose.Orientation.x += ANGLE(1.0f);
+		}
 		else
+		{
 			item->Pose.Orientation.x = angle;
+		}
 	}
 	else if (LOT->IsJumping)
 	{
@@ -693,7 +847,9 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 					item->Pose.Position.z = old.z;
 				}
 				else
+				{
 					item->Pose.Position.y = item->Floor;
+				}
 			}
 		}
 	} 
@@ -703,9 +859,13 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 		ceiling = GetCeiling(floor, item->Pose.Position.x, y, item->Pose.Position.z);
 
 		if (item->ObjectNumber == ID_TYRANNOSAUR || item->ObjectNumber == ID_SHIVA || item->ObjectNumber == ID_MUTANT2)
+		{
 			top = CLICK(3);
+		}
 		else
+		{
 			top = bounds->Y1; // TODO: check if Y1 or Y2
+		}
 
 		if (item->Pose.Position.y + top < ceiling)
 		{
@@ -718,11 +878,17 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 		item->Floor = GetFloorHeight(floor, item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z);
 
 		if (item->Pose.Position.y > item->Floor)
+		{
 			item->Pose.Position.y = item->Floor;
-		else if (item->Floor - item->Pose.Position.y > STEP_SIZE/4)
-			item->Pose.Position.y += STEP_SIZE/4;
+		}
+		else if (item->Floor - item->Pose.Position.y > STEP_SIZE / 4)
+		{
+			item->Pose.Position.y += STEP_SIZE / 4;
+		}
 		else if (item->Pose.Position.y < item->Floor)
+		{
 			item->Pose.Position.y = item->Floor;
+		}
 
 		item->Pose.Orientation.x = 0;
 	}
@@ -739,12 +905,14 @@ int CreatureAnimation(short itemNumber, short angle, short tilt)
 	roomNumber = item->RoomNumber;
 	GetFloor(item->Pose.Position.x, item->Pose.Position.y - CLICK(2), item->Pose.Position.z, &roomNumber);
 	if (item->RoomNumber != roomNumber)
+	{
 		ItemNewRoom(itemNumber, roomNumber);
+	}
 
 	return true;
 }
 
-void CreatureDie(short itemNumber, int explode)
+void CreatureDie(short itemNumber, bool explode)
 {
 	auto* item = &g_Level.Items[itemNumber];
 
@@ -754,9 +922,13 @@ void CreatureDie(short itemNumber, int explode)
 	if (explode)
 	{
 		if (Objects[item->ObjectNumber].hitEffect)
+		{
 			ExplodingDeath(itemNumber, ALL_MESHBITS, EXPLODE_HIT_EFFECT);
+		}
 		else
+		{
 			ExplodingDeath(itemNumber, ALL_MESHBITS, EXPLODE_NORMAL);
+		}
 
 		KillItem(itemNumber);
 	}
@@ -774,23 +946,35 @@ int BadFloor(int x, int y, int z, int boxHeight, int nextHeight, short roomNumbe
 {
 	FloorInfo* floor = GetFloor(x, y, z, &roomNumber);
 	if (floor->Box == NO_BOX)
+	{
 		return true;
+	}
 
 	if (LOT->IsJumping)
+	{
 		return false;
+	}
 
 	if (g_Level.Boxes[floor->Box].flags & LOT->BlockMask)
+	{
 		return true;
+	}
 
 	int height = g_Level.Boxes[floor->Box].height;
 	if ((boxHeight - height) > LOT->Step || (boxHeight - height) < LOT->Drop)
+	{
 		return true;
+	}
 
 	if (boxHeight - height < -LOT->Step && height > nextHeight)
+	{
 		return true;
+	}
 
 	if (LOT->Fly != NO_FLYING && y > (height + LOT->Fly))
+	{
 		return true;
+	}
 
 	return false;
 }
@@ -828,19 +1012,25 @@ int CreatureCreature(short itemNumber)
 	return 0;
 }
 
-int ValidBox(ItemInfo* item, short zoneNumber, short boxNumber) 
+bool ValidBox(ItemInfo* item, short zoneNumber, short boxNumber) 
 {
 	if (boxNumber == NO_BOX)
+	{
 		return false;
+	}
 
 	auto* creature = GetCreatureInfo(item);
 	int* zone = g_Level.Zones[creature->LOT.Zone][FlipStatus].data();
 	if (creature->LOT.Fly == NO_FLYING && zone[boxNumber] != zoneNumber)
+	{
 		return false;
+	}
 
 	auto* box = &g_Level.Boxes[boxNumber];
 	if (box->flags & creature->LOT.BlockMask)
+	{
 		return false;
+	}
 
 	if (item->Pose.Position.z > (box->left * SECTOR(1)) &&
 		item->Pose.Position.z < (box->right * SECTOR(1)) &&
@@ -853,10 +1043,12 @@ int ValidBox(ItemInfo* item, short zoneNumber, short boxNumber)
 	return true;
 }
 
-int EscapeBox(ItemInfo* item, ItemInfo* enemy, int boxNumber) 
+bool EscapeBox(ItemInfo* item, ItemInfo* enemy, int boxNumber) 
 {
 	if (boxNumber == NO_BOX)
+	{
 		return false;
+	}
 
 	auto* box = &g_Level.Boxes[boxNumber];
 
@@ -864,10 +1056,14 @@ int EscapeBox(ItemInfo* item, ItemInfo* enemy, int boxNumber)
 	int z = (box->left + box->right) * SECTOR(1) / 2 - enemy->Pose.Position.z;
 	
 	if (x > -ESCAPE_DIST && x < ESCAPE_DIST && z > -ESCAPE_DIST && z < ESCAPE_DIST)
+	{
 		return false;
+	}
 
 	if (((x > 0) ^ (item->Pose.Position.x > enemy->Pose.Position.x)) && ((z > 0) ^ (item->Pose.Position.z > enemy->Pose.Position.z)))
+	{
 		return false;
+	}
 
 	return true;
 }
@@ -904,7 +1100,9 @@ int UpdateLOT(LOTInfo* LOT, int depth)
 			node->nextExpansion = LOT->Head;
 
 			if (LOT->Head == NO_BOX)
+			{
 				LOT->Tail = LOT->TargetBox;
+			}
 
 			LOT->Head = LOT->TargetBox;
 		}
@@ -922,7 +1120,9 @@ int SearchLOT(LOTInfo* LOT, int depth)
 	int searchZone = zone[LOT->Head];
 
 	if (depth <= 0)
+	{
 		return true;
+	}
 
 	for (int i = 0; i < depth; i++)
 	{
@@ -1056,40 +1256,58 @@ void InitialiseCreature(short itemNumber)
 int StalkBox(ItemInfo* item, ItemInfo* enemy, int boxNumber)
 {
 	if (boxNumber == NO_BOX)
+	{
 		return false;
+	}
 
-	if (enemy == NULL)
+	if (enemy == nullptr)
+	{
 		return false;
+	}
 
 	auto* box = &g_Level.Boxes[boxNumber];
 
-	int xRange = STALK_DIST + ((box->bottom - box->top + 3) * SECTOR(1));
-	int zRange = STALK_DIST + ((box->right - box->left + 3) * SECTOR(1));
+	int xRange = STALK_DIST + ((box->bottom - box->top) * SECTOR(1));
+	int zRange = STALK_DIST + ((box->right - box->left) * SECTOR(1));
 	int x = (box->top + box->bottom) * SECTOR(1) / 2 - enemy->Pose.Position.x;
 	int z = (box->left + box->right) * SECTOR(1) / 2 - enemy->Pose.Position.z;
 	
 	if (x > xRange || x < -xRange || z > zRange || z < -zRange)
+	{
 		return false;
+	}
 
 	int enemyQuad = (enemy->Pose.Orientation.y / ANGLE(90.0f)) + 2;
 	
 	int boxQuad;
 	if (z > 0)
+	{
 		boxQuad = (x > 0) ? 2 : 1;
+	}
 	else
+	{
 		boxQuad = (x > 0) ? 3 : 0;
+	}
 
 	if (enemyQuad == boxQuad)
+	{
 		return false;
+	}
 
 	int baddyQuad = 0;
 	if (item->Pose.Position.z > enemy->Pose.Position.z)
+	{
 		baddyQuad = (item->Pose.Position.x > enemy->Pose.Position.x) ? 2 : 1;
+	}
 	else
+	{
 		baddyQuad = (item->Pose.Position.x > enemy->Pose.Position.x) ? 3 : 0;
+	}
 
 	if (enemyQuad == baddyQuad && abs(enemyQuad - boxQuad) == 2)
+	{
 		return false;
+	}
 
 	return true;
 }
@@ -1313,7 +1531,7 @@ void FindAITargetObject(CreatureInfo* creature, short objectNumber)
 
 	if (g_Level.AIObjects.size() > 0)
 	{
-		AI_OBJECT* foundObject = NULL;
+		AI_OBJECT* foundObject = nullptr;
 
 		for (int i = 0; i < g_Level.AIObjects.size(); i++)
 		{
@@ -1340,7 +1558,7 @@ void FindAITargetObject(CreatureInfo* creature, short objectNumber)
 			}
 		}
 
-		if (foundObject != NULL)
+		if (foundObject != nullptr)
 		{
 			auto* aiItem = creature->AITarget;
 
