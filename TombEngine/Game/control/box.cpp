@@ -1060,7 +1060,8 @@ bool EscapeBox(ItemInfo* item, ItemInfo* enemy, int boxNumber)
 		return false;
 	}
 
-	if (((x > 0) ^ (item->Pose.Position.x > enemy->Pose.Position.x)) && ((z > 0) ^ (item->Pose.Position.z > enemy->Pose.Position.z)))
+	if (((x > 0) ^ (item->Pose.Position.x > enemy->Pose.Position.x))
+		&& ((z > 0) ^ (item->Pose.Position.z > enemy->Pose.Position.z)))
 	{
 		return false;
 	}
@@ -1071,9 +1072,10 @@ bool EscapeBox(ItemInfo* item, ItemInfo* enemy, int boxNumber)
 void TargetBox(LOTInfo* LOT, int boxNumber)
 {
 	if (boxNumber == NO_BOX)
+	{
 		return;
+	}
 
-	boxNumber &= NO_BOX;
 	auto* box = &g_Level.Boxes[boxNumber];
 
 	LOT->Target.x = ((box->top * SECTOR(1)) + GetRandomControl() * ((box->bottom - box->top) - 1) >> 5) + SECTOR(0.5f);
@@ -1081,12 +1083,16 @@ void TargetBox(LOTInfo* LOT, int boxNumber)
 	LOT->RequiredBox = boxNumber;
 
 	if (LOT->Fly == NO_FLYING)
+	{
 		LOT->Target.y = box->height;
+	}
 	else
+	{
 		LOT->Target.y = box->height - STEPUP_HEIGHT;
+	}
 }
 
-int UpdateLOT(LOTInfo* LOT, int depth)
+bool UpdateLOT(LOTInfo* LOT, int depth)
 {
 	//printf("LOT->head: %d, LOT->tail: %d\n", LOT->head, LOT->tail);
 
@@ -1114,7 +1120,7 @@ int UpdateLOT(LOTInfo* LOT, int depth)
 	return SearchLOT(LOT, depth);
 }
 
-int SearchLOT(LOTInfo* LOT, int depth)
+bool SearchLOT(LOTInfo* LOT, int depth)
 {
 	int* zone = g_Level.Zones[LOT->Zone][FlipStatus].data();
 	int searchZone = zone[LOT->Head];
@@ -1145,26 +1151,39 @@ int SearchLOT(LOTInfo* LOT, int depth)
 				int flags = g_Level.Overlaps[index++].flags;
 
 				if (flags & BOX_END_BIT)
+				{
 					done = true;
+				}
 
 				if (LOT->Fly == NO_FLYING && searchZone != zone[boxNumber])
+				{
 					continue;
+				}
 
 				int delta = g_Level.Boxes[boxNumber].height - box->height;
-				if ((delta > LOT->Step || delta < LOT->Drop) && (!(flags & BOX_MONKEY) || !LOT->CanMonkey))
+				if ((delta > LOT->Step || delta < LOT->Drop)
+					&& (!(flags & BOX_MONKEY) || !LOT->CanMonkey))
+				{
 					continue;
+				}
 
 				if ((flags & BOX_JUMP) && !LOT->CanJump)
+				{
 					continue;
+				}
 
 				auto* expand = &LOT->Node[boxNumber];
 				if ((node->searchNumber & SEARCH_NUMBER) < (expand->searchNumber & SEARCH_NUMBER))
+				{
 					continue;
+				}
 
 				if (node->searchNumber & BLOCKED_SEARCH)
 				{
 					if ((node->searchNumber & SEARCH_NUMBER) == (expand->searchNumber & SEARCH_NUMBER))
+					{
 						continue;
+					}
 
 					expand->searchNumber = node->searchNumber;
 				}
@@ -1177,7 +1196,9 @@ int SearchLOT(LOTInfo* LOT, int depth)
 					}
 
 					if (g_Level.Boxes[boxNumber].flags & LOT->BlockMask)
+					{
 						expand->searchNumber = node->searchNumber | BLOCKED_SEARCH;
+					}
 					else
 					{
 						expand->searchNumber = node->searchNumber;
@@ -1678,7 +1699,9 @@ void CreatureAIInfo(ItemInfo* item, AI_INFO* AI)
 void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 {
 	if (!item->Data)
+	{
 		return;
+	}
 
 	auto* creature = GetCreatureInfo(item);
 	auto* enemy = creature->Enemy;
@@ -1701,7 +1724,9 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 					creature->Mood = MoodType::Bored;
 				}
 				else if (LOT->RequiredBox == NO_BOX)
+				{
 					TargetBox(LOT, boxNumber);
+				}
 			}
 
 			break;
@@ -1723,8 +1748,12 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 			if (ValidBox(item, AI->zoneNumber, boxNumber) && LOT->RequiredBox == NO_BOX)
 			{
 				if (EscapeBox(item, enemy, boxNumber))
+				{
 					TargetBox(LOT, boxNumber);
-				else if (AI->zoneNumber == AI->enemyZone && StalkBox(item, enemy, boxNumber) && !violent)
+				}
+				else if (AI->zoneNumber == AI->enemyZone 
+					&& StalkBox(item, enemy, boxNumber)
+					&& !violent)
 				{
 					TargetBox(LOT, boxNumber);
 					creature->Mood = MoodType::Stalk;
@@ -1740,12 +1769,17 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 				if (ValidBox(item, AI->zoneNumber, boxNumber))
 				{
 					if (StalkBox(item, enemy, boxNumber))
+					{
 						TargetBox(LOT, boxNumber);
+					}
 					else if (LOT->RequiredBox == NO_BOX)
 					{
 						TargetBox(LOT, boxNumber);
+
 						if (AI->zoneNumber != AI->enemyZone)
+						{
 							creature->Mood = MoodType::Bored;
+						}
 					}
 				}
 			}
@@ -1755,7 +1789,9 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 	}
 
 	if (LOT->TargetBox == NO_BOX)
+	{
 		TargetBox(LOT, item->BoxNumber);
+	}
 
 #ifdef CREATURE_AI_PRIORITY_OPTIMIZATION
 	bool shouldUpdateTarget = false;
@@ -1788,7 +1824,10 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 		creature->FramesSinceLOTUpdate = 0;
 	}
 	else
+	{
 		creature->FramesSinceLOTUpdate++;
+	}
+
 #else
 	CalculateTarget(&creature->Target, item, &creature->LOT);
 #endif // CREATURE_AI_PRIORITY_OPTIMIZATION
@@ -1817,10 +1856,14 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 			if (nextBox == startBox)
 			{
 				if (flags & BOX_JUMP)
+				{
 					creature->JumpAhead = true;
+				}
 
 				if (flags & BOX_MONKEY)
+				{
 					creature->MonkeySwingAhead = true;
+				}
 			}
 		}
 	}
@@ -1829,22 +1872,27 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 {
 	if (!item->Data)
+	{
 		return;
+	}
 
 	auto* creature = GetCreatureInfo(item);
 	auto* enemy = creature->Enemy;
 	auto* LOT = &creature->LOT;
 
 	if (item->BoxNumber == NO_BOX || creature->LOT.Node[item->BoxNumber].searchNumber == (creature->LOT.SearchNumber | BLOCKED_SEARCH))
+	{
 		creature->LOT.RequiredBox = NO_BOX;
+	}
 
-	if (creature->Mood != MoodType::Attack &&
-		creature->LOT.RequiredBox != NO_BOX)
+	if (creature->Mood != MoodType::Attack && creature->LOT.RequiredBox != NO_BOX)
 	{
 		if (!ValidBox(item, AI->zoneNumber, creature->LOT.TargetBox))
 		{
 			if (AI->zoneNumber == AI->enemyZone)
+			{
 				creature->Mood = MoodType::Bored;
+			}
 
 			creature->LOT.RequiredBox = NO_BOX;
 		}
@@ -1857,7 +1905,9 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 		enemy = LaraItem;
 	}
 	else if (enemy->HitPoints <= 0 && enemy == LaraItem)
+	{
 		creature->Mood = MoodType::Bored;
+	}
 	else if (isViolent)
 	{
 		switch (creature->Mood)
@@ -1865,21 +1915,29 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 			case MoodType::Bored:
 			case MoodType::Stalk:
 				if (AI->zoneNumber == AI->enemyZone)
+				{
 					creature->Mood = MoodType::Attack;
+				}
 				else if (item->HitStatus)
+				{
 					creature->Mood = MoodType::Escape;
+				}
 
 				break;
 
 			case MoodType::Attack:
 				if (AI->zoneNumber != AI->enemyZone)
+				{
 					creature->Mood = MoodType::Bored;
+				}
 
 				break;
 
 			case MoodType::Escape:
 				if (AI->zoneNumber == AI->enemyZone)
+				{
 					creature->Mood = MoodType::Attack;
+				}
 
 				break;
 		}
@@ -1894,18 +1952,26 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 					AI->zoneNumber != AI->enemyZone)
 				{
 					if (AI->distance > SECTOR(3))
+					{
 						creature->Mood = MoodType::Stalk;
+					}
 					else
+					{
 						creature->Mood = MoodType::Bored;
+					}
 				}
 				else if (AI->zoneNumber == AI->enemyZone)
 				{
 					if (AI->distance < ATTACK_RANGE ||
 						(creature->Mood == MoodType::Stalk &&
 							LOT->RequiredBox == NO_BOX))
+					{
 						creature->Mood = MoodType::Attack;
+					}
 					else
+					{
 						creature->Mood = MoodType::Stalk;
+					}
 				}
 
 				break;
@@ -1914,16 +1980,22 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 				if (item->HitStatus &&
 					(GetRandomControl() < ESCAPE_CHANCE ||
 						AI->zoneNumber != AI->enemyZone))
+				{
 					creature->Mood = MoodType::Stalk;
+				}
 				else if (AI->zoneNumber != AI->enemyZone && AI->distance > SECTOR(6))
+				{
 					creature->Mood = MoodType::Bored;
+				}
 
 				break;
 
 			case MoodType::Escape:
 				if (AI->zoneNumber == AI->enemyZone &&
 					GetRandomControl() < RECOVER_CHANCE)
+				{
 					creature->Mood = MoodType::Stalk;
+				}
 
 				break;
 		}
@@ -1932,7 +2004,9 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 	if (mood != creature->Mood)
 	{
 		if (mood == MoodType::Attack)
+		{
 			TargetBox(LOT, LOT->TargetBox);
+		}
 
 		LOT->RequiredBox = NO_BOX;
 	}
