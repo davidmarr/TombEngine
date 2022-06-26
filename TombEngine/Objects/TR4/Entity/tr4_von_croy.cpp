@@ -13,13 +13,16 @@
 #include "Game/itemdata/creature_info.h"
 #include "Game/misc.h"
 
+using std::vector;
+
 namespace TEN::Entities::TR4
 {
 	bool VonCroyPassedWaypoints[128];
-	BITE_INFO VonCroyBite = { 0, 35, 130, 18 };
 
-#define SWAPMESHFLAGS_VON_CROY	0x40080
-#define VON_CROY_FLAG_JUMP		6
+	BITE_INFO VonCroyBite = { 0, 35, 130, 18 };
+	vector<int> VonCroyKnifeSwapJoints = { 7, 18 };
+
+	#define VON_CROY_FLAG_JUMP		6
 
 	enum VonCroyState
 	{
@@ -69,7 +72,7 @@ namespace TEN::Entities::TR4
 		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
 		item->Animation.TargetState = VON_CROY_STATE_TOGGLE_KNIFE;
 		item->Animation.ActiveState = VON_CROY_STATE_TOGGLE_KNIFE;
-		item->SwapMeshFlags = SWAPMESHFLAGS_VON_CROY;
+		item->SetBits(JointBitType::MeshSwap, VonCroyKnifeSwapJoints);
 
 		memset(VonCroyPassedWaypoints, 0, 128);
 	}
@@ -149,7 +152,6 @@ namespace TEN::Entities::TR4
 		// Von Croy must follow Lara and navigate with ID_AI_FOLLOW objects
 		item->AIBits = FOLLOW;
 		GetAITarget(creature);
-
 
 		// Try to find a possible enemy or target
 		ItemInfo* foundTarget = NULL;
@@ -355,7 +357,7 @@ namespace TEN::Entities::TR4
 				probe = GetCollision(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, probe.RoomNumber);
 				if (probe.Position.Ceiling == probe.Position.Floor - 1536)
 				{
-					if (item->SwapMeshFlags == SWAPMESHFLAGS_VON_CROY)
+					if (item->TestBits(JointBitType::MeshSwap, VonCroyKnifeSwapJoints))
 						item->Animation.TargetState = VON_CROY_STATE_TOGGLE_KNIFE;
 					else
 						item->Animation.TargetState = VON_CROY_STATE_START_MONKEY;
@@ -428,7 +430,8 @@ namespace TEN::Entities::TR4
 			{
 				if (Lara.Location >= item->ItemFlags[3])
 				{
-					if (!foundTarget || AI.distance >= SECTOR(2048) && (item->SwapMeshFlags & 0x40000 || AI.distance >= SECTOR(8216)))
+					if (!foundTarget || AI.distance >= SECTOR(2048) &&
+						(item->TestBits(JointBitType::MeshSwap, 18) || AI.distance >= SECTOR(8216)))
 					{
 						if (creature->Enemy == LaraItem)
 						{
@@ -553,10 +556,10 @@ namespace TEN::Entities::TR4
 		case VON_CROY_STATE_TOGGLE_KNIFE:
 			if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase)
 			{
-				if (!(item->SwapMeshFlags & SWAPMESHFLAGS_VON_CROY))
-					item->SwapMeshFlags |= SWAPMESHFLAGS_VON_CROY;
+				if (!item->TestBits(JointBitType::MeshSwap, VonCroyKnifeSwapJoints))
+					item->SetBits(JointBitType::MeshSwap, VonCroyKnifeSwapJoints);
 				else
-					item->SwapMeshFlags &= ~SWAPMESHFLAGS_VON_CROY;
+					item->ClearBits(JointBitType::MeshSwap, VonCroyKnifeSwapJoints);
 			}
 
 			break;
@@ -640,13 +643,12 @@ namespace TEN::Entities::TR4
 						abs(item->Pose.Position.y - enemy->Pose.Position.y) < CLICK(2) &&
 						abs(item->Pose.Position.z - enemy->Pose.Position.z) < CLICK(2))
 					{
-						enemy->HitPoints -= 40;
+						DoDamage(enemy, 40);
+						CreatureEffect2(item, &VonCroyBite, 2, -1, DoBloodSplat);
+						creature->Flags = 1;
+
 						if (enemy->HitPoints <= 0)
 							item->AIBits = FOLLOW;
-
-						enemy->HitStatus = true;
-						creature->Flags = 1;
-						CreatureEffect2(item, &VonCroyBite, 2, -1, DoBloodSplat);
 					}
 				}
 			}
@@ -709,13 +711,12 @@ namespace TEN::Entities::TR4
 							abs(item->Pose.Position.y - enemy->Pose.Position.y) < CLICK(2) &&
 							abs(item->Pose.Position.z - enemy->Pose.Position.z) < CLICK(2))
 						{
-							enemy->HitPoints -= 20;
+							DoDamage(enemy, 20);
+							CreatureEffect2(item, &VonCroyBite, 2, -1, DoBloodSplat);
+							creature->Flags = 1;
+
 							if (enemy->HitPoints <= 0)
 								item->AIBits = FOLLOW;
-
-							enemy->HitStatus = true;
-							creature->Flags = 1;
-							CreatureEffect2(item, &VonCroyBite, 2, -1, DoBloodSplat);
 						}
 					}
 				}

@@ -20,8 +20,6 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 
 	TENLog("Initializing DX11...", LogLevel::Info);
 
-	CoInitialize(NULL);
-
 	ScreenWidth = w;
 	ScreenHeight = h;
 	Windowed = windowed;
@@ -31,24 +29,21 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	m_states = std::make_unique<CommonStates>(m_device.Get());
 
 	wchar_t titleScreenFile[255];
-	std::wstring titleFile = std::wstring(titleScreenFile);
 	std::mbstowcs(titleScreenFile, g_GameFlow->TitleScreenImagePath.c_str(), 255);
-	m_titleScreen = Texture2D(m_device.Get(), titleScreenFile);
+	SetTextureOrDefault(m_titleScreen, titleScreenFile);
 
 	auto whiteSpriteName = L"Textures/WhiteSprite.png";
-	m_whiteTexture = std::filesystem::exists(whiteSpriteName) ? Texture2D(m_device.Get(), L"Textures/WhiteSprite.png") : Texture2D();
+	SetTextureOrDefault(m_whiteTexture, L"Textures/WhiteSprite.png");
 
 	auto logoName = L"Textures/Logo.png";
-	m_logo = std::filesystem::exists(logoName) ? Texture2D(m_device.Get(), logoName) : Texture2D();
+	SetTextureOrDefault(m_logo, logoName);
 
-	m_shadowMaps = RenderTargetCubeArray(m_device.Get(), g_Configuration.shadowMapSize, MAX_DYNAMIC_SHADOWS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D16_UNORM);
+	m_shadowMaps = RenderTargetCubeArray(m_device.Get(), g_Configuration.ShadowMapSize, MAX_DYNAMIC_SHADOWS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D16_UNORM);
 	// Load shaders
 	ComPtr<ID3D10Blob> blob;
-	//char shadowMapStringBuff[4];
-	//_itoa(g_Configuration.shadowMapSize, shadowMapStringBuff,10);
-	std::string shadowSizeString = std::to_string(g_Configuration.shadowMapSize);
-	const D3D_SHADER_MACRO roomDefines[] = {"SHADOW_MAP_SIZE",shadowSizeString.c_str(),nullptr,nullptr};
-	const D3D_SHADER_MACRO roomDefinesAnimated[] = { "SHADOW_MAP_SIZE",shadowSizeString.c_str(),"ANIMATED" ,"",nullptr,nullptr };
+	std::string shadowSizeString = std::to_string(g_Configuration.ShadowMapSize);
+	const D3D_SHADER_MACRO roomDefines[] = {"SHADOW_MAP_SIZE", shadowSizeString.c_str(), nullptr, nullptr};
+	const D3D_SHADER_MACRO roomDefinesAnimated[] = { "SHADOW_MAP_SIZE", shadowSizeString.c_str(), "ANIMATED", "", nullptr, nullptr };
 	   
 	m_vsRooms = Utils::compileVertexShader(m_device.Get(),L"Shaders\\DX11_Rooms.fx", "VS", "vs_4_0", &roomDefines[0], blob);
 	// Initialise input layout using the first vertex shader
@@ -94,12 +89,7 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	m_psHUDBarColor = Utils::compilePixelShader(m_device.Get(), L"Shaders\\HUD\\DX11_PS_HUDBar.hlsl", "PSTextured", "ps_4_0", nullptr, blob);
 	m_vsFinalPass = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_FinalPass.fx", "VS", "vs_4_0", nullptr, blob);
 	m_psFinalPass = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_FinalPass.fx", "PS", "ps_4_0", nullptr, blob);
-	m_vsDualParaboloidShadowMap = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_DualParaboloidShadowMap.fx", "VS", "vs_4_0", nullptr, blob);
-	m_psDualParaboloidShadowMap = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_DualParaboloidShadowMap.fx", "PS", "ps_4_0", nullptr, blob);
-
-	m_shadowMap = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT,DXGI_FORMAT_D16_UNORM);
-	m_shadowMapFront = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
-	m_shadowMapBack = RenderTarget2D(m_device.Get(), g_Configuration.shadowMapSize, g_Configuration.shadowMapSize, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
+	m_shadowMap = RenderTarget2D(m_device.Get(), g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
 	m_depthMap = RenderTarget2D(m_device.Get(), w, h, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D16_UNORM);
 	
 	// Initialise constant buffers
@@ -226,7 +216,7 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	rasterizerStateDesc.ScissorEnable = true;
 	Utils::throwIfFailed(m_device->CreateRasterizerState(&rasterizerStateDesc, m_cullNoneRasterizerState.GetAddressOf()));
 
-	InitialiseBars();
+	InitialiseGameBars();
 	initQuad(m_device.Get());
 }
 
@@ -297,8 +287,8 @@ void TEN::Renderer::Renderer11::InitialiseScreen(int w, int h, bool windowed, HW
 	m_gameFont = std::make_unique<SpriteFont>(m_device.Get(), L"Textures/Font.spritefont");
 	m_primitiveBatch = std::make_unique<PrimitiveBatch<RendererVertex>>(m_context.Get());
 
-	loadingBarBorder = Texture2D(m_device.Get(), L"Textures/LoadingBarBorder.png");
-	loadingBarInner = Texture2D(m_device.Get(), L"Textures/LoadingBarInner.png");
+	SetTextureOrDefault(loadingBarBorder, L"Textures/LoadingBarBorder.png");
+	SetTextureOrDefault(loadingBarInner, L"Textures/LoadingBarInner.png");
 
 	// Initialise buffers
 	m_renderTarget = RenderTarget2D(m_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -315,8 +305,8 @@ void TEN::Renderer::Renderer11::InitialiseScreen(int w, int h, bool windowed, HW
 
 	m_shadowMapViewport.TopLeftX = 0;
 	m_shadowMapViewport.TopLeftY = 0;
-	m_shadowMapViewport.Width = g_Configuration.shadowMapSize;
-	m_shadowMapViewport.Height = g_Configuration.shadowMapSize;
+	m_shadowMapViewport.Width = g_Configuration.ShadowMapSize;
+	m_shadowMapViewport.Height = g_Configuration.ShadowMapSize;
 	m_shadowMapViewport.MinDepth = 0.0f;
 	m_shadowMapViewport.MaxDepth = 1.0f;
 

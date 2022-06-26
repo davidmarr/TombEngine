@@ -39,6 +39,8 @@
 
 using namespace TEN::Effects::Lara;
 using namespace TEN::Control::Volumes;
+using namespace TEN::Input;
+
 using std::function;
 using TEN::Renderer::g_Renderer;
 
@@ -454,6 +456,8 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 	if (lara->SprintEnergy < LARA_SPRINT_ENERGY_MAX && item->Animation.ActiveState != LS_SPRINT)
 		lara->SprintEnergy++;
 
+	RumbleLaraHealthCondition(item);
+
 	lara->Control.IsLow = false;
 
 	bool isWater = TestEnvironment(ENV_FLAG_WATER, item);
@@ -728,10 +732,7 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 		break;
 	}
 
-	Statistics.Game.Distance += sqrt(
-		pow(item->Pose.Position.x - oldPos.x, 2) +
-		pow(item->Pose.Position.y - oldPos.y, 2) +
-		pow(item->Pose.Position.z - oldPos.z, 2));
+	Statistics.Game.Distance += (int)round(Vector3::Distance(oldPos.ToVector3(), item->Pose.Position.ToVector3()));
 }
 
 void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
@@ -752,9 +753,9 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = true;
 
 	coll->Setup.OldPosition = item->Pose.Position;
-	coll->Setup.OldState = item->Animation.ActiveState;
 	coll->Setup.OldAnimNumber = item->Animation.AnimNumber;
 	coll->Setup.OldFrameNumber = item->Animation.FrameNumber;
+	coll->Setup.OldState = item->Animation.ActiveState;
 
 	if (TrInput & IN_LOOK && lara->Control.CanLook &&
 		lara->ExtraAnim == NO_ITEM)
@@ -806,6 +807,8 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 	ProcessSectorFlags(item);
 	TestTriggers(item, false);
 	TestVolumes(Lara.ItemNumber);
+
+	DrawNearbyPathfinding(GetCollision(item).BottomBlock->Box);
 }
 
 void LaraWaterSurface(ItemInfo* item, CollisionInfo* coll)
@@ -845,28 +848,11 @@ void LaraWaterSurface(ItemInfo* item, CollisionInfo* coll)
 
 	auto level = g_GameFlow->GetLevel(CurrentLevel);
 
-	if (level->GetLaraType() == LaraType::Divesuit)
-	{
-		if (lara->Control.TurnRate < -ANGLE(0.5f))
-			lara->Control.TurnRate += ANGLE(0.5f);
-		else if (lara->Control.TurnRate > ANGLE(0.5f))
-			lara->Control.TurnRate -= ANGLE(0.5f);
-		else
-			lara->Control.TurnRate = 0;
-	}
-	else
-	{
-		// Reset turn rate.
-		int sign = copysign(1, lara->Control.TurnRate);
-		if (abs(lara->Control.TurnRate) > ANGLE(2.0f))
-			lara->Control.TurnRate -= ANGLE(2.0f) * sign;
-		else if (abs(lara->Control.TurnRate) > ANGLE(0.5f))
-			lara->Control.TurnRate -= ANGLE(0.5f) * sign;
-		else
-			lara->Control.TurnRate = 0;
-	}
-
+	// TODO: Subsuit gradually slows down at rate of 0.5 degrees. @Sezz 2022.06.23
+	// Apply and reset turn rate.
 	item->Pose.Orientation.y += lara->Control.TurnRate;
+	if (!(TrInput & (IN_LEFT | IN_RIGHT)))
+		lara->Control.TurnRate = 0;
 
 	if (level->GetLaraType() == LaraType::Divesuit)
 		UpdateLaraSubsuitAngles(item);
@@ -879,9 +865,7 @@ void LaraWaterSurface(ItemInfo* item, CollisionInfo* coll)
 		LaraWaterCurrent(item, coll);
 
 	AnimateLara(item);
-
-	item->Pose.Position.x += round(item->Animation.VerticalVelocity * phd_sin(lara->Control.MoveAngle) / 4);
-	item->Pose.Position.z += round(item->Animation.VerticalVelocity * phd_cos(lara->Control.MoveAngle) / 4);
+	TranslateItem(item, lara->Control.MoveAngle, item->Animation.VerticalVelocity / 4);
 
 	DoObjectCollision(item, coll);
 
@@ -934,22 +918,11 @@ void LaraUnderwater(ItemInfo* item, CollisionInfo* coll)
 
 	auto* level = g_GameFlow->GetLevel(CurrentLevel);
 
-	if (level->GetLaraType() == LaraType::Divesuit)
-	{
-		if (lara->Control.TurnRate < -ANGLE(0.5f))
-			lara->Control.TurnRate += ANGLE(0.5f);
-		else if (lara->Control.TurnRate > ANGLE(0.5f))
-			lara->Control.TurnRate -= ANGLE(0.5f);
-		else
-			lara->Control.TurnRate = 0;
-	}
-	else if (lara->Control.TurnRate < -ANGLE(2.0f))
-		lara->Control.TurnRate += ANGLE(2.0f);
-	else if (lara->Control.TurnRate > ANGLE(2.0f))
-		lara->Control.TurnRate -= ANGLE(2.0f);
-	else
-		lara->Control.TurnRate = 0;
+	// TODO: Subsuit gradually slowed down at rate of 0.5 degrees. @Sezz 2022.06.23
+	// Apply and reset turn rate.
 	item->Pose.Orientation.y += lara->Control.TurnRate;
+	if (!(TrInput & (IN_LEFT | IN_RIGHT)))
+		lara->Control.TurnRate = 0;
 
 	if (level->GetLaraType() == LaraType::Divesuit)
 		UpdateLaraSubsuitAngles(item);
@@ -981,10 +954,7 @@ void LaraUnderwater(ItemInfo* item, CollisionInfo* coll)
 		LaraWaterCurrent(item, coll);
 
 	AnimateLara(item);
-
-	item->Pose.Position.x += round(phd_cos(item->Pose.Orientation.x) * item->Animation.VerticalVelocity * phd_sin(item->Pose.Orientation.y) / 4);
-	item->Pose.Position.y -= round(item->Animation.VerticalVelocity * phd_sin(item->Pose.Orientation.x) / 4);
-	item->Pose.Position.z += round(phd_cos(item->Pose.Orientation.x) * item->Animation.VerticalVelocity * phd_cos(item->Pose.Orientation.y) / 4);
+	TranslateItem(item, item->Pose.Orientation, item->Animation.VerticalVelocity / 4);
 
 	DoObjectCollision(item, coll);
 

@@ -94,7 +94,7 @@ bool GetTargetOnLOS(GameVector* src, GameVector* dest, bool drawTarget, bool fir
 		Lara.Control.Weapon.Fired = true;
 
 		if (Lara.Control.Weapon.GunType == LaraWeaponType::Revolver)
-			SoundEffect(SFX_TR4_DESSERT_EAGLE_FIRE, nullptr);
+			SoundEffect(SFX_TR4_REVOLVER_FIRE, nullptr);
 	}
 
 	bool hit = false;
@@ -397,8 +397,6 @@ bool DoRayBox(GameVector* start, GameVector* end, BOUNDING_BOX* box, PHD_3DPOS* 
 	int bit = 0;
 	int sp = -2;
 	float minDistance = std::numeric_limits<float>::max();
-
-	int action = TrInput & IN_ACTION;
 
 	if (closesItemNumber < 0)
 	{

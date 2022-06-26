@@ -18,6 +18,7 @@
 #include "Specific/input.h"
 #include "Specific/level.h"
 
+using namespace TEN::Input;
 using namespace TEN::Renderer;
 using namespace TEN::Floordata;
 
@@ -123,7 +124,7 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 	if (LaraCeilingFront(item, lara->Control.MoveAngle, coll->Setup.Radius * 1.5f, 0) > -950)
 		stopped = true;
 
-	// Backup item pos to restore it after coll tests
+	// Restore backup pos after coll tests
 	item->Pose = oldPos;
 
 	// Setup coll lara
@@ -320,6 +321,7 @@ bool TestLaraHangJump(ItemInfo* item, CollisionInfo* coll)
 	item->Animation.Velocity = 2;
 	item->Animation.VerticalVelocity = 1;
 	item->Animation.Airborne = true;
+	lara->Control.TurnRate = 0;
 	lara->Control.HandStatus = HandStatus::Busy;
 	return true;
 }
@@ -439,12 +441,20 @@ bool TestLaraClimbIdle(ItemInfo* item, CollisionInfo* coll)
 	return true;
 }
 
+bool TestLaraNearClimbableWall(ItemInfo* item, FloorInfo* floor)
+{
+	if (floor == nullptr)
+		floor = GetCollision(item).BottomBlock;
+
+	return ((1 << (GetQuadrant(item->Pose.Orientation.y) + 8)) & GetClimbFlags(floor));
+}
+
 bool TestLaraHangOnClimbableWall(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
 	int shift, result;
 
-	if (!lara->Control.CanClimbLadder)
+	if (!TestLaraNearClimbableWall(item))
 		return false;
 
 	if (item->Animation.VerticalVelocity < 0)
@@ -930,6 +940,10 @@ bool TestLaraWaterClimbOut(ItemInfo* item, CollisionInfo* coll)
 	if (!TestValidLedge(item, coll))
 		return false;
 
+	TestForObjectOnLedge(item, coll);
+	if (coll->HitStatic)
+		return false;
+
 	auto probe = GetCollision(item, coll->Setup.ForwardAngle, CLICK(2), -CLICK(1));
 	int headroom = probe.Position.Floor - probe.Position.Ceiling;
 
@@ -979,6 +993,7 @@ bool TestLaraWaterClimbOut(ItemInfo* item, CollisionInfo* coll)
 	item->Animation.Airborne = false;
 	item->Animation.Velocity = 0;
 	item->Animation.VerticalVelocity = 0;
+	lara->Control.TurnRate = 0;
 	lara->Control.HandStatus = HandStatus::Busy;
 	lara->Control.WaterStatus = WaterStatus::Dry;
 	return true;
@@ -1165,11 +1180,11 @@ bool IsRunJumpQueueableState(LaraState state)
 
 bool IsRunJumpCountableState(LaraState state)
 {
-	if (state == LS_RUN_FORWARD ||
-		state == LS_WALK_FORWARD ||
-		state == LS_JUMP_FORWARD ||
+	if (state == LS_WALK_FORWARD ||
+		state == LS_RUN_FORWARD ||
 		state == LS_SPRINT ||
-		state == LS_SPRINT_DIVE)
+		state == LS_SPRINT_DIVE ||
+		state == LS_JUMP_FORWARD)
 	{
 		return true;
 	}
@@ -1356,7 +1371,7 @@ bool TestLaraMonkeyStep(ItemInfo* item, CollisionInfo* coll)
 	return false;
 }
 
-// TODO: This function and its clone TestLaraCrawlMoveTolerance() should become obsolete with more accurate and accessible collision detection in the future.
+// TODO: This function should become obsolete with more accurate and accessible collision detection in the future.
 // For now, it supersedes old probes and is used alongside COLL_INFO. @Sezz 2021.10.24
 bool TestLaraMoveTolerance(ItemInfo* item, CollisionInfo* coll, MoveTestSetup testSetup, bool useCrawlSetup)
 {
@@ -2153,7 +2168,7 @@ CrawlVaultTestResult TestLaraCrawlVaultTolerance(ItemInfo* item, CollisionInfo* 
 {
 	int y = item->Pose.Position.y;
 	auto probeA = GetCollision(item, item->Pose.Orientation.y, testSetup.CrossDist, -LARA_HEIGHT_CRAWL);	// Crossing.
-	auto probeB = GetCollision(item, item->Pose.Orientation.y, testSetup.DestDist, -LARA_HEIGHT_CRAWL);	// Approximate destination.
+	auto probeB = GetCollision(item, item->Pose.Orientation.y, testSetup.DestDist, -LARA_HEIGHT_CRAWL);		// Approximate destination.
 	auto probeMiddle = GetCollision(item);
 
 	bool isSlope = testSetup.CheckSlope ? probeB.Position.FloorSlope : false;

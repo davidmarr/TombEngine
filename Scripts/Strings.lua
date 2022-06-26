@@ -19,6 +19,16 @@ local strings = {
 		"",
 		""
 	},
+	auto_target = {
+		"Automatic targeting",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
 	back = {
 		"Back",
 		"",
@@ -259,6 +269,16 @@ local strings = {
 		"",
 		""
 	},
+	controls_pause = {
+		"Pause",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
 	controls_use_flare = {
 		"Use Flare",
 		"",
@@ -399,16 +419,6 @@ local strings = {
 		"",
 		""
 	},
-	sounds = {
-		"Audio settings",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		""
-	},
 	enable_sound = {
 		"Enable Sounds",
 		"",
@@ -490,7 +500,7 @@ local strings = {
 		""
 	},
 	grenade_launcher_ammo1 = {
-		"Grenadegun (Normal Ammo)",
+		"Grenade Gun Normal Ammo",
 		"",
 		"",
 		"",
@@ -500,7 +510,7 @@ local strings = {
 		""
 	},
 	grenade_launcher_ammo2 = {
-		"Grenadegun (Super Ammo)",
+		"Grenade Gun Super Ammo",
 		"",
 		"",
 		"",
@@ -510,7 +520,7 @@ local strings = {
 		""
 	},
 	grenade_launcher_ammo3 = {
-		"Grenadegun (Flash Ammo)",
+		"Grenade Gun Flash Ammo",
 		"",
 		"",
 		"",
@@ -519,8 +529,8 @@ local strings = {
 		"",
 		""
 	},
-	harpoon_item = {
-		"Harpoon Launcher",
+	harpoon_gun = {
+		"Harpoon Gun",
 		"",
 		"",
 		"",
@@ -530,7 +540,7 @@ local strings = {
 		""
 	},
 	harpoon_ammo = {
-		"Harpoon Launcher Ammo",
+		"Harpoon Gun Ammo",
 		"",
 		"",
 		"",
@@ -669,6 +679,26 @@ local strings = {
 		"",
 		""
 	},
+	options = {
+		"Options",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
+	other_settings = {
+		"Sound and Gameplay",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
 	output_settings = {
 		"Output Settings",
 		"",
@@ -711,6 +741,16 @@ local strings = {
 	},
 	render_options = {
 		"Render Options",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
+	reverb = {
+		"Reverb",
 		"",
 		"",
 		"",
@@ -769,6 +809,16 @@ local strings = {
 		"",
 		""
 	},
+	rumble = {
+		"Vibration",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
 	save_game = {
 		"Save game",
 		"",
@@ -780,7 +830,7 @@ local strings = {
 		""
 	},
 	savegame_timestamp = {
-		"%d Days %d:%d:%d",
+		"%02d Days %02d:%02d:%02d",
 		"",
 		"",
 		"",
@@ -890,7 +940,7 @@ local strings = {
 		""
 	},
 	sound = {
-		"Sound settings",
+		"Sound",
 		"",
 		"",
 		"",
@@ -899,17 +949,7 @@ local strings = {
 		"",
 		""
 	},
-	special_sound_fx = {
-		"Special Sound FX",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		""
-	},
-SILENCER_ITEM = {
+	silencer = {
 	"Silencer",
 		"",
 		"",
@@ -921,6 +961,16 @@ SILENCER_ITEM = {
 	},
 	statistics = {
 		"Statistics",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	},
+	thumbstick_camera = {
+		"Thumbstick camera",
 		"",
 		"",
 		"",

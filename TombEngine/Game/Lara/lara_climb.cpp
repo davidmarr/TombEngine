@@ -13,6 +13,8 @@
 #include "Specific/input.h"
 #include "Flow/ScriptInterfaceFlowHandler.h"
 
+using namespace TEN::Input;
+
 // -----------------------------
 // LADDER CLIMB
 // Control & Collision Functions
@@ -408,7 +410,7 @@ void lara_as_climb_stepoff_right(ItemInfo* item, CollisionInfo* coll)
 
 short GetClimbFlags(int x, int y, int z, short roomNumber)
 {
-	return GetClimbFlags(GetFloor(x, y, z, &roomNumber));
+	return GetClimbFlags(GetCollision(x, y, z, roomNumber).BottomBlock);
 }
 
 short GetClimbFlags(FloorInfo* floor)

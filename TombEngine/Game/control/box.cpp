@@ -17,6 +17,7 @@
 #include "Objects/objectslist.h"
 #include "Game/itemdata/creature_info.h"
 #include "Objects/TR5/Object/tr5_pushableblock.h"
+#include "Renderer/Renderer11.h"
 
 #define CHECK_CLICK(x) CLICK(x) / 2
 #define ESCAPE_DIST SECTOR(5)
@@ -37,6 +38,53 @@ constexpr int NONE_PRIO_RANGE = LOW_PRIO_RANGE + LOW_PRIO_RANGE * (LOW_PRIO_RANG
 constexpr auto FRAME_PRIO_BASE = 4;
 constexpr auto FRAME_PRIO_EXP = 1.5;
 #endif // CREATURE_AI_PRIORITY_OPTIMIZATION
+
+void DrawBox(int boxIndex, Vector3 color)
+{
+	if (boxIndex == NO_BOX)
+		return;
+
+	auto& currBox = g_Level.Boxes[boxIndex];
+
+	float x = ((float)currBox.left + (float)(currBox.right - currBox.left) / 2.0f) * 1024.0f;
+	auto  y = currBox.height - CLICK(1);
+	float z = ((float)currBox.top + (float)(currBox.bottom - currBox.top) / 2.0f) * 1024.0f;
+
+
+	auto center = Vector3(z, y, x);
+	auto corner = Vector3(currBox.bottom * SECTOR(1), currBox.height + CLICK(1), currBox.right * SECTOR(1));
+	auto extents = (corner - center) * 0.9f;
+	auto dBox = BoundingOrientedBox(center, extents, Vector4::UnitY);
+
+	for (int i = 0; i <= 10; i++)
+	{
+		dBox.Extents = extents + Vector3(i);
+		TEN::Renderer::g_Renderer.AddDebugBox(dBox, Vector4(color.x, color.y, color.z, 1), RENDERER_DEBUG_PAGE::LOGIC_STATS);
+	}
+}
+
+void DrawNearbyPathfinding(int boxIndex)
+{
+	if (boxIndex == NO_BOX)
+		return;
+
+	DrawBox(boxIndex, Vector3(0, 1, 1));
+
+	auto& currBox = g_Level.Boxes[boxIndex];
+	auto index = currBox.overlapIndex;
+
+	while (true)
+	{
+		auto overlap = g_Level.Overlaps[index];
+
+		DrawBox(overlap.box, Vector3(1, 1, 0));
+
+		if (overlap.flags & BOX_END_BIT)
+			break;
+		else
+			index++;
+	}
+}
 
 void DropEntityPickups(ItemInfo* item)
 {
@@ -431,12 +479,12 @@ short CreatureTurn(ItemInfo* item, short maxTurn)
 	int x = creature->Target.x - item->Pose.Position.x;
 	int z = creature->Target.z - item->Pose.Position.z;
 	angle = phd_atan(z, x) - item->Pose.Orientation.y;
-	int range = item->Animation.Velocity * (16384 / maxTurn);
+	int range = (item->Animation.Velocity * 16384) / maxTurn;
 	int distance = pow(x, 2) + pow(z, 2);
 
 	if (angle > FRONT_ARC || angle < -FRONT_ARC && distance < pow(range, 2))
 	{
-		maxTurn >>= 1;
+		maxTurn /= 2;
 	}
 
 	if (angle > maxTurn)
@@ -923,11 +971,11 @@ void CreatureDie(short itemNumber, bool explode)
 	{
 		if (Objects[item->ObjectNumber].hitEffect)
 		{
-			ExplodingDeath(itemNumber, ALL_MESHBITS, EXPLODE_HIT_EFFECT);
+			ExplodingDeath(itemNumber, ALL_JOINT_BITS, EXPLODE_HIT_EFFECT);
 		}
 		else
 		{
-			ExplodingDeath(itemNumber, ALL_MESHBITS, EXPLODE_NORMAL);
+			ExplodingDeath(itemNumber, ALL_JOINT_BITS, EXPLODE_NORMAL);
 		}
 
 		KillItem(itemNumber);
@@ -1078,8 +1126,10 @@ void TargetBox(LOTInfo* LOT, int boxNumber)
 
 	auto* box = &g_Level.Boxes[boxNumber];
 
-	LOT->Target.x = ((box->top * SECTOR(1)) + GetRandomControl() * ((box->bottom - box->top) - 1) >> 5) + SECTOR(0.5f);
-	LOT->Target.z = ((box->left * SECTOR(1)) + GetRandomControl() * ((box->right - box->left) - 1) >> 5) + SECTOR(0.5f);
+	// Maximize target precision. DO NOT change bracket precedence!
+	LOT->Target.x = (int)((box->top  * SECTOR(1)) + (float)GetRandomControl() * (((float)(box->bottom - box->top) - 1.0f) / 32.0f) + SECTOR(0.5f));
+	LOT->Target.z = (int)((box->left * SECTOR(1)) + (float)GetRandomControl() * (((float)(box->right - box->left) - 1.0f) / 32.0f) + SECTOR(0.5f));
+	
 	LOT->RequiredBox = boxNumber;
 
 	if (LOT->Fly == NO_FLYING)
@@ -1220,7 +1270,6 @@ bool SearchLOT(LOTInfo* LOT, int depth)
 
 	return true;
 }
-
 
 #if CREATURE_AI_PRIORITY_OPTIMIZATION
 CreatureAIPriority GetCreatureLOTPriority(ItemInfo* item)
@@ -1463,6 +1512,7 @@ void GetAITarget(CreatureInfo* creature)
 			Objects[item->ObjectNumber].waterCreature)
 		{
 			TestTriggers(enemy, true);
+			ProcessSectorFlags(enemy);
 			creature->Patrol = !creature->Patrol;
 		}
 	}
@@ -1480,6 +1530,7 @@ void GetAITarget(CreatureInfo* creature)
 			abs(enemy->Pose.Position.z - item->Pose.Position.z) < REACHED_GOAL_RADIUS)
 		{
 			TestTriggers(enemy, true);
+			ProcessSectorFlags(enemy);
 
 			creature->ReachedGoal = true;
 			creature->Enemy = LaraItem;
@@ -1715,8 +1766,7 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 		{
 		case MoodType::Bored:
 			boxNumber = LOT->Node[GetRandomControl() * LOT->ZoneCount >> 15].boxNumber;
-			if (ValidBox(item, AI->zoneNumber, boxNumber) &&
-				!(GetRandomControl() & 0x0F))
+			if (ValidBox(item, AI->zoneNumber, boxNumber))
 			{
 				if (StalkBox(item, enemy, boxNumber) && enemy->HitPoints > 0 && creature->Enemy)
 				{
@@ -1745,7 +1795,7 @@ void CreatureMood(ItemInfo* item, AI_INFO* AI, int violent)
 
 		case MoodType::Escape:
 			boxNumber = LOT->Node[GetRandomControl() * LOT->ZoneCount >> 15].boxNumber;
-			if (ValidBox(item, AI->zoneNumber, boxNumber) && LOT->RequiredBox == NO_BOX)
+			if (ValidBox(item, AI->zoneNumber, boxNumber))
 			{
 				if (EscapeBox(item, enemy, boxNumber))
 				{
@@ -2069,7 +2119,7 @@ TARGET_TYPE CalculateTarget(Vector3Int* target, ItemInfo* item, LOTInfo* LOT)
 		{
 			if (item->Pose.Position.z < boxLeft)
 			{
-				if (direction & CLIP_LEFT &&
+				if ((direction & CLIP_LEFT) &&
 					item->Pose.Position.x >= boxTop &&
 					item->Pose.Position.x <= boxBottom)
 				{
@@ -2098,7 +2148,7 @@ TARGET_TYPE CalculateTarget(Vector3Int* target, ItemInfo* item, LOTInfo* LOT)
 			}
 			else if (item->Pose.Position.z > boxRight)
 			{
-				if (direction & CLIP_RIGHT &&
+				if ((direction & CLIP_RIGHT) &&
 					item->Pose.Position.x >= boxTop &&
 					item->Pose.Position.x <= boxBottom)
 				{
@@ -2128,7 +2178,7 @@ TARGET_TYPE CalculateTarget(Vector3Int* target, ItemInfo* item, LOTInfo* LOT)
 
 			if (item->Pose.Position.x < boxTop)
 			{
-				if (direction & CLIP_TOP &&
+				if ((direction & CLIP_TOP) &&
 					item->Pose.Position.z >= boxLeft &&
 					item->Pose.Position.z <= boxRight)
 				{
@@ -2157,7 +2207,7 @@ TARGET_TYPE CalculateTarget(Vector3Int* target, ItemInfo* item, LOTInfo* LOT)
 			}
 			else if (item->Pose.Position.x > boxBottom)
 			{
-				if (direction & CLIP_BOTTOM &&
+				if ((direction & CLIP_BOTTOM) &&
 					item->Pose.Position.z >= boxLeft &&
 					item->Pose.Position.z <= boxRight)
 				{

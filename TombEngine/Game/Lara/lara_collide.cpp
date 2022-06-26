@@ -17,6 +17,8 @@
 #include "Flow/ScriptInterfaceFlowHandler.h"
 #include "ScriptInterfaceLevel.h"
 
+using namespace TEN::Input;
+
 // -----------------------------
 // COLLISION TEST FUNCTIONS
 // For State Control & Collision
@@ -24,6 +26,8 @@
 
 bool LaraDeflectEdge(ItemInfo* item, CollisionInfo* coll)
 {
+	auto* lara = GetLaraInfo(item);
+
 	if (coll->CollisionType == CT_FRONT || coll->CollisionType == CT_TOP_FRONT)
 	{
 		ShiftItem(item, coll);
@@ -31,6 +35,7 @@ bool LaraDeflectEdge(ItemInfo* item, CollisionInfo* coll)
 		item->Animation.TargetState = LS_IDLE;
 		item->Animation.Velocity = 0;
 		item->Animation.Airborne = false;
+		lara->Control.TurnRate = 0;
 		return true;
 	}
 
@@ -64,8 +69,12 @@ bool LaraDeflectEdgeJump(ItemInfo* item, CollisionInfo* coll)
 				SetAnimation(item, LA_LAND);
 				LaraSnapToHeight(item, coll);
 			}
-			else if (abs(item->Animation.Velocity) > 50) // TODO: Tune and demagic this value.
+			else if (abs(item->Animation.Velocity) > 47)
+			{
+				// TODO: Demagic. This is Lara's running velocity. Jumps have a minimum of 50.
 				SetAnimation(item, LA_JUMP_WALL_SMASH_START, 1);
+				Rumble(0.5f, 0.15f);
+			}
 
 			item->Animation.Velocity /= 4;
 			lara->Control.MoveAngle += ANGLE(180.0f);
@@ -431,9 +440,7 @@ void LaraSurfaceCollision(ItemInfo* item, CollisionInfo* coll)
 		coll->Middle.Floor < 0 && coll->Middle.FloorSlope)
 	{
 		item->Animation.VerticalVelocity = 0;
-		item->Pose.Position.x = coll->Setup.OldPosition.x;
-		item->Pose.Position.y = coll->Setup.OldPosition.y;
-		item->Pose.Position.z = coll->Setup.OldPosition.z;
+		item->Pose.Position = coll->Setup.OldPosition;
 	}
 	else if (coll->CollisionType == CT_LEFT)
 		item->Pose.Orientation.y += ANGLE(5.0f);
@@ -681,13 +688,10 @@ bool TestLaraHitCeiling(CollisionInfo* coll)
 
 void SetLaraHitCeiling(ItemInfo* item, CollisionInfo* coll)
 {
-	item->Pose.Position.x = coll->Setup.OldPosition.x;
-	item->Pose.Position.y = coll->Setup.OldPosition.y;
-	item->Pose.Position.z = coll->Setup.OldPosition.z;
-
+	item->Animation.Airborne = false;
 	item->Animation.Velocity = 0;
 	item->Animation.VerticalVelocity = 0;
-	item->Animation.Airborne = false;
+	item->Pose.Position = coll->Setup.OldPosition;
 }
 
 bool TestLaraObjectCollision(ItemInfo* item, short angle, int distance, int height, int side)

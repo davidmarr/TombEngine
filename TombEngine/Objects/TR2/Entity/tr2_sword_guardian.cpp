@@ -56,7 +56,7 @@ void SwordGuardianControl(short itemNumber)
 			SoundEffect(SFX_TR4_EXPLOSION2, &LaraItem->Pose);
 			//item->meshBits = 0xFFFFFFFF;
 			//item->objectNumber = ID_SAS;
-			ExplodingDeath(itemNumber, -1, 256);
+			ExplodingDeath(itemNumber, ALL_JOINT_BITS, 256);
 			//item->objectNumber = ID_SWAT;
 			DisableEntityAI(itemNumber);
 			KillItem(itemNumber);
@@ -217,10 +217,8 @@ void SwordGuardianControl(short itemNumber)
 			if (!creature->Flags && (item->TouchBits & 0xC000))
 			{
 				CreatureEffect(item, &SwordBite, DoBloodSplat);
+				DoDamage(creature->Enemy, 300);
 				creature->Flags = 1;
-
-				LaraItem->HitPoints -= 300;
-				LaraItem->HitStatus = true;
 			}
 
 			break;

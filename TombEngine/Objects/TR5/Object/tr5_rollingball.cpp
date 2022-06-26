@@ -60,7 +60,10 @@ void RollingBallControl(short itemNumber)
 				pow(Camera.pos.z - item->Pose.Position.z, 2));
 
 			if (distance < 16384)
+			{
 				Camera.bounce = -(((16384 - distance) * abs(item->Animation.VerticalVelocity)) / 16384);
+				SoundEffect(SFX_TR4_BOULDER_FALL, &item->Pose);
+			}
 		}
 
 		if ((item->Pose.Position.y - dh) < CLICK(2))
@@ -291,7 +294,7 @@ void ClassicRollingBallCollision(short itemNum, ItemInfo* lara, CollisionInfo* c
 			if (coll->Setup.EnableObjectPush)
 				ItemPushItem(item, lara, coll, coll->Setup.EnableSpasm, 1);
 
-			lara->HitPoints -= 100;
+			DoDamage(lara, 100);
 			int x = lara->Pose.Position.x - item->Pose.Position.x;
 			int y = (lara->Pose.Position.y - 350) - (item->Pose.Position.y - 512);
 			int z = lara->Pose.Position.z - item->Pose.Position.z;
@@ -427,7 +430,7 @@ void ClassicRollingBallControl(short itemNum)
 			item->Pose.Position.z = oldz;
 			item->Animation.Velocity = 0;
 			item->Animation.VerticalVelocity = 0;
-			item->TouchBits = 0;
+			item->TouchBits = NO_JOINT_BITS;
 		}
 	}
 	else if (item->Status == ITEM_DEACTIVATED)

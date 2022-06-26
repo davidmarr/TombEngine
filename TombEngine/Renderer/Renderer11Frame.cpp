@@ -237,7 +237,7 @@ namespace TEN::Renderer
 				room->BoundActive |= 1;
 
 				if (nativeRoom->flags & ENV_FLAG_OUTSIDE)
-					m_outside = ENV_FLAG_OUTSIDE;
+					m_outside = true;
 
 				Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
 					(nativeRoom->minfloor + nativeRoom->maxceiling) / 2.0f,
@@ -298,7 +298,7 @@ namespace TEN::Renderer
 
 		room->BoundActive = 2;
 
-		// Initialize bounds list
+		// Initialise bounds list
 		m_boundList[0] = Camera.pos.roomNumber;
 		m_boundStart = 0;
 		m_boundEnd = 1;
