@@ -92,6 +92,7 @@ struct ItemInfo
 	bool LookedAt;
 	bool Collidable;
 	bool InDrawRoom;
+	bool InUse;
 
 	ROOM_VECTOR Location;
 	short RoomNumber;

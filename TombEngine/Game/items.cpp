@@ -165,6 +165,7 @@ void KillItem(short const itemNumber)
 		if (itemNumber >= g_Level.NumItems)
 		{
 			NextItemFree = itemNumber;
+			item->InUse = false;
 		}
 		else
 		{
@@ -489,7 +490,7 @@ short TryGetNextFreeItem()
 	for (short currentItemNumber = g_Level.NumItems; currentItemNumber < g_Level.Items.size(); currentItemNumber++)
 	{
 		auto* currentItem = &g_Level.Items[currentItemNumber];
-		if (!currentItem->Active)
+		if (!currentItem->InUse)
 		{
 			return currentItemNumber;
 		}
@@ -519,6 +520,7 @@ short CreateItem()
 
 	g_Level.Items[NextItemFree].Flags = 0;
 	g_Level.Items[NextItemFree].LuaName = "";
+	g_Level.Items[NextItemFree].InUse = true;
 
 	NextItemFree = TryGetNextFreeItem();
 
@@ -538,6 +540,7 @@ void InitialiseItemArray(int totalItem)
 		{
 			item->Active = false;
 			item->Data = nullptr;
+			item->InUse = false;
 		}
 	}
 }

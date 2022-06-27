@@ -523,13 +523,12 @@ bool CreatureAnimation(short itemNumber, short angle, short tilt)
 
 	auto old = item->Pose.Position;
 	
-	/*if (!Objects[item->objectNumber].waterCreature)
+	if (!Objects[item->ObjectNumber].waterCreature)
 	{
-		roomNumber = item->roomNumber;
-		GetFloor(item->pos.Position.x, item->pos.Position.y, item->pos.Position.z, &roomNumber);
-		if (roomNumber != item->roomNumber)
+		auto roomNumber = GetCollision(item).RoomNumber;
+		if (roomNumber != item->RoomNumber)
 			ItemNewRoom(itemNumber, roomNumber);
-	}*/
+	}
 
 	AnimateItem(item);
 	if (item->Status == ITEM_DEACTIVATED)
@@ -539,7 +538,13 @@ bool CreatureAnimation(short itemNumber, short angle, short tilt)
 	}
 
 	auto* bounds = GetBoundsAccurate(item);
-	int y = item->Pose.Position.y + bounds->Y1;
+
+	// HACK: In original, y coordinate was just set to bounding box top point.
+	// In TEN, we have to use real floor height + small headroom, because Choco's floordata
+	// system returns inconsistent room number in portal 4-click vault cases -- Lwmte, 27.06.22
+
+	int y = item->Pose.Position.y;
+	y -= LOT->Step <= SECTOR(2) ? LOT->Step : bounds->Y1;
 
 	short roomNumber = item->RoomNumber;
 	GetFloor(old.x, y, old.z, &roomNumber);  
@@ -929,9 +934,9 @@ bool CreatureAnimation(short itemNumber, short angle, short tilt)
 		{
 			item->Pose.Position.y = item->Floor;
 		}
-		else if (item->Floor - item->Pose.Position.y > STEP_SIZE / 4)
+		else if (item->Floor - item->Pose.Position.y > CLICK(0.25f))
 		{
-			item->Pose.Position.y += STEP_SIZE / 4;
+			item->Pose.Position.y += CLICK(0.25f);
 		}
 		else if (item->Pose.Position.y < item->Floor)
 		{
@@ -941,14 +946,19 @@ bool CreatureAnimation(short itemNumber, short angle, short tilt)
 		item->Pose.Orientation.x = 0;
 	}
 
-	/*roomNumber = item->roomNumber;
-	if (!Objects[item->objectNumber].waterCreature)
+	if (!Objects[item->ObjectNumber].waterCreature)
 	{
-		GetFloor(item->pos.Position.x, item->pos.Position.y - STEP_SIZE*2, item->pos.Position.z, &roomNumber);
+		auto roomNumber = GetCollision(item->Pose.Position.x, 
+										item->Pose.Position.y - CLICK(2), 
+										item->Pose.Position.z,
+										item->RoomNumber).RoomNumber;
 
-		if (g_Level.Rooms[roomNumber].flags & ENV_FLAG_WATER)
-			item->HitPoints = 0;
-	}*/
+		if (roomNumber != item->RoomNumber)
+			ItemNewRoom(itemNumber, roomNumber);
+
+		if (TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, &g_Level.Rooms[roomNumber]))
+			DoDamage(item, INT_MAX);
+	}
 
 	roomNumber = item->RoomNumber;
 	GetFloor(item->Pose.Position.x, item->Pose.Position.y - CLICK(2), item->Pose.Position.z, &roomNumber);
@@ -2023,7 +2033,6 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, int isViolent)
 						creature->Mood = MoodType::Stalk;
 					}
 				}
-
 				break;
 
 			case MoodType::Attack:
