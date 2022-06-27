@@ -40,7 +40,7 @@ enum SpriteEnumFlag
 
 struct FX_INFO
 {
-	bool Active;
+	bool InUse;
 	PHD_3DPOS pos;
 	short RoomNumber;
 	short objectNumber;

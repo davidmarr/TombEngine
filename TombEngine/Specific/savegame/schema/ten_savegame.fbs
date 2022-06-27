@@ -42,10 +42,11 @@ table Item {
 	lua_on_hit_name: string;
 	lua_on_collided_with_object_name: string;
 	lua_on_collided_with_room_name: string;
+	in_use: bool;
 }
 
 table Effect {
-	active: bool;
+	in_use: bool;
 	position: Position;
 	room_number: int32;
 	object_number: int32;

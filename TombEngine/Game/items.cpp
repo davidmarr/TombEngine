@@ -289,7 +289,7 @@ void KillEffect(short fxNumber)
 
 		DetatchSpark(fxNumber, SP_FX);
 
-		fx->Active = false;
+		fx->InUse = false;
 
 		ActiveEffects.erase(
 			std::remove(
@@ -344,7 +344,7 @@ short CreateNewEffect(short roomNum)
 	short fxNumber = NextFxFree;
 	auto* fx = &EffectList[fxNumber];
 
-	fx->Active = true;
+	fx->InUse = true;
 	fx->RoomNumber = roomNum;
 	fx->shade = GRAY555;
 
@@ -363,7 +363,7 @@ void InitialiseFXArray(int allocateMemory)
 
 	for (short currentFxNumber = 0; currentFxNumber < NUM_EFFECTS; currentFxNumber++)
 	{
-		EffectList[currentFxNumber].Active = false;
+		EffectList[currentFxNumber].InUse = false;
 	}
 }
 

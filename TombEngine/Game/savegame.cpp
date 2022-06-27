@@ -651,6 +651,8 @@ bool SaveGame::Save(int slot)
 		serializedItem.add_lua_on_collided_with_object_name(luaOnCollidedObjectNameOffset);
 		serializedItem.add_lua_on_collided_with_room_name(luaOnCollidedRoomNameOffset);
 
+		serializedItem.add_in_use(itemToSerialize.InUse);
+
 		auto serializedItemOffset = serializedItem.Finish();
 		serializedItems.push_back(serializedItemOffset);
 
@@ -672,7 +674,7 @@ bool SaveGame::Save(int slot)
 			(int32_t)fx.pos.Orientation.y,
 			(int32_t)fx.pos.Orientation.z);
 
-		serializedFx.add_active(fx.Active);
+		serializedFx.add_in_use(fx.InUse);
 		serializedFx.add_position(&position);
 		serializedFx.add_counter(fx.counter);
 		serializedFx.add_fall_speed(fx.fallspeed);
@@ -1351,6 +1353,7 @@ bool SaveGame::Load(int slot)
 		item->Animation.Airborne = savedItem->airborne();
 		item->Collidable = savedItem->collidable();
 		item->LookedAt = savedItem->looked_at();
+		item->InUse = savedItem->in_use();
 
 		// Mesh stuff
 		item->MeshBits = savedItem->mesh_bits();
@@ -1550,7 +1553,7 @@ bool SaveGame::Load(int slot)
 		const Save::Effect* savedEffect = s->effects()->Get(i);
 		auto& fx = EffectList[i];
 
-		fx.Active = savedEffect->active();
+		fx.InUse = savedEffect->in_use();
 		fx.counter = savedEffect->counter();
 		fx.fallspeed = savedEffect->fall_speed();
 		fx.flag1 = savedEffect->flag1();

@@ -425,6 +425,7 @@ struct ItemT : public flatbuffers::NativeTable {
   std::string lua_on_hit_name{};
   std::string lua_on_collided_with_object_name{};
   std::string lua_on_collided_with_room_name{};
+  bool in_use = false;
 };
 
 struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -468,7 +469,8 @@ struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_LUA_ON_KILLED_NAME = 70,
     VT_LUA_ON_HIT_NAME = 72,
     VT_LUA_ON_COLLIDED_WITH_OBJECT_NAME = 74,
-    VT_LUA_ON_COLLIDED_WITH_ROOM_NAME = 76
+    VT_LUA_ON_COLLIDED_WITH_ROOM_NAME = 76,
+    VT_IN_USE = 78
   };
   int32_t floor() const {
     return GetField<int32_t>(VT_FLOOR, 0);
@@ -648,6 +650,9 @@ struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *lua_on_collided_with_room_name() const {
     return GetPointer<const flatbuffers::String *>(VT_LUA_ON_COLLIDED_WITH_ROOM_NAME);
   }
+  bool in_use() const {
+    return GetField<uint8_t>(VT_IN_USE, 0) != 0;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_FLOOR) &&
@@ -694,6 +699,7 @@ struct Item FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(lua_on_collided_with_object_name()) &&
            VerifyOffset(verifier, VT_LUA_ON_COLLIDED_WITH_ROOM_NAME) &&
            verifier.VerifyString(lua_on_collided_with_room_name()) &&
+           VerifyField<uint8_t>(verifier, VT_IN_USE) &&
            verifier.EndTable();
   }
   ItemT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -904,6 +910,9 @@ struct ItemBuilder {
   void add_lua_on_collided_with_room_name(flatbuffers::Offset<flatbuffers::String> lua_on_collided_with_room_name) {
     fbb_.AddOffset(Item::VT_LUA_ON_COLLIDED_WITH_ROOM_NAME, lua_on_collided_with_room_name);
   }
+  void add_in_use(bool in_use) {
+    fbb_.AddElement<uint8_t>(Item::VT_IN_USE, static_cast<uint8_t>(in_use), 0);
+  }
   explicit ItemBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -953,7 +962,8 @@ inline flatbuffers::Offset<Item> CreateItem(
     flatbuffers::Offset<flatbuffers::String> lua_on_killed_name = 0,
     flatbuffers::Offset<flatbuffers::String> lua_on_hit_name = 0,
     flatbuffers::Offset<flatbuffers::String> lua_on_collided_with_object_name = 0,
-    flatbuffers::Offset<flatbuffers::String> lua_on_collided_with_room_name = 0) {
+    flatbuffers::Offset<flatbuffers::String> lua_on_collided_with_room_name = 0,
+    bool in_use = false) {
   ItemBuilder builder_(_fbb);
   builder_.add_lua_on_collided_with_room_name(lua_on_collided_with_room_name);
   builder_.add_lua_on_collided_with_object_name(lua_on_collided_with_object_name);
@@ -985,6 +995,7 @@ inline flatbuffers::Offset<Item> CreateItem(
   builder_.add_mesh_bits(mesh_bits);
   builder_.add_touch_bits(touch_bits);
   builder_.add_floor(floor);
+  builder_.add_in_use(in_use);
   builder_.add_data_type(data_type);
   builder_.add_looked_at(looked_at);
   builder_.add_collidable(collidable);
@@ -1038,7 +1049,8 @@ inline flatbuffers::Offset<Item> CreateItemDirect(
     const char *lua_on_killed_name = nullptr,
     const char *lua_on_hit_name = nullptr,
     const char *lua_on_collided_with_object_name = nullptr,
-    const char *lua_on_collided_with_room_name = nullptr) {
+    const char *lua_on_collided_with_room_name = nullptr,
+    bool in_use = false) {
   auto item_flags__ = item_flags ? _fbb.CreateVector<int32_t>(*item_flags) : 0;
   auto lua_name__ = lua_name ? _fbb.CreateString(lua_name) : 0;
   auto lua_on_killed_name__ = lua_on_killed_name ? _fbb.CreateString(lua_on_killed_name) : 0;
@@ -1083,14 +1095,15 @@ inline flatbuffers::Offset<Item> CreateItemDirect(
       lua_on_killed_name__,
       lua_on_hit_name__,
       lua_on_collided_with_object_name__,
-      lua_on_collided_with_room_name__);
+      lua_on_collided_with_room_name__,
+      in_use);
 }
 
 flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb, const ItemT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
 struct EffectT : public flatbuffers::NativeTable {
   typedef Effect TableType;
-  bool active = false;
+  bool in_use = false;
   std::unique_ptr<TEN::Save::Position> position{};
   int32_t room_number = 0;
   int32_t object_number = 0;
@@ -1108,7 +1121,7 @@ struct Effect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef EffectBuilder Builder;
   struct Traits;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ACTIVE = 4,
+    VT_IN_USE = 4,
     VT_POSITION = 6,
     VT_ROOM_NUMBER = 8,
     VT_OBJECT_NUMBER = 10,
@@ -1120,8 +1133,8 @@ struct Effect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FLAG1 = 22,
     VT_FLAG2 = 24
   };
-  bool active() const {
-    return GetField<uint8_t>(VT_ACTIVE, 0) != 0;
+  bool in_use() const {
+    return GetField<uint8_t>(VT_IN_USE, 0) != 0;
   }
   const TEN::Save::Position *position() const {
     return GetStruct<const TEN::Save::Position *>(VT_POSITION);
@@ -1155,7 +1168,7 @@ struct Effect FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_ACTIVE) &&
+           VerifyField<uint8_t>(verifier, VT_IN_USE) &&
            VerifyField<TEN::Save::Position>(verifier, VT_POSITION) &&
            VerifyField<int32_t>(verifier, VT_ROOM_NUMBER) &&
            VerifyField<int32_t>(verifier, VT_OBJECT_NUMBER) &&
@@ -1177,8 +1190,8 @@ struct EffectBuilder {
   typedef Effect Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_active(bool active) {
-    fbb_.AddElement<uint8_t>(Effect::VT_ACTIVE, static_cast<uint8_t>(active), 0);
+  void add_in_use(bool in_use) {
+    fbb_.AddElement<uint8_t>(Effect::VT_IN_USE, static_cast<uint8_t>(in_use), 0);
   }
   void add_position(const TEN::Save::Position *position) {
     fbb_.AddStruct(Effect::VT_POSITION, position);
@@ -1223,7 +1236,7 @@ struct EffectBuilder {
 
 inline flatbuffers::Offset<Effect> CreateEffect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    bool active = false,
+    bool in_use = false,
     const TEN::Save::Position *position = 0,
     int32_t room_number = 0,
     int32_t object_number = 0,
@@ -1245,7 +1258,7 @@ inline flatbuffers::Offset<Effect> CreateEffect(
   builder_.add_object_number(object_number);
   builder_.add_room_number(room_number);
   builder_.add_position(position);
-  builder_.add_active(active);
+  builder_.add_in_use(in_use);
   return builder_.Finish();
 }
 
@@ -6686,6 +6699,7 @@ inline void Item::UnPackTo(ItemT *_o, const flatbuffers::resolver_function_t *_r
   { auto _e = lua_on_hit_name(); if (_e) _o->lua_on_hit_name = _e->str(); }
   { auto _e = lua_on_collided_with_object_name(); if (_e) _o->lua_on_collided_with_object_name = _e->str(); }
   { auto _e = lua_on_collided_with_room_name(); if (_e) _o->lua_on_collided_with_room_name = _e->str(); }
+  { auto _e = in_use(); _o->in_use = _e; }
 }
 
 inline flatbuffers::Offset<Item> Item::Pack(flatbuffers::FlatBufferBuilder &_fbb, const ItemT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
@@ -6733,6 +6747,7 @@ inline flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb
   auto _lua_on_hit_name = _o->lua_on_hit_name.empty() ? _fbb.CreateSharedString("") : _fbb.CreateString(_o->lua_on_hit_name);
   auto _lua_on_collided_with_object_name = _o->lua_on_collided_with_object_name.empty() ? _fbb.CreateSharedString("") : _fbb.CreateString(_o->lua_on_collided_with_object_name);
   auto _lua_on_collided_with_room_name = _o->lua_on_collided_with_room_name.empty() ? _fbb.CreateSharedString("") : _fbb.CreateString(_o->lua_on_collided_with_room_name);
+  auto _in_use = _o->in_use;
   return TEN::Save::CreateItem(
       _fbb,
       _floor,
@@ -6771,7 +6786,8 @@ inline flatbuffers::Offset<Item> CreateItem(flatbuffers::FlatBufferBuilder &_fbb
       _lua_on_killed_name,
       _lua_on_hit_name,
       _lua_on_collided_with_object_name,
-      _lua_on_collided_with_room_name);
+      _lua_on_collided_with_room_name,
+      _in_use);
 }
 
 inline EffectT *Effect::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
@@ -6783,7 +6799,7 @@ inline EffectT *Effect::UnPack(const flatbuffers::resolver_function_t *_resolver
 inline void Effect::UnPackTo(EffectT *_o, const flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
-  { auto _e = active(); _o->active = _e; }
+  { auto _e = in_use(); _o->in_use = _e; }
   { auto _e = position(); if (_e) _o->position = std::unique_ptr<TEN::Save::Position>(new TEN::Save::Position(*_e)); }
   { auto _e = room_number(); _o->room_number = _e; }
   { auto _e = object_number(); _o->object_number = _e; }
@@ -6804,7 +6820,7 @@ inline flatbuffers::Offset<Effect> CreateEffect(flatbuffers::FlatBufferBuilder &
   (void)_rehasher;
   (void)_o;
   struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const EffectT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
-  auto _active = _o->active;
+  auto _in_use = _o->in_use;
   auto _position = _o->position ? _o->position.get() : 0;
   auto _room_number = _o->room_number;
   auto _object_number = _o->object_number;
@@ -6817,7 +6833,7 @@ inline flatbuffers::Offset<Effect> CreateEffect(flatbuffers::FlatBufferBuilder &
   auto _flag2 = _o->flag2;
   return TEN::Save::CreateEffect(
       _fbb,
-      _active,
+      _in_use,
       _position,
       _room_number,
       _object_number,
