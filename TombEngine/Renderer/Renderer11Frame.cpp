@@ -143,7 +143,7 @@ namespace TEN::Renderer
 					else
 					{
 						top = 0;
-						bottom = m_screenWidth;
+						bottom = m_screenHeight;
 					}
 				}
 			}
@@ -191,7 +191,7 @@ namespace TEN::Renderer
 				room->ClipTest.bottom = bottom;
 			}
 		}
-		else
+		else if (!m_rooms[door->room].Visited)
 		{
 			// The room must be added to the bounds list
 
