@@ -527,7 +527,9 @@ namespace TEN::Renderer
 		void ResetScissor();
 		void ResetDebugVariables();
 		float CalculateFrameRate();
-
+		bool CheckPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 viewPort, Vector4* clipPort, RenderView& renderView);
+		void GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView);
+		Vector4 GetPortalRect(Vector4 v, Vector4 vp);
 		void AddSpriteBillboard(RendererSprite* sprite, Vector3 pos, Vector4 color, float rotation, float scale,
 		                        Vector2 size, BLEND_MODES blendMode, RenderView& view);
 		void AddSpriteBillboardConstrained(RendererSprite* sprite, Vector3 pos, Vector4 color, float rotation,
@@ -543,7 +545,6 @@ namespace TEN::Renderer
 		RendererMesh* GetMesh(int meshIndex);
 		Texture2D CreateDefaultNormalTexture();
 
-		Vector4 GetPortalRect(Vector4 v, Vector4 vp);
 		bool SphereBoxIntersection(Vector3 boxMin, Vector3 boxMax, Vector3 sphereCentre, float sphereRadius);
 
 		inline void DrawIndexedTriangles(int count, int baseIndex, int baseVertex)

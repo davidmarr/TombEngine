@@ -15,6 +15,97 @@ namespace TEN::Renderer
 	using TEN::Memory::LinearArrayBuffer;
 	using std::vector;
 
+	bool Renderer11::CheckPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 viewPort, Vector4* clipPort, RenderView& renderView) 
+	{
+		ROOM_INFO* parentRoom = &g_Level.Rooms[parentRoomNumber];
+
+		Vector3 n = door->normal;
+		Vector3 v = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z) - 
+			Vector3(
+				parentRoom->x + door->vertices[0].x, 
+				parentRoom->y + door->vertices[0].y,
+				parentRoom->z + door->vertices[0].z);
+
+		if (n.Dot(v) <= 0.0f)
+			return false;
+
+		int  zClip = 0;
+		Vector4 p[4];
+
+		*clipPort = Vector4(INFINITY, INFINITY, -INFINITY, -INFINITY);
+
+		for (int i = 0; i < 4; i++) 
+		{
+			Vector4 tmp = Vector4(
+				parentRoom->x + door->vertices[i].x,
+				parentRoom->y + door->vertices[i].y,
+				parentRoom->z + door->vertices[i].z,
+				1.0f);
+
+			p[i] = Vector4::Transform(tmp, renderView.camera.ViewProjection);
+
+			if (p[i].w > 0.0f) 
+			{
+				p[i].x *= (1.0f / p[i].w);
+				p[i].y *= (1.0f / p[i].w);
+
+				clipPort->x = std::min(clipPort->x, p[i].x);
+				clipPort->y = std::min(clipPort->y, p[i].y);
+				clipPort->z = std::max(clipPort->z, p[i].x);
+				clipPort->w = std::max(clipPort->w, p[i].y);
+			}
+			else
+				zClip++;
+		}
+
+		if (zClip == 4)
+			return false;
+
+		if (zClip > 0) 
+		{
+			for (int i = 0; i < 4; i++) 
+			{
+				Vector4 a = p[i];
+				Vector4 b = p[(i + 1) % 4];
+
+				if ((a.w > 0.0f) ^ (b.w > 0.0f)) 
+				{
+					if (a.x < 0.0f && b.x < 0.0f)
+						clipPort->x = -1.0f;
+					else
+						if (a.x > 0.0f && b.x > 0.0f)
+							clipPort->z = 1.0f;
+						else 
+						{
+							clipPort->x = -1.0f;
+							clipPort->z = 1.0f;
+						}
+
+					if (a.y < 0.0f && b.y < 0.0f)
+						clipPort->y = -1.0f;
+					else
+						if (a.y > 0.0f && b.y > 0.0f)
+							clipPort->w = 1.0f;
+						else
+						{
+							clipPort->y = -1.0f;
+							clipPort->w = 1.0f;
+						}
+				}
+			}
+		}
+
+		if (clipPort->x > viewPort.z || clipPort->y > viewPort.w || clipPort->z < viewPort.x || clipPort->w < viewPort.y)
+			return false;
+
+		clipPort->x = std::max(clipPort->x, viewPort.x);
+		clipPort->y = std::max(clipPort->y, viewPort.y);
+		clipPort->z = std::min(clipPort->z, viewPort.z);
+		clipPort->w = std::min(clipPort->w, viewPort.w);
+
+		return true;
+	}
+
 	void Renderer11::CollectRooms(RenderView &renderView, bool onlyRooms)
 	{
 		short baseRoomIndex = renderView.camera.RoomNumber;
@@ -31,7 +122,46 @@ namespace TEN::Renderer
 			m_rooms[i].BoundActive = 0;
 		}
 
-		GetVisibleObjects(renderView, onlyRooms);
+		GetVisibleRooms(NO_ROOM, Camera.pos.roomNumber, Vector4(-1.0f, -1.0f, 1.0f, 1.0f), 0, onlyRooms, renderView);
+		//GetVisibleObjects(renderView, onlyRooms);
+	}
+
+	void Renderer11::GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView)
+	{
+		if (count > 32) {
+			return;
+		}
+
+		RendererRoom* room = &m_rooms[to];
+		ROOM_INFO* nativeRoom = &g_Level.Rooms[to];
+
+		renderView.roomsToDraw.push_back(room);
+
+		room->Visited = true;
+		room->ViewPort = viewPort;
+		Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
+			(nativeRoom->minfloor + nativeRoom->maxceiling) / 2.0f,
+			nativeRoom->z + nativeRoom->zSize * WALL_SIZE / 2.0f);
+		Vector3 laraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
+
+		room->Distance = (roomCentre - laraPosition).Length();
+
+		if (!onlyRooms)
+		{
+			CollectLightsForRoom(to, renderView);
+			CollectItems(to, renderView);
+			CollectStatics(to, renderView);
+			CollectEffects(to, renderView);
+		}
+
+		Vector4 clipPort;
+		for (int i = 0; i < nativeRoom->doors.size(); i++)
+		{
+			ROOM_DOOR* portal = &nativeRoom->doors[i];
+
+			if (from != portal->room && CheckPortal(to, portal, viewPort, &clipPort, renderView))
+				GetVisibleRooms(to, portal->room, clipPort, count + 1, onlyRooms, renderView);
+		}
 	}
 
 	void Renderer11::SetRoomBounds(ROOM_DOOR* door, short parentRoomNumber, RenderView& renderView)
@@ -85,7 +215,7 @@ namespace TEN::Renderer
 				if (p[i].w > 0)
 				{
 					xs = 0.5f * (p[i].x + 1.0f) * m_screenWidth;
-					ys = 0.5f * (p[i].y + 1.0f) * m_screenHeight;
+					ys = m_screenHeight - 0.5f * (p[i].y + 1.0f) * m_screenHeight;
 				}
 				else
 				{
@@ -143,7 +273,7 @@ namespace TEN::Renderer
 					else
 					{
 						top = 0;
-						bottom = m_screenWidth;
+						bottom = m_screenHeight;
 					}
 				}
 			}

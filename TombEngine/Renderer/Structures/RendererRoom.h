@@ -21,6 +21,7 @@ namespace TEN::Renderer
 		RendererRectangle Clip;
 		RendererRectangle ClipTest;
 		byte BoundActive;
+		Vector4 ViewPort;
 		std::vector<RendererBucket> Buckets;
 		std::vector<RendererLight> Lights;
 		std::vector<RendererItem*> ItemsToDraw;
