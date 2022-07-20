@@ -102,6 +102,12 @@ namespace TEN::Renderer
 			}
 		}
 
+		// Expand a bit the clipping area for avoiding precision issues
+		tempClipPort.x = std::max(tempClipPort.x - CLIPPING_AREA_DELTA, -1.0f);
+		tempClipPort.y = std::max(tempClipPort.y - CLIPPING_AREA_DELTA, -1.0f);
+		tempClipPort.z = std::min(tempClipPort.z + CLIPPING_AREA_DELTA, 1.0f);
+		tempClipPort.w = std::min(tempClipPort.w + CLIPPING_AREA_DELTA, 1.0f);
+
 		// If found clipping area and parent clipping area are not intersecting, then 
 		// the portal must not be traversed
 		if (tempClipPort.x > parentViewPort.z 

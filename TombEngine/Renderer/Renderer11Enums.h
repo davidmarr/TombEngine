@@ -243,3 +243,5 @@ constexpr auto MAX_ROOM_BOUNDS = 256;
 
 constexpr auto MIN_FAR_VIEW = 3200.0f;
 constexpr auto DEFAULT_FAR_VIEW = 102400.0f;
+
+constexpr auto CLIPPING_AREA_DELTA = 0.01f;
