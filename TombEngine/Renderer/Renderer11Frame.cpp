@@ -36,16 +36,20 @@ namespace TEN::Renderer
 
 		for (int i = 0; i < 4; i++)
 		{
+			// Get the current corner absolute coordinates. Notice that in TR and TEN world,
+			// Y coordinates are always absolute for rooms stuff.
 			Vector4 tmp = Vector4(
 				parentRoom->x + door->vertices[i].x,
 				door->vertices[i].y,
 				parentRoom->z + door->vertices[i].z,
 				1.0f);
 
+			// Project the corner in clipping space
 			p[i] = Vector4::Transform(tmp, renderView.camera.ViewProjection);
 
 			if (p[i].w > 0.0f)
 			{
+				// Scale correctly the result dividing by the homogenous coordinate
 				p[i].x *= (1.0f / p[i].w);
 				p[i].y *= (1.0f / p[i].w);
 
@@ -59,9 +63,11 @@ namespace TEN::Renderer
 				zClip++;
 		}
 
+		// If all corners of the portal are behind the camera, the portal must not be traversed
 		if (zClip == 4)
 			return false;
 
+		// If some of the corners were behind the camera, do a proper clipping
 		if (zClip > 0)
 		{
 			for (int i = 0; i < 4; i++)
@@ -96,13 +102,15 @@ namespace TEN::Renderer
 			}
 		}
 
+		// If found clipping area and parent clipping area are not intersecting, then 
+		// the portal must not be traversed
 		if (tempClipPort.x > parentViewPort.z 
 			|| tempClipPort.y > parentViewPort.w 
 			|| tempClipPort.z < parentViewPort.x 
 			|| tempClipPort.w < parentViewPort.y)
 			return false;
 
-		// Output the final clipped area
+		// Output the final clipped area, intersecting both the current and the parent clipping area
 		outClipPort->x = std::max(tempClipPort.x, parentViewPort.x);
 		outClipPort->y = std::max(tempClipPort.y, parentViewPort.y);
 		outClipPort->z = std::min(tempClipPort.z, parentViewPort.z);
@@ -115,19 +123,22 @@ namespace TEN::Renderer
 	{
 		short baseRoomIndex = renderView.camera.RoomNumber;
 
+		// Reset rooms fields
 		for (int i = 0; i < g_Level.Rooms.size(); i++)
 		{
 			m_rooms[i].ItemsToDraw.clear();
 			m_rooms[i].EffectsToDraw.clear();
 			m_rooms[i].TransparentFacesToDraw.clear();
 			m_rooms[i].StaticsToDraw.clear();
-			m_rooms[i].Visited = false;
 			m_rooms[i].ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
 			m_rooms[i].ViewPorts.clear();
 		}
 
+		// Get all visible rooms, collecting all possible clipping rectangles
 		GetVisibleRooms(NO_ROOM, Camera.pos.roomNumber, Vector4(-1.0f, -1.0f, 1.0f, 1.0f), 0, onlyRooms, renderView);
 
+		// For each room, find the largest clipping area containing all clipping rectangles found 
+		// in the previous step. We'll do overdraw in some cases but it won't cause glitches.
 		for (int i = 0; i < g_Level.Rooms.size(); i++)
 		{
 			RendererRoom* room = &m_rooms[i];
@@ -146,6 +157,8 @@ namespace TEN::Renderer
 	
 	Vector4 Renderer11::GetPortalScissorRect(Vector4 v)
 	{
+		// NOTE: clip space ranges from -1 to 1 and also Y coordinate from bottom to top.
+		// This formula below does the trick of scaling it to 0 ... 1 with Y from top to bottom.
 		return Vector4(
 			(v.x * 0.5f + 0.5f) * m_screenWidth,
 			(1.0f - (v.w * 0.5f + 0.5f)) * m_screenHeight,
@@ -156,6 +169,7 @@ namespace TEN::Renderer
 
 	void Renderer11::GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView)
 	{
+		// Avoid too much recursion depth
 		if (count > 32) 
 		{
 			return;
@@ -166,16 +180,17 @@ namespace TEN::Renderer
 
 		renderView.roomsToDraw.push_back(room);
 
-		room->Visited = true;
-		room->ViewPort = viewPort;
+		// Store the distance of the room from the camera
 		Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
 			(nativeRoom->minfloor + nativeRoom->maxceiling) / 2.0f,
 			nativeRoom->z + nativeRoom->zSize * WALL_SIZE / 2.0f);
 		Vector3 laraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
-
 		room->Distance = (roomCentre - laraPosition).Length();
+
+		// Collect the current clipping area used to reach that room
 		room->ViewPorts.push_back(viewPort);
 
+		// Collect items
 		if (!onlyRooms)
 		{
 			CollectLightsForRoom(to, renderView);
@@ -184,10 +199,11 @@ namespace TEN::Renderer
 			CollectEffects(to);
 		}
 
-		//Vector4 clipPort;
+		// Traverse all portals for recursively collecting the visible rooms
 		for (int i = 0; i < nativeRoom->doors.size(); i++)
 		{
 			ROOM_DOOR* portal = &nativeRoom->doors[i];
+
 			Vector4 outClipPort;
 			if (from != portal->room && ClipPortal(to, portal, viewPort, &outClipPort, renderView))
 			{
