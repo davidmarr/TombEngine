@@ -18,10 +18,8 @@ namespace TEN::Renderer
 		int Distance;
 		short RoomNumber;
 		Vector4 AmbientLight;
-		RendererRectangle Clip;
-		RendererRectangle ClipTest;
-		byte BoundActive;
 		Vector4 ViewPort;
+		std::vector<Vector4> ViewPorts;
 		std::vector<RendererBucket> Buckets;
 		std::vector<RendererLight> Lights;
 		std::vector<RendererItem*> ItemsToDraw;

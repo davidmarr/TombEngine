@@ -15,15 +15,15 @@ namespace TEN::Renderer
 	using TEN::Memory::LinearArrayBuffer;
 	using std::vector;
 
-	bool Renderer11::CheckPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 viewPort, Vector4* clipPort, RenderView& renderView) 
+	bool Renderer11::ClipPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 parentViewPort, Vector4* outClipPort, RenderView& renderView)
 	{
 		ROOM_INFO* parentRoom = &g_Level.Rooms[parentRoomNumber];
 
 		Vector3 n = door->normal;
-		Vector3 v = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z) - 
+		Vector3 v = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z) -
 			Vector3(
-				parentRoom->x + door->vertices[0].x, 
-				parentRoom->y + door->vertices[0].y,
+				parentRoom->x + door->vertices[0].x,
+				door->vertices[0].y,
 				parentRoom->z + door->vertices[0].z);
 
 		if (n.Dot(v) <= 0.0f)
@@ -32,27 +32,28 @@ namespace TEN::Renderer
 		int  zClip = 0;
 		Vector4 p[4];
 
-		*clipPort = Vector4(INFINITY, INFINITY, -INFINITY, -INFINITY);
+		Vector4 tempClipPort = Vector4(INFINITY, INFINITY, -INFINITY, -INFINITY);
 
-		for (int i = 0; i < 4; i++) 
+		for (int i = 0; i < 4; i++)
 		{
 			Vector4 tmp = Vector4(
 				parentRoom->x + door->vertices[i].x,
-				parentRoom->y + door->vertices[i].y,
+				door->vertices[i].y,
 				parentRoom->z + door->vertices[i].z,
 				1.0f);
 
 			p[i] = Vector4::Transform(tmp, renderView.camera.ViewProjection);
 
-			if (p[i].w > 0.0f) 
+			if (p[i].w > 0.0f)
 			{
 				p[i].x *= (1.0f / p[i].w);
 				p[i].y *= (1.0f / p[i].w);
 
-				clipPort->x = std::min(clipPort->x, p[i].x);
-				clipPort->y = std::min(clipPort->y, p[i].y);
-				clipPort->z = std::max(clipPort->z, p[i].x);
-				clipPort->w = std::max(clipPort->w, p[i].y);
+				// Expand the current clip area
+				tempClipPort.x = std::min(tempClipPort.x, p[i].x);
+				tempClipPort.y = std::min(tempClipPort.y, p[i].y);
+				tempClipPort.z = std::max(tempClipPort.z, p[i].x);
+				tempClipPort.w = std::max(tempClipPort.w, p[i].y);
 			}
 			else
 				zClip++;
@@ -61,47 +62,51 @@ namespace TEN::Renderer
 		if (zClip == 4)
 			return false;
 
-		if (zClip > 0) 
+		if (zClip > 0)
 		{
-			for (int i = 0; i < 4; i++) 
+			for (int i = 0; i < 4; i++)
 			{
 				Vector4 a = p[i];
 				Vector4 b = p[(i + 1) % 4];
 
-				if ((a.w > 0.0f) ^ (b.w > 0.0f)) 
+				if ((a.w > 0.0f) ^ (b.w > 0.0f))
 				{
 					if (a.x < 0.0f && b.x < 0.0f)
-						clipPort->x = -1.0f;
+						tempClipPort.x = -1.0f;
 					else
 						if (a.x > 0.0f && b.x > 0.0f)
-							clipPort->z = 1.0f;
-						else 
+							tempClipPort.z = 1.0f;
+						else
 						{
-							clipPort->x = -1.0f;
-							clipPort->z = 1.0f;
+							tempClipPort.x = -1.0f;
+							tempClipPort.z = 1.0f;
 						}
 
 					if (a.y < 0.0f && b.y < 0.0f)
-						clipPort->y = -1.0f;
+						tempClipPort.y = -1.0f;
 					else
 						if (a.y > 0.0f && b.y > 0.0f)
-							clipPort->w = 1.0f;
+							tempClipPort.w = 1.0f;
 						else
 						{
-							clipPort->y = -1.0f;
-							clipPort->w = 1.0f;
+							tempClipPort.y = -1.0f;
+							tempClipPort.w = 1.0f;
 						}
 				}
 			}
 		}
 
-		if (clipPort->x > viewPort.z || clipPort->y > viewPort.w || clipPort->z < viewPort.x || clipPort->w < viewPort.y)
+		if (tempClipPort.x > parentViewPort.z 
+			|| tempClipPort.y > parentViewPort.w 
+			|| tempClipPort.z < parentViewPort.x 
+			|| tempClipPort.w < parentViewPort.y)
 			return false;
 
-		clipPort->x = std::max(clipPort->x, viewPort.x);
-		clipPort->y = std::max(clipPort->y, viewPort.y);
-		clipPort->z = std::min(clipPort->z, viewPort.z);
-		clipPort->w = std::min(clipPort->w, viewPort.w);
+		// Output the final clipped area
+		outClipPort->x = std::max(tempClipPort.x, parentViewPort.x);
+		outClipPort->y = std::max(tempClipPort.y, parentViewPort.y);
+		outClipPort->z = std::min(tempClipPort.z, parentViewPort.z);
+		outClipPort->w = std::min(tempClipPort.w, parentViewPort.w);
 
 		return true;
 	}
@@ -117,18 +122,42 @@ namespace TEN::Renderer
 			m_rooms[i].TransparentFacesToDraw.clear();
 			m_rooms[i].StaticsToDraw.clear();
 			m_rooms[i].Visited = false;
-			m_rooms[i].Clip = RendererRectangle(m_screenWidth, m_screenHeight, 0, 0);
-			m_rooms[i].ClipTest = RendererRectangle(m_screenWidth, m_screenHeight, 0, 0);
-			m_rooms[i].BoundActive = 0;
+			m_rooms[i].ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
+			m_rooms[i].ViewPorts.clear();
 		}
 
 		GetVisibleRooms(NO_ROOM, Camera.pos.roomNumber, Vector4(-1.0f, -1.0f, 1.0f, 1.0f), 0, onlyRooms, renderView);
-		//GetVisibleObjects(renderView, onlyRooms);
+
+		for (int i = 0; i < g_Level.Rooms.size(); i++)
+		{
+			RendererRoom* room = &m_rooms[i];
+			room->ViewPort = Vector4(INFINITY, INFINITY, -INFINITY, -INFINITY);
+			for (int j = 0; j < room->ViewPorts.size(); j++)
+			{
+				Vector4 viewPort = room->ViewPorts[j];
+
+				room->ViewPort.x = std::min(viewPort.x, room->ViewPort.x);
+				room->ViewPort.y = std::min(viewPort.y, room->ViewPort.y);
+				room->ViewPort.z = std::max(viewPort.z, room->ViewPort.z);
+				room->ViewPort.w = std::max(viewPort.w, room->ViewPort.w);
+			}
+		}
+	}
+	
+	Vector4 Renderer11::GetPortalScissorRect(Vector4 v)
+	{
+		return Vector4(
+			(v.x * 0.5f + 0.5f) * m_screenWidth,
+			(1.0f - (v.w * 0.5f + 0.5f)) * m_screenHeight,
+			(v.z * 0.5f + 0.5f) * m_screenWidth,
+			(1.0f - (v.y * 0.5f + 0.5f)) * m_screenHeight
+		);
 	}
 
 	void Renderer11::GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView)
 	{
-		if (count > 32) {
+		if (count > 32) 
+		{
 			return;
 		}
 
@@ -145,305 +174,26 @@ namespace TEN::Renderer
 		Vector3 laraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
 
 		room->Distance = (roomCentre - laraPosition).Length();
+		room->ViewPorts.push_back(viewPort);
 
 		if (!onlyRooms)
 		{
 			CollectLightsForRoom(to, renderView);
 			CollectItems(to, renderView);
-			CollectStatics(to, renderView);
-			CollectEffects(to, renderView);
+			CollectStatics(to);
+			CollectEffects(to);
 		}
 
-		Vector4 clipPort;
+		//Vector4 clipPort;
 		for (int i = 0; i < nativeRoom->doors.size(); i++)
 		{
 			ROOM_DOOR* portal = &nativeRoom->doors[i];
-
-			if (from != portal->room && CheckPortal(to, portal, viewPort, &clipPort, renderView))
-				GetVisibleRooms(to, portal->room, clipPort, count + 1, onlyRooms, renderView);
+			Vector4 outClipPort;
+			if (from != portal->room && ClipPortal(to, portal, viewPort, &outClipPort, renderView))
+			{
+				GetVisibleRooms(to, portal->room, outClipPort, count + 1, onlyRooms, renderView);
+			}		
 		}
-	}
-
-	void Renderer11::SetRoomBounds(ROOM_DOOR* door, short parentRoomNumber, RenderView& renderView)
-	{
-		RendererRoom* room = &m_rooms[door->room];
-		ROOM_INFO* nativeRoom = &g_Level.Rooms[door->room];
-
-		RendererRoom* parentRoom = &m_rooms[parentRoomNumber];
-		ROOM_INFO* parentNativeRoom = &g_Level.Rooms[parentRoomNumber];
-
-		// If parent's bounds are bigger than current bounds test, then don't do anything else
-		if (room->Clip.left <= parentRoom->ClipTest.left
-			&& room->Clip.right >= parentRoom->ClipTest.right
-			&& room->Clip.top <= parentRoom->ClipTest.top
-			&& room->Clip.bottom >= parentRoom->ClipTest.bottom)
-		{
-			return;
-		}
-
-		int left = parentRoom->ClipTest.right;
-		int right = parentRoom->ClipTest.left;
-		int top = parentRoom->ClipTest.bottom;
-		int bottom = parentRoom->ClipTest.top;
-
-		int zBehind = 0;
-		int zTooFar = 0;
-
-		Vector4 p[4];
-
-		int xs = 0;
-		int ys = 0;
-
-		for (int i = 0; i < 4; i++)
-		{
-			// Project vertices of the door in clip space
-			Vector4 tmp = Vector4(
-				door->vertices[i].x + parentNativeRoom->x,
-				door->vertices[i].y,
-				door->vertices[i].z + parentNativeRoom->z,
-				1.0f);
-
-			Vector4::Transform(tmp, renderView.camera.ViewProjection, p[i]);
-
-			// Convert coordinates to screen space
-			if (p[i].w > 0.0f)
-			{
-				p[i].x *= (1.0f / p[i].w);
-				p[i].y *= (1.0f / p[i].w);
-				p[i].z *= (1.0f / p[i].w);
-
-				if (p[i].w > 0)
-				{
-					xs = 0.5f * (p[i].x + 1.0f) * m_screenWidth;
-					ys = m_screenHeight - 0.5f * (p[i].y + 1.0f) * m_screenHeight;
-				}
-				else
-				{
-					xs = (p[i].x >= 0) ? 0 : m_screenWidth;
-					ys = (p[i].y >= 0) ? m_screenHeight : 0;
-				}
-
-				// Has bound changed?
-				if (xs - 1 < left)
-					left = xs - 1;
-				if (xs + 1 > right)
-					right = xs + 1;
-
-				if (ys - 1 < top)
-					top = ys - 1;
-				if (ys + 1 > bottom)
-					bottom = ys + 1;
-			}
-			else
-			{
-				zBehind++;
-			}
-		}
-
-		// If all vertices of the door ar behind the camera, exit now
-		if (zBehind == 4)
-			return;
-
-		// If some vertices are behind the camera, we need to properly clip
-		if (zBehind > 0)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				Vector4 a = p[i];
-				Vector4 b = p[(i + 1) % 4];
-
-				if ((a.z <= 0) ^ (b.z <= 0))
-				{
-					// X clip
-					if (a.x < 0 && b.x < 0)
-						left = 0;
-					else if (a.x > 0 && b.x > 0)
-						right = m_screenWidth;
-					else
-					{
-						left = 0;
-						right = m_screenWidth;
-					}
-
-					// Y clip
-					if (a.y < 0 && b.y < 0)
-						top = 0;
-					else if (a.y > 0 && b.y > 0)
-						bottom = m_screenHeight;
-					else
-					{
-						top = 0;
-						bottom = m_screenHeight;
-					}
-				}
-			}
-		}
-
-		// Clip bounds to parent bounds
-		if (left < parentRoom->ClipTest.left)
-			left = parentRoom->ClipTest.left;
-		if (right > parentRoom->ClipTest.right)
-			right = parentRoom->ClipTest.right;
-		if (top < parentRoom->ClipTest.top)
-			top = parentRoom->ClipTest.top;
-		if (bottom > parentRoom->ClipTest.bottom)
-			bottom = parentRoom->ClipTest.bottom;
-
-		if (left >= right || top >= bottom)
-			return;
-
-		// Store the new calculated bounds
-		if (room->BoundActive & 2)
-		{
-			// The room is already in the bounds list
-
-			if (left < room->ClipTest.left)
-			{
-				room->Clip.left = left;
-				room->ClipTest.left = left;
-			}
-
-			if (top < room->ClipTest.top)
-			{
-				room->Clip.top = top;
-				room->ClipTest.top = top;
-			}
-
-			if (right > room->ClipTest.right)
-			{
-				room->Clip.right = right;
-				room->ClipTest.right = right;
-			}
-
-			if (bottom > room->ClipTest.bottom)
-			{
-				room->Clip.bottom = bottom;
-				room->ClipTest.bottom = bottom;
-			}
-		}
-		else
-		{
-			// The room must be added to the bounds list
-
-			m_boundList[(m_boundEnd++) % MAX_ROOM_BOUNDS] = door->room;
-			room->BoundActive |= 2;
-
-			room->ClipTest.left = left;
-			room->ClipTest.right = right;
-			room->ClipTest.top = top;
-			room->ClipTest.bottom = bottom;
-
-			room->Clip.left = left;
-			room->Clip.right = right;
-			room->Clip.top = top;
-			room->Clip.bottom = bottom;
-		}
-	}
-
-	void Renderer11::GetRoomBounds(RenderView& renderView, bool onlyRooms)
-	{
-		while (m_boundStart != m_boundEnd)
-		{
-			short roomNumber = m_boundList[(m_boundStart++) % MAX_ROOM_BOUNDS];
-			RendererRoom* room = &m_rooms[roomNumber];
-			ROOM_INFO* nativeRoom = &g_Level.Rooms[roomNumber];
-
-			room->BoundActive -= 2;
-
-			if (room->ClipTest.left < room->Clip.left)
-				room->Clip.left = room->ClipTest.left;
-			if (room->ClipTest.top < room->Clip.top)
-				room->Clip.top = room->ClipTest.top;
-			if (room->ClipTest.right > room->Clip.right)
-				room->Clip.right = room->ClipTest.right;
-			if (room->ClipTest.bottom > room->Clip.bottom)
-				room->Clip.bottom = room->ClipTest.bottom;
-
-			// Add room to the list of rooms to draw
-			if (!(room->BoundActive & 1))
-			{
-				renderView.roomsToDraw.push_back(room);
-
-				room->BoundActive |= 1;
-
-				if (nativeRoom->flags & ENV_FLAG_OUTSIDE)
-					m_outside = true;
-
-				Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
-					(nativeRoom->minfloor + nativeRoom->maxceiling) / 2.0f,
-					nativeRoom->z + nativeRoom->zSize * WALL_SIZE / 2.0f);
-				Vector3 laraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
-
-				m_rooms[roomNumber].Distance = (roomCentre - laraPosition).Length();
-				m_rooms[roomNumber].Visited = true;
-
-				if (!onlyRooms)
-				{
-					CollectLightsForRoom(roomNumber, renderView);
-					CollectItems(roomNumber, renderView);
-					CollectStatics(roomNumber);
-					CollectEffects(roomNumber);
-				}
-			}
-
-			if (nativeRoom->flags & ENV_FLAG_OUTSIDE)
-			{
-				if (room->Clip.left < m_outsideClip.left)
-					m_outsideClip.left = room->Clip.left;
-				if (room->Clip.right > m_outsideClip.right)
-					m_outsideClip.right = room->Clip.right;
-				if (room->Clip.top < m_outsideClip.top)
-					m_outsideClip.top = room->Clip.top;
-				if (room->Clip.bottom > m_outsideClip.bottom)
-					m_outsideClip.bottom = room->Clip.bottom;
-			}
-
-			for (int i = 0; i < nativeRoom->doors.size(); i++)
-			{
-				ROOM_DOOR* portal = &nativeRoom->doors[i];
-
-				Vector3Int n = Vector3Int(portal->normal.x, portal->normal.y, portal->normal.z);
-				Vector3Int v = Vector3Int(
-					Camera.pos.x - (nativeRoom->x + portal->vertices[0].x),
-					Camera.pos.y - (nativeRoom->y + portal->vertices[0].y),
-					Camera.pos.z - (nativeRoom->z + portal->vertices[0].z));
-
-				if (n.x * v.x + n.y * v.y + n.z * v.z < 0)
-					continue;
-
-				SetRoomBounds(portal, roomNumber, renderView);
-			}
-		}
-	}
-
-	void Renderer11::GetVisibleObjects(RenderView& renderView, bool onlyRooms)
-	{
-		RendererRoom* room = &m_rooms[Camera.pos.roomNumber];
-		ROOM_INFO* nativeRoom = &g_Level.Rooms[Camera.pos.roomNumber];
-
-		room->ClipTest = RendererRectangle(0, 0, m_screenWidth, m_screenHeight);
-		m_outside = nativeRoom->flags & ENV_FLAG_OUTSIDE;
-		m_cameraUnderwater = (nativeRoom->flags & ENV_FLAG_WATER);
-
-		room->BoundActive = 2;
-
-		// Initialise bounds list
-		m_boundList[0] = Camera.pos.roomNumber;
-		m_boundStart = 0;
-		m_boundEnd = 1;
-
-		// Horizon clipping
-		if (m_outside)
-		{
-			m_outsideClip = RendererRectangle(0, 0, m_screenWidth, m_screenHeight);
-		}
-		else
-		{
-			m_outsideClip = RendererRectangle(m_screenWidth, m_screenHeight, 0, 0);
-		}
-
-		// Get all rooms and objects to draw
-		GetRoomBounds(renderView, onlyRooms);
 	}
 
 	void Renderer11::CollectItems(short roomNumber, RenderView& renderView)

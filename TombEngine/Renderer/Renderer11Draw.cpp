@@ -1972,13 +1972,7 @@ namespace TEN::Renderer
 			BindConstantBufferVS(CB_ROOM, m_cbRoom.get());
 			BindConstantBufferPS(CB_ROOM, m_cbRoom.get());
 
-			/*RendererRectangle rect;
-			rect.left = (room->ViewPort.x * 0.5f + 0.5f) * m_screenWidth;
-			rect.top = (room->ViewPort.y * 0.5f + 0.5f) * m_screenHeight;
-			rect.right = (room->ViewPort.z * 0.5f + 0.5f) * m_screenWidth;
-			rect.bottom = (room->ViewPort.w * 0.5f + 0.5f) * m_screenHeight;
-
-			SetScissor(rect);*/
+			SetScissor(GetPortalScissorRect(room->ViewPort));
 
 			for (int animated = 0; animated < 2; animated++)
 			{

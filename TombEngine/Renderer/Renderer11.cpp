@@ -454,13 +454,13 @@ namespace TEN::Renderer
 		}
 	}
 
-	void Renderer11::SetScissor(RendererRectangle s)
+	void Renderer11::SetScissor(Vector4 s)
 	{
 		D3D11_RECT rects;
-		rects.left = s.left;
-		rects.top =  s.top;
-		rects.right = s.right;
-		rects.bottom = s.bottom;
+		rects.left = s.x;
+		rects.top = s.y;
+		rects.right = s.z;
+		rects.bottom = s.w;
 
 		m_context->RSSetScissorRects(1, &rects);
 	}

@@ -433,8 +433,6 @@ namespace TEN::Renderer
 		void UpdateAnimation(RendererItem* item, RendererObject& obj, ANIM_FRAME** frmptr, short frac, short rate,
 		                     int mask, bool useObjectWorldRotation = false);
 		void GetVisibleObjects(RenderView& renderView, bool onlyRooms);
-		void GetRoomBounds(RenderView& renderView, bool onlyRooms);
-		void SetRoomBounds(ROOM_DOOR* door, short parentRoomNumber, RenderView& renderView);
 		void CollectRooms(RenderView& renderView, bool onlyRooms);
 		void CollectItems(short roomNumber, RenderView& renderView);
 		void CollectStatics(short roomNumber);
@@ -528,11 +526,11 @@ namespace TEN::Renderer
 		void SetDepthState(DEPTH_STATES depthState, bool force = false);
 		void SetCullMode(CULL_MODES cullMode, bool force = false);
 		void SetAlphaTest(ALPHA_TEST_MODES mode, float threshold, bool force = false);
-		void SetScissor(RendererRectangle rectangle);
+		void SetScissor(Vector4 rectangle);
 		void ResetScissor();
 		void ResetDebugVariables();
 		float CalculateFrameRate();
-		bool CheckPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 viewPort, Vector4* clipPort, RenderView& renderView);
+		bool ClipPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 parentViewPort, Vector4* outClipPort, RenderView& renderView);
 		void GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView);
 		Vector4 GetPortalRect(Vector4 v, Vector4 vp);
 		void AddSpriteBillboard(RendererSprite* sprite, Vector3 pos, Vector4 color, float rotation, float scale,
@@ -545,6 +543,7 @@ namespace TEN::Renderer
 		                                         RenderView& view);
 		void AddSprite3D(RendererSprite* sprite, Vector3 vtx1, Vector3 vtx2, Vector3 vtx3, Vector3 vtx4, Vector4 color,
 		                 float rotation, float scale, Vector2 size, BLEND_MODES blendMode, RenderView& view);
+		Vector4 GetPortalScissorRect(Vector4 v);
 
 		short GetRoomNumberForSpriteTest(Vector3 position);
 		RendererMesh* GetMesh(int meshIndex);
