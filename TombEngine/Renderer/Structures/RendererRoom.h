@@ -17,6 +17,7 @@ namespace TEN::Renderer
 		int Distance;
 		short RoomNumber;
 		Vector4 AmbientLight;
+		bool InDrawList;
 		Vector4 ViewPort;
 		std::vector<Vector4> ViewPorts;
 		std::vector<RendererBucket> Buckets;

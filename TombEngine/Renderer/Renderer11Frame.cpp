@@ -138,6 +138,7 @@ namespace TEN::Renderer
 			m_rooms[i].StaticsToDraw.clear();
 			m_rooms[i].ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
 			m_rooms[i].ViewPorts.clear();
+			m_rooms[i].InDrawList = false;
 		}
 
 		// Get all visible rooms, collecting all possible clipping rectangles
@@ -184,7 +185,8 @@ namespace TEN::Renderer
 		RendererRoom* room = &m_rooms[to];
 		ROOM_INFO* nativeRoom = &g_Level.Rooms[to];
 
-		renderView.roomsToDraw.push_back(room);
+		if (!room->InDrawList)
+			renderView.roomsToDraw.push_back(room);
 
 		// Store the distance of the room from the camera
 		Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
@@ -197,13 +199,14 @@ namespace TEN::Renderer
 		room->ViewPorts.push_back(viewPort);
 
 		// Collect items
-		if (!onlyRooms)
+		if (!onlyRooms && !room->InDrawList)
 		{
 			CollectLightsForRoom(to, renderView);
 			CollectItems(to, renderView);
 			CollectStatics(to);
 			CollectEffects(to);
 		}
+		room->InDrawList = true;
 
 		// Traverse all portals for recursively collecting the visible rooms
 		for (int i = 0; i < nativeRoom->doors.size(); i++)
