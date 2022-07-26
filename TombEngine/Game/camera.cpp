@@ -87,6 +87,8 @@ float CinematicBarsHeight = 0;
 float CinematicBarsDestinationHeight = 0;
 float CinematicBarsSpeed = 0;
 
+extern ScriptInterfaceFlowHandler* g_GameFlow;
+
 void LookAt(CAMERA_INFO* cam, short roll)
 {
 	Vector3 position = Vector3(cam->pos.x, cam->pos.y, cam->pos.z);

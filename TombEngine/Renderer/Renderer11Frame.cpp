@@ -8,6 +8,7 @@
 #include "Specific/setup.h"
 #include "RenderView\RenderView.h"
 #include "Game/items.h"
+#include "ScriptInterfaceLevel.h"
 
 namespace TEN::Renderer
 {
@@ -19,45 +20,63 @@ namespace TEN::Renderer
 	{
 		ROOM_INFO* parentRoom = &g_Level.Rooms[parentRoomNumber];
 
-		Vector3 n = door->normal;
-		Vector3 v = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z) -
-			Vector3(
-				parentRoom->x + door->vertices[0].x,
-				door->vertices[0].y,
-				parentRoom->z + door->vertices[0].z);
-
-		if (n.Dot(v) <= 0.0f)
-			return false;
-
 		int  zClip = 0;
-		Vector4 p[4];
 
 		Vector4 tempClipPort = Vector4(INFINITY, INFINITY, -INFINITY, -INFINITY);
 
+		// Do the heavy math only if door was not visited already
+		if (!door->Visited)
+		{
+			int tooFar = 0;
+
+			//float gameFarView = g_GameFlow->GetGameFarView() * float(SECTOR(1));
+			//float levelFarView = g_GameFlow->GetLevel(CurrentLevel)->GetFarView() * float(SECTOR(1));
+
+			//float farView = std::min(gameFarView, levelFarView);
+			float farView = 100 * 1024.0f;
+
+			Vector3 cameraPos = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
+
+			for (int i = 0; i < 4; i++)
+			{
+				// Project the corner in clipping space
+				door->ScreenCoordinates[i] = Vector4::Transform(Vector4(
+					door->AbsoluteCoordinates[i].x,
+					door->AbsoluteCoordinates[i].y,
+					door->AbsoluteCoordinates[i].z,
+					1.0f), renderView.camera.ViewProjection);
+
+				if (door->ScreenCoordinates[i].w > 0.0f)
+				{
+					// Scale correctly the result dividing by the homogenous coordinate
+					door->ScreenCoordinates[i].x *= (1.0f / door->ScreenCoordinates[i].w);
+					door->ScreenCoordinates[i].y *= (1.0f / door->ScreenCoordinates[i].w);
+				}
+
+				if ((cameraPos - door->AbsoluteCoordinates[i]).Length() >= farView)
+					tooFar++;
+			}
+
+			// If all points are too far, just discard this portal and all connected rooms to it
+			if (tooFar == 4)
+			{
+				door->NotVisible = true;
+				return false;
+			}
+
+			// Mark the portal as visited, the heavy math was cached and will not be done anymore
+			door->Visited = true;
+		}
+
 		for (int i = 0; i < 4; i++)
 		{
-			// Get the current corner absolute coordinates. Notice that in TR and TEN world,
-			// Y coordinates are always absolute for rooms stuff.
-			Vector4 tmp = Vector4(
-				parentRoom->x + door->vertices[i].x,
-				door->vertices[i].y,
-				parentRoom->z + door->vertices[i].z,
-				1.0f);
-
-			// Project the corner in clipping space
-			p[i] = Vector4::Transform(tmp, renderView.camera.ViewProjection);
-
-			if (p[i].w > 0.0f)
+			if (door->ScreenCoordinates[i].w > 0.0f)
 			{
-				// Scale correctly the result dividing by the homogenous coordinate
-				p[i].x *= (1.0f / p[i].w);
-				p[i].y *= (1.0f / p[i].w);
-
 				// Expand the current clip area
-				tempClipPort.x = std::min(tempClipPort.x, p[i].x);
-				tempClipPort.y = std::min(tempClipPort.y, p[i].y);
-				tempClipPort.z = std::max(tempClipPort.z, p[i].x);
-				tempClipPort.w = std::max(tempClipPort.w, p[i].y);
+				tempClipPort.x = std::min(tempClipPort.x, door->ScreenCoordinates[i].x);
+				tempClipPort.y = std::min(tempClipPort.y, door->ScreenCoordinates[i].y);
+				tempClipPort.z = std::max(tempClipPort.z, door->ScreenCoordinates[i].x);
+				tempClipPort.w = std::max(tempClipPort.w, door->ScreenCoordinates[i].y);
 			}
 			else
 				zClip++;
@@ -65,15 +84,18 @@ namespace TEN::Renderer
 
 		// If all corners of the portal are behind the camera, the portal must not be traversed
 		if (zClip == 4)
+		{
+			door->NotVisible = true;
 			return false;
+		}
 
 		// If some of the corners were behind the camera, do a proper clipping
 		if (zClip > 0)
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				Vector4 a = p[i];
-				Vector4 b = p[(i + 1) % 4];
+				Vector4 a = door->ScreenCoordinates[i];
+				Vector4 b = door->ScreenCoordinates[(i + 1) % 4];
 
 				if ((a.w > 0.0f) ^ (b.w > 0.0f))
 				{
@@ -139,6 +161,13 @@ namespace TEN::Renderer
 			m_rooms[i].ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
 			m_rooms[i].ViewPorts.clear();
 			m_rooms[i].InDrawList = false;
+
+			ROOM_INFO* nativeRoom = &g_Level.Rooms[i];
+			for (int j = 0; j < nativeRoom->doors.size(); j++)
+			{
+				nativeRoom->doors[j].NotVisible = false;
+				nativeRoom->doors[j].Visited = false;
+			}
 		}
 
 		// Get all visible rooms, collecting all possible clipping rectangles
@@ -177,7 +206,7 @@ namespace TEN::Renderer
 	void Renderer11::GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView)
 	{
 		// Avoid too much recursion depth
-		if (count > 32) 
+		if (count > 12) 
 		{
 			return;
 		}
@@ -186,14 +215,16 @@ namespace TEN::Renderer
 		ROOM_INFO* nativeRoom = &g_Level.Rooms[to];
 
 		if (!room->InDrawList)
-			renderView.roomsToDraw.push_back(room);
+		{
+			// Store the distance of the room from the camera
+			Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
+				(nativeRoom->minfloor + nativeRoom->maxceiling) / 2.0f,
+				nativeRoom->z + nativeRoom->zSize * WALL_SIZE / 2.0f);
+			Vector3 laraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
+			room->Distance = (roomCentre - laraPosition).Length();
 
-		// Store the distance of the room from the camera
-		Vector3 roomCentre = Vector3(nativeRoom->x + nativeRoom->xSize * WALL_SIZE / 2.0f,
-			(nativeRoom->minfloor + nativeRoom->maxceiling) / 2.0f,
-			nativeRoom->z + nativeRoom->zSize * WALL_SIZE / 2.0f);
-		Vector3 laraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
-		room->Distance = (roomCentre - laraPosition).Length();
+			renderView.roomsToDraw.push_back(room);
+		}
 
 		// Collect the current clipping area used to reach that room
 		room->ViewPorts.push_back(viewPort);
@@ -206,18 +237,40 @@ namespace TEN::Renderer
 			CollectStatics(to);
 			CollectEffects(to);
 		}
+
 		room->InDrawList = true;
 
 		// Traverse all portals for recursively collecting the visible rooms
 		for (int i = 0; i < nativeRoom->doors.size(); i++)
 		{
 			ROOM_DOOR* portal = &nativeRoom->doors[i];
+			
+			// If portal was already marked as not visible by a previous step, simply discard it
+			if (portal->NotVisible)
+				continue;
 
+			if (!portal->Visited)
+			{
+				portal->ViewDirection = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z) - portal->AbsoluteCoordinates[0];
+				portal->ViewDirection.Normalize();
+			}
+
+			// Check if portal is visible
+			Vector3 n = portal->normal;
+			n.Normalize();
+
+			if (n.Dot(portal->ViewDirection) <= 0.0f)
+			{
+				portal->NotVisible = true;
+				continue;
+			}
+
+			// Try to clip the portal and eventually find recursively the connected rooms
 			Vector4 outClipPort;
 			if (from != portal->room && ClipPortal(to, portal, viewPort, &outClipPort, renderView))
 			{
 				GetVisibleRooms(to, portal->room, outClipPort, count + 1, onlyRooms, renderView);
-			}		
+			}
 		}
 	}
 
