@@ -714,10 +714,34 @@ void ReadRooms()
 					maxY1 = std::max(maxY2, maxY1);
 					maxZ1 = std::max(maxZ2, maxZ1);
 
-					current->vertices[0] = Vector3(minX1, minY1, minZ1);
-					current->vertices[1] = Vector3(minX1, maxY1, maxZ1);
-					current->vertices[2] = Vector3(maxX1, maxY1, maxZ1);
-					current->vertices[3] = Vector3(maxX1, minY1, minZ1);
+					if (minY1 == maxY1)
+					{
+						current->vertices[0] = Vector3(minX1, minY1, minZ1);
+						current->vertices[1] = Vector3(minX1, minY1, maxZ1);
+						current->vertices[2] = Vector3(maxX1, minY1, maxZ1);
+						current->vertices[3] = Vector3(maxX1, minY1, minZ1);
+					}
+					else if (minX1 == maxX1)
+					{
+						current->vertices[0] = Vector3(minX1, minY1, minZ1);
+						current->vertices[1] = Vector3(minX1, maxY1, minZ1);
+						current->vertices[2] = Vector3(minX1, maxY1, maxZ1);
+						current->vertices[3] = Vector3(minX1, minY1, maxZ1);
+					}
+					else if (minZ1 == maxZ1)
+					{
+						current->vertices[0] = Vector3(minX1, minY1, minZ1);
+						current->vertices[1] = Vector3(minX1, maxY1, minZ1);
+						current->vertices[2] = Vector3(maxX1, maxY1, minZ1);
+						current->vertices[3] = Vector3(maxX1, minY1, minZ1);
+					}
+					else
+					{
+						current->vertices[0] = Vector3(minX1, minY1, minZ1);
+						current->vertices[1] = Vector3(minX1, maxY1, maxZ1);
+						current->vertices[2] = Vector3(maxX1, maxY1, maxZ1);
+						current->vertices[3] = Vector3(maxX1, minY1, minZ1);
+					}
 
 					for (int n = 0; n < 4; n++)
 					{
@@ -727,8 +751,6 @@ void ReadRooms()
 							room.z + current->vertices[n].z
 						);
 					}
-
-					break;
 				}
 			}
 
