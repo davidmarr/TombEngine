@@ -16,7 +16,7 @@ namespace TEN::Renderer
 	using TEN::Memory::LinearArrayBuffer;
 	using std::vector;
 
-	bool Renderer11::ClipPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 parentViewPort, Vector4* outClipPort, RenderView& renderView)
+	bool Renderer11::ClipPortal(short parentRoomNumber, RendererPortal* door, Vector4 parentViewPort, Vector4* outClipPort, RenderView& renderView)
 	{
 		ROOM_INFO* parentRoom = &g_Level.Rooms[parentRoomNumber];
 
@@ -154,19 +154,20 @@ namespace TEN::Renderer
 		// Reset rooms fields
 		for (int i = 0; i < g_Level.Rooms.size(); i++)
 		{
-			m_rooms[i].ItemsToDraw.clear();
-			m_rooms[i].EffectsToDraw.clear();
-			m_rooms[i].TransparentFacesToDraw.clear();
-			m_rooms[i].StaticsToDraw.clear();
-			m_rooms[i].ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
-			m_rooms[i].ViewPorts.clear();
-			m_rooms[i].InDrawList = false;
+			RendererRoom* room = &m_rooms[i];
 
-			ROOM_INFO* nativeRoom = &g_Level.Rooms[i];
-			for (int j = 0; j < nativeRoom->doors.size(); j++)
+			room->ItemsToDraw.clear();
+			room->EffectsToDraw.clear();
+			room->TransparentFacesToDraw.clear();
+			room->StaticsToDraw.clear();
+			room->ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
+			room->ViewPorts.clear();
+			room->InDrawList = false;
+
+			for (int j = 0; j < room->Portals.size(); j++)
 			{
-				nativeRoom->doors[j].NotVisible = false;
-				nativeRoom->doors[j].Visited = false;
+				room->Portals[j].NotVisible = false;
+				room->Portals[j].Visited = false;
 			}
 		}
 
@@ -241,9 +242,9 @@ namespace TEN::Renderer
 		room->InDrawList = true;
 
 		// Traverse all portals for recursively collecting the visible rooms
-		for (int i = 0; i < nativeRoom->doors.size(); i++)
+		for (int i = 0; i < room->Portals.size(); i++)
 		{
-			ROOM_DOOR* portal = &nativeRoom->doors[i];
+			RendererPortal* portal = &room->Portals[i];
 			
 			// If portal was already marked as not visible by a previous step, simply discard it
 			if (portal->NotVisible)
@@ -256,10 +257,7 @@ namespace TEN::Renderer
 			}
 
 			// Check if portal is visible
-			Vector3 n = portal->normal;
-			n.Normalize();
-
-			if (n.Dot(portal->ViewDirection) <= 0.0f)
+			if (portal->Normal.Dot(portal->ViewDirection) <= 0.0f)
 			{
 				portal->NotVisible = true;
 				continue;
@@ -267,9 +265,9 @@ namespace TEN::Renderer
 
 			// Try to clip the portal and eventually find recursively the connected rooms
 			Vector4 outClipPort;
-			if (from != portal->room && ClipPortal(to, portal, viewPort, &outClipPort, renderView))
+			if (from != portal->Room && ClipPortal(to, portal, viewPort, &outClipPort, renderView))
 			{
-				GetVisibleRooms(to, portal->room, outClipPort, count + 1, onlyRooms, renderView);
+				GetVisibleRooms(to, portal->Room, outClipPort, count + 1, onlyRooms, renderView);
 			}
 		}
 	}

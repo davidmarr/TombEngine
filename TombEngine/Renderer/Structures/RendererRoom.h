@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <SimpleMath.h>
+#include "RendererPortal.h"
 
 struct MESH_INFO;
 
@@ -26,5 +27,6 @@ namespace TEN::Renderer
 		std::vector<RendererEffect*> EffectsToDraw;
 		std::vector<RendererStatic> StaticsToDraw;
 		std::vector<RendererTransparentFace> TransparentFacesToDraw;
+		std::vector<RendererPortal> Portals;
 	};
 }

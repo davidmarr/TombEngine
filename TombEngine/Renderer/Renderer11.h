@@ -530,7 +530,7 @@ namespace TEN::Renderer
 		void ResetScissor();
 		void ResetDebugVariables();
 		float CalculateFrameRate();
-		bool ClipPortal(short parentRoomNumber, ROOM_DOOR* door, Vector4 parentViewPort, Vector4* outClipPort, RenderView& renderView);
+		bool ClipPortal(short parentRoomNumber, RendererPortal* door, Vector4 parentViewPort, Vector4* outClipPort, RenderView& renderView);
 		void GetVisibleRooms(short from, short to, Vector4 viewPort, int count, bool onlyRooms, RenderView& renderView);
 		Vector4 GetPortalRect(Vector4 v, Vector4 vp);
 		void AddSpriteBillboard(RendererSprite* sprite, Vector3 pos, Vector4 color, float rotation, float scale,

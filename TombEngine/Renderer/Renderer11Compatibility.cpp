@@ -169,7 +169,7 @@ namespace TEN::Renderer
 
 			if (room.positions.size() == 0)
 				continue;
-			
+
 			for (auto& levelBucket : room.buckets)
 			{
 				RendererBucket bucket{};
@@ -201,7 +201,7 @@ namespace TEN::Renderer
 					n.Normalize();
 
 					newPoly.Normal = n;
-					
+
 					int baseVertices = lastVertex;
 					for (int k = 0; k < poly.indices.size(); k++)
 					{
@@ -222,7 +222,7 @@ namespace TEN::Renderer
 						vertex->Effects = Vector4(room.effects[index].x, room.effects[index].y, room.effects[index].z, 0);
 
 						const unsigned long long primes[]{ 73856093ULL, 19349663ULL, 83492791ULL };
-						vertex->Hash = std::hash<float>{}((vertex->Position.x)* primes[0]) ^ (std::hash<float>{}(vertex->Position.y)* primes[1]) ^ std::hash<float>{}(vertex->Position.z) * primes[2];
+						vertex->Hash = std::hash<float>{}((vertex->Position.x) * primes[0]) ^ (std::hash<float>{}(vertex->Position.y)* primes[1]) ^ std::hash<float>{}(vertex->Position.z)* primes[2];
 						vertex->Bone = 0;
 
 						lastVertex++;
@@ -244,7 +244,7 @@ namespace TEN::Renderer
 					else
 					{
 						newPoly.baseIndex = lastIndex;
- 
+
 						roomsIndices[lastIndex + 0] = baseVertices + 0;
 						roomsIndices[lastIndex + 1] = baseVertices + 1;
 						roomsIndices[lastIndex + 2] = baseVertices + 2;
@@ -255,7 +255,7 @@ namespace TEN::Renderer
 					bucket.Polygons.push_back(newPoly);
 				}
 
-				r->Buckets.push_back(bucket);		
+				r->Buckets.push_back(bucket);
 			}
 
 			if (room.lights.size() != 0)
@@ -314,6 +314,32 @@ namespace TEN::Renderer
 					}
 
 					oldLight++;
+				}
+			}
+
+			if (room.doors.size() > 0)
+			{
+				r->Portals.resize(room.doors.size());
+
+				for (auto& door : room.doors)
+				{
+					RendererPortal portal;
+
+					for (int k = 0; k < 4; k++)
+					{
+						portal.AbsoluteCoordinates[k] = Vector3(
+							room.x + door.vertices[k].x,
+							room.y + door.vertices[k].y,
+							room.z + door.vertices[k].z
+						);
+					}
+
+					portal.Normal = door.normal;
+					portal.Normal.Normalize();
+
+					portal.Room = door.room;
+
+					r->Portals.push_back(portal);
 				}
 			}
 		}
