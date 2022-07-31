@@ -23,11 +23,6 @@ struct ROOM_DOOR
 	short room;
 	Vector3 normal;
 	Vector3 vertices[4];
-	Vector3 AbsoluteCoordinates[4];
-	Vector4 ScreenCoordinates[4];
-	Vector3 ViewDirection;
-	bool Visited;
-	bool NotVisible;
 };
 
 struct ROOM_LIGHT

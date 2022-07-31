@@ -669,12 +669,6 @@ void ReadRooms()
 				maxX1 = std::max(maxX1, door.vertices[k].x);
 				maxY1 = std::max(maxY1, door.vertices[k].y);
 				maxZ1 = std::max(maxZ1, door.vertices[k].z);
-
-				door.AbsoluteCoordinates[k] = Vector3(
-					room.x + door.vertices[k].x,
-					door.vertices[k].y,
-					room.z + door.vertices[k].z
-				);
 			}
 
 			bool found = false;
@@ -741,15 +735,6 @@ void ReadRooms()
 						current->vertices[1] = Vector3(minX1, maxY1, maxZ1);
 						current->vertices[2] = Vector3(maxX1, maxY1, maxZ1);
 						current->vertices[3] = Vector3(maxX1, minY1, minZ1);
-					}
-
-					for (int n = 0; n < 4; n++)
-					{
-						current->AbsoluteCoordinates[n] = Vector3(
-							room.x + current->vertices[n].x,
-							current->vertices[n].y,
-							room.z + current->vertices[n].z
-						);
 					}
 				}
 			}
