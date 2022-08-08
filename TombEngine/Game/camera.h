@@ -43,6 +43,7 @@ struct CAMERA_INFO
 
 enum CAMERA_FLAGS
 {
+	CF_NONE = 0,
 	CF_FOLLOW_CENTER = 1,
 	CF_NO_CHUNKY = 2,
 	CF_CHASE_OBJECT = 3,
@@ -72,6 +73,7 @@ extern float CinematicBarsSpeed;
 
 void LookAt(CAMERA_INFO* cam, short roll);
 void AlterFOV(int value);
+short GetCurrentFOV();
 void InitialiseCamera();
 void MoveCamera(GameVector* ideal, int speed);
 void ChaseCamera(ItemInfo* item);

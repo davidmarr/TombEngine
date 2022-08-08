@@ -28,5 +28,6 @@ namespace TEN::Renderer
 		std::vector<RendererStatic> StaticsToDraw;
 		std::vector<RendererTransparentFace> TransparentFacesToDraw;
 		std::vector<RendererPortal> Portals;
+		std::vector<int> Neighbors;
 	};
 }
