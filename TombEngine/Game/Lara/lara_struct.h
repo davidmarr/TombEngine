@@ -1,9 +1,12 @@
 #pragma once
+#include "Game/collision/Attractors.h"
 #include "Game/Lara/PlayerContext.h"
 #include "Objects/objectslist.h"
 #include "Specific/trmath.h"
 
+using namespace TEN::Collision::Attractors;
 using namespace TEN::Entities::Player;
+using std::list;
 
 struct CreatureInfo;
 struct FX_INFO;
@@ -1251,8 +1254,22 @@ struct LaraControlData
 	bool Locked;
 };
 
+struct AttractorControlData
+{
+	Attractor DebugAttractor;
+
+	AttractorData Head;
+	AttractorData List[MAX_ATTRACTORS];
+
+	list<AttractorData> Front;
+	list<AttractorData> Left;
+	list<AttractorData> Right;
+};
+
 struct LaraInfo
 {
+	AttractorControlData Attractor;
+
 	short ItemNumber;
 	LaraControlData Control;
 	LaraInventoryData Inventory;

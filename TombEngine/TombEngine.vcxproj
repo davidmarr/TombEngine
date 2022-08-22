@@ -154,6 +154,7 @@ CALL gen.bat</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Game\collision\Attractors.h" />
     <ClInclude Include="Game\collision\collide_item.h" />
     <ClInclude Include="Game\control\box.h" />
     <ClInclude Include="Game\control\los.h" />
@@ -176,6 +177,7 @@ CALL gen.bat</Command>
     <ClInclude Include="Game\Lara\lara_test_structs.h" />
     <ClInclude Include="Game\Lara\PlayerContext.h" />
     <ClInclude Include="Game\Lara\PlayerContextStructs.h" />
+    <ClInclude Include="Math\Geometry.h" />
     <ClInclude Include="Objects\Generic\Object\burning_torch.h" />
     <ClInclude Include="Objects\Generic\Object\polerope.h" />
     <ClInclude Include="Objects\Generic\Object\rope.h" />
@@ -595,6 +597,7 @@ CALL gen.bat</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Game\collision\Attractors.cpp" />
     <ClCompile Include="Game\collision\collide_item.cpp" />
     <ClCompile Include="Game\control\los.cpp" />
     <ClCompile Include="Game\effects\bubble.cpp" />
@@ -632,6 +635,7 @@ CALL gen.bat</Command>
     <ClCompile Include="Game\pickup\pickup_misc_items.cpp" />
     <ClCompile Include="Game\pickup\pickup_weapon.cpp" />
     <ClCompile Include="Game\room.cpp" />
+    <ClCompile Include="Math\Geometry.cpp" />
     <ClCompile Include="Objects\Generic\Object\burning_torch.cpp" />
     <ClCompile Include="Objects\Generic\Object\polerope.cpp" />
     <ClCompile Include="Objects\Generic\Object\rope.cpp" />

@@ -784,6 +784,10 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.Height = LARA_HEIGHT;
 	lara->Control.CanLook = true;
 
+	//-- Attractor debug
+	lara->Attractor.DebugAttractor.PrintDebugInfo();
+	//--
+
 	UpdateItemRoom(item, -LARA_HEIGHT / 2);
 
 	// Process vehicles.
@@ -815,7 +819,6 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 		{
 			// Check for collision with items.
 			DoObjectCollision(item, coll);
-
 		}
 
 		// Handle Lara collision.
