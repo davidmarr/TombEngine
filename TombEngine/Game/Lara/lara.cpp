@@ -1,6 +1,8 @@
 #include "framework.h"
 #include "Game/Lara/lara.h"
 
+#include <ois/OISKeyboard.h>
+
 #include "Game/Lara/lara_basic.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_jump.h"
@@ -745,6 +747,66 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 	Statistics.Game.Distance += (int)round(Vector3::Distance(oldPos.ToVector3(), item->Pose.Position.ToVector3()));
 }
 
+#ifdef _DEBUG
+void LaraDebugControl(ItemInfo* item, CollisionInfo* coll)
+{
+	// Store position:	 NUMPAD SUBTRACT
+	// Restore position: NUMPAD ADD
+	// Forward:			 NUMPAD 8
+	// Backward:		 NUMPAD 5
+	// Left:			 NUMPAD 4
+	// Right:			 NUMPAD 6
+
+	// Store position.
+	static auto storedAnimData = item->Animation;
+	static auto storedPose = item->Pose;
+	static int storedRoomNumber = item->RoomNumber;
+
+	static bool dbStorePos = false;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD1] && !dbStorePos)
+	{
+		storedAnimData = item->Animation;
+		storedPose = item->Pose;
+		storedRoomNumber = item->RoomNumber;
+	}
+	dbStorePos = KeyMap[OIS::KeyCode::KC_NUMPAD1] ? true : false;
+	
+	// Restore position.
+	static bool dbRestorePos = false;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD3] && !dbRestorePos)
+	{
+		item->Animation = storedAnimData;
+		item->Pose = storedPose;
+		item->RoomNumber = storedRoomNumber;
+	}
+	dbRestorePos = KeyMap[OIS::KeyCode::KC_NUMPAD3] ? true : false;
+
+	// Move forward.
+	static bool dbForward = false;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD8] && !dbForward)
+		TranslateItem(item, item->Pose.Orientation.y, (TrInput & IN_SPRINT) ? 10 : 1);
+	dbForward = KeyMap[OIS::KeyCode::KC_NUMPAD8] ? true : false;
+
+	// Move backward.
+	static bool dbBackward = false;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD5] && !dbBackward)
+		TranslateItem(item, item->Pose.Orientation.y, (TrInput & IN_SPRINT) ? -10 : -1);
+	dbBackward = KeyMap[OIS::KeyCode::KC_NUMPAD5] ? true : false;
+	
+	// Move left.
+	static bool dbLeft = false;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD4] && !dbLeft)
+		TranslateItem(item, item->Pose.Orientation.y - ANGLE(90.0f), (TrInput & IN_SPRINT) ? 10 : 1);
+	dbLeft = KeyMap[OIS::KeyCode::KC_NUMPAD4] ? true : false;
+	
+	// Move right.
+	static bool dbRight = false;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD6] && !dbRight)
+		TranslateItem(item, item->Pose.Orientation.y + ANGLE(90.0f), (TrInput & IN_SPRINT) ? 10 : 1);
+	dbRight = KeyMap[OIS::KeyCode::KC_NUMPAD6] ? true : false;
+}
+#endif
+
 void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
@@ -785,20 +847,40 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 	if (HandleLaraVehicle(item, coll))
 		return;
 
-	// Handle current Lara status.
-	lara_control_routines[item->Animation.ActiveState](item, coll);
-	HandleLaraMovementParameters(item, coll);
-	AnimateLara(item);
+#ifdef _DEBUG
+	// Toggle freeze:	 NUMPAD 7
+	// Progress 1 frame: NUMPAD 9
 
-	if (lara->ExtraAnim == NO_ITEM)
+	LaraDebugControl(item, coll);
+
+	static bool dbToggleFreeze = false;
+	static bool doRoutines = true;
+	if (KeyMap[OIS::KeyCode::KC_NUMPAD7] && !dbToggleFreeze)
+		doRoutines = !doRoutines;
+	dbToggleFreeze = KeyMap[OIS::KeyCode::KC_NUMPAD7] ? true : false;
+
+	static bool dbProgressFrame = false;
+	if (doRoutines || KeyMap[OIS::KeyCode::KC_NUMPAD9] && !dbProgressFrame)
 	{
-		// Check for collision with items.
-		DoObjectCollision(item, coll);
+#endif
+		// Handle current Lara status.
+		lara_control_routines[item->Animation.ActiveState](item, coll);
+		HandleLaraMovementParameters(item, coll);
+		AnimateLara(item);
 
-		// Handle Lara collision.
-		if (lara->Vehicle == NO_ITEM)
-			lara_collision_routines[item->Animation.ActiveState](item, coll);
+		if (lara->ExtraAnim == NO_ITEM)
+		{
+			// Check for collision with items.
+			DoObjectCollision(item, coll);
+
+			// Handle Lara collision.
+			if (lara->Vehicle == NO_ITEM)
+				lara_collision_routines[item->Animation.ActiveState](item, coll);
+		}
+#ifdef _DEBUG
 	}
+	dbProgressFrame = KeyMap[OIS::KeyCode::KC_NUMPAD9] ? true : false;
+#endif
 
 	// Handle weapons.
 	LaraGun(item);
