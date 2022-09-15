@@ -750,17 +750,25 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 #ifdef _DEBUG
 void LaraDebugControl(ItemInfo* item, CollisionInfo* coll)
 {
-	// Store position:	 NUMPAD SUBTRACT
-	// Restore position: NUMPAD ADD
-	// Forward:			 NUMPAD 8
-	// Backward:		 NUMPAD 5
-	// Left:			 NUMPAD 4
-	// Right:			 NUMPAD 6
+	/*
+	Store position:	   NUMPAD 1
+	Restore position:  NUMPAD 2
+	Forward 1 unit:	   NUMPAD 8
+	Forward 10 units:  NUMPAD 8 + SPRINT
+	Backward 1 unit:   NUMPAD 5
+	Backward 10 units: NUMPAD 5 + SPRINT
+	Left 1 unit:	   NUMPAD 4
+	Left 10 units:	   NUMPAD 4 + SPRINT
+	Right 1 unit:	   NUMPAD 6
+	Right 10 units:	   NUMPAD 6 + SPRINT
+	*/
 
 	// Store position.
 	static auto storedAnimData = item->Animation;
 	static auto storedPose = item->Pose;
 	static int storedRoomNumber = item->RoomNumber;
+	static auto storedCamera = Camera;
+	static auto storedOldCamera = Camera;
 
 	static bool dbStorePos = false;
 	if (KeyMap[OIS::KeyCode::KC_NUMPAD1] && !dbStorePos)
@@ -768,6 +776,7 @@ void LaraDebugControl(ItemInfo* item, CollisionInfo* coll)
 		storedAnimData = item->Animation;
 		storedPose = item->Pose;
 		storedRoomNumber = item->RoomNumber;
+		storedCamera = Camera;
 	}
 	dbStorePos = KeyMap[OIS::KeyCode::KC_NUMPAD1] ? true : false;
 	
@@ -778,6 +787,7 @@ void LaraDebugControl(ItemInfo* item, CollisionInfo* coll)
 		item->Animation = storedAnimData;
 		item->Pose = storedPose;
 		item->RoomNumber = storedRoomNumber;
+		Camera = storedCamera;
 	}
 	dbRestorePos = KeyMap[OIS::KeyCode::KC_NUMPAD3] ? true : false;
 
