@@ -54,6 +54,8 @@ static constexpr char ScriptReserved_SetSoundID[]			= "SetSoundID";
 static constexpr char ScriptReserved_GetHP[]				= "GetHP";
 static constexpr char ScriptReserved_SetHP[]				= "SetHP";
 static constexpr char ScriptReserved_GetSlotHP[]			= "GetSlotHP";
+static constexpr char ScriptReserved_GetVelocity[]			= "GetVelocity";
+static constexpr char ScriptReserved_SetVelocity[]			= "SetVelocity";
 static constexpr char ScriptReserved_GetFrameNumber[]		= "GetFrame";
 static constexpr char ScriptReserved_SetFrameNumber[]		= "SetFrame";
 static constexpr char ScriptReserved_GetAnimNumber[]		= "GetAnim";
@@ -116,7 +118,6 @@ static constexpr char ScriptReserved_SetLanguageNames[]		= "SetLanguageNames";
 // Flow Tables
 static constexpr char ScriptReserved_WeatherType[]		= "WeatherType";
 static constexpr char ScriptReserved_LaraType[]			= "LaraType";
-static constexpr char ScriptReserved_InvItem[]			= "InvID";
 static constexpr char ScriptReserved_RotationAxis[]		= "RotationAxis";
 static constexpr char ScriptReserved_ItemAction[]		= "ItemAction";
 static constexpr char ScriptReserved_ErrorMode[]		= "ErrorMode";
