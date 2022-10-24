@@ -21,27 +21,28 @@ namespace TEN::Entities::Creatures::TR3
 {
 	const auto MPStickBite1 = BiteInfo(Vector3(247.0f, 10.0f, 11.0f), 13);
 	const auto MPStickBite2 = BiteInfo(Vector3(0.0f, 0.0f, 100.0f), 6);
-	const vector<int> MPStickPunchAttackJoints = { 10, 13 };
-	const vector<int> MPStickKickAttackJoints  = { 5, 6 };
+	const vector<uint> MPStickPunchAttackJoints = { 10, 13 };
+	const vector<uint> MPStickKickAttackJoints  = { 5, 6 };
 
 	enum MPStickState
 	{
-		MPSTICK_STATE_STOP,
-		MPSTICK_STATE_WALK,
-		MPSTICK_STATE_PUNCH2,
-		MPSTICK_STATE_AIM2,
-		MPSTICK_STATE_WAIT,
-		MPSTICK_STATE_AIM1,
-		MPSTICK_STATE_AIM0,
-		MPSTICK_STATE_PUNCH1,
-		MPSTICK_STATE_PUNCH0,
-		MPSTICK_STATE_RUN,
-		MPSTICK_STATE_DEATH,
-		MPSTICK_STATE_KICK,
-		MPSTICK_STATE_CLIMB3,
-		MPSTICK_STATE_CLIMB1,
-		MPSTICK_STATE_CLIMB2,
-		MPSTICK_STATE_FALL3
+		// No state 0.
+		MPSTICK_STATE_STOP = 1,
+		MPSTICK_STATE_WALK = 2,
+		MPSTICK_STATE_PUNCH2 = 3,
+		MPSTICK_STATE_AIM2 = 4,
+		MPSTICK_STATE_WAIT = 5,
+		MPSTICK_STATE_AIM1 = 6,
+		MPSTICK_STATE_AIM0 = 7,
+		MPSTICK_STATE_PUNCH1 = 8,
+		MPSTICK_STATE_PUNCH0 = 9,
+		MPSTICK_STATE_RUN = 10,
+		MPSTICK_STATE_DEATH = 11,
+		MPSTICK_STATE_KICK = 12,
+		MPSTICK_STATE_CLIMB3 = 13,
+		MPSTICK_STATE_CLIMB1 = 14,
+		MPSTICK_STATE_CLIMB2 = 15,
+		MPSTICK_STATE_FALL3 = 16,
 	};
 
 	// TODO
@@ -338,7 +339,7 @@ namespace TEN::Entities::Creatures::TR3
 
 				if (creature->Enemy->IsLara())
 				{
-					if (!creature->Flags && item->TestBits(JointBitType::Touch, MPStickPunchAttackJoints))
+					if (!creature->Flags && item->TouchBits.Test(MPStickPunchAttackJoints))
 					{
 						DoDamage(enemy, 80);
 						CreatureEffect(item, MPStickBite1, DoBloodSplat);
@@ -373,7 +374,7 @@ namespace TEN::Entities::Creatures::TR3
 
 				if (creature->Enemy->IsLara())
 				{
-					if (!creature->Flags && item->TestBits(JointBitType::Touch, MPStickPunchAttackJoints))
+					if (!creature->Flags && item->TouchBits.Test(MPStickPunchAttackJoints))
 					{
 						DoDamage(creature->Enemy, 80);
 						CreatureEffect(item, MPStickBite1, DoBloodSplat);
@@ -411,7 +412,7 @@ namespace TEN::Entities::Creatures::TR3
 
 				if (creature->Enemy->IsLara())
 				{
-					if (creature->Flags != 2 && item->TestBits(JointBitType::Touch, MPStickPunchAttackJoints))
+					if (creature->Flags != 2 && item->TouchBits.Test(MPStickPunchAttackJoints))
 					{
 						DoDamage(creature->Enemy, 100);
 						CreatureEffect(item, MPStickBite1, DoBloodSplat);
@@ -443,7 +444,7 @@ namespace TEN::Entities::Creatures::TR3
 
 				if (creature->Enemy->IsLara())
 				{
-					if (creature->Flags != 1 && item->TestBits(JointBitType::Touch, MPStickKickAttackJoints) &&
+					if (creature->Flags != 1 && item->TouchBits.Test(MPStickKickAttackJoints) &&
 						item->Animation.FrameNumber > g_Level.Anims[item->Animation.AnimNumber].frameBase + 8)
 					{
 						DoDamage(creature->Enemy, 150);
