@@ -40,7 +40,7 @@ Test::~Test()
 
 void Test::Register(sol::table& parent)
 {
-	parent.new_usertype<Test>(ScriptReserved_Sink,
+	parent.new_usertype<Test>(ScriptReserved_Lara,
 		sol::no_constructor, // ability to spawn new ones could be added later
 		sol::meta_function::index, index_error,
 		sol::meta_function::new_index, newindex_error,
@@ -48,11 +48,11 @@ void Test::Register(sol::table& parent)
 		/// Set Poison to Lara with specific potency of poison
 		// @function Lara:SetPoison
 		// @tparam int poison potency (0-64)
-		ScriptReserved_GetPosition, & Test::SetPoison,
+		ScriptReserved_SetPoison, &Test::SetPoison,
 
 		/// Remove Poison from Lara
 		// @function Lara:RemovePoison
-		ScriptReserved_SetPosition, & Test::RemovePoison
+		ScriptReserved_RemovePoison, &Test::RemovePoison
 	);
 }
 
