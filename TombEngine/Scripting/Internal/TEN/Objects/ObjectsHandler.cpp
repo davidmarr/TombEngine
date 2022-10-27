@@ -72,8 +72,8 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table & parent) :
 	*/
 	m_table_objects.set_function(ScriptReserved_GetAIObjectByName, &ObjectsHandler::GetByName<AIObject, ScriptReserved_AIObject>, this);
 
-	Test::Register(m_table_objects);
-	Test::SetNameCallbacks(
+	LaraObject::Register(m_table_objects);
+	LaraObject::SetNameCallbacks(
 		[this](auto && ... param) { return AddName(std::forward<decltype(param)>(param)...); },
 		[this](auto && ... param) { return RemoveName(std::forward<decltype(param)>(param)...); }
 	);
@@ -155,7 +155,8 @@ void ObjectsHandler::TestCollidingObjects()
 
 void ObjectsHandler::AssignLara()
 {
-	m_table_objects.set("Test", Test(Lara.ItemNumber, false));
+	m_table_objects.set("Lara", LaraObject(Lara.ItemNumber, false));
+	m_table_objects.set("Lara", Moveable(Lara.ItemNumber, false));
 }
 
 

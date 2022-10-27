@@ -12,16 +12,16 @@ namespace sol
 struct ItemInfo;
 enum GAME_OBJECT_ID : short;
 
-class Test : public NamedBase<Test, short>
+class LaraObject : public NamedBase<LaraObject, short>
 {
 public:
 	using IdentifierType = short;
 
-	Test(short num, bool alreadyInitialised = true);
-	~Test();
-	Test& operator=(Test const& other) = delete;
-	Test(Test const& other) = delete;
-	Test(Test&& other) noexcept;
+	LaraObject(short num, bool alreadyInitialised = true);
+	~LaraObject();
+	LaraObject& operator=(LaraObject const& other) = delete;
+	LaraObject(LaraObject const& other) = delete;
+	LaraObject(LaraObject&& other) noexcept;
 
 	static void Register(sol::table& parent);
 
