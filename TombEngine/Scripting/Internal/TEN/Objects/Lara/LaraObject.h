@@ -9,22 +9,29 @@ namespace sol
 {
 	class state;
 }
+struct ItemInfo;
+enum GAME_OBJECT_ID : short;
 
-class Test : public NamedBase<int, bool>
+class Test : public NamedBase<Test, short>
 {
 public:
-	using IdentifierType = std::reference_wrapper<LaraInfo>;
-	Test(LaraInfo& ref);
-	~Test() = default;
+	using IdentifierType = short;
 
+	Test(short num, bool alreadyInitialised = true);
+	~Test();
 	Test& operator=(Test const& other) = delete;
 	Test(Test const& other) = delete;
+	Test(Test&& other) noexcept;
 
-	static void Register(sol::table&);
+	static void Register(sol::table& parent);
 
 	void SetPoison(unsigned short $potency);
 	void RemovePoison();
 
 private:
-	LaraInfo& m_lara;
+	ItemInfo* m_item;
+	short m_num;
+	bool m_initialised;
+
+	bool MeshExists(int number) const;
 };

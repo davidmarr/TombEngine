@@ -1,7 +1,11 @@
 #pragma once
 #include "framework.h"
+#include "Game/Lara/lara_helpers.h"
 #include "LaraObject.h"
+#include "Objects/Moveable/MoveableObject.h"
+#include "Objects/ObjectsHandler.h"
 #include "ReservedScriptNames.h"
+#include "Specific/level.h"
 #include "ScriptAssert.h"
 #include "ScriptUtil.h"
 
@@ -15,8 +19,24 @@ Represents lara object inside the game world.
 static auto index_error = index_error_maker(Test, ScriptReserved_Lara);
 static auto newindex_error = newindex_error_maker(Test, ScriptReserved_Lara);
 
-Test::Test(LaraInfo& ref) : m_lara{ ref }
-{};
+Test::Test(short num, bool alreadyInitialised) : m_item{ &g_Level.Items[num] }, m_num{ num }, m_initialised{ alreadyInitialised }
+{
+	
+};
+
+Test::Test(Test&& other) noexcept :
+	m_item{ std::exchange(other.m_item, nullptr) },
+	m_num{ std::exchange(other.m_num, NO_ITEM) },
+	m_initialised{ std::exchange(other.m_initialised, false) }
+{
+
+}
+
+
+Test::~Test()
+{
+
+}
 
 void Test::Register(sol::table& parent)
 {
@@ -38,10 +58,12 @@ void Test::Register(sol::table& parent)
 
 void Test::SetPoison(unsigned short potency = 0)
 {
-	m_lara.PoisonPotency = potency;
+	auto* lara = GetLaraInfo(m_item);
+	lara->PoisonPotency = potency;
 }
 
 void Test::RemovePoison()
 {
-	m_lara.PoisonPotency = 0;
+	auto* lara = GetLaraInfo(m_item);
+	lara->PoisonPotency = 0;
 }
