@@ -156,7 +156,6 @@ void ObjectsHandler::TestCollidingObjects()
 void ObjectsHandler::AssignLara()
 {
 	m_table_objects.set("Lara", LaraObject(Lara.ItemNumber, false));
-	m_table_objects.set("Lara", Moveable(Lara.ItemNumber, false));
 }
 
 
