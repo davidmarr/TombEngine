@@ -4,6 +4,7 @@
 #include "ReservedScriptNames.h"
 #include "Lara/lara.h"
 #include "ObjectIDs.h"
+#include "Objects/Lara/LaraObject.h"
 #include "Camera/CameraObject.h"
 #include "Sink/SinkObject.h"
 #include "SoundSource/SoundSourceObject.h"
@@ -149,7 +150,7 @@ void ObjectsHandler::TestCollidingObjects()
 
 void ObjectsHandler::AssignLara()
 {
-	m_table_objects.set("Lara", Moveable(Lara.ItemNumber, false));
+	m_table_objects.set("Lara", Test(Lara.ItemNumber, false));
 }
 
 

@@ -12,6 +12,7 @@ static constexpr char ScriptReserved_Effects[]			= "Effects";
 
 // Classes
 static constexpr char ScriptReserved_Moveable[]			= "Moveable";
+static constexpr char ScriptReserved_Lara[]				= "Lara";
 static constexpr char ScriptReserved_Static[]			= "Static";
 static constexpr char ScriptReserved_Camera[]			= "Camera";
 static constexpr char ScriptReserved_Sink[]				= "Sink";
