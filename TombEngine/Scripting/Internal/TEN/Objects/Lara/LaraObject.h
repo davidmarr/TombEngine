@@ -1,4 +1,5 @@
 #pragma once
+#include "Objects/Interactive/InteractiveObject.h"
 #include "Objects/NamedBase.h"
 #include "Lara/lara_struct.h"
 #include "Math/Math.h"
@@ -12,7 +13,7 @@ namespace sol
 struct ItemInfo;
 enum GAME_OBJECT_ID : short;
 
-class LaraObject : public NamedBase<LaraObject, short>
+class LaraObject : public NamedBase<LaraObject, short>, InteractiveObject
 {
 public:
 	using IdentifierType = short;
