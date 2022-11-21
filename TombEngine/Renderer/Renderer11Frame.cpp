@@ -12,6 +12,7 @@
 #include "Specific/level.h"
 #include "Specific/setup.h"
 #include "RenderView/RenderView.h"
+#include <stack>
 
 using namespace TEN::Math;
 
@@ -20,6 +21,20 @@ namespace TEN::Renderer
 	using namespace TEN::Renderer;
 	using TEN::Memory::LinearArrayBuffer;
 	using std::vector;
+
+	struct RoomNode
+	{
+		short From;
+		short To;
+		Vector4 ViewPort;
+
+		RoomNode(short from, short to, Vector4 vp)
+		{
+			From = from;
+			To = to;
+			ViewPort = vp;
+		}
+	};
 
 	void Renderer11::CollectRooms(RenderView &renderView, bool onlyRooms)
 	{
@@ -35,61 +50,84 @@ namespace TEN::Renderer
 			m_rooms[i].Visited = false;
 			m_rooms[i].ViewPort = Vector4(-1.0f, 1.0f, 1.0f, 1.0f);
 			m_rooms[i].BoundActive = 0;
-		}
+
+			for (int j = 0; j < m_rooms[i].Portals.size(); j++)
+			{
+				m_rooms[i].Portals[j].Visited = false;
+			}
+		}	
 
 		GetVisibleRooms(NO_ROOM, Camera.pos.RoomNumber, Vector4(-1.0f, -1.0f, 1.0f, 1.0f), false, 0, onlyRooms, renderView);
 	}
 
-	bool Renderer11::CheckPortal(short parentRoomNumber, ROOM_DOOR* portal, Vector4 viewPort, Vector4* clipPort, RenderView& renderView)
+	bool Renderer11::CheckPortal(short parentRoomNumber, RendererPortal* portal, Vector4 viewPort, Vector4* clipPort, RenderView& renderView)
 	{
-		RendererRoom* room = &m_rooms[parentRoomNumber];
-		ROOM_INFO* nativeRoom = &g_Level.Rooms[parentRoomNumber];
+		RendererRoom* parentRoom = &m_rooms[parentRoomNumber];
+		ROOM_INFO* parentNativeRoom = &g_Level.Rooms[parentRoomNumber];
 
-		Vector3 n = portal->normal;
-		Vector3i v = Vector3i(
-			Camera.pos.x - (nativeRoom->x + portal->vertices[0].x),
-			Camera.pos.y - (nativeRoom->y + portal->vertices[0].y),
-			Camera.pos.z - (nativeRoom->z + portal->vertices[0].z));
+		RendererRoom* currentRoom = &m_rooms[portal->AdjoiningRoom];
+		ROOM_INFO* currentNativeRoom = &g_Level.Rooms[portal->AdjoiningRoom];
 
-		if (n.x * v.x + n.y * v.y + n.z * v.z < 0)
-			return false;
+		// CONCEPT: try to do a simplified check for outside rooms, too much slow
+		/*if ((currentNativeRoom->flags & ENV_FLAG_OUTSIDE) && (parentNativeRoom->flags & ENV_FLAG_OUTSIDE))
+		{
+			Vector3 a = Vector3(currentNativeRoom->x, currentNativeRoom->minfloor, currentNativeRoom->z);
+			Vector3 b = Vector3(currentNativeRoom->x + currentNativeRoom->xSize * SECTOR(1), currentNativeRoom->maxceiling, currentNativeRoom->z + currentNativeRoom->zSize * SECTOR(1));
+
+			if (renderView.camera.Frustum.AABBInFrustum(a, b))
+			{
+				portal->Visited = true;
+				*clipPort = Vector4(-1.0f, 1.0f, 1.0f, 1.0f);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	*/
 
 		int  zClip = 0;
-		Vector4 p[4];
 
-		*clipPort = Vector4(FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
-
+		*clipPort = Vector4(FLT_MAX, FLT_MAX, -FLT_MIN, -FLT_MIN);
+		
 		for (int i = 0; i < 4; i++)
 		{
-			Vector4 corner = Vector4(
-				(nativeRoom->x + portal->vertices[i].x),
-				(nativeRoom->y + portal->vertices[i].y),
-				(nativeRoom->z + portal->vertices[i].z),
-				1.0f);
-
-			p[i] = Vector4::Transform(corner, renderView.camera.ViewProjection);
-
-			if (p[i].w > 0.0f)
+			// Do the heavy clipping transform math just once
+			if (!portal->Visited)
 			{
-				p[i].x *= (1.0f / p[i].w);
-				p[i].y *= (1.0f / p[i].w);
+				portal->ClipSpaceVertices[i] = Vector4::Transform(portal->AbsoluteVertices[i], renderView.camera.ViewProjection);
+				if (portal->ClipSpaceVertices[i].w > 0.0f)
+				{
+					portal->ClipSpaceVertices[i].x *= (1.0f / portal->ClipSpaceVertices[i].w);
+					portal->ClipSpaceVertices[i].y *= (1.0f / portal->ClipSpaceVertices[i].w);
+				}
+			}
 
-				clipPort->x = std::min(clipPort->x, p[i].x);
-				clipPort->y = std::min(clipPort->y, p[i].y);
-				clipPort->z = std::max(clipPort->z, p[i].x);
-				clipPort->w = std::max(clipPort->w, p[i].y);
+			if (portal->ClipSpaceVertices[i].w > 0.0f)
+			{
+				// If in front of camera, valid clip area
+				clipPort->x = std::min(clipPort->x, portal->ClipSpaceVertices[i].x);
+				clipPort->y = std::min(clipPort->y, portal->ClipSpaceVertices[i].y);
+				clipPort->z = std::max(clipPort->z, portal->ClipSpaceVertices[i].x);
+				clipPort->w = std::max(clipPort->w, portal->ClipSpaceVertices[i].y);
 			}
 			else
 				zClip++;
 		}
 
+		portal->Visited = true;
+
 		if (zClip == 4)
 			return false;
 
-		if (zClip > 0) {
-			for (int i = 0; i < 4; i++) {
-				Vector4 a = p[i];
-				Vector4 b = p[(i + 1) % 4];
+		// Clip the area if camera plane crosses the portal plane
+		if (zClip > 0) 
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				Vector4 a = portal->ClipSpaceVertices[i];
+				Vector4 b = portal->ClipSpaceVertices[(i + 1) % 4];
 
 				if ((a.w > 0.0f) ^ (b.w > 0.0f)) {
 
@@ -128,56 +166,140 @@ namespace TEN::Renderer
 		return true;
 	}
 
-	void Renderer11::GetVisibleRooms(short from, short to, Vector4 viewPort, bool water, int count, bool onlyRooms, RenderView& renderView)
+	void Renderer11::GetVisibleRooms(short from, short toRoom, Vector4 viewPort, bool water, int count, bool onlyRooms, RenderView& renderView)
 	{
-		if (count > 32)
+		// CONCEPT: simple frustum check, very good results, but overdraw expecially behind sky faces
+		/*for (int i = 0; i < m_rooms.size(); i++)
 		{
-			return;
-		}
+			RendererRoom* room = &m_rooms[i];
+			ROOM_INFO* nativeRoom = &g_Level.Rooms[i];
 
-		RendererRoom* room = &m_rooms[to];
-		ROOM_INFO* nativeRoom = &g_Level.Rooms[to];
+			Vector3 a = Vector3(nativeRoom->x, nativeRoom->minfloor, nativeRoom->z);
+			Vector3 b = Vector3(nativeRoom->x + nativeRoom->xSize * SECTOR(1), nativeRoom->maxceiling, nativeRoom->z + nativeRoom->zSize * SECTOR(1));
 
-		auto cameraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
-
-		float xRad = nativeRoom->xSize * SECTOR(1) / 2.0f;
-		float yRad = (nativeRoom->minfloor - nativeRoom->maxceiling) / 2.0f;
-		float zRad = nativeRoom->zSize * SECTOR(1) / 2.0f;
-
-		auto roomCentre = Vector3(nativeRoom->x + xRad, nativeRoom->minfloor - yRad, nativeRoom->z + zRad);
-
-		float roomRad = std::max(std::max(xRad, yRad), zRad);
-		float distance = std::max((roomCentre - cameraPosition).Length() - (roomRad * 1.5f), 0.0f);
-
-		if (!m_rooms[to].Visited)
-		{
-			renderView.roomsToDraw.push_back(room);
-
-			CollectLightsForRoom(to, renderView);
-
-			if (!onlyRooms)
+			if (renderView.camera.Frustum.AABBInFrustum(a, b))
 			{
-				CollectItems(to, renderView);
-				CollectStatics(to, renderView);
-				CollectEffects(to);
+				
+				auto cameraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
+
+				float xRad = nativeRoom->xSize * SECTOR(1) / 2.0f;
+				float yRad = (nativeRoom->minfloor - nativeRoom->maxceiling) / 2.0f;
+				float zRad = nativeRoom->zSize * SECTOR(1) / 2.0f;
+
+				auto roomCentre = Vector3(nativeRoom->x + xRad, nativeRoom->minfloor - yRad, nativeRoom->z + zRad);
+
+				float roomRad = std::max(std::max(xRad, yRad), zRad);
+				float distance = std::max((roomCentre - cameraPosition).Length() - (roomRad * 1.5f), 0.0f);
+
+				if (!m_rooms[i].Visited)
+				{
+					renderView.roomsToDraw.push_back(room);
+
+					CollectLightsForRoom(i, renderView);
+
+					if (!onlyRooms)
+					{
+						CollectItems(i, renderView);
+						CollectStatics(i, renderView);
+						CollectEffects(i);
+					}
+				}
+
+				room->Distance = distance;
+				room->Visited = true;
+				room->ViewPort = Vector4(-1.0f, -1.0f, 1.0f, 1.0f);
 			}
 		}
 
-		room->Distance = distance;
-		room->Visited = true;
-		room->ViewPort.x = std::min(room->ViewPort.x, viewPort.x);
-		room->ViewPort.y = std::min(room->ViewPort.y, viewPort.y);
-		room->ViewPort.z = std::max(room->ViewPort.z, viewPort.z);
-		room->ViewPort.w = std::max(room->ViewPort.w, viewPort.w);
+		return;*/
 
-		Vector4 clipPort;
-		for (int i = 0; i < nativeRoom->doors.size(); i++)
+		std::stack<RoomNode> stack;
+
+		stack.push(RoomNode(from,toRoom,viewPort));
+
+		int cycles = 0;
+		int maxDepth = 1;;
+		
+		while (!stack.empty())
 		{
-			ROOM_DOOR* p = &nativeRoom->doors[i];
+			maxDepth--;
 
-			if (from != p->room && CheckPortal(to, p, viewPort, &clipPort, renderView))
-				GetVisibleRooms(to, p->room, clipPort, water, count + 1, onlyRooms, renderView);
+			RoomNode node = stack.top();
+			stack.pop();
+
+			RendererRoom* room = &m_rooms[node.To];
+			ROOM_INFO* nativeRoom = &g_Level.Rooms[node.To];
+
+			if (!room->Visited)
+			{
+				auto cameraPosition = Vector3(Camera.pos.x, Camera.pos.y, Camera.pos.z);
+
+				float xRad = nativeRoom->xSize * SECTOR(1) / 2.0f;
+				float yRad = (nativeRoom->minfloor - nativeRoom->maxceiling) / 2.0f;
+				float zRad = nativeRoom->zSize * SECTOR(1) / 2.0f;
+
+				auto roomCentre = Vector3(nativeRoom->x + xRad, nativeRoom->minfloor - yRad, nativeRoom->z + zRad);
+
+				float roomRad = std::max(std::max(xRad, yRad), zRad);
+				float distance = std::max((roomCentre - cameraPosition).Length() - (roomRad * 1.5f), 0.0f);
+
+				room->Distance = distance;
+			}
+
+			if (!m_rooms[node.To].Visited)
+			{
+				renderView.roomsToDraw.push_back(room);
+
+				CollectLightsForRoom(node.To, renderView);
+
+				if (!onlyRooms)
+				{
+					CollectItems(node.To, renderView);
+					CollectStatics(node.To, renderView);
+					CollectEffects(node.To);
+				}
+			}
+
+			room->Visited = true;
+			room->ViewPort.x = std::min(room->ViewPort.x, viewPort.x);
+			room->ViewPort.y = std::min(room->ViewPort.y, viewPort.y);
+			room->ViewPort.z = std::max(room->ViewPort.z, viewPort.z);
+			room->ViewPort.w = std::max(room->ViewPort.w, viewPort.w);
+
+			Vector4 clipPort;
+			for (int i = 0; i < nativeRoom->doors.size(); i++)
+			{
+				RendererPortal* p = &room->Portals[i];
+
+
+				//if (node.From != p->AdjoiningRoom)
+				{
+					if (!p->Visited)
+					{
+						p->CameraViewVector = Vector3(Camera.pos.x - p->AbsoluteVertices[0].x,
+							Camera.pos.y - p->AbsoluteVertices[0].y,
+							Camera.pos.z - p->AbsoluteVertices[0].z);
+					}
+
+					if (p->Normal.x * p->CameraViewVector.x +
+						p->Normal.y * p->CameraViewVector.y +
+						p->Normal.z * p->CameraViewVector.z < 0)
+						continue;
+
+					if (!CheckPortal(node.To, p, viewPort, &clipPort, renderView))
+						continue;
+
+					//GetVisibleRooms(to, p->AdjoiningRoom, clipPort, water, count + 1, onlyRooms, renderView);
+					stack.push(RoomNode(node.To, p->AdjoiningRoom, clipPort));
+					maxDepth++;
+				}
+			}
+
+			cycles++;
 		}
+
+		cycles++;
+		
 	}
 
 	void Renderer11::CollectItems(short roomNumber, RenderView& renderView)

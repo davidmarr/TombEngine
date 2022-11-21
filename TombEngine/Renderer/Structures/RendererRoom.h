@@ -3,6 +3,7 @@
 #include <SimpleMath.h>
 
 #include "Renderer/RendererRectangle.h"
+#include "RendererPortal.h"
 
 struct MESH_INFO;
 
@@ -29,6 +30,7 @@ namespace TEN::Renderer
 		std::vector<RendererStatic> StaticsToDraw;
 		std::vector<RendererTransparentFace> TransparentFacesToDraw;
 		std::vector<RendererLight*> LightsToDraw;
+		std::vector<RendererPortal> Portals;
 
 		std::vector<int> Neighbors;
 	};

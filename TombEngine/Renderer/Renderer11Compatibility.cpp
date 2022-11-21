@@ -169,6 +169,30 @@ namespace TEN::Renderer
 			r->TransparentFacesToDraw.reserve(MAX_TRANSPARENT_FACES_PER_ROOM);
 			r->Neighbors = room.neighbors;
 
+			if (room.doors.size() > 0)
+			{
+				r->Portals.resize(room.doors.size());
+
+				for (int l = 0; l < room.doors.size(); l++)
+				{
+					RendererPortal* portal = &r->Portals[l];
+					ROOM_DOOR* oldPortal = &room.doors[l];
+
+					portal->AdjoiningRoom = oldPortal->room;
+					portal->Normal = oldPortal->normal;
+
+					for (int k = 0; k < 4; k++)
+					{
+						portal->AbsoluteVertices[k] = Vector4(
+							room.x + oldPortal->vertices[k].x,
+							room.y + oldPortal->vertices[k].y,
+							room.z + oldPortal->vertices[k].z,
+							1.0f
+						);
+					}
+				}
+			}
+
 			if (room.mesh.size() > 0)
 				r->StaticsToDraw.reserve(room.mesh.size());
 
@@ -263,7 +287,7 @@ namespace TEN::Renderer
 				r->Buckets.push_back(bucket);		
 			}
 
-			if (room.lights.size() != 0)
+			if (room.lights.size() > 0)
 			{
 				r->Lights.resize(room.lights.size());
 
