@@ -1,17 +1,22 @@
 #include "framework.h"
-#include "ReservedScriptNames.h"
-#include "ScriptUtil.h"
-#include "Vec3/Vec3.h"
+
 #include "Game/camera.h"
 #include "Game/collision/collide_room.h"
 #include "Game/control/los.h"
-#include "Game/effects/tomb4fx.h"
 #include "Game/effects/explosion.h"
+#include "Game/effects/tomb4fx.h"
 #include "Game/effects/weather.h"
+#include "Game/Lara/lara.h"
+#include "Game/room.h"
+#include "Game/spotcam.h"
+#include "ReservedScriptNames.h"
+#include "ScriptUtil.h"
 #include "Sound/sound.h"
 #include "Specific/configuration.h"
-#include "Specific/input.h"
-#include "Game/room.h"
+#include "Specific/level.h"
+#include "Specific/Input/Input.h"
+#include "Vec3/Vec3.h"
+#include "ScriptAssert.h"
 
 /***
 Functions that don't fit in the other modules.
@@ -47,11 +52,11 @@ namespace Misc
 	{
 		GameVector vec1, vec2;
 		pos1.StoreInGameVector(vec1);
-		vec1.roomNumber = roomNumber1;
+		vec1.RoomNumber = roomNumber1;
 		pos2.StoreInGameVector(vec2);
 
 		MESH_INFO* mesh;
-		Vector3Int vector;
+		Vector3i vector;
 		return LOS(&vec1, &vec2) && (ObjectOnLOS2(&vec1, &vec2, &vector, &mesh) == NO_LOS_ITEM);
 	}
 
@@ -156,26 +161,49 @@ namespace Misc
 	////@tparam[opt] Vec3 position The 3D position of the sound, i.e. where the sound "comes from". If not given, the sound will not be positional.
 	static void PlaySoundEffect(int id, sol::optional<Vec3> p)
 	{
-		SoundEffect(id, p.has_value() ? &PHD_3DPOS(p.value().x, p.value().y, p.value().z) : nullptr, SoundEnvironment::Always);
+		SoundEffect(id, p.has_value() ? &Pose(p.value().x, p.value().y, p.value().z) : nullptr, SoundEnvironment::Always);
+	}
+
+	static bool CheckInput(int actionIndex)
+	{
+		if (actionIndex > ActionMap.size())
+		{
+			ScriptAssertF(false, "Key index {} does not exist", actionIndex);
+			return false;
+		}
+		else
+			return true;
 	}
 
 	static bool KeyIsHeld(int actionIndex)
 	{
+		if (!CheckInput(actionIndex))
+			return false;
+
 		return (TrInput & (1 << actionIndex)) != 0;
 	}
 
 	static bool KeyIsHit(int actionIndex)
 	{
+		if (!CheckInput(actionIndex))
+			return false;
+
 		return (DbInput & (1 << actionIndex)) != 0;
 	}
 
 	static void KeyPush(int actionIndex)
 	{
+		if (!CheckInput(actionIndex))
+			return;
+
 		TrInput |= (1 << actionIndex);
 	}
 
 	static void KeyClear(int actionIndex)
 	{
+		if (!CheckInput(actionIndex))
+			return;
+
 		TrInput &= ~(1 << actionIndex);
 	}
 
@@ -185,6 +213,15 @@ namespace Misc
 	static void FlipMap(int flipmap)
 	{
 		DoFlipMap(flipmap);
+	}
+
+	///Enable FlyBy with specific ID
+	//@function PlayFlyBy
+	//@tparam short flyby (ID of flyby)
+	static void PlayFlyBy(short flyby)
+	{
+		UseSpotCam = true;
+		InitialiseSpotCam(flyby);
 	}
 
 	///Calculate the distance between two positions.
@@ -251,6 +288,13 @@ namespace Misc
 		return std::make_tuple(resX, resY);
 	}
 
+	/// Reset object camera back to Lara and deactivate object camera.
+	//@function ResetObjCamera
+	static void ResetObjCamera()
+	{
+		ObjCamera(LaraItem, 0, LaraItem, 0, false);
+	}
+
 
 	void Register(sol::state * state, sol::table & parent) {
 		sol::table table_misc{ state->lua_state(), sol::create };
@@ -309,5 +353,8 @@ namespace Misc
 
 		table_misc.set_function(ScriptReserved_FlipMap, &FlipMap);
 
+		table_misc.set_function(ScriptReserved_PlayFlyBy, &PlayFlyBy);
+
+		table_misc.set_function(ScriptReserved_ResetObjCamera, &ResetObjCamera);
 	}
 }

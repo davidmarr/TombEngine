@@ -1,5 +1,5 @@
 #include "framework.h"
-#include "Game/effects/lara_fx.h"
+#include "Game/effects/item_fx.h"
 
 #include "Game/collision/collide_room.h"
 #include "Game/collision/floordata.h"
@@ -13,24 +13,26 @@
 
 using namespace TEN::Effects::Smoke;
 
-namespace TEN::Effects::Lara
+namespace TEN::Effects::Items
 {
-	void LaraBurn(ItemInfo* item)
+	void ItemBurn(ItemInfo* item, int timeout)
 	{
-		if (!item->IsLara())
-			return;
+		item->Effect.Type = EffectType::Fire;
+		item->Effect.Count = timeout;
+		item->Effect.LightColor = Vector3(0.8f, 0.5f, 0.0f);
+	}
 
-		auto* lara = GetLaraInfo(item);
+	void ItemElectricBurn(ItemInfo* item, int timeout)
+	{
+		item->Effect.Type = EffectType::Sparks;
+		item->Effect.Count = timeout;
+		item->Effect.LightColor = Vector3(0.0f, 0.2f, 0.8f);
+	}
 
-		if (!lara->Burn && !lara->BurnSmoke)
-		{
-			short fxNum = CreateNewEffect(item->RoomNumber);
-			if (fxNum != NO_ITEM)
-			{
-				EffectList[fxNum].objectNumber = ID_FLAME;
-				lara->Burn = true;
-			}
-		}
+	void ItemSmoke(ItemInfo* item, int timeout)
+	{
+		item->Effect.Type = EffectType::Smoke;
+		item->Effect.Count = timeout;
 	}
 
 	void LavaBurn(ItemInfo* item)
@@ -46,13 +48,13 @@ namespace TEN::Effects::Lara
 		{
 			item->HitPoints = -1;
 			item->HitStatus = true;
-			LaraBurn(item);
+			ItemBurn(item);
 		}
 	}
 
 	void LaraBreath(ItemInfo* item)
 	{
-		if (!item->IsLara())
+		if (item->IsLara())
 			return;
 
 		auto* lara = GetLaraInfo(item);
@@ -87,15 +89,14 @@ namespace TEN::Effects::Lara
 
 		float z = std::sin(TO_RAD(item->Pose.Orientation.y)) * -64.0f;
 		float x = std::cos(TO_RAD(item->Pose.Orientation.y)) * -64.0f;
-		auto offset = Vector3Int(0, -4, 64);
+		auto offset = GetJointPosition(item, LM_HEAD, Vector3i(0, -4, 64));
 
-		GetLaraJointPosition(&offset, LM_HEAD);
+		auto seed = GetJointPosition(item, 
+			LM_HEAD,
+			Vector3i((GetRandomControl() & 7) - 4,
+				(GetRandomControl() & 7) - 8,
+				(GetRandomControl() & 7) - 4));
 
-		auto seed = Vector3Int((GetRandomControl() & 7) - 4,
-			(GetRandomControl() & 7) - 8,
-			(GetRandomControl() & 7) - 4);
-
-		GetLaraJointPosition(&seed, LM_HEAD);
 		TriggerBreathSmoke(offset.x, offset.y, offset.z, item->Pose.Orientation.y);
 	}
 }

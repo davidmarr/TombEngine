@@ -13,8 +13,8 @@
 #include "Game/Lara/lara_fire.h"
 #include "Game/misc.h"
 #include "Game/people.h"
+#include "Math/Random.h"
 #include "Specific/level.h"
-#include "Specific/prng.h"
 #include "Specific/setup.h"
 
 using namespace TEN::Math::Random;
@@ -54,7 +54,7 @@ namespace TEN::Entities::TR4
 {
 	const auto BaddyGunBite	  = BiteInfo(Vector3(0.0f, -16.0f, 200.0f), 11);
 	const auto BaddySwordBite = BiteInfo(Vector3::Zero, 15);
-	const vector<uint> BaddySwordAttackJoints = { 14, 15, 16 };
+	const vector<unsigned int> BaddySwordAttackJoints = { 14, 15, 16 };
 
 	#define BADDY_USE_UZI	24
 
@@ -216,13 +216,13 @@ namespace TEN::Entities::TR4
 
 		if (item->ObjectNumber == ID_BADDY1)
 		{
-			item->MeshSwapBits = MESHSWAPFLAGS_BADDY_GUN;
+			item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_GUN);
 			item->MeshBits = 0xFF81FFFF;
 			item->ItemFlags[2] = BADDY_USE_UZI;
 		}
 		else
 		{
-			item->MeshSwapBits = MESHSWAPFLAGS_BADDY_SWORD_NINJA;
+			item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_NINJA);
 			item->MeshBits = ALL_JOINT_BITS;
 			item->ItemFlags[2] = 0;
 		}
@@ -321,8 +321,8 @@ namespace TEN::Entities::TR4
 		auto* enemyItem = creature->Enemy;
 		auto* object = &Objects[ID_BADDY1];
 
-		short tilt = 0;
 		short angle = 0;
+		short tilt = 0;
 		short joint1 = 0;
 		short joint2 = 0;
 		short joint3 = 0;
@@ -419,12 +419,10 @@ namespace TEN::Entities::TR4
 
 		item->ItemFlags[1] = item->RoomNumber;
 
-		// Handle baddy firing
+		// Handle baddy firing.
 		if (creature->FiredWeapon)
 		{
-			auto pos = Vector3Int(BaddyGunBite.Position);
-			GetJointAbsPosition(item, &pos, BaddyGunBite.meshNum);
-
+			auto pos = GetJointPosition(item, BaddyGunBite.meshNum, Vector3i(BaddyGunBite.Position));
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 4 * creature->FiredWeapon + 8, 24, 16, 4);
 			creature->FiredWeapon--;
 		}
@@ -647,7 +645,7 @@ namespace TEN::Entities::TR4
 					break;
 				}
 
-				if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_SWORD_NINJA &&
+				if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_NINJA) &&
 					item == Lara.TargetEntity &&
 					laraAI.ahead &&
 					laraAI.distance > pow(682, 2))
@@ -658,13 +656,14 @@ namespace TEN::Entities::TR4
 
 				if (Targetable(item, &AI) && item->ItemFlags[2] > 0)
 				{
-					if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_GUN)
+					if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_GUN))
 					{
 						item->Animation.TargetState = BADDY_STATE_AIM;
 						break;
 					}
 
-					if (item->MeshSwapBits != MESHSWAPFLAGS_BADDY_SWORD_SIMPLE && item->MeshSwapBits != MESHSWAPFLAGS_BADDY_SWORD_NINJA)
+					if (!item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_SIMPLE) && 
+						!item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_NINJA))
 					{
 						item->Animation.TargetState = BADDY_STATE_DRAW_GUN;
 						break;
@@ -713,7 +712,7 @@ namespace TEN::Entities::TR4
 					}
 				}
 
-				if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_GUN && item->ItemFlags[2] < 1)
+				if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_GUN) && item->ItemFlags[2] < 1)
 				{
 					item->Animation.TargetState = BADDY_STATE_HOLSTER_GUN;
 					break;
@@ -724,13 +723,13 @@ namespace TEN::Entities::TR4
 					probe = GetCollision(item);
 					if (probe.Position.Ceiling == probe.Position.Floor - CLICK(6))
 					{
-						if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_EMPTY)
+						if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_EMPTY))
 						{
 							item->Animation.TargetState = BADDY_STATE_MONKEY_GRAB;
 							break;
 						}
 
-						if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_GUN)
+						if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_GUN))
 						{
 							item->Animation.TargetState = BADDY_STATE_HOLSTER_GUN;
 							break;
@@ -756,7 +755,7 @@ namespace TEN::Entities::TR4
 						break;
 					}
 
-					if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_EMPTY)
+					if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_EMPTY))
 					{
 						item->Animation.TargetState = BADDY_STATE_DRAW_SWORD;
 						break;
@@ -767,7 +766,7 @@ namespace TEN::Entities::TR4
 						AI.distance < pow(SECTOR(0.5f), 2) &&
 						AI.verticalDistance < SECTOR(1))
 					{
-						if (item->MeshSwapBits == MESHSWAPFLAGS_BADDY_GUN)
+						if (item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_GUN))
 							item->Animation.TargetState = BADDY_STATE_HOLSTER_GUN;
 						else if (AI.distance >= pow(SECTOR(0.5f), 2))
 							item->Animation.TargetState = BADDY_STATE_SWORD_HIT_FRONT;
@@ -815,7 +814,8 @@ namespace TEN::Entities::TR4
 
 				if (item->ItemFlags[2] < 1)
 				{
-					if (item->MeshSwapBits != MESHSWAPFLAGS_BADDY_SWORD_SIMPLE && item->MeshSwapBits != MESHSWAPFLAGS_BADDY_SWORD_NINJA)
+					if (!item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_SIMPLE) && 
+						!item->TestMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_NINJA))
 					{
 						item->Animation.TargetState = BADDY_STATE_IDLE;
 						break;
@@ -1075,7 +1075,7 @@ namespace TEN::Entities::TR4
 				break;
 
 			case BADDY_STATE_CROUCH_PICKUP:
-				ClampRotation(&item->Pose, AI.angle, ANGLE(11.0f));
+				ClampRotation(item->Pose, AI.angle, ANGLE(11.0f));
 
 				if (item->Animation.FrameNumber != g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_CROUCH_PICKUP)
 					break;
@@ -1130,7 +1130,7 @@ namespace TEN::Entities::TR4
 					joint1 = AI.angle;
 					joint2 = AI.xAngle;
 				}
-				ClampRotation(&item->Pose, AI.angle, ANGLE(7));
+				ClampRotation(item->Pose, AI.angle, ANGLE(7));
 
 				if (!Targetable(item, &AI) ||
 					item->ItemFlags[2] < 1)
@@ -1149,7 +1149,7 @@ namespace TEN::Entities::TR4
 					joint1 = AI.angle;
 					joint2 = AI.xAngle;
 				}
-				ClampRotation(&item->Pose, AI.angle, ANGLE(7.0f));
+				ClampRotation(item->Pose, AI.angle, ANGLE(7.0f));
 
 				if (item->Animation.FrameNumber >= g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_FIRE_MAX ||
 					item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_FIRE_MIN)
@@ -1172,19 +1172,19 @@ namespace TEN::Entities::TR4
 
 			case BADDY_STATE_HOLSTER_GUN:
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_HOLSTER_GUN)
-					item->MeshSwapBits = MESHSWAPFLAGS_BADDY_EMPTY;
+					item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_EMPTY);
 
 				break;
 
 			case BADDY_STATE_DRAW_GUN:
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_DRAW_GUN)
-					item->MeshSwapBits = MESHSWAPFLAGS_BADDY_GUN;
+					item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_GUN);
 
 				break;
 
 			case BADDY_STATE_HOLSTER_SWORD:
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_HOLSTER_SWORD)
-					item->MeshSwapBits = MESHSWAPFLAGS_BADDY_EMPTY;
+					item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_EMPTY);
 				
 				break;
 
@@ -1193,16 +1193,16 @@ namespace TEN::Entities::TR4
 					break;
 
 				if (item->ObjectNumber == ID_BADDY1)
-					item->MeshSwapBits = MESHSWAPFLAGS_BADDY_SWORD_SIMPLE;
+					item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_SIMPLE);
 				else
-					item->MeshSwapBits = MESHSWAPFLAGS_BADDY_SWORD_NINJA;
+					item->SetMeshSwapFlags(MESHSWAPFLAGS_BADDY_SWORD_NINJA);
 
 				break;
 
 			case BADDY_STATE_UNKNOWN_8:
 				currentCreature->MaxTurn = 0;
 
-				ClampRotation(&item->Pose, AI.angle, ANGLE(11.0f));
+				ClampRotation(item->Pose, AI.angle, ANGLE(11.0f));
 
 				if (laraAI.distance < pow(682, 2) ||
 					item != Lara.TargetEntity)
@@ -1224,7 +1224,7 @@ namespace TEN::Entities::TR4
 			case BADDY_STATE_SOMERSAULT:
 				if (item->Animation.AnimNumber == (Objects[objectNumber].animIndex + BADDY_ANIM_SOMERSAULT_END))
 				{
-					ClampRotation(&item->Pose, AI.angle, ANGLE(7.0f));
+					ClampRotation(item->Pose, AI.angle, ANGLE(7.0f));
 					break;
 				}
 

@@ -1,11 +1,12 @@
 #include "framework.h"
-
-#include "ScriptAssert.h"
 #include "Objects/Camera/CameraObject.h"
-#include "Vec3/Vec3.h"
-#include "ScriptUtil.h"
+
 #include "ReservedScriptNames.h"
+#include "ScriptAssert.h"
+#include "ScriptUtil.h"
+#include "Specific/LevelCameraInfo.h"
 #include "Specific/level.h"
+#include "Vec3/Vec3.h"
 
 /***
 Basic cameras that can point at Lara or at a CAMERA_TARGET.
@@ -67,12 +68,12 @@ Vec3 Camera::GetPos() const
 
 void Camera::SetPos(Vec3 const& pos)
 {
-	m_camera.Position = Vector3Int(pos.x, pos.y, pos.z);
+	m_camera.Position = Vector3i(pos.x, pos.y, pos.z);
 }
 
 std::string Camera::GetName() const
 {
-	return m_camera.LuaName;
+	return m_camera.Name;
 }
 
 void Camera::SetName(std::string const & id) 
@@ -85,8 +86,8 @@ void Camera::SetName(std::string const & id)
 	if (s_callbackSetName(id, m_camera))
 	{
 		// remove the old name if we have one
-		s_callbackRemoveName(m_camera.LuaName);
-		m_camera.LuaName = id;
+		s_callbackRemoveName(m_camera.Name);
+		m_camera.Name = id;
 	}
 	else
 	{

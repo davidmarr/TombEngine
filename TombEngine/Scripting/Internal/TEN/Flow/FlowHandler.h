@@ -26,6 +26,7 @@ public:
 	int								FogOutDistance{ 0 };
 	bool							PlayAnyLevel{ true };
 	bool							FlyCheat{ true };
+	bool							MassPickup{ true };
 	bool							DebugMode{ false };
 
 	// New animation flag table
@@ -39,7 +40,7 @@ public:
 
 	void				AddLevel(Level const& level);
 	void				LoadFlowScript();
-	char const *		GetString(const char* id) const;
+	char const*			GetString(const char* id) const;
 	void				SetStrings(sol::nested<std::unordered_map<std::string, std::vector<std::string>>> && src);
 	void				SetLanguageNames(sol::as_table_t<std::vector<std::string>> && src);
 	void				SetAnimations(Animations const & src);
@@ -55,17 +56,22 @@ public:
 	void				AddSecret(int levelSecretIndex);
 	void				SetIntroImagePath(std::string const& path);
 	void				SetTitleScreenImagePath(std::string const& path);
+	void				SetTotalSecretCount(int secretsNumber);
 	bool				IsFlyCheatEnabled() const;
+	void				EnableFlyCheat(bool flyCheat);
+	bool				IsMassPickupEnabled() const;
+	void				EnableMassPickup(bool massPickup);
 	bool				CanPlayAnyLevel() const;
 
 	bool HasCrawlExtended() const override { return Anims.HasCrawlExtended; }
 	bool HasCrouchRoll() const override { return Anims.HasCrouchRoll; }
-	bool HasCrawlspaceSwandive() const override { return Anims.HasCrawlspaceDive; }
+	bool HasCrawlspaceDive() const override { return Anims.HasCrawlspaceDive; }
 	bool HasMonkeyAutoJump() const override { return Anims.HasMonkeyAutoJump; }
 	bool HasAFKPose() const override { return Anims.HasPose; }
 	bool HasOverhangClimb() const override { return Anims.HasOverhangClimb; }
 	bool HasSlideExtended() const override { return Anims.HasSlideExtended; }
 	bool HasSprintJump() const override { return Anims.HasSprintJump; }
+	bool HasLedgeJumps() const override { return Anims.HasLedgeJumps; }
 	bool DoFlow() override;
 };
 

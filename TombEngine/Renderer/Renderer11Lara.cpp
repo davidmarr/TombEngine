@@ -1,5 +1,7 @@
 #include "framework.h"
 #include "Renderer/Renderer11.h"
+
+#include "Flow/ScriptInterfaceFlowHandler.h"
 #include "Game/animation.h"
 #include "Game/effects/hair.h"
 #include "Game/items.h"
@@ -9,10 +11,11 @@
 #include "Game/spotcam.h"
 #include "Game/camera.h"
 #include "Game/collision/sphere.h"
+#include "Math/Math.h"
 #include "Specific/level.h"
 #include "Specific/setup.h"
-#include "Flow/ScriptInterfaceFlowHandler.h"
 
+using namespace TEN::Math;
 using namespace TEN::Renderer;
 
 extern ScriptInterfaceFlowHandler *g_GameFlow;
@@ -43,7 +46,7 @@ bool shouldAnimateUpperBody(const LaraWeaponType& weapon)
 	case LaraWeaponType::HK:
 	{
 		// Animate upper body if Lara is shooting from shoulder OR if Lara is standing still/turning
-		int baseAnim = Objects[WeaponObject(weapon)].animIndex;
+		int baseAnim = Objects[GetWeaponObjectID(weapon)].animIndex;
 		if (laraInfo.RightArm.AnimNumber - baseAnim == 0 ||
 			laraInfo.RightArm.AnimNumber - baseAnim == 2 ||
 			laraInfo.RightArm.AnimNumber - baseAnim == 4)
@@ -91,11 +94,11 @@ void Renderer11::UpdateLaraAnimations(bool force)
 
 	// Clear extra rotations
 	for (int i = 0; i < laraObj.LinearizedBones.size(); i++)
-		laraObj.LinearizedBones[i]->ExtraRotation = Vector3(0.0f, 0.0f, 0.0f);
+		laraObj.LinearizedBones[i]->ExtraRotation = Vector3::Zero;
 
 	// Lara world matrix
 	translation = Matrix::CreateTranslation(LaraItem->Pose.Position.x, LaraItem->Pose.Position.y, LaraItem->Pose.Position.z);
-	rotation = Matrix::CreateFromYawPitchRoll(TO_RAD(LaraItem->Pose.Orientation.y), TO_RAD(LaraItem->Pose.Orientation.x), TO_RAD(LaraItem->Pose.Orientation.z));
+	rotation = LaraItem->Pose.Orientation.ToRotationMatrix();
 
 	m_LaraWorldMatrix = rotation * translation;
 	item->World = m_LaraWorldMatrix;
@@ -109,7 +112,7 @@ void Renderer11::UpdateLaraAnimations(bool force)
 	AnimFrame* framePtr[2];
 	int rate, frac;
 
-	frac = GetFrame(LaraItem, framePtr, &rate);
+	frac = GetFrame(LaraItem, framePtr, rate);
 	UpdateAnimation(item, laraObj, framePtr, frac, rate, mask);
 
 	// Then the arms, based on current weapon status
@@ -119,7 +122,7 @@ void Renderer11::UpdateLaraAnimations(bool force)
 	{
 		// Both arms
 		mask = MESH_BITS(LM_LINARM) | MESH_BITS(LM_LOUTARM) | MESH_BITS(LM_LHAND) | MESH_BITS(LM_RINARM) | MESH_BITS(LM_ROUTARM) | MESH_BITS(LM_RHAND);
-		frac = GetFrame(LaraItem, framePtr, &rate);
+		frac = GetFrame(LaraItem, framePtr, rate);
 		UpdateAnimation(item, laraObj, framePtr, frac, rate, mask);
 	}
 	else
@@ -226,12 +229,12 @@ void Renderer11::UpdateLaraAnimations(bool force)
 				tempItem.Animation.AnimNumber < Objects[ID_FLARE_ANIM].animIndex + 4)
 				mask |= MESH_BITS(LM_TORSO) | MESH_BITS(LM_HEAD);
 
-			frac = GetFrame(&tempItem, framePtr, &rate);
+			frac = GetFrame(&tempItem, framePtr, rate);
 			UpdateAnimation(item, laraObj, framePtr, frac, rate, mask);
 
 			// Right arm
 			mask = MESH_BITS(LM_RINARM) | MESH_BITS(LM_ROUTARM) | MESH_BITS(LM_RHAND);
-			frac = GetFrame(LaraItem, framePtr, &rate);
+			frac = GetFrame(LaraItem, framePtr, rate);
 			UpdateAnimation(item, laraObj, framePtr, frac, rate, mask);
 			break;
 		}
@@ -241,7 +244,9 @@ void Renderer11::UpdateLaraAnimations(bool force)
 	for (int m = 0; m < 15; m++)
 		laraObj.AnimationTransforms[m] = item->AnimationTransforms[m];
 
-	m_items[Lara.ItemNumber].DoneAnimations = true;
+	// Copy meshswap indices
+	item->MeshIndex = LaraItem->Model.MeshIndex;
+	item->DoneAnimations = true;
 }
 
 void TEN::Renderer::Renderer11::DrawLara(RenderView& view, bool transparent)
@@ -284,7 +289,7 @@ void TEN::Renderer::Renderer11::DrawLara(RenderView& view, bool transparent)
 	m_stItem.AmbientLight = item->AmbientLight;
 	memcpy(m_stItem.BonesMatrices, laraObj.AnimationTransforms.data(), sizeof(Matrix) * MAX_BONES);
 	for (int k = 0; k < laraSkin.ObjectMeshes.size(); k++)
-		m_stItem.BoneLightModes[k] = GetMesh(Lara.MeshPtrs[k])->LightMode;
+		m_stItem.BoneLightModes[k] = GetMesh(nativeItem->Model.MeshIndex[k])->LightMode;
 
 	m_cbItem.updateData(m_stItem, m_context.Get());
 	BindConstantBufferVS(CB_ITEM, m_cbItem.get());
@@ -297,8 +302,7 @@ void TEN::Renderer::Renderer11::DrawLara(RenderView& view, bool transparent)
 		if (!nativeItem->MeshBits.Test(k))
 			continue;
 
-		RendererMesh *mesh = GetMesh(Lara.MeshPtrs[k]);
-		DrawMoveableMesh(item, mesh, room, k, transparent);
+		DrawMoveableMesh(item, GetMesh(nativeItem->Model.MeshIndex[k]), room, k, transparent);
 	}
 
 	DrawLaraHolsters(transparent);
@@ -331,7 +335,7 @@ void TEN::Renderer::Renderer11::DrawLara(RenderView& view, bool transparent)
 			for (int i = 0; i < hairsObj.BindPoseTransforms.size(); i++)
 			{
 				auto* hairs = &Hairs[h][i];
-				Matrix world = Matrix::CreateFromYawPitchRoll(TO_RAD(hairs->pos.Orientation.y), TO_RAD(hairs->pos.Orientation.x), 0) *
+				Matrix world = Matrix::CreateFromYawPitchRoll(TO_RAD(hairs->pos.Orientation.y), TO_RAD(hairs->pos.Orientation.x), 0.0f) *
 					Matrix::CreateTranslation(hairs->pos.Position.x, hairs->pos.Position.y, hairs->pos.Position.z);
 				m_stItem.BonesMatrices[i + 1] = world;
 				m_stItem.BoneLightModes[i] = LIGHT_MODES::LIGHT_MODE_DYNAMIC;

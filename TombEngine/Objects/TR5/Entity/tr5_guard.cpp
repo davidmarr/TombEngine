@@ -14,7 +14,6 @@
 #include "Game/people.h"
 #include "Sound/sound.h"
 #include "Specific/level.h"
-#include "Specific/prng.h"
 #include "Specific/setup.h"
 
 using namespace TEN::Math::Random;
@@ -128,7 +127,7 @@ namespace TEN::Entities::Creatures::TR5
 			case 3:
 				item->Animation.AnimNumber = anim + 28;
 				item->Animation.TargetState = GUARD_STATE_SIT;
-				item->MeshSwapBits = 9216;
+				item->SetMeshSwapFlags(9216);
 
 				roomItemNumber = g_Level.Rooms[item->RoomNumber].itemNumber;
 				if (roomItemNumber != NO_ITEM)
@@ -162,7 +161,7 @@ namespace TEN::Entities::Creatures::TR5
 			case 4:
 				item->Animation.AnimNumber = anim + 30;
 				item->Animation.TargetState = 17;
-				item->MeshSwapBits = 8192;
+				item->SetMeshSwapFlags(8192);
 				break;
 
 			case 5:
@@ -204,12 +203,7 @@ namespace TEN::Entities::Creatures::TR5
 		auto* item = &g_Level.Items[itemNumber];
 
 		ClearItem(itemNumber);
-
-		item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex;
-		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
-		item->Animation.TargetState = SNIPER_STATE_IDLE;
-		item->Animation.ActiveState = SNIPER_STATE_IDLE;
-
+		SetAnimation(item, 0);
 		item->Pose.Position.x += SECTOR(1) * phd_sin(item->Pose.Orientation.y + ANGLE(90.0f));
 		item->Pose.Position.y += CLICK(2);
 		item->Pose.Position.z += SECTOR(1) * phd_cos(item->Pose.Orientation.y + ANGLE(90.0f));
@@ -220,11 +214,7 @@ namespace TEN::Entities::Creatures::TR5
 		auto* item = &g_Level.Items[itemNumber];
 
 		ClearItem(itemNumber);
-
-		item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 6;
-		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
-		item->Animation.TargetState = GUARD_STATE_IDLE;
-		item->Animation.ActiveState = GUARD_STATE_IDLE;
+		SetAnimation(item, 6);
 	}
 
 	void ControlGuardLaser(short itemNumber)
@@ -291,9 +281,7 @@ namespace TEN::Entities::Creatures::TR5
 		{
 			creature->FiredWeapon--;
 
-			auto pos = Vector3Int(SwatGunBite.Position);
-			GetJointAbsPosition(item, &pos, SwatGunBite.meshNum);
-
+			auto pos = GetJointPosition(item, SwatGunBite.meshNum, Vector3i(SwatGunBite.Position));
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 2 * creature->FiredWeapon + 10, 192, 128, 32);
 		}
 
@@ -401,20 +389,19 @@ namespace TEN::Entities::Creatures::TR5
 
 			creature->Enemy = enemy;
 
-			GameVector src;
-			src.x = item->Pose.Position.x;
-			src.y = item->Pose.Position.y - CLICK(1.5f);
-			src.z = item->Pose.Position.z;
-			src.roomNumber = item->RoomNumber;
-
+			auto origin = GameVector(
+				item->Pose.Position.x,
+				item->Pose.Position.y - CLICK(1.5f),
+				item->Pose.Position.z,
+				item->RoomNumber
+			);
 			auto* frame = GetBestFrame(LaraItem);
-
-			GameVector dest;
-			dest.x = LaraItem->Pose.Position.x;
-			dest.y = LaraItem->Pose.Position.y + ((frame->boundingBox.Y2 + 3 * frame->boundingBox.Y1) / 4);
-			dest.z = LaraItem->Pose.Position.z;
-
-			bool los = !LOS(&src, &dest) && item->TriggerFlags != 10;
+			auto target = GameVector(
+				LaraItem->Pose.Position.x,
+				LaraItem->Pose.Position.y + ((frame->boundingBox.Y2 + 3 * frame->boundingBox.Y1) / 4),
+				LaraItem->Pose.Position.z
+			);
+			bool los = !LOS(&origin, &target) && item->TriggerFlags != 10;
 
 			creature->MaxTurn = 0;
 
@@ -562,8 +549,8 @@ namespace TEN::Entities::Creatures::TR5
 					/*pos1.x = SwatGunBite.x;
 					pos1.y = SwatGunBite.y;
 					pos1.z = SwatGunBite.z;
-					GetJointAbsPosition(item, &pos1, SwatGunBite.meshNum);
-					TriggerEnergyArc(&pos1, (Vector3Int*)& LaraItem->pos, 192, 128, 192, 256, 150, 256, 0, ENERGY_ARC_STRAIGHT_LINE);*/
+					GetJointPosition(item, &pos1, SwatGunBite.meshNum);
+					TriggerEnergyArc(&pos1, (Vector3i*)& LaraItem->pos, 192, 128, 192, 256, 150, 256, 0, ENERGY_ARC_STRAIGHT_LINE);*/
 
 				}
 
@@ -721,7 +708,7 @@ namespace TEN::Entities::Creatures::TR5
 
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + 44)
 				{
-					item->MeshSwapBits = NO_JOINT_BITS;
+					item->SetMeshSwapFlags(NO_JOINT_BITS);
 
 					short currentItemNumber = g_Level.Rooms[item->RoomNumber].itemNumber;
 					if (currentItemNumber == NO_ITEM)
@@ -816,7 +803,7 @@ namespace TEN::Entities::Creatures::TR5
 					item->Pose.Position.x = currentItem->Pose.Position.x - CLICK(1);
 					item->Pose.Orientation.y = currentItem->Pose.Orientation.y;
 					item->Pose.Position.z = currentItem->Pose.Position.z + CLICK(0.5f);
-					item->MeshSwapBits = 1024;
+					item->SetMeshSwapFlags(1024);
 				}
 				else
 				{
@@ -835,7 +822,7 @@ namespace TEN::Entities::Creatures::TR5
 						currentItem->MeshBits = 0x1FFF;
 						TestTriggers(item, true);
 						item->Animation.RequiredState = GUARD_STATE_WALK;
-						item->MeshSwapBits = NO_JOINT_BITS;
+						item->SetMeshSwapFlags(NO_JOINT_BITS);
 					}
 				}
 
@@ -1000,9 +987,7 @@ namespace TEN::Entities::Creatures::TR5
 
 		if (creature->FiredWeapon)
 		{
-			auto pos = Vector3Int(SniperGunBite.Position);
-			GetJointAbsPosition(item, &pos, SniperGunBite.meshNum);
-
+			auto pos = GetJointPosition(item, SniperGunBite.meshNum, Vector3i(SniperGunBite.Position));
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 2 * creature->FiredWeapon + 10, 192, 128, 32);
 			creature->FiredWeapon--;
 		}
@@ -1100,7 +1085,7 @@ namespace TEN::Entities::Creatures::TR5
 		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
 		item->Animation.TargetState = GUARD_STATE_IDLE;
 		item->Animation.ActiveState = GUARD_STATE_IDLE;
-		item->MeshSwapBits = 9216;
+		item->SetMeshSwapFlags(9216);
 	}
 
 	void Mafia2Control(short itemNumber)
@@ -1159,9 +1144,7 @@ namespace TEN::Entities::Creatures::TR5
 
 		if (creature->FiredWeapon)
 		{
-			auto pos = Vector3Int(ArmedMafia2GunBite.Position);
-			GetJointAbsPosition(item, &pos, ArmedMafia2GunBite.meshNum);
-
+			auto pos = GetJointPosition(item, ArmedMafia2GunBite.meshNum, Vector3i(ArmedMafia2GunBite.Position));
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 4 * creature->FiredWeapon + 8, 24, 16, 4);
 			creature->FiredWeapon--;
 		}
@@ -1227,13 +1210,13 @@ namespace TEN::Entities::Creatures::TR5
 				}
 				if (laraAI.angle <= ANGLE(112.5f) && laraAI.angle >= -ANGLE(112.5f))
 				{
-					if (item->MeshSwapBits == 9216)
+					if (item->TestMeshSwapFlags(9216))
 					{
 						item->Animation.TargetState = MAFIA2_STATE_UNDRAW_GUNS;
 						break;
 					}
 				}
-				else if (item->MeshSwapBits == 9216)
+				else if (item->TestMeshSwapFlags(9216))
 				{
 					item->Animation.TargetState = MAFIA2_STATE_TURN_180;
 					break;
@@ -1289,13 +1272,13 @@ namespace TEN::Entities::Creatures::TR5
 					item->Pose.Orientation.y += ANGLE(2.0f);
 
 				if (item->Animation.FrameNumber != g_Level.Anims[item->Animation.AnimNumber].frameBase + 16 ||
-					item->MeshSwapBits != 9216)
+					!item->TestMeshSwapFlags(9216))
 				{
 					if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameEnd)
 						item->Pose.Orientation.y += -ANGLE(180.0f);
 				}
 				else
-					item->MeshSwapBits = 128;
+					item->SetMeshSwapFlags(128);
 			
 				break;
 
@@ -1429,9 +1412,9 @@ namespace TEN::Entities::Creatures::TR5
 					item->Pose.Orientation.y -= ANGLE(2.0f);
 
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameBase + 16 &&
-					item->MeshSwapBits == 9216)
+					item->TestMeshSwapFlags(9216))
 				{
-					item->MeshSwapBits = 128;
+					item->SetMeshSwapFlags(128);
 				}
 
 				break;

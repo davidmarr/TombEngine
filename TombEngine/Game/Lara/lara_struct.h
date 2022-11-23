@@ -1,19 +1,22 @@
 #pragma once
+#include "Math/Math.h"
 #include "Objects/objectslist.h"
-#include "Specific/trmath.h"
 
-#define NUM_PUZZLES	(ID_PUZZLE_ITEM16 - ID_PUZZLE_ITEM1 + 1)
-#define NUM_PUZZLE_PIECES	(ID_PUZZLE_ITEM16_COMBO2 - ID_PUZZLE_ITEM1_COMBO1 + 1)
-#define NUM_KEYS (ID_KEY_ITEM16 - ID_KEY_ITEM1 + 1)
-#define NUM_KEY_PIECES	(ID_KEY_ITEM16_COMBO2 - ID_KEY_ITEM1_COMBO1 + 1)
-#define NUM_PICKUPS (ID_PICKUP_ITEM16 - ID_PICKUP_ITEM1 + 1)
-#define NUM_PICKUPS_PIECES	(ID_PICKUP_ITEM16_COMBO2 - ID_PICKUP_ITEM1_COMBO1 + 1)
-#define NUM_EXAMINES (ID_EXAMINE8 - ID_EXAMINE1 + 1)
-#define NUM_EXAMINES_PIECES	(ID_EXAMINE8_COMBO2 - ID_EXAMINE1_COMBO1 + 1)
+using namespace TEN::Math;
 
 struct CreatureInfo;
-struct ItemInfo;
 struct FX_INFO;
+struct ItemInfo;
+
+// Inventory object constants
+constexpr int NUM_PUZZLES		  = ID_PUZZLE_ITEM16 - ID_PUZZLE_ITEM1 + 1;
+constexpr int NUM_PUZZLE_PIECES   = ID_PUZZLE_ITEM16_COMBO2 - ID_PUZZLE_ITEM1_COMBO1 + 1;
+constexpr int NUM_KEYS			  = ID_KEY_ITEM16 - ID_KEY_ITEM1 + 1;
+constexpr int NUM_KEY_PIECES	  = ID_KEY_ITEM16_COMBO2 - ID_KEY_ITEM1_COMBO1 + 1;
+constexpr int NUM_PICKUPS		  = ID_PICKUP_ITEM16 - ID_PICKUP_ITEM1 + 1;
+constexpr int NUM_PICKUPS_PIECES  = ID_PICKUP_ITEM16_COMBO2 - ID_PICKUP_ITEM1_COMBO1 + 1;
+constexpr int NUM_EXAMINES		  = ID_EXAMINE8 - ID_EXAMINE1 + 1;
+constexpr int NUM_EXAMINES_PIECES = ID_EXAMINE8_COMBO2 - ID_EXAMINE1_COMBO1 + 1;
 
 namespace TEN::Renderer
 {
@@ -807,8 +810,12 @@ enum LaraAnim
 	LA_CROUCH_TURN_180_END = 562,
 	LA_CRAWL_TURN_180_START = 653,
 	LA_CRAWL_TURN_180_END = 654,
+	LA_LEDGE_JUMP_UP_START = 565,
+	LA_LEDGE_JUMP_UP_END = 566,
+	LA_LEDGE_JUMP_BACK_START = 567,
+	LA_LEDGE_JUMP_BACK_END = 568,
 
-	NUM_LARA_ANIMS,
+	NUM_LARA_ANIMS
 
 	// TRASHED ANIMS (please reuse slots before going any higher and remove entries from this list as you go):
 	// 102
@@ -901,15 +908,6 @@ enum class ClothType
 	Wet
 };
 
-enum class BurnType
-{
-	None,
-	Normal,
-	Smoke,
-	Blue,
-	Blue2
-};
-
 enum class WaterStatus
 {
 	Dry,
@@ -952,106 +950,106 @@ struct Ammo
 	using CountType = uint16_t;
 
 private:
-	CountType count;
-	bool isInfinite;
+	CountType Count;
+	bool	  IsInfinite;
 
 public:
+	static CountType Clamp(int value)
+	{
+		return std::clamp(value, 0, static_cast<int>(std::numeric_limits<CountType>::max()));
+	}
+
+	bool HasInfinite() const
+	{
+		return IsInfinite;
+	}
+
+	CountType GetCount() const
+	{
+		return Count;
+	}
+
+	void SetInfinite(bool infinite)
+	{
+		this->IsInfinite = infinite;
+	}
 
 	Ammo& operator --()
 	{
-		--count;
+		assert(this->Count > 0);
+		--this->Count;
 		return *this;
 	}
 
 	Ammo operator --(int)
 	{
-		Ammo tmp = *this;
+		auto temp = *this;
 		--*this;
-		return tmp;
+		return temp;
 	}
 
 	Ammo& operator ++()
 	{
-		++count;
+		++this->Count;
 		return *this;
 	}
 
 	Ammo operator ++(int)
 	{
-		Ammo tmp = *this;
+		auto temp = *this;
 		++*this;
-		return tmp;
+		return temp;
 	}
 
-	Ammo& operator =(size_t val)
+	Ammo& operator =(size_t value)
 	{
-		count = clamp(val);
+		this->Count = Clamp(value);
 		return *this;
 	}
 
-	bool operator ==(size_t val)
+	bool operator ==(size_t value)
 	{
-		return count == clamp(val);
+		return (Count == Clamp(value));
 	}
 
 	Ammo& operator =(Ammo& rhs)
 	{
-		count = rhs.count;
-		isInfinite = rhs.count;
+		this->Count = rhs.Count;
+		this->IsInfinite = rhs.Count;
 		return *this;
 	}
 
-	Ammo operator +(size_t val)
+	Ammo operator +(size_t value)
 	{
-		Ammo tmp = *this;
-		tmp += val;
-		return tmp;
+		auto temp = *this;
+		temp += value;
+		return temp;
 	}
 
-	Ammo operator -(size_t val)
+	Ammo operator -(size_t value)
 	{
-		Ammo tmp = *this;
-		tmp -= val;
-		return tmp;
+		auto temp = *this;
+		temp -= value;
+		return temp;
 	}
 
-	Ammo& operator +=(size_t val)
+	Ammo& operator +=(size_t value)
 	{
-		int tmp = this->count + val;
-		this->count = clamp(tmp);
+		int temp = Count + value;
+		this->Count = Clamp(temp);
 		return *this;
 	}
 
-	Ammo& operator -=(size_t val)
+	Ammo& operator -=(size_t value)
 	{
-		int tmp = this->count - val;
-		this->count = clamp(tmp);
+		int temp = Count - value;
+		this->Count = Clamp(temp);
 		return *this;
 	}
 
 	operator bool()
 	{
-		return isInfinite || (count > 0);
-	}
-
-	static CountType clamp(int val)
-	{
-		return std::clamp(val, 0, static_cast<int>(std::numeric_limits<CountType>::max()));
-	}
-
-	bool hasInfinite() const
-	{
-		return isInfinite;
-	}
-
-	CountType getCount() const
-	{
-		return count;
-	}
-
-	void setInfinite(bool infinite)
-	{
-		isInfinite = infinite;
+		return (IsInfinite || Count > 0);
 	}
 };
 
@@ -1064,11 +1062,13 @@ struct HolsterInfo
 
 struct CarriedWeaponInfo
 {
-	bool Present;
-	Ammo Ammo[(int)WeaponAmmoType::NumAmmoTypes];
-	WeaponAmmoType SelectedAmmo; // WeaponAmmoType_enum
-	bool HasLasersight; // TODO: Duplicated in LaraInventoryData.
-	bool HasSilencer;	// TODO: Duplicated in LaraInventoryData.
+	bool Present	   = false;
+	bool HasLasersight = false; // TODO: Duplicated in LaraInventoryData.
+	bool HasSilencer   = false; // TODO: Unused and duplicated in LaraInventoryData.
+
+	Ammo Ammo[(int)WeaponAmmoType::NumAmmoTypes] = {};
+	WeaponAmmoType SelectedAmmo = WeaponAmmoType::Ammo1; // WeaponAmmoType_enum
+	LaraWeaponTypeCarried WeaponMode = LaraWeaponTypeCarried::WTYPE_MISSING;
 };
 
 struct ArmInfo
@@ -1077,7 +1077,7 @@ struct ArmInfo
 	int FrameNumber;
 	int FrameBase;
 
-	Vector3Shrt Orientation;
+	EulerAngles Orientation;
 
 	bool Locked;
 	int GunFlash;
@@ -1097,27 +1097,27 @@ struct TorchData
 	bool IsLit;
 };
 
-// TODO: Someone's abandoned dairy feature.
-#define MaxDiaryPages	  64
-#define MaxStringsPerPage 8
+// TODO: Troye's abandoned dairy feature.
+constexpr int MAX_DIARY_PAGES			 = 64;
+constexpr int MAX_DIARY_STRINGS_PER_PAGE = 8;
 
 struct DiaryString
 {
-	int x, y;
-	short stringID;
+	Vector2i Position;
+	int		StringID;
 };
 
 struct DiaryPage
 {
-	DiaryString	Strings[MaxStringsPerPage];
+	DiaryString	Strings[MAX_DIARY_STRINGS_PER_PAGE];
 };
 
 struct DiaryInfo
 {
-	bool Present;
-	short numPages;
-	short currentPage;
-	DiaryPage Pages[MaxDiaryPages];
+	bool		 Present;
+	DiaryPage	 Pages[MAX_DIARY_PAGES];
+	unsigned int NumPages;
+	unsigned int CurrentPage;
 };
 
 struct LaraInventoryData
@@ -1128,21 +1128,23 @@ struct LaraInventoryData
 	DiaryInfo Diary;
 
 	byte BeetleLife;
-	int BeetleComponents;	// & 1 -> beetle. & 2 -> combo1. & 4 ->combo2
-	byte SmallWaterskin;	// 1 = has waterskin, 2 = has waterskin with 1 liter, etc. max value is 4: has skin + 3 = 4
-	byte BigWaterskin;		// 1 = has waterskin, 2 = has waterskin with 1 liter, etc. max value is 6: has skin + 5 liters = 6
+	int BeetleComponents; // BeetleComponentFlags enum
+	byte SmallWaterskin;  // 1 = has waterskin, 2 = has waterskin with 1 liter, etc. max value is 4 (has skin + 3 = 4)
+	byte BigWaterskin;	  // 1 = has waterskin, 2 = has waterskin with 1 liter, etc. max value is 6 (has skin + 5 liters = 6)
 
-	bool HasBinoculars;
-	bool HasCrowbar;
-	bool HasTorch;
-	bool HasLasersight; // TODO: Duplicated in CarriedWeaponInfo.
-	bool HasSilencer;	// TODO: Duplicated in CarriedWeaponInfo.
-
+	// TODO: Rename prefixes back to "Num".
 	int TotalSmallMedipacks;
 	int TotalLargeMedipacks;
 	int TotalFlares;
 	unsigned int TotalSecrets;
 
+	bool HasBinoculars;
+	bool HasCrowbar;
+	bool HasTorch;
+	bool HasLasersight;
+	bool HasSilencer; // TODO: Unused.
+
+	// TODO: Convert to bools.
 	int Puzzles[NUM_PUZZLES];
 	int Keys[NUM_KEYS];
 	int Pickups[NUM_PICKUPS];
@@ -1159,22 +1161,26 @@ struct LaraCountData
 	unsigned int PositionAdjust;
 	unsigned int Run;
 	unsigned int Death;
-	unsigned int NoCheat;
 };
 
 struct WeaponControlData
 {
-	short WeaponItem;
-	bool HasFired;
-	bool Fired;
+	LaraWeaponType GunType		  = LaraWeaponType::None;
+	LaraWeaponType RequestGunType = LaraWeaponType::None;
+	LaraWeaponType LastGunType	  = LaraWeaponType::None;
+	HolsterInfo	   HolsterInfo	  = {};
+	
+	short WeaponItem = -1;
+	bool  HasFired	 = false;
+	bool  Fired		 = false;
 
-	bool UziLeft;
-	bool UziRight;
+	bool UziLeft  = false;
+	bool UziRight = false;
 
-	LaraWeaponType GunType;
-	LaraWeaponType RequestGunType;
-	LaraWeaponType LastGunType;
-	HolsterInfo HolsterInfo;
+	// TODO: Interval and Timer count frame time for now, but should count delta time in the future. -- Sezz 2022.11.14
+	unsigned int NumShotsFired = 0;
+	float		 Interval	   = 0.0f;
+	float		 Timer		   = 0.0f;
 };
 
 struct RopeControlData
@@ -1258,14 +1264,14 @@ struct LaraInfo
 	FlareData Flare;
 	TorchData Torch;
 
-	Vector3Shrt ExtraHeadRot;
-	Vector3Shrt ExtraTorsoRot;
+	EulerAngles ExtraHeadRot;
+	EulerAngles ExtraTorsoRot;
 	short WaterCurrentActive;
-	Vector3Int WaterCurrentPull;
+	Vector3i WaterCurrentPull;
 
 	ArmInfo LeftArm;
 	ArmInfo RightArm;
-	Vector3Shrt TargetArmOrient;
+	EulerAngles TargetArmOrient;
 	ItemInfo* TargetEntity;
 	CreatureInfo* Creature;	// Not saved. Unused?
 
@@ -1281,19 +1287,11 @@ struct LaraInfo
 
 	short InteractedItem;
 	int ProjectedFloorHeight;
-	Vector3Shrt TargetOrientation;
+	EulerAngles TargetOrientation;
 	int WaterSurfaceDist;
-	PHD_3DPOS NextCornerPos;
-
-	// TODO: Use BurnType in place of Burn, BurnBlue, and BurnSmoke. Core didn't make replacing them easy.
-	BurnType BurnType;
-	unsigned int BurnCount;
-	bool Burn;
-	byte BurnBlue;
-	bool BurnSmoke;
+	Pose NextCornerPos;
 
 	byte Wet[NUM_LARA_MESHES];
-	int MeshPtrs[NUM_LARA_MESHES];
 	signed char Location;
 	signed char HighestLocation;
 	signed char LocationPad;

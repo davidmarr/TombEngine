@@ -63,17 +63,17 @@ void Sink::Register(sol::table& parent)
 
 Vec3 Sink::GetPos() const
 {
-	return Vec3{ m_sink.Position.x, m_sink.Position.y, m_sink.Position.z };
+	return Vec3{ m_sink.Position };
 }
 
 void Sink::SetPos(Vec3 const& pos)
 {
-	m_sink.Position = Vector3Int(pos.x, pos.y, pos.z);
+	m_sink.Position = Vector3i(pos.x, pos.y, pos.z);
 }
 
 std::string Sink::GetName() const
 {
-	return m_sink.LuaName;
+	return m_sink.Name;
 }
 
 void Sink::SetName(std::string const & id) 
@@ -86,8 +86,8 @@ void Sink::SetName(std::string const & id)
 	if (s_callbackSetName(id, m_sink))
 	{
 		// remove the old name if we have one
-		s_callbackRemoveName(m_sink.LuaName);
-		m_sink.LuaName = id;
+		s_callbackRemoveName(m_sink.Name);
+		m_sink.Name = id;
 	}
 	else
 	{

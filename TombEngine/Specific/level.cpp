@@ -19,13 +19,14 @@
 #include "Game/savegame.h"
 #include "Game/spotcam.h"
 #include "Objects/Generic/Doors/generic_doors.h"
+#include "Objects/Sink.h"
 #include "Renderer/Renderer11.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Scripting/Include/Objects/ScriptInterfaceObjectsHandler.h"
 #include "Scripting/Include/ScriptInterfaceGame.h"
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Sound/sound.h"
-#include "Specific/input.h"
+#include "Specific/Input/Input.h"
 #include "Specific/setup.h"
 #include "Specific/trutils.h"
 
@@ -183,12 +184,12 @@ void LoadItems()
 			item->Color = ReadVector4();
 			item->TriggerFlags = ReadInt16();
 			item->Flags = ReadInt16();
-			item->LuaName = ReadString();
+			item->Name = ReadString();
 
-			g_GameScriptEntities->AddName(item->LuaName, i);
+			g_GameScriptEntities->AddName(item->Name, i);
 			g_GameScriptEntities->TryAddColliding(i);
 
-			memcpy(&item->StartPose, &item->Pose, sizeof(PHD_3DPOS));
+			memcpy(&item->StartPose, &item->Pose, sizeof(Pose));
 		}
 
 		for (int i = 0; i < g_Level.NumItems; i++)
@@ -422,9 +423,9 @@ void LoadCameras()
 		camera.RoomNumber = ReadInt32();
 		camera.Flags = ReadInt32();
 		camera.Speed = ReadInt32();
-		camera.LuaName = ReadString();
+		camera.Name = ReadString();
 
-		g_GameScriptEntities->AddName(camera.LuaName, camera);
+		g_GameScriptEntities->AddName(camera.Name, camera);
 	}
 
 	NumberSpotcams = ReadInt32();
@@ -444,9 +445,9 @@ void LoadCameras()
 		sink.Position.z = ReadInt32();
 		sink.Strength = ReadInt32();
 		sink.BoxIndex = ReadInt32();
-		sink.LuaName = ReadString();
+		sink.Name = ReadString();
 
-		g_GameScriptEntities->AddName(sink.LuaName, sink);
+		g_GameScriptEntities->AddName(sink.Name, sink);
 	}
 }
 
@@ -671,22 +672,7 @@ void ReadRooms()
 
 		int numPortals = ReadInt32();
 		for (int j = 0; j < numPortals; j++)
-		{
-			ROOM_DOOR door;
-
-			door.room = ReadInt16();
-			door.normal.x = ReadInt32();
-			door.normal.y = ReadInt32();
-			door.normal.z = ReadInt32();
-			for (int k = 0; k < 4; k++)
-			{
-				door.vertices[k].x = ReadInt32();
-				door.vertices[k].y = ReadInt32();
-				door.vertices[k].z = ReadInt32();
-			}
-
-			room.doors.push_back(door);
-		}
+			LoadPortal(room);
 
 		room.zSize = ReadInt32();
 		room.xSize = ReadInt32();
@@ -809,7 +795,7 @@ void ReadRooms()
 			volume.Scale.y = ReadFloat();
 			volume.Scale.z = ReadFloat();
 
-			volume.LuaName = ReadString();
+			volume.Name = ReadString();
 			volume.EventSetIndex = ReadInt32();
 
 			volume.Status = TriggerStatus::Outside;
@@ -917,9 +903,9 @@ void LoadSoundSources()
 		source.Position.z = ReadInt32();
 		source.SoundID = ReadInt32();
 		source.Flags = ReadInt32();
-		source.LuaName = ReadString();
+		source.Name = ReadString();
 
-		g_GameScriptEntities->AddName(source.LuaName, source);
+		g_GameScriptEntities->AddName(source.Name, source);
 	}
 }
 
@@ -1431,4 +1417,23 @@ void BuildOutsideRoomsTable()
 			}
 		}
 	}
+}
+
+void LoadPortal(ROOM_INFO& room) 
+{
+	ROOM_DOOR door;
+
+	door.room = ReadInt16();
+	door.normal.x = ReadInt32();
+	door.normal.y = ReadInt32();
+	door.normal.z = ReadInt32();
+
+	for (int k = 0; k < 4; k++)
+	{
+		door.vertices[k].x = ReadInt32();
+		door.vertices[k].y = ReadInt32();
+		door.vertices[k].z = ReadInt32();
+	}
+
+	room.doors.push_back(door);
 }

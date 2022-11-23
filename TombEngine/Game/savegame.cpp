@@ -2,6 +2,7 @@
 #include "Game/savegame.h"
 
 #include <filesystem>
+
 #include "Game/collision/collide_room.h"
 #include "Game/collision/floordata.h"
 #include "Game/control/box.h"
@@ -9,7 +10,7 @@
 #include "Game/control/lot.h"
 #include "Game/control/volume.h"
 #include "Game/control/volumetriggerer.h"
-#include "Game/effects/lara_fx.h"
+#include "Game/effects/item_fx.h"
 #include "Game/effects/effects.h"
 #include "Game/items.h"
 #include "Game/itemdata/creature_info.h"
@@ -21,6 +22,7 @@
 #include "Objects/Generic/Switches/fullblock_switch.h"
 #include "Objects/Generic/Traps/traps.h"
 #include "Objects/Generic/puzzles_keys.h"
+#include "Objects/Sink.h"
 #include "Objects/TR4/Entity/tr4_beetle_swarm.h"
 #include "Objects/TR5/Emitter/tr5_rats_emitter.h"
 #include "Objects/TR5/Emitter/tr5_bats_emitter.h"
@@ -35,7 +37,7 @@
 #include "Objects/ScriptInterfaceObjectsHandler.h"
 
 using namespace TEN::Control::Volumes;
-using namespace TEN::Effects::Lara;
+using namespace TEN::Effects::Items;
 using namespace TEN::Entities::Switches;
 using namespace TEN::Entities::TR4;
 using namespace TEN::Entities::Generic;
@@ -78,9 +80,9 @@ void LoadSavegameInfos()
 	}
 }
 
-PHD_3DPOS ToPHD(Save::Position const* src)
+Pose ToPHD(Save::Position const* src)
 {
-	PHD_3DPOS dest;
+	Pose dest;
 	dest.Position.x = src->x_pos();
 	dest.Position.y = src->y_pos();
 	dest.Position.z = src->z_pos();
@@ -90,7 +92,7 @@ PHD_3DPOS ToPHD(Save::Position const* src)
 	return dest;
 }
 
-Save::Position FromPHD(PHD_3DPOS const& src)
+Save::Position FromPHD(Pose const& src)
 {
 	return Save::Position{
 		src.Position.x,
@@ -107,12 +109,12 @@ Save::Vector3 FromVector3(Vector3 vec)
 	return Save::Vector3(vec.x, vec.y, vec.z);
 }
 
-Save::Vector3 FromVector3(Vector3Int vec)
+Save::Vector3 FromVector3(Vector3i vec)
 {
 	return Save::Vector3(vec.x, vec.y, vec.z);
 }
 
-Save::Vector3 FromVector3(Vector3Shrt vec)
+Save::Vector3 FromVector3(EulerAngles vec)
 {
 	return Save::Vector3(vec.x, vec.y, vec.z);
 }
@@ -122,14 +124,14 @@ Save::Vector4 FromVector4(Vector4 vec)
 	return Save::Vector4(vec.x, vec.y, vec.z, vec.w);
 }
 
-Vector3Shrt ToVector3Shrt(const Save::Vector3* vec)
+EulerAngles ToEulerAngles(const Save::Vector3* vec)
 {
-	return Vector3Shrt(short(vec->x()), short(vec->y()), short(vec->z()));
+	return EulerAngles(short(vec->x()), short(vec->y()), short(vec->z()));
 }
 
-Vector3Int ToVector3Int(const Save::Vector3* vec)
+Vector3i ToVector3i(const Save::Vector3* vec)
 {
-	return Vector3Int(int(vec->x()), int(vec->y()), int(vec->z()));
+	return Vector3i(int(vec->x()), int(vec->y()), int(vec->z()));
 }
 
 Vector3 ToVector3(const Save::Vector3* vec)
@@ -226,11 +228,6 @@ bool SaveGame::Save(int slot)
 		examinesCombo.push_back(Lara.Inventory.ExaminesCombo[i]);
 	auto examinesComboOffset = fbb.CreateVector(examinesCombo);
 
-	std::vector<int> meshPtrs;
-	for (int i = 0; i < 15; i++)
-		meshPtrs.push_back(Lara.MeshPtrs[i]);
-	auto meshPtrsOffset = fbb.CreateVector(meshPtrs);
-
 	std::vector<byte> wet;
 	for (int i = 0; i < 15; i++)
 		wet.push_back(Lara.Wet[i] == 1);
@@ -308,12 +305,10 @@ bool SaveGame::Save(int slot)
 	inventory.add_total_flares(Lara.Inventory.TotalFlares);
 	inventory.add_total_small_medipacks(Lara.Inventory.TotalSmallMedipacks);
 	inventory.add_total_large_medipacks(Lara.Inventory.TotalLargeMedipacks);
-	inventory.add_total_secrets(Lara.Inventory.TotalSecrets);
 	auto inventoryOffset = inventory.Finish();
 
 	Save::LaraCountDataBuilder count{ fbb };
 	count.add_death(Lara.Control.Count.Death);
-	count.add_no_cheat(Lara.Control.Count.NoCheat);
 	count.add_pose(Lara.Control.Count.Pose);
 	count.add_position_adjust(Lara.Control.Count.PositionAdjust);
 	count.add_run_jump(Lara.Control.Count.Run);
@@ -329,6 +324,9 @@ bool SaveGame::Save(int slot)
 	weaponControl.add_request_gun_type((int)Lara.Control.Weapon.RequestGunType);
 	weaponControl.add_last_gun_type((int)Lara.Control.Weapon.LastGunType);
 	weaponControl.add_holster_info(holsterInfoOffset);
+	weaponControl.add_interval(Lara.Control.Weapon.Interval);
+	weaponControl.add_timer(Lara.Control.Weapon.Timer);
+	weaponControl.add_num_shots_fired(Lara.Control.Weapon.NumShotsFired);
 	auto weaponControlOffset = weaponControl.Finish();
 
 	Save::RopeControlDataBuilder ropeControl{ fbb };
@@ -398,8 +396,8 @@ bool SaveGame::Save(int slot)
 		for (int j = 0; j < (int)WeaponAmmoType::NumAmmoTypes; j++)
 		{
 			Save::AmmoInfoBuilder ammo{ fbb };
-			ammo.add_count(info->Ammo[j].getCount());
-			ammo.add_is_infinite(info->Ammo[j].hasInfinite());
+			ammo.add_count(info->Ammo[j].GetCount());
+			ammo.add_is_infinite(info->Ammo[j].HasInfinite());
 			auto ammoOffset = ammo.Finish();
 			ammos.push_back(ammoOffset);
 		}
@@ -411,6 +409,7 @@ bool SaveGame::Save(int slot)
 		serializedInfo.add_has_silencer(info->HasSilencer);
 		serializedInfo.add_present(info->Present);
 		serializedInfo.add_selected_ammo((int)info->SelectedAmmo);
+		serializedInfo.add_weapon_mode((int)info->WeaponMode);
 		auto serializedInfoOffset = serializedInfo.Finish();
 
 		carriedWeapons.push_back(serializedInfoOffset);
@@ -420,11 +419,6 @@ bool SaveGame::Save(int slot)
 	Save::LaraBuilder lara{ fbb };
 	lara.add_air(Lara.Air);
 
-	lara.add_burn_count(Lara.BurnCount);
-	lara.add_burn_type((int)Lara.BurnType);
-	lara.add_burn(Lara.Burn);
-	lara.add_burn_blue(Lara.BurnBlue);
-	lara.add_burn_smoke(Lara.BurnSmoke);
 	lara.add_control(controlOffset);
 	lara.add_next_corner_pose(&FromPHD(Lara.NextCornerPos));
 	lara.add_extra_anim(Lara.ExtraAnim);
@@ -440,7 +434,6 @@ bool SaveGame::Save(int slot)
 	lara.add_left_arm(leftArmOffset);
 	lara.add_location(Lara.Location);
 	lara.add_location_pad(Lara.LocationPad);
-	lara.add_mesh_ptrs(meshPtrsOffset);
 	lara.add_poison_potency(Lara.PoisonPotency);
 	lara.add_projected_floor_height(Lara.ProjectedFloorHeight);
 	lara.add_right_arm(rightArmOffset);
@@ -462,16 +455,21 @@ bool SaveGame::Save(int slot)
 	{
 		ObjectInfo* obj = &Objects[itemToSerialize.ObjectNumber];
 
-		auto luaNameOffset = fbb.CreateString(itemToSerialize.LuaName);
-		auto luaOnKilledNameOffset = fbb.CreateString(itemToSerialize.LuaCallbackOnKilledName);
-		auto luaOnHitNameOffset = fbb.CreateString(itemToSerialize.LuaCallbackOnHitName);
-		auto luaOnCollidedObjectNameOffset = fbb.CreateString(itemToSerialize.LuaCallbackOnCollidedWithObjectName);
-		auto luaOnCollidedRoomNameOffset = fbb.CreateString(itemToSerialize.LuaCallbackOnCollidedWithRoomName);
+		auto luaNameOffset = fbb.CreateString(itemToSerialize.Name);
+		auto luaOnKilledNameOffset = fbb.CreateString(itemToSerialize.Callbacks.OnKilled);
+		auto luaOnHitNameOffset = fbb.CreateString(itemToSerialize.Callbacks.OnHit);
+		auto luaOnCollidedObjectNameOffset = fbb.CreateString(itemToSerialize.Callbacks.OnObjectCollided);
+		auto luaOnCollidedRoomNameOffset = fbb.CreateString(itemToSerialize.Callbacks.OnRoomCollided);
 
 		std::vector<int> itemFlags;
 		for (int i = 0; i < 7; i++)
 			itemFlags.push_back(itemToSerialize.ItemFlags[i]);
 		auto itemFlagsOffset = fbb.CreateVector(itemFlags);
+
+		std::vector<int> meshPointers;
+		for (auto p : itemToSerialize.Model.MeshIndex)
+			meshPointers.push_back(p);
+		auto meshPointerOffset = fbb.CreateVector(meshPointers);
 				
 		flatbuffers::Offset<Save::Creature> creatureOffset;
 		flatbuffers::Offset<Save::QuadBike> quadOffset;
@@ -628,6 +626,8 @@ bool SaveGame::Save(int slot)
 		serializedItem.add_hit_points(itemToSerialize.HitPoints);
 		serializedItem.add_item_flags(itemFlagsOffset);
 		serializedItem.add_mesh_bits(itemToSerialize.MeshBits.ToPackedBits());
+		serializedItem.add_mesh_pointers(meshPointerOffset);
+		serializedItem.add_base_mesh(itemToSerialize.Model.BaseMesh);
 		serializedItem.add_object_id(itemToSerialize.ObjectNumber);
 		serializedItem.add_pose(&FromPHD(itemToSerialize.Pose));
 		serializedItem.add_required_state(itemToSerialize.Animation.RequiredState);
@@ -645,7 +645,9 @@ bool SaveGame::Save(int slot)
 		serializedItem.add_ai_bits(itemToSerialize.AIBits);
 		serializedItem.add_collidable(itemToSerialize.Collidable);
 		serializedItem.add_looked_at(itemToSerialize.LookedAt);
-		serializedItem.add_swap_mesh_flags(itemToSerialize.MeshSwapBits.ToPackedBits());
+		serializedItem.add_effect_type((int)itemToSerialize.Effect.Type);
+		serializedItem.add_effect_count(itemToSerialize.Effect.Count);
+		serializedItem.add_effect_light_colour(&FromVector3(itemToSerialize.Effect.LightColor));
 
 		if (Objects[itemToSerialize.ObjectNumber].intelligent 
 			&& itemToSerialize.Data.is<CreatureInfo>())
@@ -1093,11 +1095,11 @@ bool SaveGame::Save(int slot)
 
 			putDataInVec(Save::VarUnion::funcName, funcNameOffset);
 		}
-		else if (std::holds_alternative<Vector3Int>(s))
+		else if (std::holds_alternative<Vector3i>(s))
 		{
 			Save::vec3TableBuilder vtb{ fbb };
-			Vector3Int data = std::get<Vector3Int>(s);
-			Save::Vector3 saveVec = FromVector3(std::get<Vector3Int>(s));
+			Vector3i data = std::get<Vector3i>(s);
+			Save::Vector3 saveVec = FromVector3(std::get<Vector3i>(s));
 			vtb.add_vec(&saveVec);
 			auto vec3Offset = vtb.Finish();
 
@@ -1195,6 +1197,9 @@ bool SaveGame::Load(int slot)
 	const Save::SaveGame* s = Save::GetSaveGame(buffer.get());
 
 	// Statistics
+	LastSaveGame = s->header()->count();
+	GameTimer = s->header()->timer();
+
 	Statistics.Game.AmmoHits = s->game()->ammo_hits();
 	Statistics.Game.AmmoUsed = s->game()->ammo_used();
 	Statistics.Game.Distance = s->game()->distance();
@@ -1325,14 +1330,14 @@ bool SaveGame::Load(int slot)
 
 		ObjectInfo* obj = &Objects[item->ObjectNumber];
 		
-		item->LuaName = savedItem->lua_name()->str();
-		if (!item->LuaName.empty())
-			g_GameScriptEntities->AddName(item->LuaName, i);
+		item->Name = savedItem->lua_name()->str();
+		if (!item->Name.empty())
+			g_GameScriptEntities->AddName(item->Name, i);
 
-		item->LuaCallbackOnKilledName = savedItem->lua_on_killed_name()->str();
-		item->LuaCallbackOnHitName = savedItem->lua_on_hit_name()->str();
-		item->LuaCallbackOnCollidedWithObjectName = savedItem->lua_on_collided_with_object_name()->str();
-		item->LuaCallbackOnCollidedWithRoomName = savedItem->lua_on_collided_with_room_name()->str();
+		item->Callbacks.OnKilled = savedItem->lua_on_killed_name()->str();
+		item->Callbacks.OnHit = savedItem->lua_on_hit_name()->str();
+		item->Callbacks.OnObjectCollided = savedItem->lua_on_collided_with_object_name()->str();
+		item->Callbacks.OnRoomCollided = savedItem->lua_on_collided_with_room_name()->str();
 
 		g_GameScriptEntities->TryAddColliding(i);
 
@@ -1386,9 +1391,17 @@ bool SaveGame::Load(int slot)
 		item->Collidable = savedItem->collidable();
 		item->LookedAt = savedItem->looked_at();
 
+		item->Effect.Type = (EffectType)savedItem->effect_type();
+		item->Effect.Count = savedItem->effect_count();
+		item->Effect.LightColor = ToVector3(savedItem->effect_light_colour());
+
 		// Mesh stuff
 		item->MeshBits = savedItem->mesh_bits();
-		item->MeshSwapBits = savedItem->swap_mesh_flags();
+
+		item->Model.BaseMesh = savedItem->base_mesh();
+		item->Model.MeshIndex.resize(savedItem->mesh_pointers()->size());
+		for (int j = 0; j < savedItem->mesh_pointers()->size(); j++)
+			item->Model.MeshIndex[j] = savedItem->mesh_pointers()->Get(j);
 
 		if (item->ObjectNumber >= ID_SMASH_OBJECT1 && item->ObjectNumber <= ID_SMASH_OBJECT8 &&
 			(item->Flags & ONESHOT))
@@ -1702,27 +1715,16 @@ bool SaveGame::Load(int slot)
 		Lara.Inventory.ExaminesCombo[i] = s->lara()->inventory()->examines_combo()->Get(i);
 	}
 
-	for (int i = 0; i < s->lara()->mesh_ptrs()->size(); i++)
-	{
-		Lara.MeshPtrs[i] = s->lara()->mesh_ptrs()->Get(i);
-	}
-
 	for (int i = 0; i < NUM_LARA_MESHES; i++)
 	{
 		Lara.Wet[i] = s->lara()->wet()->Get(i);
 	}
 
 	Lara.Air = s->lara()->air();
-	Lara.BurnCount = s->lara()->burn_count();
-	Lara.BurnType = (BurnType)s->lara()->burn_type();
-	Lara.Burn = s->lara()->burn();
-	Lara.BurnBlue = s->lara()->burn_blue();
-	Lara.BurnSmoke = s->lara()->burn_smoke();
 	Lara.Control.CalculatedJumpVelocity = s->lara()->control()->calculated_jump_velocity();
 	Lara.Control.CanMonkeySwing = s->lara()->control()->can_monkey_swing();
 	Lara.Control.CanClimbLadder = s->lara()->control()->is_climbing_ladder();
 	Lara.Control.Count.Death = s->lara()->control()->count()->death();
-	Lara.Control.Count.NoCheat = s->lara()->control()->count()->no_cheat();
 	Lara.Control.Count.Pose = s->lara()->control()->count()->pose();
 	Lara.Control.Count.PositionAdjust = s->lara()->control()->count()->position_adjust();
 	Lara.Control.Count.Run = s->lara()->control()->count()->run_jump();
@@ -1740,6 +1742,7 @@ bool SaveGame::Load(int slot)
 	Lara.Control.HandStatus = (HandStatus)s->lara()->control()->hand_status();
 	Lara.Control.Weapon.GunType = (LaraWeaponType)s->lara()->control()->weapon()->gun_type();
 	Lara.Control.Weapon.HasFired = s->lara()->control()->weapon()->has_fired();
+	Lara.Control.Weapon.Interval = s->lara()->control()->weapon()->interval();
 	Lara.Control.Weapon.Fired = s->lara()->control()->weapon()->fired();
 	Lara.Control.Weapon.LastGunType = (LaraWeaponType)s->lara()->control()->weapon()->last_gun_type();
 	Lara.Control.Weapon.RequestGunType = (LaraWeaponType)s->lara()->control()->weapon()->request_gun_type();
@@ -1747,6 +1750,8 @@ bool SaveGame::Load(int slot)
 	Lara.Control.Weapon.HolsterInfo.BackHolster = (HolsterSlot)s->lara()->control()->weapon()->holster_info()->back_holster();
 	Lara.Control.Weapon.HolsterInfo.LeftHolster = (HolsterSlot)s->lara()->control()->weapon()->holster_info()->left_holster();
 	Lara.Control.Weapon.HolsterInfo.RightHolster = (HolsterSlot)s->lara()->control()->weapon()->holster_info()->right_holster();
+	Lara.Control.Weapon.NumShotsFired = s->lara()->control()->weapon()->num_shots_fired();
+	Lara.Control.Weapon.Timer = s->lara()->control()->weapon()->timer();
 	Lara.Control.Weapon.UziLeft = s->lara()->control()->weapon()->uzi_left();
 	Lara.Control.Weapon.UziRight = s->lara()->control()->weapon()->uzi_right();
 	Lara.ExtraAnim = s->lara()->extra_anim();
@@ -1780,7 +1785,6 @@ bool SaveGame::Load(int slot)
 	Lara.Inventory.SmallWaterskin = s->lara()->inventory()->small_waterskin();
 	Lara.Inventory.TotalFlares = s->lara()->inventory()->total_flares();
 	Lara.Inventory.TotalLargeMedipacks = s->lara()->inventory()->total_large_medipacks();
-	Lara.Inventory.TotalSecrets = s->lara()->inventory()->total_secrets();
 	Lara.Inventory.TotalSmallMedipacks = s->lara()->inventory()->total_small_medipacks();
 	Lara.ItemNumber = s->lara()->item_number();
 	Lara.LeftArm.AnimNumber = s->lara()->left_arm()->anim_number();
@@ -1789,7 +1793,7 @@ bool SaveGame::Load(int slot)
 	Lara.LeftArm.FrameBase = s->lara()->left_arm()->frame_base();
 	Lara.LeftArm.FrameNumber = s->lara()->left_arm()->frame_number();
 	Lara.LeftArm.Locked = s->lara()->left_arm()->locked();
-	Lara.LeftArm.Orientation = ToVector3Shrt(s->lara()->left_arm()->rotation());
+	Lara.LeftArm.Orientation = ToEulerAngles(s->lara()->left_arm()->rotation());
 	Lara.Location = s->lara()->location();
 	Lara.LocationPad = s->lara()->location_pad();
 	Lara.NextCornerPos = ToPHD(s->lara()->next_corner_pose());
@@ -1801,7 +1805,7 @@ bool SaveGame::Load(int slot)
 	Lara.RightArm.FrameBase = s->lara()->right_arm()->frame_base();
 	Lara.RightArm.FrameNumber = s->lara()->right_arm()->frame_number();
 	Lara.RightArm.Locked = s->lara()->right_arm()->locked();
-	Lara.RightArm.Orientation = ToVector3Shrt(s->lara()->right_arm()->rotation());
+	Lara.RightArm.Orientation = ToEulerAngles(s->lara()->right_arm()->rotation());
 	Lara.Torch.IsLit = s->lara()->torch()->is_lit();
 	Lara.Torch.State = (TorchState)s->lara()->torch()->state();
 	Lara.Control.Rope.Segment = s->lara()->control()->rope()->segment();
@@ -1846,7 +1850,7 @@ bool SaveGame::Load(int slot)
 
 		for (int j = 0; j < info->ammo()->size(); j++)
 		{
-			Lara.Weapons[i].Ammo[j].setInfinite(info->ammo()->Get(j)->is_infinite());
+			Lara.Weapons[i].Ammo[j].SetInfinite(info->ammo()->Get(j)->is_infinite());
 			Lara.Weapons[i].Ammo[j] = info->ammo()->Get(j)->count();
 		}
 
@@ -1854,22 +1858,7 @@ bool SaveGame::Load(int slot)
 		Lara.Weapons[i].HasSilencer = info->has_silencer();
 		Lara.Weapons[i].Present = info->present();
 		Lara.Weapons[i].SelectedAmmo = (WeaponAmmoType)info->selected_ammo();
-	}
-
-	if (Lara.BurnType != BurnType::None)
-	{
-		char flag = 0;
-		Lara.BurnType = BurnType::None;
-		if (Lara.BurnSmoke)
-		{
-			flag = 1;
-			Lara.BurnSmoke = 0;
-		}
-
-		LaraBurn(LaraItem);
-
-		if (flag)
-			Lara.BurnSmoke = 1;
+		Lara.Weapons[i].WeaponMode = (LaraWeaponTypeCarried)info->weapon_mode();
 	}
 
 	// Rope
@@ -1879,25 +1868,25 @@ bool SaveGame::Load(int slot)
 		
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
 		{
-			rope->segment[i] = ToVector3Int(s->rope()->segments()->Get(i));
-			rope->normalisedSegment[i] = ToVector3Int(s->rope()->normalised_segments()->Get(i));
-			rope->meshSegment[i] = ToVector3Int(s->rope()->mesh_segments()->Get(i));
-			rope->coords[i] = ToVector3Int(s->rope()->coords()->Get(i));
-			rope->velocity[i] = ToVector3Int(s->rope()->velocities()->Get(i));
+			rope->segment[i] = ToVector3i(s->rope()->segments()->Get(i));
+			rope->normalisedSegment[i] = ToVector3i(s->rope()->normalised_segments()->Get(i));
+			rope->meshSegment[i] = ToVector3i(s->rope()->mesh_segments()->Get(i));
+			rope->coords[i] = ToVector3i(s->rope()->coords()->Get(i));
+			rope->velocity[i] = ToVector3i(s->rope()->velocities()->Get(i));
 		}
 
 		rope->coiled = s->rope()->coiled();
 		rope->active = s->rope()->active();
 
-		rope->position = ToVector3Int(s->rope()->position());
-		CurrentPendulum.position = ToVector3Int(s->pendulum()->position());
-		CurrentPendulum.velocity = ToVector3Int(s->pendulum()->velocity());
+		rope->position = ToVector3i(s->rope()->position());
+		CurrentPendulum.position = ToVector3i(s->pendulum()->position());
+		CurrentPendulum.velocity = ToVector3i(s->pendulum()->velocity());
 
 		CurrentPendulum.node = s->pendulum()->node();
 		CurrentPendulum.rope = rope;
 
-		AlternatePendulum.position = ToVector3Int(s->alternate_pendulum()->position());
-		AlternatePendulum.velocity = ToVector3Int(s->alternate_pendulum()->velocity());
+		AlternatePendulum.position = ToVector3i(s->alternate_pendulum()->position());
+		AlternatePendulum.velocity = ToVector3i(s->alternate_pendulum()->velocity());
 
 		AlternatePendulum.node = s->alternate_pendulum()->node();
 		AlternatePendulum.rope = rope;
@@ -1934,7 +1923,7 @@ bool SaveGame::Load(int slot)
 			}
 			else if (var->u_type() == Save::VarUnion::vec3)
 			{
-				loadedVars.push_back(ToVector3Int(var->u_as_vec3()->vec()));
+				loadedVars.push_back(ToVector3i(var->u_as_vec3()->vec()));
 			}
 			else if (var->u_type() == Save::VarUnion::funcName)
 			{

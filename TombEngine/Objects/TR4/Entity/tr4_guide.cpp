@@ -22,9 +22,9 @@ namespace TEN::Entities::TR4
 
 	const auto GuideBite1 = BiteInfo(Vector3(0.0f, 20.0f, 180.0f), 18);
 	const auto GuideBite2 = BiteInfo(Vector3(30.0f, 80.0f, 50.0f), 15);
-	const vector<uint> GuideLeftFingerSwapJoints = { 15 };
-	const vector<uint> GuideRightHandSwapJoints	= { 18 };
-	const vector<uint> GuideHeadSwapJoints		= { 21 };
+	const vector<unsigned int> GuideLeftFingerSwapJoints = { 15 };
+	const vector<unsigned int> GuideRightHandSwapJoints	= { 18 };
+	const vector<unsigned int> GuideHeadSwapJoints		= { 21 };
 
 	enum GuideState
 	{
@@ -100,7 +100,7 @@ namespace TEN::Entities::TR4
 
 		ClearItem(itemNumber);
 		SetAnimation(item, GUIDE_ANIM_IDLE);
-		item->MeshSwapBits.Set(GuideRightHandSwapJoints);
+		item->SetMeshSwapFlags(GuideRightHandSwapJoints);
 
 	}
 
@@ -122,11 +122,9 @@ namespace TEN::Entities::TR4
 		// Ignite torch.
 		if (item->ItemFlags[1] == 2)
 		{
-			auto pos = Vector3Int(GuideBite1.Position);
-			GetJointAbsPosition(item, &pos, GuideBite1.meshNum);
-
+			auto pos = GetJointPosition(item, GuideBite1.meshNum, Vector3i(GuideBite1.Position));
+			TriggerFireFlame(pos.x, pos.y - 20, pos.z, FlameType::Trail);
 			SoundEffect(SFX_TR4_LOOP_FOR_SMALL_FIRES, &item->Pose);
-			TriggerFireFlame(pos.x, pos.y - 20, pos.z, -1, 3);
 
 			short random = GetRandomControl();
 			TriggerDynamicLight(
@@ -145,8 +143,7 @@ namespace TEN::Entities::TR4
 						(random & 0x3F) + pos.x - 32,
 						((random / 8) & 0x3F) + pos.y - 128,
 						pos.z + ((random / 64) & 0x3F) - 32,
-						-1,
-						3);
+						FlameType::Trail);
 				}
 			}
 		}
@@ -214,8 +211,8 @@ namespace TEN::Entities::TR4
 					dy = currentItem->Pose.Position.y - item->Pose.Position.y;
 					dz = currentItem->Pose.Position.z - item->Pose.Position.z;
 
-					if (dx > 32000 || dx < -32000 || dz > 32000 || dz < -32000)
-						distance = 0x7FFFFFFF;
+					if (dx > SECTOR(31.25f) || dx < -SECTOR(31.25f) || dz > SECTOR(31.25f) || dz < -SECTOR(31.25f))
+						distance = INT_MAX;
 					else
 						distance = pow(dx, 2) + pow(dz, 2);
 
@@ -250,7 +247,7 @@ namespace TEN::Entities::TR4
 		}
 
 		bool someFlag = false;
-		Vector3Int pos1;
+		Vector3i pos1;
 		int frameNumber;
 		short random;
 				
@@ -296,7 +293,7 @@ namespace TEN::Entities::TR4
 			{
 				if (!creature->ReachedGoal || foundEnemy)
 				{
-					if (item->MeshSwapBits == 0x40000)
+					if (item->TestMeshSwapFlags(0x40000))
 						item->Animation.TargetState = GUIDE_STATE_WALK_FORWARD_NO_TORCH;
 					else if (foundEnemy && AI.distance < pow(SECTOR(1), 2))
 					{
@@ -422,7 +419,7 @@ namespace TEN::Entities::TR4
 				{
 					if (!foundEnemy ||
 						AI.distance >= pow(SECTOR(1.5f), 2) &&
-						(item->MeshSwapBits.Test(GuideRightHandSwapJoints) || AI.distance >= pow(SECTOR(3), 2)))
+						(item->TestMeshSwapFlags(GuideRightHandSwapJoints) || AI.distance >= pow(SECTOR(3), 2)))
 					{
 						if (creature->Enemy->IsLara())
 						{
@@ -478,7 +475,7 @@ namespace TEN::Entities::TR4
 			}
 			else if (foundEnemy &&
 				(AI.distance < pow(SECTOR(1.5f), 2) ||
-					!(item->MeshSwapBits.Test(GuideRightHandSwapJoints)) &&
+					!(item->TestMeshSwapFlags(GuideRightHandSwapJoints)) &&
 					AI.distance < pow(SECTOR(3), 2)))
 			{
 				item->Animation.TargetState = GUIDE_STATE_IDLE;
@@ -488,16 +485,14 @@ namespace TEN::Entities::TR4
 			break;
 
 		case GUIDE_STATE_IGNITE_TORCH:
-			pos1 = Vector3Int(GuideBite2.Position);
-			GetJointAbsPosition(item, &pos1, GuideBite2.meshNum);
-
+			pos1 = GetJointPosition(item, GuideBite2.meshNum, Vector3i(GuideBite2.Position));
 			frameNumber = item->Animation.FrameNumber - g_Level.Anims[item->Animation.AnimNumber].frameBase;
 			random = GetRandomControl();
 
 			if (frameNumber == 32)
-				item->MeshSwapBits.Set(GuideLeftFingerSwapJoints);
+				item->SetMeshSwapFlags(GuideLeftFingerSwapJoints);
 			else if (frameNumber == 216)
-				item->MeshSwapBits.Clear(GuideLeftFingerSwapJoints);
+				item->SetMeshSwapFlags(GuideLeftFingerSwapJoints, true);
 			else if (frameNumber <= 79 || frameNumber >= 84)
 			{
 				if (frameNumber <= 83 || frameNumber >= 94)
@@ -510,8 +505,7 @@ namespace TEN::Entities::TR4
 								(random & 0x3F) + pos1.x - 64,
 								((random >> 5) & 0x3F) + pos1.y - 96,
 								((random >> 10) & 0x3F) + pos1.z - 64,
-								-1,
-								3);
+								FlameType::Trail);
 
 							TriggerDynamicLight(
 								pos1.x - 32,
@@ -551,8 +545,7 @@ namespace TEN::Entities::TR4
 						(random & 0x3F) + pos1.x - 64,
 						((random >> 5) & 0x3F) + pos1.y - 96,
 						((random >> 10) & 0x3F) + pos1.z - 64,
-						-1,
-						3);
+						FlameType::Trail);
 				}
 			}
 			else
@@ -604,13 +597,8 @@ namespace TEN::Entities::TR4
 					if (item->Animation.FrameNumber > g_Level.Anims[item->Animation.AnimNumber].frameBase + 15 &&
 						item->Animation.FrameNumber < g_Level.Anims[item->Animation.AnimNumber].frameBase + 26)
 					{
-						dx = abs(enemy->Pose.Position.x - item->Pose.Position.x);
-						dy = abs(enemy->Pose.Position.y - item->Pose.Position.y);
-						dz = abs(enemy->Pose.Position.z - item->Pose.Position.z);
-
-						if (dx < CLICK(2) &&
-							dy < CLICK(2) &&
-							dz < CLICK(2))
+						float distance = Vector3i::Distance(item->Pose.Position, enemy->Pose.Position);
+						if (distance <= CLICK(2))
 						{
 							DoDamage(enemy, GUIDE_ATTACK_DAMAGE);
 							CreatureEffect2(item, GuideBite1, 8, -1, DoBloodSplat);
@@ -672,7 +660,7 @@ namespace TEN::Entities::TR4
 			}
 			else if (item->Animation.FrameNumber == (g_Level.Anims[item->Animation.AnimNumber].frameBase + 35))
 			{
-				item->MeshSwapBits.Clear(GuideRightHandSwapJoints);
+				item->SetMeshSwapFlags(GuideRightHandSwapJoints, true);
 
 				auto* room = &g_Level.Rooms[item->RoomNumber];
 
@@ -759,14 +747,14 @@ namespace TEN::Entities::TR4
 					flagScaryInscription)
 				{
 					item->Animation.RequiredState = GUIDE_STATE_RUN_FORWARD;
-					item->MeshSwapBits.Set(GuideHeadSwapJoints);
+					item->SetMeshSwapFlags(GuideHeadSwapJoints);
 					SoundEffect(SFX_TR4_GUIDE_SCARE, &item->Pose);
 				}
 				if (item->Animation.FrameNumber == (g_Level.Anims[item->Animation.AnimNumber].frameBase + 185) &&
 					flagScaryInscription)
 				{
 					item->ItemFlags[2] &= ~(1 << 4); // Turn off 4th bit for flagScaryInscription.
-					item->MeshSwapBits.Clear(GuideHeadSwapJoints);
+					item->SetMeshSwapFlags(GuideHeadSwapJoints, true);
 				}
 			}
 			else if ((enemy->Pose.Orientation.y - item->Pose.Orientation.y) <= ANGLE(2.0f))

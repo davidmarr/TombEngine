@@ -5,9 +5,9 @@
 
 #include "Game/animation.h"
 #include "Game/itemdata/itemdata.h"
+#include "Math/Math.h"
 #include "Specific/newtypes.h"
 #include "Specific/BitField.h"
-#include "Specific/phd_global.h"
 
 using namespace TEN::Utils;
 
@@ -39,11 +39,11 @@ enum ItemStatus
 
 enum ItemFlags
 {
-	IFLAG_CLEAR_BODY	  = (1 << 7),  // 0x0080
-	IFLAG_INVISIBLE		  = (1 << 8),  // 0x0100
-	IFLAG_REVERSE		  = (1 << 14), // 0x4000
-	IFLAG_KILLED		  = (1 << 15), // 0x8000
-	IFLAG_ACTIVATION_MASK = 0x3E00	   // bits 9-13
+	IFLAG_CLEAR_BODY	  = (1 << 7),
+	IFLAG_INVISIBLE		  = (1 << 8),
+	IFLAG_REVERSE		  = (1 << 14),
+	IFLAG_KILLED		  = (1 << 15),
+	IFLAG_ACTIVATION_MASK = 0x3E00 // bits 9-13
 };
 
 constexpr unsigned int ALL_JOINT_BITS = UINT_MAX;
@@ -56,6 +56,14 @@ enum class JointBitType
 	MeshSwap
 };
 
+enum class EffectType
+{
+	None,
+	Fire,
+	Sparks,
+	Smoke
+};
+
 struct EntityAnimationData
 {
 	int AnimNumber	  = -1;
@@ -65,14 +73,36 @@ struct EntityAnimationData
 	int RequiredState = -1; // TODO: Phase out this weird feature.
 
 	bool IsAirborne	= false;
-	Vector3 Velocity = Vector3::Zero; // CONVENTION: +X is right, +Y is down, +Z is forward.
+	Vector3 Velocity = Vector3::Zero; // CONVENTION: +X = right, +Y = down, +Z = forward
+};
+
+struct EntityModelData
+{
+	int BaseMesh;
+	std::vector<int> MeshIndex = {};
 	std::vector<BoneMutator> Mutator = {};
+};
+
+struct EntityCallbackData
+{
+	std::string OnKilled;
+	std::string OnHit;
+	std::string OnObjectCollided;
+	std::string OnRoomCollided;
+};
+
+struct EntityEffectData
+{
+	EffectType Type = EffectType::None;
+	Vector3 LightColor = Vector3::One;
+	int Count = -1;
 };
 
 //todo we need to find good "default states" for a lot of these - squidshire 25/05/2022
 struct ItemInfo
 {
 	GAME_OBJECT_ID ObjectNumber;
+	std::string Name;
 
 	int Status;	// ItemStatus enum.
 	bool Active;
@@ -83,8 +113,12 @@ struct ItemInfo
 
 	ITEM_DATA Data;
 	EntityAnimationData Animation;
-	PHD_3DPOS StartPose;
-	PHD_3DPOS Pose;
+	EntityCallbackData Callbacks;
+	EntityModelData Model;
+	EntityEffectData Effect;
+	
+	Pose StartPose;
+	Pose Pose;
 	ROOM_VECTOR Location;
 	short RoomNumber;
 	int Floor;
@@ -101,7 +135,6 @@ struct ItemInfo
 
 	BitField TouchBits	  = BitField();
 	BitField MeshBits	  = BitField();
-	BitField MeshSwapBits = BitField();
 
 	unsigned short Flags; // ItemFlags enum
 	short ItemFlags[8];
@@ -112,13 +145,6 @@ struct ItemInfo
 	short AfterDeath;
 	short CarriedItem;
 
-	// Lua
-	std::string LuaName;
-	std::string LuaCallbackOnKilledName;
-	std::string LuaCallbackOnHitName;
-	std::string LuaCallbackOnCollidedWithObjectName;
-	std::string LuaCallbackOnCollidedWithRoomName;
-
 	bool TestOcb(short ocbFlags);
 	void RemoveOcb(short ocbFlags);
 	void ClearAllOcb();
@@ -126,8 +152,15 @@ struct ItemInfo
 	bool TestFlags(short id, short value);
 	void SetFlags(short id, short value);
 
-	bool IsLara();
-	bool IsCreature();
+	bool TestMeshSwapFlags(unsigned int flags);
+	bool TestMeshSwapFlags(const std::vector<unsigned int>& flags);
+	void SetMeshSwapFlags(unsigned int flags, bool clear = false);
+	void SetMeshSwapFlags(const std::vector<unsigned int>& flags, bool clear = false);
+
+	bool IsLara() const;
+	bool IsCreature() const;
+
+	void ResetModelToDefault();
 };
 
 bool TestState(int refState, const std::vector<int>& stateList);
@@ -145,7 +178,9 @@ void KillEffect(short fxNumber);
 void InitialiseItem(short itemNumber);
 void InitialiseItemArray(int totalItems);
 void KillItem(short itemNumber);
-void UpdateItemRoom(ItemInfo* item, int height, int xOffset = 0, int zOffset = 0);
+void UpdateItemRoom(short itemNumber);
+void UpdateAllItems();
+void UpdateAllEffects();
 std::vector<int> FindAllItems(short objectNumber);
 ItemInfo* FindItem(int objectNumber);
 int FindItem(ItemInfo* item);
