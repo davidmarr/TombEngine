@@ -69,6 +69,8 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	m_psSprites = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_Sprites.fx", "PS", "ps_4_0", nullptr, blob);
 	m_vsSolid = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_Solid.fx", "VS", "vs_4_0", nullptr, blob);
 	m_psSolid = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_Solid.fx", "PS", "ps_4_0", nullptr, blob);
+	m_vs2D = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_2D.fx", "VS", "vs_4_0", nullptr, blob);
+	m_ps2D = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_2D.fx", "PS", "ps_4_0", nullptr, blob);
 	m_vsInventory = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_Inventory.fx", "VS", "vs_4_0",nullptr, blob);
 	m_psInventory = Utils::compilePixelShader(m_device.Get(), L"Shaders\\DX11_Inventory.fx", "PS", "ps_4_0", nullptr, blob);
 	m_vsFullScreenQuad = Utils::compileVertexShader(m_device.Get(), L"Shaders\\DX11_FullScreenQuad.fx", "VS", "vs_4_0",nullptr, blob);
@@ -198,7 +200,7 @@ void TEN::Renderer::Renderer11::Initialise(int w, int h, bool windowed, HWND han
 	D3D11_RASTERIZER_DESC rasterizerStateDesc = {};
 
 	rasterizerStateDesc.CullMode = D3D11_CULL_BACK;
-	rasterizerStateDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerStateDesc.FillMode = D3D11_FILL_WIREFRAME;
 	rasterizerStateDesc.DepthClipEnable = true;
 	rasterizerStateDesc.MultisampleEnable = true;
 	rasterizerStateDesc.AntialiasedLineEnable = true;

@@ -404,14 +404,11 @@ namespace TEN::Renderer
 	void Renderer11::DrawLines2D()
 	{
 		SetBlendMode(BLENDMODE_OPAQUE);
-		SetDepthState(DEPTH_STATE_READ_ONLY_ZBUFFER);
+		SetDepthState(DEPTH_STATE_NONE);
 		SetCullMode(CULL_MODE_NONE);
 
-		m_context->VSSetShader(m_vsSolid.Get(), nullptr, 0);
-		m_context->PSSetShader(m_psSolid.Get(), nullptr, 0);
-		Matrix world = Matrix::CreateOrthographicOffCenter(0, m_screenWidth, m_screenHeight, 0, m_viewport.MinDepth,
-														   m_viewport.MaxDepth);
-
+		m_context->VSSetShader(m_vs2D.Get(), nullptr, 0);
+		m_context->PSSetShader(m_ps2D.Get(), nullptr, 0);
 		m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 		m_context->IASetInputLayout(m_inputLayout.Get());
 
@@ -438,9 +435,6 @@ namespace TEN::Renderer
 			v2.Color.y = line->Color.y / 255.0f;
 			v2.Color.z = line->Color.z / 255.0f;
 			v2.Color.w = line->Color.w / 255.0f;
-
-			v1.Position = Vector3::Transform(v1.Position, world);
-			v2.Position = Vector3::Transform(v2.Position, world);
 
 			v1.Position.z = 0.5f;
 			v2.Position.z = 0.5f;

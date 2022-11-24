@@ -218,7 +218,7 @@ namespace TEN::Renderer
 		stack.push(RoomNode(from,toRoom,viewPort));
 
 		int cycles = 0;
-		int maxDepth = 1;;
+		int maxDepth = 1;
 		
 		while (!stack.empty())
 		{
@@ -281,14 +281,22 @@ namespace TEN::Renderer
 							Camera.pos.z - p->AbsoluteVertices[0].z);
 					}
 
-					if (p->Normal.x * p->CameraViewVector.x +
-						p->Normal.y * p->CameraViewVector.y +
-						p->Normal.z * p->CameraViewVector.z < 0)
+					if (p->Normal.Dot(p->CameraViewVector) < 0)
 						continue;
 
-					if (!CheckPortal(node.To, p, viewPort, &clipPort, renderView))
-						continue;
-
+					if (!CheckPortal(node.To, p, viewPort, &clipPort, renderView)) {
+						AddLine2D(clipPort.x, clipPort.y, clipPort.x, clipPort.w, 255, 0, 0, 255);
+						AddLine2D(clipPort.x, clipPort.y, clipPort.z, clipPort.y, 255, 0, 0, 255);
+						AddLine2D(clipPort.z, clipPort.y, clipPort.z, clipPort.w, 255, 0, 0, 255);
+						AddLine2D(clipPort.x, clipPort.w, clipPort.z, clipPort.w, 255, 0, 0, 255);
+					}else {
+						AddLine2D(clipPort.x, clipPort.y, clipPort.x, clipPort.w, 0, 255, 0, 255);
+						AddLine2D(clipPort.x, clipPort.y, clipPort.z, clipPort.y, 0, 255, 0, 255);
+						AddLine2D(clipPort.z, clipPort.y, clipPort.z, clipPort.w, 0, 255, 0, 255);
+						AddLine2D(clipPort.x, clipPort.w, clipPort.z, clipPort.w, 0, 255, 0, 255);
+					}
+						
+					
 					//GetVisibleRooms(to, p->AdjoiningRoom, clipPort, water, count + 1, onlyRooms, renderView);
 					stack.push(RoomNode(node.To, p->AdjoiningRoom, clipPort));
 					maxDepth++;

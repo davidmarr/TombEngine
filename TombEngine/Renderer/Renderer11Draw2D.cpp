@@ -170,7 +170,7 @@ namespace TEN::Renderer
 		DrawIndexedTriangles(12, 0, 0);
 	}
 
-	void Renderer11::AddLine2D(int x1, int y1, int x2, int y2, byte r, byte g, byte b, byte a) {
+	void Renderer11::AddLine2D(float x1, float y1, float x2, float y2, byte r, byte g, byte b, byte a) {
 		RendererLine2D line;
 
 		line.Vertices[0] = Vector2(x1, y1);
@@ -257,7 +257,7 @@ namespace TEN::Renderer
 	void Renderer11::DrawPostprocess(ID3D11RenderTargetView* target, ID3D11DepthStencilView* depthTarget, RenderView& view)
 	{
 		SetBlendMode(BLENDMODE_OPAQUE);
-		SetCullMode(CULL_MODE_CCW);
+		SetCullMode(CULL_MODE_NONE);
 
 		m_context->ClearRenderTargetView(target, Colors::Black);
 		m_context->ClearDepthStencilView(depthTarget, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);

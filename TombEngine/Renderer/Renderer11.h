@@ -290,6 +290,8 @@ namespace TEN::Renderer
 		ComPtr<ID3D11PixelShader> m_psInstancedSprites;
 		ComPtr<ID3D11VertexShader> m_vsSolid;
 		ComPtr<ID3D11PixelShader> m_psSolid;
+		ComPtr<ID3D11VertexShader> m_vs2D;
+		ComPtr<ID3D11PixelShader> m_ps2D;
 		ComPtr<ID3D11VertexShader> m_vsInventory;
 		ComPtr<ID3D11PixelShader> m_psInventory;
 		ComPtr<ID3D11VertexShader> m_vsFullScreenQuad;
@@ -647,7 +649,7 @@ namespace TEN::Renderer
 		void SetFullScreen();
 		bool IsFullsScreen();
 		void RenderTitleImage();
-		void AddLine2D(int x1, int y1, int x2, int y2, byte r, byte g, byte b, byte a);
+		void AddLine2D(float x1, float y1, float x2, float y2, byte r, byte g, byte b, byte a);
 		void AddLine3D(Vector3 start, Vector3 end, Vector4 color);
 		void AddBox(Vector3 min, Vector3 max, Vector4 color);
 		void AddBox(Vector3* corners, Vector4 color);
