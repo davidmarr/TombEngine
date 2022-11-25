@@ -17,7 +17,6 @@
 #include "Sound/sound.h"
 
 using namespace OIS;
-using std::vector;
 using TEN::Renderer::g_Renderer;
 
 // Big TODO: Entire input system shouldn't be left exposed like this.
@@ -79,18 +78,19 @@ namespace TEN::Input
 	Effect*		   OisEffect	   = nullptr;
 
 	// Globals
-	RumbleData			RumbleInfo = {};
-	vector<InputAction>	ActionMap  = {};
-	vector<bool>		KeyMap	   = {};
-	vector<float>		AxisMap    = {};
+	RumbleData				 RumbleInfo = {};
+	std::vector<InputAction> ActionMap	= {};
+	std::vector<bool>		 KeyMap		= {};
+	std::vector<float>		 AxisMap	= {};
 
-	int DbInput = 0;
-	int TrInput = 0;
+	long DbInput = 0;
+	long TrInput = 0;
 
-	vector<int>DefaultBindings =
+	std::vector<int>DefaultBindings =
 	{
 		KC_UP, KC_DOWN, KC_LEFT, KC_RIGHT, KC_PERIOD, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_RCONTROL, KC_SPACE, KC_COMMA, KC_NUMPAD0, KC_END, KC_ESCAPE, KC_P, KC_PGUP, KC_PGDOWN,
-		/*KC_RCONTROL, KC_DOWN, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_SPACE,*/
+		KC_RCONTROL, KC_DOWN, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_SPACE,
+		KC_MINUS, KC_EQUALS, KC_LBRACKET, KC_RBRACKET, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
 		KC_F5, KC_F6, KC_RETURN, KC_ESCAPE, KC_NUMPAD0
 	};
 
@@ -100,11 +100,13 @@ namespace TEN::Input
 	{
 		{
 			KC_UP, KC_DOWN, KC_LEFT, KC_RIGHT, KC_PERIOD, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_RCONTROL, KC_SPACE, KC_COMMA, KC_NUMPAD0, KC_END, KC_ESCAPE, KC_P, KC_PGUP, KC_PGDOWN,
-			/*KC_RCONTROL, KC_DOWN, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_SPACE*/
+			KC_RCONTROL, KC_DOWN, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_SPACE,
+			KC_MINUS, KC_EQUALS, KC_LBRACKET, KC_RBRACKET, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
 		},
 		{
 			KC_UP, KC_DOWN, KC_LEFT, KC_RIGHT, KC_PERIOD, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_RCONTROL, KC_SPACE, KC_COMMA, KC_NUMPAD0, KC_END, KC_ESCAPE, KC_P, KC_PGUP, KC_PGDOWN,
-			/*KC_RCONTROL, KC_DOWN, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_SPACE*/
+			KC_RCONTROL, KC_DOWN, KC_SLASH, KC_RSHIFT, KC_RMENU, KC_SPACE,
+			KC_MINUS, KC_EQUALS, KC_LBRACKET, KC_RBRACKET, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
 		}
 	};
 
@@ -673,7 +675,7 @@ namespace TEN::Input
 		if (power == 0.0f || RumbleInfo.Power)
 			return;
 
-		RumbleInfo.FadeSpeed = power / (delayInSec * (float)FPS);
+		RumbleInfo.FadeSpeed = power / (delayInSec * FPS);
 		RumbleInfo.Power = power + RumbleInfo.FadeSpeed;
 		RumbleInfo.LastPower = RumbleInfo.Power;
 	}

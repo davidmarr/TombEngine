@@ -40,7 +40,7 @@ namespace TEN::Gui
 
 	GuiController g_Gui;
 
-	const char* OptionStrings[] =
+	std::vector<const char*> OptionStrings =
 	{
 		STRING_USE,
 		STRING_CHOOSE_AMMO,
@@ -57,12 +57,12 @@ namespace TEN::Gui
 	//	STRING_READ_DIARY
 	};
 
-	const char* ControlStrings[] =
+	std::vector<const char*> GeneralControlStrings =
 	{
-		STRING_CONTROLS_MOVE_FORWARD,
-		STRING_CONTROLS_MOVE_BACKWARD,
-		STRING_CONTROLS_MOVE_LEFT,
-		STRING_CONTROLS_MOVE_RIGHT,
+		STRING_CONTROLS_FORWARD,
+		STRING_CONTROLS_BACKWARD,
+		STRING_CONTROLS_LEFT,
+		STRING_CONTROLS_RIGHT,
 		STRING_CONTROLS_CROUCH,
 		STRING_CONTROLS_SPRINT,
 		STRING_CONTROLS_WALK,
@@ -75,13 +75,35 @@ namespace TEN::Gui
 		STRING_CONTROLS_INVENTORY,
 		STRING_CONTROLS_PAUSE,
 		STRING_CONTROLS_STEP_LEFT,
-		STRING_CONTROLS_STEP_RIGHT,
+		STRING_CONTROLS_STEP_RIGHT
+	};
+
+	std::vector<const char*> VehicleControlStrings =
+	{
 		STRING_CONTROLS_V_ACCELERATE,
 		STRING_CONTROLS_V_REVERSE,
 		STRING_CONTROLS_V_SPEED,
 		STRING_CONTROLS_V_SLOW,
 		STRING_CONTROLS_V_BRAKE,
 		STRING_CONTROLS_V_FIRE
+	};
+
+	std::vector<const char*> ItemHotkeyStrings =
+	{
+		STRING_HOTKEYS_SMALL_MEDIPACK,
+		STRING_HOTKEYS_LARGE_MEDIPACK,
+		STRING_HOTKEYS_PREVIOUS_WEAPON,
+		STRING_HOTKEYS_NEXT_WEAPON,
+		STRING_HOTKEYS_WEAPON_1,
+		STRING_HOTKEYS_WEAPON_2,
+		STRING_HOTKEYS_WEAPON_3,
+		STRING_HOTKEYS_WEAPON_4,
+		STRING_HOTKEYS_WEAPON_5,
+		STRING_HOTKEYS_WEAPON_6,
+		STRING_HOTKEYS_WEAPON_7,
+		STRING_HOTKEYS_WEAPON_8,
+		STRING_HOTKEYS_WEAPON_9,
+		STRING_HOTKEYS_WEAPON_10
 	};
 
 	bool GuiController::GuiIsPulsed(ActionID actionID) const
@@ -253,7 +275,9 @@ namespace TEN::Gui
 			HandleDisplaySettingsInput(false);
 			return inventoryResult;
 
-		case Menu::Controls:
+		case Menu::GeneralControls:
+		case Menu::VehicleControls:
+		case Menu::ItemHotkeys:
 			HandleControlSettingsInput(item, false);
 			return inventoryResult;
 
@@ -540,10 +564,49 @@ namespace TEN::Gui
 
 	void GuiController::HandleControlSettingsInput(ItemInfo* item, bool fromPauseMenu)
 	{
-		static const int numControlSettingsOptions = KEY_COUNT + 1;
+		unsigned int numControlSettingsOptions = 0;
+		switch (MenuToDisplay)
+		{
+		default:
+		case Menu::GeneralControls:
+			numControlSettingsOptions = GeneralControlStrings.size() + 1;
+			break;
+			
+		case Menu::VehicleControls:
+			numControlSettingsOptions = VehicleControlStrings.size() + 1;
+			break;
+			
+		case Menu::ItemHotkeys:
+			numControlSettingsOptions = ItemHotkeyStrings.size() + 1;
+			break;
+		}
 
 		OptionCount = numControlSettingsOptions;
 		CurrentSettings.WaitingForKey = false;
+
+		// Switch control settings page.
+		if (GuiIsPulsed(In::Left))
+		{
+			if ((int)MenuToDisplay > (int)Menu::GeneralControls)
+			{
+				MenuToDisplay = Menu((int)MenuToDisplay - 1);
+				SelectedOption = 0;
+				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+			}
+
+			return;
+		}
+		else if (GuiIsPulsed(In::Right))
+		{
+			if ((int)MenuToDisplay < (int)Menu::ItemHotkeys)
+			{
+				MenuToDisplay = Menu((int)MenuToDisplay + 1);
+				SelectedOption = 0;
+				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+			}
+
+			return;
+		}
 
 		if (CurrentSettings.IgnoreInput)
 		{
@@ -698,7 +761,7 @@ namespace TEN::Gui
 
 		case OptionsOption::Controls:
 			BackupOptions();
-			MenuToDisplay = Menu::Controls;
+			MenuToDisplay = Menu::GeneralControls;
 			SelectedOption = 0;
 			break;
 		}
@@ -908,7 +971,9 @@ namespace TEN::Gui
 			HandleDisplaySettingsInput(true);
 			return InventoryResult::None;
 
-		case Menu::Controls:
+		case Menu::GeneralControls:
+		case Menu::VehicleControls:
+		case Menu::ItemHotkeys:
 			HandleControlSettingsInput(item, true);
 			return InventoryResult::None;
 

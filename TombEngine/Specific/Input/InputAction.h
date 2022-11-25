@@ -1,14 +1,12 @@
 #pragma once
 
-using std::vector;
-
 namespace TEN::Input
 {
 	typedef enum class ActionID
 	{
-		None = -1,
+		None = -1, // TODO: When legacy input enums are removed, make this a real dummy input at index 0 that never gets updated. -- Sezz 2022.11.25
 
-		// Basic control
+		// General controls
 		Forward,
 		Back,
 		Left,
@@ -27,21 +25,21 @@ namespace TEN::Input
 		LeftStep,
 		RightStep,
 
-		// Vehicle control
-		/*Accelerate,
+		// Vehicle controls
+		Accelerate,
 		Reverse,
 		Speed,
 		Slow,
 		Brake,
-		Fire,*/
+		Fire,
 
 		// Item hotkeys
 		/*Light, // Generic light button may be used for flares.
-		Binoculars,
+		Binoculars,*/
 		SmallMedipack,
-		BigMedipack,
-		NextWeapon,
+		LargeMedipack,
 		PreviousWeapon,
+		NextWeapon,
 		Weapon1,
 		Weapon2,
 		Weapon3,
@@ -51,9 +49,9 @@ namespace TEN::Input
 		Weapon7,
 		Weapon8,
 		Weapon9,
-		Weapon10,*/
+		Weapon10,
 
-		// GUI control
+		// GUI controls
 		/*Option,
 		Pause,*/
 		Save,
@@ -94,6 +92,7 @@ namespace TEN::Input
 		bool IsReleased(float maxDelayInSec = INFINITY) const;
 
 		// Utilities
+		void Update(bool value);
 		void Update(float value);
 		void Clear();
 		void PrintDebugInfo() const;
