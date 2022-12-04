@@ -194,7 +194,7 @@ bool SaveGame::Save(int slot)
 	auto puzzlesOffset = fbb.CreateVector(puzzles);
 
 	std::vector<int> puzzlesCombo;
-	for (int i = 0; i < NUM_PUZZLES * 2; i++)
+	for (int i = 0; i < NUM_PUZZLE_PIECES; i++)
 		puzzlesCombo.push_back(Lara.Inventory.PuzzlesCombo[i]);
 	auto puzzlesComboOffset = fbb.CreateVector(puzzlesCombo);
 
@@ -204,7 +204,7 @@ bool SaveGame::Save(int slot)
 	auto keysOffset = fbb.CreateVector(keys);
 
 	std::vector<int> keysCombo;
-	for (int i = 0; i < NUM_KEYS * 2; i++)
+	for (int i = 0; i < NUM_KEY_PIECES; i++)
 		keysCombo.push_back(Lara.Inventory.KeysCombo[i]);
 	auto keysComboOffset = fbb.CreateVector(keysCombo);
 
@@ -214,7 +214,7 @@ bool SaveGame::Save(int slot)
 	auto pickupsOffset = fbb.CreateVector(pickups);
 
 	std::vector<int> pickupsCombo;
-	for (int i = 0; i < NUM_PICKUPS * 2; i++)
+	for (int i = 0; i < NUM_PICKUPS_PIECES; i++)
 		pickupsCombo.push_back(Lara.Inventory.PickupsCombo[i]);
 	auto pickupsComboOffset = fbb.CreateVector(pickupsCombo);
 
@@ -224,7 +224,7 @@ bool SaveGame::Save(int slot)
 	auto examinesOffset = fbb.CreateVector(examines);
 
 	std::vector<int> examinesCombo;
-	for (int i = 0; i < NUM_EXAMINES * 2; i++)
+	for (int i = 0; i < NUM_EXAMINES_PIECES; i++)
 		examinesCombo.push_back(Lara.Inventory.ExaminesCombo[i]);
 	auto examinesComboOffset = fbb.CreateVector(examinesCombo);
 
@@ -1679,7 +1679,7 @@ bool SaveGame::Load(int slot)
 		Lara.Inventory.Puzzles[i] = s->lara()->inventory()->puzzles()->Get(i);
 	}
 
-	ZeroMemory(Lara.Inventory.PuzzlesCombo, NUM_PUZZLES * 2 * sizeof(int));
+	ZeroMemory(Lara.Inventory.PuzzlesCombo, NUM_PUZZLE_PIECES * sizeof(int));
 	for (int i = 0; i < s->lara()->inventory()->puzzles_combo()->size(); i++)
 	{
 		Lara.Inventory.PuzzlesCombo[i] = s->lara()->inventory()->puzzles_combo()->Get(i);
@@ -1691,7 +1691,7 @@ bool SaveGame::Load(int slot)
 		Lara.Inventory.Keys[i] = s->lara()->inventory()->keys()->Get(i);
 	}
 
-	ZeroMemory(Lara.Inventory.KeysCombo, NUM_KEYS * 2 * sizeof(int));
+	ZeroMemory(Lara.Inventory.KeysCombo, NUM_KEY_PIECES * sizeof(int));
 	for (int i = 0; i < s->lara()->inventory()->keys_combo()->size(); i++)
 	{
 		Lara.Inventory.KeysCombo[i] = s->lara()->inventory()->keys_combo()->Get(i);
@@ -1703,7 +1703,7 @@ bool SaveGame::Load(int slot)
 		Lara.Inventory.Pickups[i] = s->lara()->inventory()->pickups()->Get(i);
 	}
 
-	ZeroMemory(Lara.Inventory.PickupsCombo, NUM_PICKUPS * 2 * sizeof(int));
+	ZeroMemory(Lara.Inventory.PickupsCombo, NUM_PICKUPS_PIECES * sizeof(int));
 	for (int i = 0; i < s->lara()->inventory()->pickups_combo()->size(); i++)
 	{
 		Lara.Inventory.Pickups[i] = s->lara()->inventory()->pickups_combo()->Get(i);
@@ -1715,7 +1715,7 @@ bool SaveGame::Load(int slot)
 		Lara.Inventory.Examines[i] = s->lara()->inventory()->examines()->Get(i);
 	}
 
-	ZeroMemory(Lara.Inventory.ExaminesCombo, NUM_EXAMINES * 2 * sizeof(int));
+	ZeroMemory(Lara.Inventory.ExaminesCombo, NUM_EXAMINES_PIECES * sizeof(int));
 	for (int i = 0; i < s->lara()->inventory()->examines_combo()->size(); i++)
 	{
 		Lara.Inventory.ExaminesCombo[i] = s->lara()->inventory()->examines_combo()->Get(i);

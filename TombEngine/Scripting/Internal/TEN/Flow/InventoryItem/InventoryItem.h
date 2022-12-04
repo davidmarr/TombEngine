@@ -1,9 +1,7 @@
 #pragma once
-
-#include <string>
-
 #include "Game/Gui.h"
-#include "Rotation/Rotation.h"
+#include "Scripting/Internal/TEN/Rotation/Rotation.h"
+
 using namespace TEN::Gui;
 
 enum GAME_OBJECT_ID : short;
@@ -30,7 +28,7 @@ namespace sol
 
 struct InventoryItem
 {
-	InventoryItem(std::string const & a_name, GAME_OBJECT_ID a_slot, short a_yOffset, float a_scale, Rotation const & a_rot, RotationFlags a_rotationFlags, int a_meshBits, ItemOptions a_actions);
+	InventoryItem(const std::string& a_name, GAME_OBJECT_ID a_slot, short a_yOffset, float a_scale, const Rotation& a_rot, RotationFlags a_rotationFlags, int a_meshBits, ItemOptions a_actions);
 
 	static void Register(sol::table& lua);
 
