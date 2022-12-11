@@ -1,8 +1,8 @@
 #include "framework.h"
-#include "Rotation.h"
+#include "Scripting/Internal/TEN/Rotation/Rotation.h"
 
 #include "Math/Math.h"
-#include "ReservedScriptNames.h"
+#include "Scripting/Internal/ReservedScriptNames.h"
 
 /*** Represents a rotation.
 Rotations are specifed as a combination of individual
@@ -12,10 +12,11 @@ All values will be clamped to [-32768, 32767].
 @pragma nostrip
 */
 
-void Rotation::Register(sol::table & parent)
+void Rotation::Register(sol::table& parent)
 {
 	using ctors = sol::constructors<Rotation(int, int, int)>;
-	parent.new_usertype<Rotation>(ScriptReserved_Rotation,
+	parent.new_usertype<Rotation>(
+		ScriptReserved_Rotation,
 		ctors(),
 		sol::call_constructor, ctors(),
 		sol::meta_function::to_string, &Rotation::ToString,
@@ -30,8 +31,7 @@ void Rotation::Register(sol::table & parent)
 
 /// (int) rotation about z axis
 //@mem z
-		"z", &Rotation::z
-	);
+		"z", &Rotation::z);
 }
 
 /*** 
@@ -55,7 +55,7 @@ void Rotation::StoreInPHDPos(Pose& pos) const
 	pos.Orientation.z = z;
 }
 
-Rotation::Rotation(Pose const & pos)
+Rotation::Rotation(const Pose& pos)
 {
 	x = pos.Orientation.x;
 	y = pos.Orientation.y;
@@ -71,4 +71,3 @@ std::string Rotation::ToString() const
 {
 	return "{" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + "}";
 }
-

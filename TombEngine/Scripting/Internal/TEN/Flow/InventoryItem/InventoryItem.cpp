@@ -1,8 +1,8 @@
 #include "framework.h"
-#include "InventoryItem.h"
-#include "ScriptAssert.h"
-#include "ReservedScriptNames.h"
-#include <string>
+#include "Scripting/Internal/TEN/Flow/InventoryItem/InventoryItem.h"
+
+#include "Scripting/Internal/ReservedScriptNames.h"
+#include "Scripting/Internal/ScriptAssert.h"
 
 /***
 Represents the properties of an object as it appears in the inventory.
@@ -27,7 +27,7 @@ Note that this is entirely separate from the `rot` field described above.
 Must be RotationAxis.X, RotationAxis.Y or RotationAxis.Z.
 e.g. `myItem.rotAxisWhenCurrent = RotationAxis.X`
 	@tparam int meshBits __Not currently implemented__ (will have no effect regardless of what you set it to)
-	@tparam ItemAction action is this usable, equippable, combineable or examinable?<br/>
+	@tparam ItemAction action is this usable, equippable, combineable, or examinable?<br/>
 Must be one of:
 	EQUIP
 	USE
@@ -36,7 +36,7 @@ Must be one of:
 e.g. `myItem.action = ItemAction.EXAMINE`
 	@treturn InventoryItem an InventoryItem
 */
-InventoryItem::InventoryItem(std::string const& a_name, GAME_OBJECT_ID a_slot, short a_yOffset, float a_scale, Rotation const & a_rot, RotationFlags a_rotationFlags, int a_meshBits, ItemOptions a_action) :
+InventoryItem::InventoryItem(const std::string& a_name, GAME_OBJECT_ID a_slot, short a_yOffset, float a_scale, const Rotation& a_rot, RotationFlags a_rotationFlags, int a_meshBits, ItemOptions a_action) :
 	name{ a_name },
 	yOffset{ a_yOffset },
 	scale{ a_scale },
@@ -48,19 +48,22 @@ InventoryItem::InventoryItem(std::string const& a_name, GAME_OBJECT_ID a_slot, s
 	SetAction(a_action);
 }
 
-void InventoryItem::Register(sol::table & parent)
+void InventoryItem::Register(sol::table& parent)
 {
-	using ctors = sol::constructors<InventoryItem(std::string const&, GAME_OBJECT_ID, short, float, Rotation const&, RotationFlags, int, ItemOptions)>;
-	parent.new_usertype<InventoryItem>(ScriptReserved_InventoryItem,
-	ctors(),
-		sol::call_constructor, ctors()
-	);
+	using ctors = sol::constructors<InventoryItem(const std::string&, GAME_OBJECT_ID, short, float, const Rotation&, RotationFlags, int, ItemOptions)>;
+	parent.new_usertype<InventoryItem>(
+		ScriptReserved_InventoryItem,
+		ctors(),
+		sol::call_constructor, ctors());
 }
 
 // Add validation so the user can't choose something unimplemented
 void InventoryItem::SetAction(ItemOptions a_action)
 {
-	bool isSupported = (a_action == ItemOptions::OPT_EQUIP) ||(a_action == ItemOptions::OPT_USE) ||	(a_action == ItemOptions::OPT_EXAMINABLE) || (a_action == ItemOptions::OPT_COMBINABLE);
+	bool isSupported = (a_action == ItemOptions::OPT_EQUIP ||
+					    a_action == ItemOptions::OPT_USE ||
+					    a_action == ItemOptions::OPT_EXAMINABLE ||
+					    a_action == ItemOptions::OPT_COMBINABLE);
 
 	if (!ScriptAssert(isSupported, "Unsupported item action: " + std::to_string(a_action)))
 	{
@@ -73,4 +76,3 @@ void InventoryItem::SetAction(ItemOptions a_action)
 		action = a_action;
 	}
 }
-
