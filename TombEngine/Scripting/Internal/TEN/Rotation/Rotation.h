@@ -1,4 +1,5 @@
 #pragma once
+#include "Math/Objects/EulerAngles.h"
 
 namespace sol
 {
@@ -10,17 +11,21 @@ class Pose;
 class Rotation
 {
 public:
-	short x{ 0 };
-	short y{ 0 };
-	short z{ 0 };
+	float x { 0 };
+	float y { 0 };
+	float z { 0 };
 
 	Rotation() = default;
-	Rotation(int x, int y, int z);
-	Rotation(const Pose& pos);
+	Rotation(float aX, float aY, float aZ);
+	Rotation(const EulerAngles& eulers);
+	Rotation(const Pose& pose);
+	Rotation(const Vector3& vec);
+
+	operator Vector3() const;
+
+	void StoreInPHDPos(Pose& pose) const;
 
 	std::string ToString() const;
-
-	void StoreInPHDPos(Pose& pos) const;
 
 	static void Register(sol::table& parent);
 };
