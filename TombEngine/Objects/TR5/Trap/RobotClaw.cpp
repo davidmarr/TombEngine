@@ -1,5 +1,5 @@
 #include "framework.h"
-#include "Objects/TR5/Trap/tr5_wreckingball.h"
+#include "Objects/TR5/Trap/RobotClaw.h"
 
 #include "Game/animation.h"
 #include "Game/camera.h"
@@ -22,13 +22,13 @@ using namespace TEN::Effects::Environment;
 
 static short WreckingBallData[2] = { 0, 0 };
 
-void InitialiseWreckingBall(short itemNumber)
+void InitialiseRobotClaw(short itemNumber)
 {
 	auto* item = &g_Level.Items[itemNumber];
 
-	item->ItemFlags[3] = FindAllItems(ID_WRECKING_BALL_BASE)[0];
-		if (!Objects[ID_WRECKING_BALL_BASE].loaded)
-			TENLog("ID_WRECKING_BALL_BASE not found. Please place in the level and re-build.", LogLevel::Error);
+	item->ItemFlags[3] = FindAllItems(ID_ROBOT_CLAW_BASE)[0];
+		if (!Objects[ID_ROBOT_CLAW_BASE].loaded)
+			TENLog("ID_ROBOT_CLAW_BASE not found. Please place in the level and re-build.", LogLevel::Error);
 
 	short RoomNumber = item->RoomNumber;
 	item->Pose.Position.y = GetCeiling(GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &RoomNumber), item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z) + 1644;
@@ -38,7 +38,7 @@ void InitialiseWreckingBall(short itemNumber)
 		ItemNewRoom(itemNumber, RoomNumber);
 }
 
-void WreckingBallCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
+void RobotClawCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
 {
 	auto* item = &g_Level.Items[itemNumber];
 
@@ -89,7 +89,7 @@ void WreckingBallCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* 
 	}
 }
 
-void WreckingBallControl(short itemNumber)
+void RobotClawControl(short itemNumber)
 {
 	int x, z, oldX, oldZ, wx, wz, flagX, flagZ, height, dx, dz, ceilingX, ceilingZ, adx, adz;
 	short room;

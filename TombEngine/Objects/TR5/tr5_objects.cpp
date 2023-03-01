@@ -63,7 +63,7 @@
 #include "tr5_fallingceiling.h"
 #include "tr5_rollingball.h"
 #include "tr5_explosion.h"
-#include "tr5_wreckingball.h"
+#include "RobotClaw.h"
 
 // Switches
 #include "tr5_crowdove_switch.h"
@@ -947,13 +947,13 @@ static void StartSwitch(ObjectInfo *obj)
 		obj->SetupHitEffect(true);
 	}
 
-	obj = &Objects[ID_WRECKING_BALL + ID_WRECKING_BALL_BASE];
+	obj = &Objects[ID_ROBOT_CLAW];
 	if (obj->loaded)
 	{
-		CheckIfSlotExists(ID_WRECKING_BALL_BASE, "ID_WRECKING_BALL", "ID_WRECKING_BALL_BASE");
-		obj->initialise = InitialiseWreckingBall;
-		obj->collision = WreckingBallCollision;
-		obj->control = WreckingBallControl;
+		CheckIfSlotExists(ID_ROBOT_CLAW_BASE, "ID_ROBOT_CLAW", "ID_ROBOT_CLAW_BASE");
+		obj->initialise = InitialiseRobotClaw;
+		obj->collision = RobotClawCollision;
+		obj->control = RobotClawControl;
 		obj->SetupHitEffect(true);
 		obj->shadowType = ShadowMode::All;
 	}
