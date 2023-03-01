@@ -27,8 +27,6 @@ void InitialiseRobotClaw(short itemNumber)
 	auto* item = &g_Level.Items[itemNumber];
 
 	item->ItemFlags[3] = FindAllItems(ID_ROBOT_CLAW_BASE)[0];
-		if (!Objects[ID_ROBOT_CLAW_BASE].loaded)
-			TENLog("ID_ROBOT_CLAW_BASE not found. Please place in the level and re-build.", LogLevel::Error);
 
 	short RoomNumber = item->RoomNumber;
 	item->Pose.Position.y = GetCeiling(GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &RoomNumber), item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z) + 1644;
