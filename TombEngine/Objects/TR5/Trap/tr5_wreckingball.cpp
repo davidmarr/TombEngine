@@ -16,6 +16,7 @@
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 #include "tr5_light.h"
+#include "Specific/setup.h"
 
 using namespace TEN::Effects::Environment;
 
@@ -25,7 +26,9 @@ void InitialiseWreckingBall(short itemNumber)
 {
 	auto* item = &g_Level.Items[itemNumber];
 
-	item->ItemFlags[3] = FindAllItems(ID_ANIMATING16)[0];
+	item->ItemFlags[3] = FindAllItems(ID_WRECKING_BALL_BASE)[0];
+		if (!Objects[ID_WRECKING_BALL_BASE].loaded)
+			TENLog("ID_WRECKING_BALL_BASE not found. Please place in the level and re-build.", LogLevel::Error);
 
 	short RoomNumber = item->RoomNumber;
 	item->Pose.Position.y = GetCeiling(GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &RoomNumber), item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z) + 1644;

@@ -947,13 +947,15 @@ static void StartSwitch(ObjectInfo *obj)
 		obj->SetupHitEffect(true);
 	}
 
-	obj = &Objects[ID_WRECKING_BALL];
+	obj = &Objects[ID_WRECKING_BALL + ID_WRECKING_BALL_BASE];
 	if (obj->loaded)
 	{
+		CheckIfSlotExists(ID_WRECKING_BALL_BASE, "ID_WRECKING_BALL", "ID_WRECKING_BALL_BASE");
 		obj->initialise = InitialiseWreckingBall;
 		obj->collision = WreckingBallCollision;
 		obj->control = WreckingBallControl;
 		obj->SetupHitEffect(true);
+		obj->shadowType = ShadowMode::All;
 	}
 }
 
