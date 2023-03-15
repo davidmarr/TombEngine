@@ -1,6 +1,6 @@
 #pragma once
 
-namespace TEN::Entities::Effects::Light
+namespace TEN::Effects::Light
 {
 	void PulseLightControl(short itemNumber);
 	void TriggerAlertLight(int x, int y, int z, int r, int g, int b, int angle, short room, int falloff);

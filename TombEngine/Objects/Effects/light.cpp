@@ -1,4 +1,5 @@
 #include "framework.h"
+
 #include "Objects/Effects/light.h"
 #include "Specific/level.h"
 #include "Game/collision/collide_room.h"
@@ -9,9 +10,9 @@
 #include "Game/animation.h"
 #include "Game/items.h"
 
-using namespace TEN::Entities::Effects;
+using namespace TEN::Effects;
 
-namespace TEN::Entities::Effects::Light
+namespace TEN::Effects::Light
 {
 	void PulseLightControl(short itemNumber)
 	{
@@ -67,7 +68,7 @@ namespace TEN::Entities::Effects::Light
 			byte g = (item->TriggerFlags / 4) & 0xF8;
 			byte b = (item->TriggerFlags / 128) & 0xF8;
 
-			TEN::Entities::Effects::Light::TriggerAlertLight(
+			Light::TriggerAlertLight(
 				item->Pose.Position.x,
 				item->Pose.Position.y - 512,
 				item->Pose.Position.z,
