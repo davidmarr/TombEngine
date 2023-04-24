@@ -157,35 +157,17 @@ Any returned value will be discarded.
 */
 void LogicHandler::AddCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
-	switch(point)
-	{
-	case CallbackPoint::OnStart:
-		m_callbacksOnStart.insert(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::OnLoad :
-		m_callbacksOnLoad.insert(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::PreControl:
-		m_callbacksPreControl.insert(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::PostControl:
-		m_callbacksPostControl.insert(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::PreSave:
-		m_callbacksPreSave.insert(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::OnSave:
-		m_callbacksOnSave.insert(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::OnEnd:
-		m_callbacksOnEnd.insert(levelFunc.m_funcName);
-		break;
+	std::map<CallbackPoint, std::unordered_set<std::string>>& callbacksMap = {
+		{ CallbackPoint::OnStart, m_callbacksOnStart },
+		{ CallbackPoint::OnLoad, m_callbacksOnLoad },
+		{ CallbackPoint::PreControl, m_callbacksPreControl },
+		{ CallbackPoint::PostControl, m_callbacksPostControl },
+		{ CallbackPoint::OnSave, m_callbacksOnSave },
+		{ CallbackPoint::OnEnd, m_callbacksOnEnd }
+	};
+	auto iter = callbacksMap.find(point);
+	if (iter != callbacksMap.end()) {
+		iter->second.insert(levelFunc.m_funcName);
 	}
 }
 
@@ -200,35 +182,17 @@ Will have no effect if the function was not registered as a callback
 */
 void LogicHandler::RemoveCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
-	switch(point)
-	{
-	case CallbackPoint::OnStart:
-		m_callbacksOnStart.erase(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::OnLoad:
-		m_callbacksOnLoad.erase(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::PreControl:
-		m_callbacksPreControl.erase(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::PostControl:
-		m_callbacksPostControl.erase(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::PreSave:
-		m_callbacksPreSave.erase(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::OnSave:
-		m_callbacksOnSave.erase(levelFunc.m_funcName);
-		break;
-
-	case CallbackPoint::OnEnd:
-		m_callbacksOnEnd.erase(levelFunc.m_funcName);
-		break;
+	std::map<CallbackPoint, std::unordered_set<std::string>>& callbacksMap = {
+		{ CallbackPoint::OnStart, m_callbacksOnStart },
+		{ CallbackPoint::OnLoad, m_callbacksOnLoad },
+		{ CallbackPoint::PreControl, m_callbacksPreControl },
+		{ CallbackPoint::PostControl, m_callbacksPostControl },
+		{ CallbackPoint::OnSave, m_callbacksOnSave },
+		{ CallbackPoint::OnEnd, m_callbacksOnEnd }
+	};
+	auto iter = callbacksMap.find(point);
+	if (iter != callbacksMap.end()) {
+		iter->second.erase(levelFunc.m_funcName);
 	}
 }
 
