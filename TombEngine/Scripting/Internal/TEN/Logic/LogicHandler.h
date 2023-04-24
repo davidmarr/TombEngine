@@ -56,8 +56,13 @@ private:
 	sol::protected_function										m_onSave{};
 	sol::protected_function										m_onEnd{};
 
+	std::unordered_set<std::string> m_callbacksOnStart;
+	std::unordered_set<std::string> m_callbacksOnLoad;
 	std::unordered_set<std::string> m_callbacksPreControl;
 	std::unordered_set<std::string> m_callbacksPostControl;
+	std::unordered_set<std::string> m_callbacksPreSave;
+	std::unordered_set<std::string> m_callbacksOnSave;
+	std::unordered_set<std::string> m_callbacksOnEnd;
 
 	std::vector<std::variant<std::string, uint32_t>> m_savedVarPath;
 

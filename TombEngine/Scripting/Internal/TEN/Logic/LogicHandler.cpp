@@ -23,14 +23,24 @@ Saving data, triggering functions, and callbacks for level-specific scripts.
 
 enum class CallbackPoint
 {
+	OnStart,
+	OnLoad,
 	PreControl,
 	PostControl,
+	PreSave,
+	OnSave,
+	OnEnd
 };
 
 static const std::unordered_map<std::string, CallbackPoint> kCallbackPoints
 {
+	{"ONSTART", CallbackPoint::OnStart},
+	{"ONLOAD", CallbackPoint::OnLoad},
 	{"PRECONTROLPHASE", CallbackPoint::PreControl},
 	{"POSTCONTROLPHASE", CallbackPoint::PostControl},
+	{"PRESAVE", CallbackPoint::PreSave},
+	{"ONSAVE", CallbackPoint::OnSave},
+	{"ONEND", CallbackPoint::OnEnd},
 };
 
 static constexpr char const* strKey = "__internal_name";
@@ -149,12 +159,32 @@ void LogicHandler::AddCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
 	switch(point)
 	{
+	case CallbackPoint::OnStart:
+		m_callbacksOnStart.insert(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::OnLoad :
+		m_callbacksOnLoad.insert(levelFunc.m_funcName);
+		break;
+
 	case CallbackPoint::PreControl:
 		m_callbacksPreControl.insert(levelFunc.m_funcName);
 		break;
 
 	case CallbackPoint::PostControl:
 		m_callbacksPostControl.insert(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::PreSave:
+		m_callbacksPreSave.insert(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::OnSave:
+		m_callbacksOnSave.insert(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::OnEnd:
+		m_callbacksOnEnd.insert(levelFunc.m_funcName);
 		break;
 	}
 }
@@ -172,12 +202,32 @@ void LogicHandler::RemoveCallback(CallbackPoint point, const LevelFunc& levelFun
 {
 	switch(point)
 	{
+	case CallbackPoint::OnStart:
+		m_callbacksOnStart.erase(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::OnLoad:
+		m_callbacksOnLoad.erase(levelFunc.m_funcName);
+		break;
+
 	case CallbackPoint::PreControl:
 		m_callbacksPreControl.erase(levelFunc.m_funcName);
 		break;
 
 	case CallbackPoint::PostControl:
 		m_callbacksPostControl.erase(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::PreSave:
+		m_callbacksPreSave.erase(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::OnSave:
+		m_callbacksOnSave.erase(levelFunc.m_funcName);
+		break;
+
+	case CallbackPoint::OnEnd:
+		m_callbacksOnEnd.erase(levelFunc.m_funcName);
 		break;
 	}
 }
@@ -755,12 +805,20 @@ void LogicHandler::OnStart()
 {
 	if (m_onStart.valid())
 		doCallback(m_onStart);
+	for (auto& name : m_callbacksOnStart)
+		m_levelFuncs_luaFunctions[name].valid() ?
+		m_levelFuncs_luaFunctions[name].call():
+		ScriptAssertF(false, "Callback {} not valid", name);
 }
 
 void LogicHandler::OnLoad()
 {
 	if (m_onLoad.valid())
 		doCallback(m_onLoad);
+	for (auto& name : m_callbacksOnLoad)
+		m_levelFuncs_luaFunctions[name].valid() ?
+		m_levelFuncs_luaFunctions[name].call() :
+		ScriptAssertF(false, "Callback {} not valid", name);
 }
 
 void LogicHandler::OnControlPhase(float deltaTime)
@@ -790,12 +848,20 @@ void LogicHandler::OnSave()
 {
 	if (m_onSave.valid())
 		doCallback(m_onSave);
+	for (auto& name : m_callbacksOnSave)
+		m_levelFuncs_luaFunctions[name].valid() ?
+		m_levelFuncs_luaFunctions[name].call() :
+		ScriptAssertF(false, "Callback {} not valid", name);
 }
 
 void LogicHandler::OnEnd()
 {
 	if(m_onEnd.valid())
 		doCallback(m_onEnd);
+	for (auto& name : m_callbacksOnEnd)
+		m_levelFuncs_luaFunctions[name].valid() ?
+		m_levelFuncs_luaFunctions[name].call() :
+		ScriptAssertF(false, "Callback {} not valid", name);
 }
 
 /*** Special tables
