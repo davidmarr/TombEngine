@@ -805,20 +805,18 @@ void LogicHandler::OnStart()
 {
 	if (m_onStart.valid())
 		doCallback(m_onStart);
-	for (auto& name : m_callbacksOnStart)
-		m_levelFuncs_luaFunctions[name].valid() ?
-		m_levelFuncs_luaFunctions[name].call():
-		ScriptAssertF(false, "Callback {} not valid", name);
+	if (CurrentLevel > 0)
+		for (auto& name : m_callbacksOnStart)
+			doCallback(m_levelFuncs_luaFunctions[name]);
 }
 
 void LogicHandler::OnLoad()
 {
 	if (m_onLoad.valid())
 		doCallback(m_onLoad);
-	for (auto& name : m_callbacksOnLoad)
-		m_levelFuncs_luaFunctions[name].valid() ?
-		m_levelFuncs_luaFunctions[name].call() :
-		ScriptAssertF(false, "Callback {} not valid", name);
+	if (CurrentLevel > 0)
+		for (auto& name : m_callbacksOnLoad)
+			doCallback(m_levelFuncs_luaFunctions[name]);
 }
 
 void LogicHandler::OnControlPhase(float deltaTime)
@@ -848,20 +846,18 @@ void LogicHandler::OnSave()
 {
 	if (m_onSave.valid())
 		doCallback(m_onSave);
-	for (auto& name : m_callbacksOnSave)
-		m_levelFuncs_luaFunctions[name].valid() ?
-		m_levelFuncs_luaFunctions[name].call() :
-		ScriptAssertF(false, "Callback {} not valid", name);
+	if (CurrentLevel > 0)
+		for (auto& name : m_callbacksOnSave)
+			doCallback(m_levelFuncs_luaFunctions[name]);
 }
 
 void LogicHandler::OnEnd()
 {
 	if(m_onEnd.valid())
 		doCallback(m_onEnd);
-	for (auto& name : m_callbacksOnEnd)
-		m_levelFuncs_luaFunctions[name].valid() ?
-		m_levelFuncs_luaFunctions[name].call() :
-		ScriptAssertF(false, "Callback {} not valid", name);
+	if (CurrentLevel > 0)
+		for (auto& name : m_callbacksOnEnd)
+			doCallback(m_levelFuncs_luaFunctions[name]);
 }
 
 /*** Special tables
