@@ -32,9 +32,7 @@ LevelVars.Engine.Timer = {timers = {}}
 
 local Timer
 
-local unpausedColor = TEN.Color(255, 255, 255)
-local pausedColor = TEN.Color(255, 255, 0)
-local str = TEN.Strings.DisplayString("TIMER", Vec2 (0, 0), 1, unpausedColor, false, {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW} )
+
 
 
 Timer = {
@@ -96,6 +94,12 @@ Timer = {
 		elseif timerFormat then
 			thisTimer.timerFormat = {seconds = true}
 		end
+		thisTimer.posX = 50
+		thisTimer.posY = 90
+		thisTimer.scale = 1
+		thisTimer.unpausedColor = TEN.Color(255, 255, 255)
+		thisTimer.pausedColor = TEN.Color(255, 255, 0)
+		thisTimer.alignment = TEN.Strings.DisplayStringOption.CENTER
 		return obj
 	end;
 	
@@ -123,6 +127,8 @@ Timer = {
 	end;
 
 	Update = function(t, dt)
+		local options = {t.alignment, TEN.Strings.DisplayStringOption.SHADOW}
+		local str = TEN.Strings.DisplayString("", TEN.Vec2(0, 0), t.scale, t.unpausedColor, false, options)
 		if t.active then
 			if not t.paused then
 				t.remainingTime = t.remainingTime - dt
@@ -153,7 +159,7 @@ Timer = {
 
 				-- deciseconds
 				if t.timerFormat.deciseconds then
-					fmt = math.floor(10*subSecond)
+					fmt = tostring(math.floor(10*subSecond))
 					fmtBefore = true
 				end
 
@@ -172,7 +178,7 @@ Timer = {
 					end
 					fmt = string.format("%02d", toBeDisplayed) .. fmt
 
-					remaining = roundedSeconds 
+					remaining = roundedSeconds
 					fmtBefore = true
 				end
 
@@ -186,23 +192,23 @@ Timer = {
 					end
 
 					local roundedMinutes = round(remaining/60)
-					local toBeDisplayed = roundedMinutes
 
-					fmt = string.format("%02d", toBeDisplayed) .. fmt
+					fmt = string.format("%02d", roundedMinutes) .. fmt
 					fmtBefore = true
 				end
 
 				str:SetKey(fmt)
-				local myX, myY = PercentToScreen(50, 90)
-				str:SetPosition(myX, myY)
+				str:SetPosition(TEN.Vec2(TEN.Util.PercentToScreen(t.posX, t.posY)))
 
 				-- Do this again in case the player has loaded while the timer was paused already
 				-- Need a better solution for this
-				if t.paused then
-					str:SetColor(pausedColor)
-				end
+				str:SetColor(t.paused and t.pausedColor or t.unpausedColor)
 
-				TEN.Strings.ShowString(str, 1)
+				if t.remainingTime <= 0 then
+					TEN.Strings.ShowString(str, 1)
+				else
+					TEN.Strings.ShowString(str, 1/30)
+				end
 			end
 
 		end
@@ -231,10 +237,6 @@ Timer = {
 		end
 
 		thisTimer.paused = false
-
-		if thisTimer.timerFormat then
-			str:SetColor(unpausedColor)
-		end
 	end;
 
 	--- Stop the timer.
@@ -256,13 +258,6 @@ Timer = {
 	SetPaused = function(t, p)
 		local thisTimer = LevelVars.Engine.Timer.timers[t.name]
 		thisTimer.paused = p
-		if thisTimer.timerFormat then
-			if p then
-				str:SetColor(pausedColor)
-			else
-				str:SetColor(unpausedColor)
-			end
-		end
 	end;
 
 	--- Get whether or not the timer is paused
@@ -306,6 +301,52 @@ Timer = {
 	-- @bool looping whether or not the timer loops
 	SetLooping = function(t, looping)
 		LevelVars.Engine.Timer.timers[t.name].loop = looping
+	end;
+
+	--- Set the position for a timer
+	-- @function myTimer:SetPosition
+	-- @float x timer's new x-coordinate value in percent
+	-- @float y timer's new y-coordinate value in percent
+	SetPosition = function(t, x, y)
+		LevelVars.Engine.Timer.timers[t.name].posX = x
+		LevelVars.Engine.Timer.timers[t.name].posY = y
+	end;
+
+	--- Set the scale for a timer
+	-- @function myTimer:SetScale
+	-- @float scale timer's new scale value
+	SetScale = function(t, scale)
+		LevelVars.Engine.Timer.timers[t.name].scale = scale
+	end;
+
+	--- Set paused color for a timer
+	-- @function myTimer:SetPausedColor
+	-- @color color timer's new paused color
+	SetPausedColor = function(t, color)
+		LevelVars.Engine.Timer.timers[t.name].pausedColor = color
+	end;
+
+	--- Set unpaused color for a timer
+	-- @function myTimer:SetUnpausedColor
+	-- @color color timer's new unpaused color
+	SetUnpausedColor = function(t, color)
+		LevelVars.Engine.Timer.timers[t.name].unpausedColor = color
+	end;
+
+	--- Set alignment for a timer
+	-- The possible values and their effects are
+	--  TEN.Strings.DisplayStringOption.CENTER: sets the timer alignment to the center.
+	--  TEN.Strings.DisplayStringOption.RIGHT: sets the timer alignment to the right.
+	--  no value: sets the timer alignment to the left.
+	-- @function myTimer:SetAlignment
+	-- @alignment alignment timer's new alignment
+	SetAlignment = function(t, alignment)
+		alignment = alignment or nil
+		if alignment == TEN.Strings.DisplayStringOption.RIGHT or alignment == TEN.Strings.DisplayStringOption.CENTER or alignment == nil then
+			LevelVars.Engine.Timer.timers[t.name].alignment = alignment
+		else
+			TEN.Util.PrintLog("Wrong value", Util.LogLevel.ERROR)
+		end
 	end;
 }
 
