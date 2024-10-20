@@ -305,8 +305,8 @@ Timer = {
 
 	--- Set the position for a timer
 	-- @function myTimer:SetPosition
-	-- @float x timer's new x-coordinate value in percent
-	-- @float y timer's new y-coordinate value in percent
+	-- @tparam float x timer's new x-coordinate value in percent
+	-- @tparam float y timer's new y-coordinate value in percent
 	SetPosition = function(t, x, y)
 		LevelVars.Engine.Timer.timers[t.name].posX = x
 		LevelVars.Engine.Timer.timers[t.name].posY = y
@@ -314,32 +314,34 @@ Timer = {
 
 	--- Set the scale for a timer
 	-- @function myTimer:SetScale
-	-- @float scale timer's new scale value
+	-- @tparam float scale timer's new scale value
 	SetScale = function(t, scale)
 		LevelVars.Engine.Timer.timers[t.name].scale = scale
 	end;
 
 	--- Set paused color for a timer
 	-- @function myTimer:SetPausedColor
-	-- @color color timer's new paused color
+	-- @tparam Color color timer's new paused color
 	SetPausedColor = function(t, color)
 		LevelVars.Engine.Timer.timers[t.name].pausedColor = color
 	end;
 
 	--- Set unpaused color for a timer
 	-- @function myTimer:SetUnpausedColor
-	-- @color color timer's new unpaused color
+	-- @tparam Color color timer's new unpaused color
 	SetUnpausedColor = function(t, color)
 		LevelVars.Engine.Timer.timers[t.name].unpausedColor = color
 	end;
 
 	--- Set alignment for a timer
-	-- The possible values and their effects are
-	--  TEN.Strings.DisplayStringOption.CENTER: sets the timer alignment to the center.
-	--  TEN.Strings.DisplayStringOption.RIGHT: sets the timer alignment to the right.
-	--  no value: sets the timer alignment to the left.
 	-- @function myTimer:SetAlignment
-	-- @alignment alignment timer's new alignment
+	-- @tparam alignment alignment timer's new alignment
+	--
+	-- @usage
+	-- The possible values are:	
+	-- TEN.Strings.DisplayStringOption.CENTER: sets the timer alignment to the center.
+	-- TEN.Strings.DisplayStringOption.RIGHT: sets the timer alignment to the right.
+	-- no value: sets the timer alignment to the left.
 	SetAlignment = function(t, alignment)
 		alignment = alignment or nil
 		if alignment == TEN.Strings.DisplayStringOption.RIGHT or alignment == TEN.Strings.DisplayStringOption.CENTER or alignment == nil then
