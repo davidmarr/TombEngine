@@ -34,6 +34,7 @@ local Timer
 
 
 
+
 Timer = {
 	--- Create (but do not start) a new timer.
 	--
@@ -93,6 +94,8 @@ Timer = {
 		elseif timerFormat then
 			thisTimer.timerFormat = {seconds = true}
 		end
+		thisTimer.totalTimeFormatted = ""
+		thisTimer.remainingTimeFormatted = ""
 		thisTimer.posX = 50
 		thisTimer.posY = 90
 		thisTimer.scale = 1
@@ -101,7 +104,9 @@ Timer = {
 		thisTimer.alignment = TEN.Strings.DisplayStringOption.CENTER
 		return obj
 	end;
-	
+
+	--- Delete a timer.
+	-- @string name The label that was given to the timer when it was created
 	Delete = function(name)
 		if LevelVars.Engine.Timer.timers[name] then
 			LevelVars.Engine.Timer.timers[name] = nil
@@ -197,6 +202,7 @@ Timer = {
 				end
 
 				str:SetKey(fmt)
+				t.remainingTimeFormatted = fmt
 				str:SetPosition(TEN.Vec2(TEN.Util.PercentToScreen(t.posX, t.posY)))
 
 				-- Do this again in case the player has loaded while the timer was paused already
