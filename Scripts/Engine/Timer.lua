@@ -32,9 +32,6 @@ LevelVars.Engine.Timer = {timers = {}}
 
 local Timer
 
-
-
-
 Timer = {
 	--- Create (but do not start) a new timer.
 	--
