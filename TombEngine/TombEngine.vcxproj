@@ -477,6 +477,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Game\misc.h" />
     <ClInclude Include="Game\missile.h" />
     <ClInclude Include="Game\people.h" />
+    <ClInclude Include="Game\Hud\DrawItems.h" />
     <ClInclude Include="Game\pickup\pickup.h" />
     <ClInclude Include="Game\pickup\pickup_ammo.h" />
     <ClInclude Include="Game\pickup\pickup_consumable.h" />
@@ -1018,6 +1019,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Game\misc.cpp" />
     <ClCompile Include="Game\missile.cpp" />
     <ClCompile Include="Game\people.cpp" />
+    <ClCompile Include="Game\Hud\DrawItems.cpp" />
     <ClCompile Include="Game\pickup\pickup.cpp" />
     <ClCompile Include="Game\pickup\pickup_ammo.cpp" />
     <ClCompile Include="Game\pickup\pickup_consumable.cpp" />

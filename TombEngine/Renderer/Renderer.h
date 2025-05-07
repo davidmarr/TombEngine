@@ -623,6 +623,7 @@ namespace TEN::Renderer
 		void ClearScene();
 		void SaveScreenshot();
 		void DrawDisplayPickup(const DisplayPickup& pickup);
+		void DrawItem(const DisplayItem& pickup);
 		int  Synchronize();
 		void AddString(int x, int y, const std::string& string, D3DCOLOR color, int flags);
 		void AddString(const std::string& string, const Vector2& pos, const Color& color, float scale, int flags);
