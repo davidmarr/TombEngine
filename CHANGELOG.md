@@ -8,14 +8,18 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## New features
 * Added video playback support.
 * Added muzzle glow effect for firearms.
+* Added weather particle clustering and increase weather particle performance.
+* Added examine mode text rendering (string key should be in the format like `examine1_text` etc).
 
 ### Bug fixes
 * Fixed Teleporter object.
 * Fixed Wraith objects not working correctly in flipped rooms.
-* Fixed lensflare enabled status not saved in a savegame.
+* Fixed collision for bridge objects with non-standard shapes.
+* Fixed lensflare enabled status and far view not saved in a savegame.
 * Fixed HK sound effects.
 * Fixed HK shots not being registered in statistics.
 * Fixed distorted knee and elbow joint vertices.
+* Fixed multi-mesh objects not shattering correctly.
 * Fixed splash effects remaining in the level after reloading from the savegame.
 * Fixed caustics not rendered correctly if texture compression was enabled.
 * Fixed exclusion blend mode not working correctly.
@@ -25,7 +29,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed crashes when Lara is on a vehicle unreachable by friendly NPCs.
 * Removed legacy TR5 search object code which caused issues with meshswaps.
 * Removed excessive HK nerfing in running state.
-* Optimized weather particle rendering.
 
 ### Lua API changes
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
@@ -33,7 +36,11 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Lara:Interact` function to allow alignment with moveables.
 * Added `muzzleGlow` and `muzzleOffset` parameters to weapon settings.
 * Added ability to use gunflash parameters for all weapons in weapon settings.
+* Added raw mouse and keyboard input action IDs to `Input.ActionID` enumeration. 
+* Added `Input.IsKeyPulsed` and `Input.IsKeyReleased` functions.
+* Updated `Input.IsKeyHeld` with additional parameter indicating key hold delay.
 * Fixed `Moveable.GetJointPosition` not returning correct results if moveable is invisible or not rendered.
+* Fixed `Util.PickMoveableByDisplayPosition`.
 
 ## [Version 1.8.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.8.1) - 2025-03-29
 

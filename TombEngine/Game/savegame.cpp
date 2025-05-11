@@ -1020,7 +1020,7 @@ const std::vector<byte> SaveGame::Build()
 	// Action queue
 	std::vector<int> actionQueue;
 	for (int i = 0; i < ActionQueueMap.size(); i++)
-		actionQueue.push_back((int)ActionQueueMap[(InputActionID)i]);
+		actionQueue.push_back((int)ActionQueueMap[(ActionID)i]);
 	auto actionQueueOffset = fbb.CreateVector(actionQueue);
 
 	// Flipmaps
@@ -1842,6 +1842,8 @@ static void ParseLua(const Save::SaveGame* s, bool hubMode)
 
 	auto* level = (Level*)g_GameFlow->GetLevel(CurrentLevel);
 
+	level->LevelFarView = s->level_data()->level_far_view();
+
 	level->Fog.MaxDistance = s->level_data()->fog_max_distance();
 	level->Fog.MinDistance = s->level_data()->fog_min_distance();
 	level->Fog.SetColor(s->level_data()->fog_color());
@@ -2576,7 +2578,7 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 	for (int i = 0; i < s->action_queue()->size(); i++)
 	{
 		TENAssert(i < ActionQueueMap.size(), "Action queue size was changed.");
-		ActionQueueMap[(InputActionID)i] = (ActionQueueState)s->action_queue()->Get(i);
+		ActionQueueMap[(ActionID)i] = (ActionQueueState)s->action_queue()->Get(i);
 	}
 
 	// Legacy soundtrack map.
