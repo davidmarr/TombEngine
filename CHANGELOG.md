@@ -26,6 +26,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed SSAO incorrectly applied through alpha blended textures.
 * Fixed static meshes not interpolating when dynamically changing their positional data.
 * Fixed crashes when shooting, if gunflash or gunshell objects are not present in a level.
+* Fixed crashes when activating objects without animations.
 * Fixed crashes when Lara is on a vehicle unreachable by friendly NPCs.
 * Removed legacy TR5 search object code which caused issues with meshswaps.
 * Removed excessive HK nerfing in running state.
