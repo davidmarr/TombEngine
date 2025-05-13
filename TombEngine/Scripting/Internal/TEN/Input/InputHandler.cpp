@@ -116,7 +116,7 @@ namespace TEN::Scripting::Input
 	}
 
 	/// Simulate an action key push.
-	// @function KeyPush
+	// @function PushKey
 	// @tparam Input.ActionID actionID Action ID to push.
 	static void PushKey(int actionID)
 	{
@@ -127,7 +127,7 @@ namespace TEN::Scripting::Input
 	}
 
 	/// Clear an action key.
-	// @function KeyClear
+	// @function ClearKey
 	// @tparam Input.ActionID actionID Action ID to clear.
 	static void ClearKey(int actionID)
 	{
@@ -138,7 +138,7 @@ namespace TEN::Scripting::Input
 	}
 
 	/// Clear all action keys.
-	// @function KeyClearAll
+	// @function ClearAllKeys
 	static void ClearAllKeys()
 	{
 		for (auto& [keyActionID, queue] : ActionQueueMap)
