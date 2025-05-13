@@ -31,7 +31,8 @@ namespace TEN::Scripting::Input
 
 	/// Get the analog value of an action key.
 	// Returns either 0 or 1 for digital key mappings (e.g. keyboard or gamepad buttons),
-	// but may return arbirtrary values for analog key mappings (e.g. gamepad or mouse axes).
+	// but may return arbitrary values in the range 0 to 1 for analog key mappings
+	// (e.g. gamepad sticks, gamepad triggers, or mouse axes).
 	// @function GetAnalogKeyValue
 	// @tparam Input.ActionID actionID Action ID to query.
 	// @treturn float Analog value in the range [0, 1].
