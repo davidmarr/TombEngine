@@ -1417,12 +1417,8 @@ namespace TEN::Renderer
 			PrintDebugMessage("BoxNumber: %d", playerItem.BoxNumber);
 			break;
 
-		case RendererDebugPage::BridgeStats:
-			PrintDebugMessage("BRIDGE STATS");
-			break;
-
-		case RendererDebugPage::RoomStats:
-			PrintDebugMessage("ROOM STATS");
+		case RendererDebugPage::CollisionMeshStats:
+			PrintDebugMessage("COLLISION MESH STATS");
 			break;
 
 		case RendererDebugPage::PortalStats:
