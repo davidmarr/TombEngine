@@ -3,9 +3,10 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
-## [Version 1.8.2]
+## [Version 1.9]
 
 ## New features
+* Added skinned meshes support for any object slot.
 * Added video playback support.
 * Added muzzle glow effect for firearms.
 * Added weather particle clustering and increase weather particle performance.
@@ -26,6 +27,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed caustics not rendered correctly if texture compression was enabled.
 * Fixed exclusion blend mode not working correctly.
 * Fixed SSAO incorrectly applied through alpha blended textures.
+* Fixed hair object not rendered correctly if alpha blended textures are present.
 * Fixed static meshes not interpolating when dynamically changing their positional data.
 * Fixed crashes when shooting, if gunflash or gunshell objects are not present in a level.
 * Fixed crashes when activating objects without animations.
@@ -37,6 +39,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
 * Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxis` functions.
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
+* Added `Moveable:SwapSkin` and `Moveable:UnswapSkin` for skinned moveable mesh management.
 * Added `Lara:Interact` function to allow alignment with moveables.
 * Added `muzzleGlow` and `muzzleOffset` parameters to weapon settings.
 * Added ability to use gunflash parameters for all weapons in weapon settings.
