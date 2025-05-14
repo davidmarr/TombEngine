@@ -9,7 +9,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added skinned meshes support for any object slot.
 * Added video playback support.
 * Added muzzle glow effect for firearms.
-* Added weather particle clustering and increase weather particle performance.
+* Added weather particle clustering and increase weather particle density and performance.
 * Added examine mode text rendering (string key should be in the format like `examine1_text` etc).
 
 ### Bug fixes
