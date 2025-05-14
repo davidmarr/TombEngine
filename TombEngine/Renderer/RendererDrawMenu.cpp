@@ -1233,9 +1233,6 @@ namespace TEN::Renderer
 		}
 #endif
 
-		if (!DebugMode || CurrentLevel == 0)
-			return;
-
 		const auto& playerItem = *LaraItem;
 		const auto& player = GetLaraInfo(playerItem);
 
@@ -1373,12 +1370,15 @@ namespace TEN::Renderer
 
 		case RendererDebugPage::InputStats:
 		{
-			auto clickedActions = BitField((int)In::Count);
-			auto heldActions = BitField((int)In::Count);
-			auto releasedActions = BitField((int)In::Count);
+			auto clickedActions = BitField((int)In::Load);
+			auto heldActions = BitField((int)In::Load);
+			auto releasedActions = BitField((int)In::Load);
 
 			for (const auto& [actionID, action] : ActionMap)
 			{
+				if ((int)action.GetID() > clickedActions.GetSize())
+					continue;
+
 				if (action.IsClicked())
 					clickedActions.Set((int)action.GetID());
 
