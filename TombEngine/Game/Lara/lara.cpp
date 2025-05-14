@@ -61,9 +61,6 @@ CollisionInfo LaraCollision = {};
 
 static void HandlePlayerDebug(const ItemInfo& item)
 {
-	if constexpr (!DEBUG_BUILD)
-		return;
-
 	// Collision stats.
 	if (g_Renderer.GetDebugPage() == RendererDebugPage::CollisionStats)
 	{
