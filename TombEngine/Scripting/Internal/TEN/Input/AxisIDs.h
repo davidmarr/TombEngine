@@ -21,7 +21,6 @@ namespace TEN::Scripting::Input
 
 	static const auto AXIS_IDS = std::unordered_map<std::string, AxisID>
 	{
-
 		{ "MOVE", AxisID::Move },
 		{ "CAMERA", AxisID::Camera },
 		{ "MOUSE", AxisID::Mouse }

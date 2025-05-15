@@ -1370,23 +1370,26 @@ namespace TEN::Renderer
 
 		case RendererDebugPage::InputStats:
 		{
-			auto clickedActions = BitField((int)In::Load);
-			auto heldActions = BitField((int)In::Load);
-			auto releasedActions = BitField((int)In::Load);
+			int	 size			 = (int)ACTION_ID_GROUPS[(int)USER_ACTION_GROUP_IDS.back()].back();
+			auto clickedActions	 = BitField(size);
+			auto heldActions	 = BitField(size);
+			auto releasedActions = BitField(size);
 
-			for (const auto& [actionID, action] : ActionMap)
+			for (auto actionGroupID : USER_ACTION_GROUP_IDS)
 			{
-				if ((int)action.GetID() > clickedActions.GetSize())
-					continue;
+				for (auto actionID : ACTION_ID_GROUPS[(int)actionGroupID])
+				{
+					const auto& action = ActionMap.at(actionID);
 
-				if (action.IsClicked())
-					clickedActions.Set((int)action.GetID());
+					if (action.IsClicked())
+						clickedActions.Set((int)action.GetID());
 
-				if (action.IsHeld())
-					heldActions.Set((int)action.GetID());
+					if (action.IsHeld())
+						heldActions.Set((int)action.GetID());
 
-				if (action.IsReleased())
-					releasedActions.Set((int)action.GetID());
+					if (action.IsReleased())
+						releasedActions.Set((int)action.GetID());
+				}
 			}
 
 			PrintDebugMessage("INPUT STATS");

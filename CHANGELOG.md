@@ -13,10 +13,11 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added examine mode text rendering (string key should be in the format like `examine1_text` etc).
 
 ### Bug fixes
-* Fixed Teleporter object.
-* Fixed Wraith objects not working correctly in flipped rooms.
-* Fixed fishes missing random targets due to distance.
-* Fixed fishes and compsognatuses not attacking corpses.
+* Fixed single lasers going through walls.
+* Fixed teleporter object.
+* Fixed wraith objects not working correctly in flipped rooms.
+* Fixed fish missing random targets due to distance.
+* Fixed fish and compsognathus not attacking corpses.
 * Fixed collision issues for subsector bridges and bridges moving between rooms.
 * Fixed lensflare enabled status and far view not saved in a savegame.
 * Fixed HK sound effects.
