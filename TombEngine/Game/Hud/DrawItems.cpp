@@ -1,9 +1,6 @@
 #include "framework.h"
 #include "Game/Hud/DrawItems.h"
 
-#include "Game/pickup/pickup.h"
-#include "Game/pickup/pickup_ammo.h"
-#include "Game/pickup/pickup_consumable.h"
 #include "Math/Math.h"
 #include "Renderer/Renderer.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
