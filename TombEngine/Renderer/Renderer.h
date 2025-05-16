@@ -12,6 +12,7 @@
 #include "Game/items.h"
 #include "Game/animation.h"
 #include "Game/Gui.h"
+#include "Game/Hud/DrawItems.h"
 #include "Game/Hud/Hud.h"
 #include "Game/Hud/PickupSummary.h"
 #include "Game/effects/effects.h"

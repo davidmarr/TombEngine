@@ -14,171 +14,90 @@ using TEN::Renderer::g_Renderer;
 
 namespace TEN::Hud
 {
-	void DisplayItem::Update(bool isHead)
+	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale)
 	{
-		constexpr auto LIFE_BUFFER		   = 0.2f;
-		constexpr auto SCALE_MAX		   = 0.4f;
-		constexpr auto SCALE_MIN		   = 0.25f;
-		constexpr auto HIDE_VEL_MAX		   = DISPLAY_SPACE_RES.x * 0.03f;
-		constexpr auto HIDE_VEL_ACCEL	   = HIDE_VEL_MAX / 4;
-		constexpr auto POS_LERP_ALPHA	   = 0.15f;
-		constexpr auto STRING_SCALAR_ALPHA = 0.25f;
-		constexpr auto ROT_RATE			   = ANGLE(360.0f / (LIFE_MAX * FPS));
-		constexpr auto ROT				   = EulerAngles(0, ROT_RATE, 0);
-
-		StoreInterpolationData();
-
-		// Move offscreen.
-		if (Life <= 0.0f && isHead)
-		{
-			HideVelocity = std::clamp(HideVelocity + HIDE_VEL_ACCEL, 0.0f, HIDE_VEL_MAX);
-			Position.x += HideVelocity;
-		}
-		// Update position, scale, and opacity.
-		else if (Life > 0.0f)
-		{
-			float totalDist = Vector2::Distance(Origin, Target);
-			float coveredDist = Vector2::Distance(Origin, Position);
-
-			// Handle edge case when stack shifts.
-			if (coveredDist > totalDist)
-			{
-				Origin = Position;
-				totalDist = Vector2::Distance(Origin, Target);
-				coveredDist = Vector2::Distance(Origin, Position);
-			}
-
-			float alpha = coveredDist / totalDist;
-
-			Position = Vector2::Lerp(Position, Target, POS_LERP_ALPHA);
-			Scale = std::max(Lerp(SCALE_MIN, SCALE_MAX, alpha), Scale);
-			Opacity = std::max(Lerp(0.0f, 1.0f, alpha), Opacity);
-		}
-
-		// Update orientation.
-		Orientation += ROT;
-
-		// Update string scale.
-		float alpha = Scale / SCALE_MAX;
-		StringScale = Lerp(0.0f, 1.0f, alpha) * (1.0f + StringScalar);
-		StringScalar = Lerp(StringScalar, 0.0f, STRING_SCALAR_ALPHA);
-
-		// Update life.
-		Life -= 1.0f;
-		if (!isHead)
-			Life = std::max(Life, round(LIFE_BUFFER * FPS));
-	}
-
-	void DrawItemsController::AddDisplayItem(GAME_OBJECT_ID objectID, const Vector2& origin, unsigned int count)
-	{
-		constexpr auto STRING_SCALAR_MAX = 0.6f;
-
-		// No count; return early.
-		if (count == 0)
+		if (_displayItems.size() >= DRAW_ITEM_COUNT_MAX)
 			return;
 
-		float life = round(DisplayItem::LIFE_MAX * FPS);
+		DisplayItem newItem;
+		newItem.ObjectID = objectID;
 
-		// Increment count of existing display pickup if it exists.
-		for (auto& pickup : _DisplayItems)
-		{
-			// Ignore already disappearing display pickups.
-			if (pickup.Life <= 0.0f)
-				continue;
+		newItem.Position = origin;
+		newItem.PrevPosition = newItem.Position;
 
-			if (pickup.ObjectID == objectID)
+		newItem.Scale = newItem.PrevScale = scale;
+		newItem.Opacity = newItem.PrevOpacity = 1.0f;
+
+		_displayItems.push_back(newItem);
+	}
+	void DrawItemsController::RemoveItem(GAME_OBJECT_ID objectID)
+	{
+		auto item = std::find_if(_displayItems.begin(), _displayItems.end(),
+			[&](const DisplayItem& item)
 			{
-				pickup.Count += count;
-				pickup.Life = life;
-				pickup.StringScalar = STRING_SCALAR_MAX;
-				return;
-			}
+				return item.ObjectID == objectID;
+			});
+
+		if (item != _displayItems.end())
+		{
+			int removedIndex = static_cast<int>(std::distance(_displayItems.begin(), item));
+			_displayItems.erase(item);
 		}
-
-		// Create new display pickup.
-		auto& pickup = GetNewDisplayItem();
-
-		pickup.ObjectID = objectID;
-		pickup.Count = count;
-		pickup.Position =
-		pickup.Origin = origin;
-		pickup.Target = Vector2::Zero;
-		pickup.Life = life;
-		pickup.Scale = 0.0f;
-		pickup.Opacity = 0.0f;
-		pickup.HideVelocity = 0.0f;
-		pickup.StringScale = 0.0f;
-		pickup.StringScalar = 0.0f;
-	}
-
-	void DrawItemsController::AddDisplayItem(const ItemInfo& item)
-	{
-		// NOTE: Ammo and consumables are a special case, as internal amount differs from pickup amount.
-		int ammoCount = GetDefaultAmmoCount(item.ObjectNumber);
-		int consumableCount = GetDefaultConsumableCount(item.ObjectNumber);
-
-		int count = DISPLAY_PICKUP_COUNT_ARG_DEFAULT;
-		if (ammoCount != NO_VALUE)
-			count = ammoCount;
-		if (consumableCount != NO_VALUE)
-			count = consumableCount;
-
-		AddDisplayItem(item.ObjectNumber, item.Pose.Position.ToVector3(), (item.HitPoints > 0) ? item.HitPoints : count);
-	}
-
-	void DrawItemsController::AddDisplayItem(GAME_OBJECT_ID objectID, const Vector3& pos, unsigned int count)
-	{
-		// Project 3D position to 2D origin.
-		auto origin = g_Renderer.Get2DPosition(pos);
-
-		AddDisplayItem(objectID, origin.value_or(Vector2::Zero), count);
 	}
 
 	void DrawItemsController::Update()
 	{
-		if (_DisplayItems.empty())
-			return;
-
-		// Get and apply stack positions as targets.
-		auto stackPositions = GetStackPositions();
-		for (int i = 0; i < stackPositions.size(); i++)
-			_DisplayItems[i].Target = std::move(stackPositions[i]);
-
-		// Update display pickups.
-		bool isHead = true;
-		for (auto& pickup : _DisplayItems)
+		for (auto& item : _displayItems)
 		{
-			pickup.Update(isHead);
-			isHead = false;
+			item.StoreInterpolationData();
 		}
-
-		ClearInactiveDisplayItems();
-
 	}
 
 	void DrawItemsController::Draw() const
 	{
-		//DrawDebug();
-
-		if (!g_GameFlow->GetSettings()->Hud.PickupNotifier)
-			return;
-
-		if (_DisplayItems.empty())
-			return;
-
-		// Draw display pickups.
-		for (const auto& pickup : _DisplayItems)
+		for (const auto& item : _displayItems)
 		{
-			if (pickup.IsOffscreen())
-				continue;
-
-			g_Renderer.DrawItem(pickup);
+			g_Renderer.DrawItem(item);
 		}
 	}
 
 	void DrawItemsController::Clear()
 	{
-		_DisplayItems.clear();
+		_displayItems.clear();
+	}
+
+	DisplayItem* DrawItemsController::SelectItemByID(GAME_OBJECT_ID id)
+	{
+		for (auto& item : _displayItems)
+		{
+			if (item.ObjectID == id)
+				return &item;
+		}
+		return nullptr;
+	}
+
+	void DrawItemsController::SetItemPosition(GAME_OBJECT_ID id, const Vector3& newPos)
+	{
+		if (auto* item = SelectItemByID(id))
+		{
+			item->Position = newPos;
+		}
+	}
+
+	void DrawItemsController::SetItemRotation(GAME_OBJECT_ID id, const EulerAngles& newRot)
+	{
+		if (auto* item = SelectItemByID(id))
+		{
+			item->Orientation = newRot;
+		}
+	}
+
+	void DrawItemsController::SetItemScale(GAME_OBJECT_ID id, float newScale)
+	{
+		if (auto* item = SelectItemByID(id))
+		{
+			item->Scale = newScale;
+		}
 	}
 
 }

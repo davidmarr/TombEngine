@@ -777,18 +777,16 @@ namespace TEN::Renderer
 		}
 	}
 
-	void Renderer::DrawItem(const DisplayItem& pickup)
+	void Renderer::DrawItem(const DisplayItem& item)
 	{
-		constexpr auto COUNT_STRING_INF = "Inf";
-		constexpr auto COUNT_STRING_OFFSET = Vector2(DISPLAY_SPACE_RES.x / 40, 0.0f);
+		float t = GetInterpolationFactor();
 
-		auto pos = Vector3::Lerp(pickup.PrevPosition, pickup.Position, GetInterpolationFactor());
-		auto orient = EulerAngles::Lerp(pickup.PrevOrientation, pickup.Orientation, GetInterpolationFactor());
-		float scale = Lerp(pickup.PrevScale, pickup.Scale, GetInterpolationFactor());
-		float opacity = Lerp(pickup.PrevOpacity, pickup.Opacity, GetInterpolationFactor());
-
-		// Draw display pickup.
-		DrawObjectIn3DSpace(pickup.ObjectID, pos, orient, scale);
+		DrawObjectIn3DSpace(
+			item.ObjectID,
+			item.GetInterpolatedPosition(t),
+			item.GetInterpolatedOrientation(t),
+			item.GetInterpolatedScale(t)
+		);
 	}
 
 	// TODO: Handle opacity
