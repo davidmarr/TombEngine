@@ -3,21 +3,71 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
-## [Version 1.8.1](link to release) - yyyy-mm-dd
+## [Version 1.9]
 
-### New features
-* Added live console input to perform Lua commands in realtime.
+## New features
+* Added skinned meshes support for any object slot.
+* Added video playback support.
+* Added muzzle glow effect for firearms.
+* Added weather particle clustering and increase weather particle density and performance.
+* Added examine mode text rendering (string key should be in the format like `examine1_text` etc).
 
 ### Bug fixes
-* Fixed pathfinding for friendly NPCs, such as monkeys.
+* Fixed single lasers going through walls.
+* Fixed teleporter object.
+* Fixed wraith objects not working correctly in flipped rooms.
+* Fixed fish missing random targets due to distance.
+* Fixed fish and compsognathus not attacking corpses.
+* Fixed collision issues for subsector bridges and bridges moving between rooms.
+* Fixed lensflare enabled status and far view not saved in a savegame.
+* Fixed HK sound effects.
+* Fixed HK shots not being registered in statistics.
+* Fixed distorted knee and elbow joint vertices.
+* Fixed multi-mesh objects not shattering correctly.
+* Fixed splash effects remaining in the level after reloading from the savegame.
+* Fixed caustics not rendered correctly if texture compression was enabled.
+* Fixed exclusion blend mode not working correctly.
+* Fixed SSAO incorrectly applied through alpha blended textures.
+* Fixed hair object not rendered correctly if alpha blended textures are present.
+* Fixed static meshes not interpolating when dynamically changing their positional data.
+* Fixed crashes when shooting, if gunflash or gunshell objects are not present in a level.
+* Fixed crashes when activating objects without animations.
+* Fixed crashes when Lara is on a vehicle unreachable by friendly NPCs.
+* Removed legacy TR5 search object code which caused issues with meshswaps.
+* Removed excessive HK nerfing in running state.
+
+### Lua API changes
+* Added `Flow.SetIntroVideoPath` function to specify intro video.
+* Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxis` functions.
+* Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
+* Added `Moveable:SwapSkin` and `Moveable:UnswapSkin` for skinned moveable mesh management.
+* Added `Lara:Interact` function to allow alignment with moveables.
+* Added `muzzleGlow` and `muzzleOffset` parameters to weapon settings.
+* Added ability to use gunflash parameters for all weapons in weapon settings.
+* Added raw mouse and keyboard input action IDs to `Input.ActionID` enumeration. 
+* Updated `Input.IsKeyHeld` with additional parameter indicating key hold delay.
+* Fixed `Moveable.GetJointPosition` not returning correct results if moveable is invisible or not rendered.
+* Fixed `Util.PickMoveableByDisplayPosition`.
+
+## [Version 1.8.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.8.1) - 2025-03-29
+
+### Bug fixes
+* Fixed pathfinding for friendly NPCs such as monkeys.
 * Fixed particles remaining in the level after reloading from the savegame.
 * Fixed particles being canceled by fog bulbs.
 * Fixed crash in case hair object is the last object in a level.
 * Fixed crash with incorrectly applied animated textures on static meshes.
 * Fixed console window not hiding in non-debug mode on Windows 11.
+* Fixed key binding settings saving for the current play session after hitting Esc to cancel.
+* Fixed lensflare blending formula to avoid screen overbright.
+
+### New features
+* Added Firefly Emitter object (ID 1099) with corresponding sprite slot (ID 1379).
+* Added live console input to perform Lua commands in realtime.
 
 ### Lua API changes
 * Added missing constructor for `Collision.Probe` without room number.
+* Added optional looping argument for `View.GetFlybyPosition` and `View.GetFlybyRotation` functions.
 
 ## [Version 1.8](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.8) - 2025-03-16
 

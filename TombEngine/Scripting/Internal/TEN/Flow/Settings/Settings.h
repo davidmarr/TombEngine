@@ -49,6 +49,13 @@ namespace TEN::Scripting
 		static void Register(sol::table& parent);
 	};
 
+	struct GraphicsSettings
+	{
+		bool Skinning = true;
+
+		static void Register(sol::table& parent);
+	};
+
 	struct HairSettings
 	{
 		int				 RootMesh = LM_HEAD;
@@ -103,7 +110,9 @@ namespace TEN::Scripting
 		bool Smoke				 = false;
 		bool Shell				 = false;
 		bool MuzzleFlash		 = true;
+		bool MuzzleGlow			 = true;
 		bool ColorizeMuzzleFlash = false;
+		Vec3 MuzzleOffset = {};
 
 		static void Register(sol::table& parent);
 	};
@@ -113,6 +122,7 @@ namespace TEN::Scripting
 		AnimSettings				Animations = {};
 		CameraSettings				Camera	   = {};
 		FlareSettings				Flare	   = {};
+		GraphicsSettings			Graphics   = {};
 		std::array<HairSettings, 3> Hair	   = {};
 		HudSettings					Hud		   = {};
 		PhysicsSettings				Physics	   = {};
