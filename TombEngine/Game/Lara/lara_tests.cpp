@@ -393,7 +393,8 @@ int TestLaraEdgeCatch(ItemInfo* item, CollisionInfo* coll, int* edge)
 	auto bounds = GameBoundingBox(item);
 	int heightDif = coll->Front.Floor - bounds.Y1;
 
-	if (heightDif < 0 == heightDif + item->Animation.Velocity.y < 0)
+	if ((heightDif < 0 && heightDif + item->Animation.Velocity.y < 0) || 
+		(heightDif > 0 && heightDif + item->Animation.Velocity.y > 0))
 	{
 		heightDif = item->Pose.Position.y + bounds.Y1;
 
