@@ -72,10 +72,14 @@ namespace TEN::Hud
 
 		DisplayItem* SelectItemByID(GAME_OBJECT_ID id);
 
-		void DrawItemsController::SetItemPosition(GAME_OBJECT_ID id, const Vector3& newPos);
-		void DrawItemsController::SetItemRotation(GAME_OBJECT_ID id, const EulerAngles& newRot);
-		void DrawItemsController::SetItemScale(GAME_OBJECT_ID id, float newScale);
+		void SetItemPosition(GAME_OBJECT_ID id, const Vector3& newPos);
+		void SetItemRotation(GAME_OBJECT_ID id, const EulerAngles& newRot);
+		void SetItemScale(GAME_OBJECT_ID id, float newScale);
 
-		std::vector<DisplayItem>& GetItems() { return _displayItems; }
+		Vector3 GetItemPosition(GAME_OBJECT_ID id);
+		EulerAngles GetItemRotation(GAME_OBJECT_ID id);
+		float GetItemScale(GAME_OBJECT_ID id);
+
+		std::vector<DisplayItem>& GetItems();
 	};
 }

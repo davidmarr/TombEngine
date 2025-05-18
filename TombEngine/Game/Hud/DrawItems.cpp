@@ -97,4 +97,33 @@ namespace TEN::Hud
 		}
 	}
 
+	Vector3 DrawItemsController::GetItemPosition(GAME_OBJECT_ID id)
+	{
+		if (auto* item = SelectItemByID(id))
+		{
+			return item->Position;
+		}
+	}
+
+	EulerAngles DrawItemsController::GetItemRotation(GAME_OBJECT_ID id)
+	{
+		if (auto* item = SelectItemByID(id))
+		{
+			return item->Orientation;
+		}
+	}
+
+	float DrawItemsController::GetItemScale(GAME_OBJECT_ID id)
+	{
+		if (auto* item = SelectItemByID(id))
+		{
+			return item->Scale;
+		}
+	}
+
+	std::vector<DisplayItem>& DrawItemsController::GetItems()
+	{
+		return _displayItems;
+	}
+
 }
