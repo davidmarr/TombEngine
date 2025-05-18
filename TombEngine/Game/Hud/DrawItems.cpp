@@ -103,6 +103,8 @@ namespace TEN::Hud
 		{
 			return item->Position;
 		}
+
+		return Vector3::Zero;
 	}
 
 	EulerAngles DrawItemsController::GetItemRotation(GAME_OBJECT_ID objectID)
@@ -111,6 +113,8 @@ namespace TEN::Hud
 		{
 			return item->Orientation;
 		}
+
+		return EulerAngles::Identity;
 	}
 
 	float DrawItemsController::GetItemScale(GAME_OBJECT_ID objectID)
@@ -119,6 +123,8 @@ namespace TEN::Hud
 		{
 			return item->Scale;
 		}
+
+		return 0.0f;
 	}
 
 	std::vector<DisplayItem>& DrawItemsController::GetItems()
