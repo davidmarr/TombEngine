@@ -16,6 +16,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed single lasers going through walls.
 * Fixed teleporter object.
 * Fixed wraith objects not working correctly in flipped rooms.
+* Fixed spiky ceiling object not having default speed assigned.
 * Fixed fish missing random targets due to distance.
 * Fixed fish and compsognathus not attacking corpses.
 * Fixed collision issues for subsector bridges and bridges moving between rooms.
