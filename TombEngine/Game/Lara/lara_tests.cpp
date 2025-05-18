@@ -890,7 +890,7 @@ bool TestPlayerWaterStepOut(ItemInfo* item, CollisionInfo* coll)
 		return false;
 	}
 
-	if ((pointColl.GetFloorHeight() - vPos) >= -CLICK(0.5f))
+	if (coll->Middle.Floor >= -CLICK(0.5f))
 	{
 		SetAnimation(item, LA_STAND_IDLE);
 	}
