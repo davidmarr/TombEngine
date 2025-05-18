@@ -70,15 +70,15 @@ namespace TEN::Hud
 		void Draw() const;
 		void Clear();
 
-		DisplayItem* SelectItemByID(GAME_OBJECT_ID id);
+		DisplayItem* SelectItemByID(GAME_OBJECT_ID objectID);
 
-		void SetItemPosition(GAME_OBJECT_ID id, const Vector3& newPos);
-		void SetItemRotation(GAME_OBJECT_ID id, const EulerAngles& newRot);
-		void SetItemScale(GAME_OBJECT_ID id, float newScale);
+		void SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos);
+		void SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot);
+		void SetItemScale(GAME_OBJECT_ID objectID, float newScale);
 
-		Vector3 GetItemPosition(GAME_OBJECT_ID id);
-		EulerAngles GetItemRotation(GAME_OBJECT_ID id);
-		float GetItemScale(GAME_OBJECT_ID id);
+		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
+		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);
+		float GetItemScale(GAME_OBJECT_ID objectID);
 
 		std::vector<DisplayItem>& GetItems();
 	};

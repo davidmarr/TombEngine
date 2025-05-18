@@ -503,6 +503,17 @@ constexpr char ScriptReserved_StaticSetSolid[]		= "SetSolid";
 constexpr char ScriptReserved_StaticSetCollidable[]	= "SetCollidable";
 constexpr char ScriptReserved_StaticShatter[]		= "Shatter";
 
+// DrawItem
+constexpr char ScriptReserved_DrawItem[]			= "DrawItem";
+constexpr char ScriptReserved_DrawItemAdd[]			= "AddItem";
+constexpr char ScriptReserved_DrawItemRemove[]		= "RemoveItem";
+constexpr char ScriptReserved_DrawItemSetPosition[] = "SetItemPosition";
+constexpr char ScriptReserved_DrawItemSetRotation[] = "SetItemRotation";
+constexpr char ScriptReserved_DrawItemSetScale[]	= "SetItemScale";
+constexpr char ScriptReserved_DrawItemGetPosition[] = "GetItemPosition";
+constexpr char ScriptReserved_DrawItemGetRotation[] = "GetItemRotation";
+constexpr char ScriptReserved_DrawItemGetScale[]	= "GetItemScale";
+
 // =====
 // TYPES
 // =====

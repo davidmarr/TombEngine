@@ -63,59 +63,59 @@ namespace TEN::Hud
 		_displayItems.clear();
 	}
 
-	DisplayItem* DrawItemsController::SelectItemByID(GAME_OBJECT_ID id)
+	DisplayItem* DrawItemsController::SelectItemByID(GAME_OBJECT_ID objectID)
 	{
 		for (auto& item : _displayItems)
 		{
-			if (item.ObjectID == id)
+			if (item.ObjectID == objectID)
 				return &item;
 		}
 		return nullptr;
 	}
 
-	void DrawItemsController::SetItemPosition(GAME_OBJECT_ID id, const Vector3& newPos)
+	void DrawItemsController::SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos)
 	{
-		if (auto* item = SelectItemByID(id))
+		if (auto* item = SelectItemByID(objectID))
 		{
 			item->Position = newPos;
 		}
 	}
 
-	void DrawItemsController::SetItemRotation(GAME_OBJECT_ID id, const EulerAngles& newRot)
+	void DrawItemsController::SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot)
 	{
-		if (auto* item = SelectItemByID(id))
+		if (auto* item = SelectItemByID(objectID))
 		{
 			item->Orientation = newRot;
 		}
 	}
 
-	void DrawItemsController::SetItemScale(GAME_OBJECT_ID id, float newScale)
+	void DrawItemsController::SetItemScale(GAME_OBJECT_ID objectID, float newScale)
 	{
-		if (auto* item = SelectItemByID(id))
+		if (auto* item = SelectItemByID(objectID))
 		{
 			item->Scale = newScale;
 		}
 	}
 
-	Vector3 DrawItemsController::GetItemPosition(GAME_OBJECT_ID id)
+	Vector3 DrawItemsController::GetItemPosition(GAME_OBJECT_ID objectID)
 	{
-		if (auto* item = SelectItemByID(id))
+		if (auto* item = SelectItemByID(objectID))
 		{
 			return item->Position;
 		}
 	}
 
-	EulerAngles DrawItemsController::GetItemRotation(GAME_OBJECT_ID id)
+	EulerAngles DrawItemsController::GetItemRotation(GAME_OBJECT_ID objectID)
 	{
-		if (auto* item = SelectItemByID(id))
+		if (auto* item = SelectItemByID(objectID))
 		{
 			return item->Orientation;
 		}
 	}
 
-	float DrawItemsController::GetItemScale(GAME_OBJECT_ID id)
+	float DrawItemsController::GetItemScale(GAME_OBJECT_ID objectID)
 	{
-		if (auto* item = SelectItemByID(id))
+		if (auto* item = SelectItemByID(objectID))
 		{
 			return item->Scale;
 		}
