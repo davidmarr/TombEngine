@@ -13,6 +13,19 @@ namespace TEN::Hud
 {
 	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale)
 	{
+		// Check if item already exists
+		for (auto& item : _displayItems)
+		{
+			if (item.ObjectID == objectID)
+			{
+				// Update existing item
+				item.Position = origin;
+				item.Scale = scale;
+				return;
+			}
+		}
+
+		// If at capacity, don’t add new item
 		if (_displayItems.size() >= DRAW_ITEM_COUNT_MAX)
 			return;
 

@@ -13,7 +13,7 @@ using namespace TEN::Hud;
 
 namespace TEN::Scripting::DisplayItem
 {
-	static void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale)
+	static void AddItem(GAME_OBJECT_ID objectID, const Vec3& origin, float scale)
 	{
 		g_Hud.DrawItems.AddItem(objectID, origin, scale);
 	}
@@ -22,7 +22,7 @@ namespace TEN::Scripting::DisplayItem
 		g_Hud.DrawItems.RemoveItem(objectID);
 	}
 
-	static void SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos)
+	static void SetItemPosition(GAME_OBJECT_ID objectID, const Vec3& newPos)
 	{
 		g_Hud.DrawItems.SetItemPosition(objectID, newPos);
 	}
