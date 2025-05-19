@@ -41,7 +41,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
-* Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxis` functions.
+* Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxisValue` functions.
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
 * Added `Moveable:SwapSkin` and `Moveable:UnswapSkin` for skinned moveable mesh management.
 * Added `Lara:Interact` function to allow alignment with moveables.
