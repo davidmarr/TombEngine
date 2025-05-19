@@ -47,7 +47,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Lara:Interact` function to allow alignment with moveables.
 * Added `muzzleGlow` and `muzzleOffset` parameters to weapon settings.
 * Added ability to use gunflash parameters for all weapons in weapon settings.
-* Added raw mouse and keyboard input action IDs to `Input.ActionID` enumeration. 
+* Added raw mouse and keyboard input action IDs to `Input.ActionID` enumeration.
+* Renamed `Input.KeyIsHit` and `Input.KeyIsHeld` to `Input.IsKeyHit` and `Input.IsKeyHeld`.
 * Updated `Input.IsKeyHeld` with additional parameter indicating key hold delay.
 * Fixed `Moveable.GetJointPosition` not returning correct results if moveable is invisible or not rendered.
 * Fixed `Util.PickMoveableByDisplayPosition`.
