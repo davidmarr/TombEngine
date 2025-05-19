@@ -32,6 +32,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed exclusion blend mode not working correctly.
 * Fixed SSAO incorrectly applied through alpha blended textures.
 * Fixed hair object not rendered correctly if alpha blended textures are present.
+* Fixed disappearing Lara when climbing through specific L-shaped portal setups.
 * Fixed static meshes not interpolating when dynamically changing their positional data.
 * Fixed crashes when shooting, if gunflash or gunshell objects are not present in a level.
 * Fixed crashes when activating objects without animations.
