@@ -971,7 +971,7 @@ namespace TEN::Renderer
 		// If string is found, draw it and shift examine position upwards.
 		if (GetHash(string) != GetHash(stringKey))
 		{
-			AddString(screenPos.x, screenPos.y + screenPos.y / 4.0f, g_GameFlow->GetString(stringKey.c_str()), PRINTSTRING_COLOR_WHITE, SF_Center());
+			AddString(screenPos.x, screenPos.y + screenPos.y / 2.0f, g_GameFlow->GetString(stringKey.c_str()), PRINTSTRING_COLOR_WHITE, SF_Center() | (int)PrintStringFlags::VerticalCenter);
 			screenPos.y -= screenPos.y / 4.0f;
 		}
 
