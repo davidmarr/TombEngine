@@ -21,7 +21,7 @@ Constants for Display String Options.
  - `RIGHT` - Set the horizontal origin point to right of the string.
  - `SHADOW` - Gives the string a small drop shadow.
  - `BLINK` - Blinks the string.
- - `VERTICAL_CENTER` - Set the vertical origin point to the center of the string.
+ - `VERTICAL_CENTER` - Sets the vertical origin point of the multiline string to the center.
 */
 
 enum class DisplayStringOptions
