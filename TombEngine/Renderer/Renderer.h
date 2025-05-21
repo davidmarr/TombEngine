@@ -96,6 +96,7 @@ namespace TEN::Renderer
 		ComPtr<ID3D11DeviceContext> _context = nullptr;
 		ComPtr<IDXGISwapChain> _swapChain = nullptr;
 		std::unique_ptr<CommonStates> _renderStates = nullptr;
+		ComPtr <ID3D11SamplerState> _pointWrapSamplerState = nullptr;
 		ComPtr<ID3D11BlendState> _subtractiveBlendState = nullptr;
 		ComPtr<ID3D11BlendState> _screenBlendState = nullptr;
 		ComPtr<ID3D11BlendState> _lightenBlendState = nullptr;

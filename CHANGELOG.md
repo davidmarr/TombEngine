@@ -40,6 +40,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed crashes when Lara is on a vehicle unreachable by friendly NPCs.
 * Removed legacy TR5 SEARCH_OBJECT1 code which caused issues with meshswaps.
 * Removed excessive HK nerfing in running state.
+* Removed mipmapping for point filter rendering mode.
 
 ### Lua API changes
 * Added `Flow.ItemAction` enum to reconfigure inventory item actions.
