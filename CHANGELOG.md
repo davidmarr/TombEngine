@@ -42,6 +42,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Removed excessive HK nerfing in running state.
 
 ### Lua API changes
+* Added `Flow.ItemAction` enum to reconfigure inventory item actions.
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
 * Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxisValue` functions.
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
