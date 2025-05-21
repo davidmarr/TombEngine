@@ -424,7 +424,7 @@ namespace TEN::Renderer
 		void DrawEffect(RenderView& view, RendererEffect* effect, RendererPass rendererPass);
 		void PrepareSplashes(RenderView& view);
 		void DrawSprites(RenderView& view, RendererPass rendererPass);
-		void DrawDisplaySprites(RenderView& view);
+		void DrawDisplaySprites(RenderView& view, bool negativePriority);
 		void DrawSortedFaces(RenderView& view);
 		void DrawSingleSprite(RendererSortableObject* object, RendererObjectType lastObjectType, RenderView& view);
 		void DrawRoomSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view);
