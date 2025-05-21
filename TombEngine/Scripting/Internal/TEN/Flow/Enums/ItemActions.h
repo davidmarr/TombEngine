@@ -21,7 +21,6 @@ namespace TEN::Scripting
 	// - `LOAD` - Load game.
 	// - `SAVE` - Save game.
 	// - `STATISTICS` - Show statistics screen.
-	// - `ALWAYS_COMBINE` - Item will always be combined with others automatically.
 	// - `CHOOSE_AMMO_SHOTGUN` - Choose ammo type for the shotgun.
 	// - `CHOOSE_AMMO_CROSSBOW` - Choose ammo type for the crossbow.
 	// - `CHOOSE_AMMO_GRENADEGUN` - Choose ammo type for the grenade launcher.
