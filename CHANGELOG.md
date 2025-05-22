@@ -25,6 +25,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed lensflare enabled status and far view not saved in a savegame.
 * Fixed HK sound effects.
 * Fixed HK shots not being registered in statistics.
+* Fixed incorrect arm rotation for revolver animations in crouched state.
 * Fixed distorted knee and elbow joint vertices.
 * Fixed multi-mesh objects not shattering correctly.
 * Fixed splash effects remaining in the level after reloading from the savegame.
