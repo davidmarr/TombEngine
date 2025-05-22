@@ -19,6 +19,7 @@
 #include "Game/Setup.h"
 #include "Game/spotcam.h"
 #include "Objects/Generic/Switches/generic_switch.h"
+#include "Objects/Generic/Switches/pulley_switch.h"
 #include "Objects/Generic/puzzles_keys.h"
 #include "Objects/objectslist.h"
 #include "Objects/TR3/Vehicles/kayak.h"
@@ -174,6 +175,10 @@ bool SwitchTrigger(short itemNumber, short timer)
 
 	if (item.ObjectNumber >= ID_KEY_HOLE1 && item.ObjectNumber <= ID_KEY_HOLE16)
 		return false;
+
+	// Handle pulley.
+	if (item.ObjectNumber == ID_PULLEY)
+		return TriggerPulley(itemNumber, timer);
 
 	// Handle switches.
 	if (item.Status == ITEM_DEACTIVATED)
