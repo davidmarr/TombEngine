@@ -12,7 +12,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added weather particle clustering and increase weather particle density and performance.
 * Added examine mode text rendering (string key should be in the format like `examine1_text`, `examine2_text` etc).
 * Added breakable wall object with land and underwater modes.
-  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_BreakableWall.wad2.
+  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_BreakableWall.wad2).
 * Added land mode for underwater switches. Asset change required for both types of underwater switches.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_WallSwitch.wad2).
 * Added ability to use big push switch (OCB 3) underwater.
