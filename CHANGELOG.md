@@ -10,7 +10,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added video playback and video texture streaming support.
 * Added muzzle glow effect for firearms.
 * Added weather particle clustering and increase weather particle density and performance.
-* Added examine mode text rendering (string key should be in the format like `examine1_text`, `examine2_text` etc).
+* Added examine mode text rendering (string key should be in the format like `examine1_text`, `examine2_text`, and so on).
 * Added breakable wall object with land and underwater modes.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_BreakableWall.wad2).
 * Added land mode for underwater switches. Asset change required for both types of underwater switches.
@@ -57,7 +57,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
 * Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxisValue` functions.
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
-* Added `Moveable:SwapSkin` and `Moveable:UnswapSkin` for skinned moveable mesh management.
+* Added `Moveable:SwapSkinnedMesh` and `Moveable:UnswapSkinnedMesh` for skinned mesh management.
 * Added `Lara:Interact` function to allow alignment with moveables.
 * Added `muzzleGlow` and `muzzleOffset` parameters to weapon settings.
 * Added ability to use gunflash parameters for all weapons in weapon settings.
