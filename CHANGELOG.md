@@ -63,6 +63,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added ability to use gunflash parameters for all weapons in weapon settings.
 * Added ability to specify negative priority values for `View.DisplaySprite` to draw it above strings.
 * Added raw mouse and keyboard input action IDs to `Input.ActionID` enumeration.
+* Added area parameter for `Strings.DisplayString` for automatic word wrapping.
 * Added `Strings.DisplayStringOption.VERTICAL_CENTER` flag for vertically centering multiline strings.
 * Renamed `Input.KeyIsHit` and `Input.KeyIsHeld` to `Input.IsKeyHit` and `Input.IsKeyHeld`.
 * Updated `Input.IsKeyHeld` with additional parameter indicating key hold delay.
