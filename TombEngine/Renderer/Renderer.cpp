@@ -174,7 +174,7 @@ namespace TEN::Renderer
 			break;
 
 		case SamplerStateRegister::PointWrap:
-			samplerState = _renderStates->PointWrap();
+			samplerState = _pointWrapSamplerState.Get();
 			break;
 
 		case SamplerStateRegister::ShadowMap:
@@ -212,7 +212,7 @@ namespace TEN::Renderer
 			break;
 
 		case SamplerStateRegister::PointWrap:
-			samplerState = _renderStates->PointWrap();
+			samplerState = _pointWrapSamplerState.Get();
 			break;
 
 		case SamplerStateRegister::ShadowMap:
@@ -480,5 +480,10 @@ namespace TEN::Renderer
 	void Renderer::SetGraphicsSettingsChanged()
 	{
 		_graphicsSettingsChanged = true;
+	}
+
+	RendererDebugPage Renderer::GetDebugPage() const
+	{
+		return _debugPage;
 	}
 }
