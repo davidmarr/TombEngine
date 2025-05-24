@@ -53,6 +53,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Removed mipmapping for point filter rendering mode.
 
 ### Lua API changes
+* Added `Effects.EmitFlow` and `Effects.EmitWaterfallMist` functions.
 * Added `Flow.ItemAction` enum to reconfigure inventory item actions.
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
 * Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxisValue` functions.
@@ -67,6 +68,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Strings.DisplayStringOption.VERTICAL_CENTER` flag for vertically centering multiline strings.
 * Renamed `Input.KeyIsHit` and `Input.KeyIsHeld` to `Input.IsKeyHit` and `Input.IsKeyHeld`.
 * Updated `Input.IsKeyHeld` with additional parameter indicating key hold delay.
+* Updated `Effects.MakeExplosion` and `Effects.EmitBlood` to spawn correct effects when used underwater.
 * Fixed `Moveable.GetJointPosition` not returning correct results if moveable is invisible or not rendered.
 * Fixed `Util.PickMoveableByDisplayPosition`.
 
