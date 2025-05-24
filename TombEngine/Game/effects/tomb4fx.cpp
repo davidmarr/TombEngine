@@ -32,6 +32,7 @@ using namespace TEN::Effects::Splash;
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;
 using namespace TEN::Math;
+using namespace TEN::Math::Random;
 using TEN::Renderer::g_Renderer;
 
 // NOTE: This fixes body part exploding instantly if entity is on ground.
@@ -1159,42 +1160,52 @@ void SomeSparkEffect(int x, int y, int z, int count)
 	}
 }
 
-void TriggerUnderwaterExplosion(ItemInfo* item, int flag)
+void TriggerUnderwaterExplosion(ItemInfo* item, bool splash)
 {
-	if (flag)
-	{
-		int x = (GetRandomControl() & 0x1FF) + item->Pose.Position.x - CLICK(1);
-		int y = item->Pose.Position.y;
-		int z = (GetRandomControl() & 0x1FF) + item->Pose.Position.z - CLICK(1);
+	auto position = item->Pose.Position.ToVector3();
 
-		TriggerExplosionBubbles(x, y, z, item->RoomNumber);
-		TriggerExplosionSparks(x, y, z, 2, -1, 1, item->RoomNumber);
+	TriggerUnderwaterExplosion(position, splash);
+}
 
-		int waterHeight = GetPointCollision(Vector3i(x, y, z), item->RoomNumber).GetWaterTopHeight();
-		if (waterHeight != NO_HEIGHT)
-			SomeSparkEffect(x, waterHeight, z, 8);
-	}
-	else
+void TriggerUnderwaterExplosion(Vector3 position, bool splash, const Vector3& mainColor, const Vector3& secondColor)
+{
+	int roomNumber = FindRoomNumber(position);
+	const auto& room = g_Level.Rooms[roomNumber];
+
+	if (splash)
 	{
-		TriggerExplosionBubble(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, item->RoomNumber);
-		TriggerExplosionSparks(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, 2, -2, 1, item->RoomNumber);
+		TriggerExplosionBubble(position.x, position.y, position.z, room.RoomNumber, mainColor, secondColor);
+		TriggerExplosionSparks(position.x, position.y, position.z, 2, -2, 1, room.RoomNumber, mainColor, secondColor);
 
 		for (int i = 0; i < 3; i++)
-			TriggerExplosionSparks(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, 2, -1, 1, item->RoomNumber);
+			TriggerExplosionSparks(position.x, position.y, position.z, 2, -1, 1, room.RoomNumber, mainColor, secondColor);
 
-		int waterHeight = GetPointCollision(*item).GetWaterTopHeight();
+		int waterHeight = GetPointCollision(position, room.RoomNumber).GetWaterTopHeight();
 		if (waterHeight != NO_HEIGHT)
 		{
-			int dy = item->Pose.Position.y - waterHeight;
+			int dy = position.y - waterHeight;
 			if (dy < 2048)
 			{
-				SplashSetup.Position = Vector3(item->Pose.Position.x, waterHeight, item->Pose.Position.z);
+				SplashSetup.Position = Vector3(position.x, waterHeight, position.z);
 				SplashSetup.InnerRadius = 160;
 				SplashSetup.SplashPower = 2048 - dy;
 
-				SetupSplash(&SplashSetup, item->RoomNumber);
+				SetupSplash(&SplashSetup, room.RoomNumber);
 			}
 		}
+	}
+	else
+	{
+		int x = (GetRandomControl() & 0x1FF) + position.x - CLICK(1);
+		int y = position.y;
+		int z = (GetRandomControl() & 0x1FF) + position.z - CLICK(1);
+
+		TriggerExplosionBubbles(x, y, z, room.RoomNumber, mainColor, secondColor);
+		TriggerExplosionSparks(x, y, z, 2, -1, 1, room.RoomNumber, mainColor, secondColor);
+
+		int waterHeight = GetPointCollision(Vector3i(x, y, z), room.RoomNumber).GetWaterTopHeight();
+		if (waterHeight != NO_HEIGHT)
+			SomeSparkEffect(x, waterHeight, z, 8);
 	}
 }
 
@@ -1202,7 +1213,7 @@ void ExplodeVehicle(ItemInfo* laraItem, ItemInfo* vehicle)
 {
 	if (g_Level.Rooms[vehicle->RoomNumber].flags & ENV_FLAG_WATER)
 	{
-		TriggerUnderwaterExplosion(vehicle, 1);
+		TriggerUnderwaterExplosion(vehicle, false);
 	}
 	else
 	{
@@ -1470,20 +1481,35 @@ void UpdateShockwaves()
 	}
 }
 
-void TriggerExplosionBubble(int x, int y, int z, short roomNumber)
+void TriggerExplosionBubble(int x, int y, int z, short roomNumber, const Vector3& mainColor, const Vector3& secondColor)
 {
 	constexpr auto BUBBLE_COUNT = 24;
 	auto* spark = GetFreeParticle();
 
-	spark->sR = 128;
-	spark->dR = 128;
-	spark->dG = 128;
-	spark->dB = 128;
+	if (mainColor == Vector3::Zero)
+	{
+		spark->sR = 128;
+		spark->sG = 64;
+		spark->sB = 0;
+		spark->dR = 128;
+		spark->dG = 128;
+		spark->dB = 128;
+	}
+	else
+	{
+		auto [colorS, colorD] = GenerateColorShift(mainColor, secondColor);
+
+		spark->sR = colorS[0];
+		spark->sG = colorS[1];
+		spark->sB = colorS[2];
+		spark->dR = colorD[0];
+		spark->dG = colorD[1];
+		spark->dB = colorD[2];
+	}
+
 	spark->on = 1;
 	spark->life = 24;
 	spark->sLife = 24;
-	spark->sG = 64;
-	spark->sB = 0;
 	spark->colFadeSpeed = 8;
 	spark->fadeToBlack = 12;
 	spark->blendMode = BlendMode::Additive;
