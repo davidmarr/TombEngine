@@ -758,10 +758,10 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active then
 			if t.timerFormat then
-				local str = TEN.Strings.DisplayString("TIMER", t.pos, t.scale, t.unpausedColor, false, t.stringOption)
-				str:SetKey(Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat))
-				str:SetColor(t.paused and t.pausedColor or t.unpausedColor)
-				TEN.Strings.ShowString(str, (t.remainingTime == zero and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30)
+				local timerString = TEN.Strings.DisplayString("TIMER", t.pos, t.scale, t.unpausedColor, false, t.stringOption)
+				timerString:SetKey(Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat))
+				timerString:SetColor(t.paused and t.pausedColor or t.unpausedColor)
+				TEN.Strings.ShowString(timerString, (t.remainingTime == zero and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30)
 			end
 			if t.remainingTime == zero then
 				if t.loop then
