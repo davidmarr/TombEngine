@@ -187,7 +187,7 @@ void DisplayString::Register(sol::table& parent)
 		// Screen-space coordinates are expected. If set to `Vec2(0, 0)`, no word wrapping will occur.
 		// @function DisplayString:SetArea
 		// @tparam Vec2 pos New word-wrapping area in pixel coordinates.
-		ScriptReserved_SetPosition, &DisplayString::SetArea,
+		ScriptReserved_SetArea, &DisplayString::SetArea,
 
 		/// Set the display string's flags.
 		// @function DisplayString:SetFlags
