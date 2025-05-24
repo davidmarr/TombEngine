@@ -118,7 +118,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.active = false
 	thisTimer.paused = true
 	thisTimer.first = true
-	thisTimer.clock = true
+	thisTimer.hasTicked = true
 	thisTimer.pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
 	thisTimer.scale = 1
 	thisTimer.unpausedColor = TEN.Color(255, 255, 255)
@@ -380,7 +380,7 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 	local remainingTime = LevelVars.Engine.Timer.timers[self.name].remainingTime
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
-	if LevelVars.Engine.Timer.timers[self.name].clock then
+	if LevelVars.Engine.Timer.timers[self.name].hasTicked then
 		return Utility.CompareValue(remainingTime, time, operator)
 	else
 		return false
@@ -735,7 +735,7 @@ end
 -- end
 function Timer:IsTicking()
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	return not thisTimer.paused and thisTimer.clock or false
+	return not thisTimer.paused and thisTimer.hasTicked or false
 end
 
 LevelFuncs.Engine.Timer.Decrease = function ()
@@ -745,8 +745,8 @@ LevelFuncs.Engine.Timer.Decrease = function ()
 				t.first = false
 			else
 				t.realRemainingTime = t.realRemainingTime - 1
-				t.clock = (t.realRemainingTime.c % 10 == 0)
-				if t.clock then
+				t.hasTicked = (t.realRemainingTime.c % 10 == 0)
+				if t.hasTicked then
 					t.remainingTime = t.remainingTime - 3
 				end
 			end
