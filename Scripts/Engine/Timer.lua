@@ -117,7 +117,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.funcArgs = {...}
 	thisTimer.active = false
 	thisTimer.paused = true
-	thisTimer.first = true
+	thisTimer.skipFirstTick = true
 	thisTimer.hasTicked = true
 	thisTimer.pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
 	thisTimer.scale = 1
@@ -329,7 +329,7 @@ function Timer:SetRemainingTime(remainingTime)
         local thisTimer = LevelVars.Engine.Timer.timers[self.name]
     	thisTimer.remainingTime = TEN.Time((math.floor(remainingTime * 10) / 10) * 30)
 		thisTimer.realRemainingTime = thisTimer.remainingTime
-		thisTimer.first = true
+		thisTimer.skipFirstTick = true
     end
 end
 
@@ -741,8 +741,8 @@ end
 LevelFuncs.Engine.Timer.Decrease = function ()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active and not t.paused then
-			if t.first then
-				t.first = false
+			if t.skipFirstTick then
+				t.skipFirstTick = false
 			else
 				t.realRemainingTime = t.realRemainingTime - 1
 				t.hasTicked = (t.realRemainingTime.c % 10 == 0)
@@ -770,7 +770,7 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 				else
 					t.active = false
 				end
-				t.first = true
+				t.skipFirstTick = true
 				if t.func then
 					t.func(table.unpack(t.funcArgs))
 				end
