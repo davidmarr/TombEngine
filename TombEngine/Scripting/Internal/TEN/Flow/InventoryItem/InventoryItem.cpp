@@ -51,7 +51,17 @@ namespace TEN::Scripting
 
 		parent.new_usertype<InventoryItem>(
 			ScriptReserved_InventoryItem,
-			ctors(), sol::call_constructor, ctors());
+			ctors(), sol::call_constructor, ctors(),
+			// Expose fields to Lua
+			"name", &InventoryItem::Name,
+			"objectID", &InventoryItem::ObjectID,
+			"yOffset", &InventoryItem::YOffset,
+			"scale", &InventoryItem::Scale,
+			"rotation", &InventoryItem::Rot,
+			"rotationFlags", &InventoryItem::RotFlags,
+			"meshBits", &InventoryItem::MeshBits,
+			"menuAction", sol::property(&InventoryItem::GetAction)
+			);
 	}
 
 	// TODO: Add validation so the user can't choose something unimplemented.
@@ -72,5 +82,9 @@ namespace TEN::Scripting
 		{
 			MenuAction = menuAction;
 		}
+	}
+	ItemOptions InventoryItem::GetAction() const
+	{
+		return MenuAction;
 	}
 }
