@@ -75,6 +75,8 @@ namespace TEN::Hud
 		void SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos);
 		void SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot);
 		void SetItemScale(GAME_OBJECT_ID objectID, float newScale);
+		void SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha);
+		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, EulerAngles& rot);
 
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);

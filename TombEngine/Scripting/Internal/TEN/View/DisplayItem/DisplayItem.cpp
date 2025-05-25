@@ -38,6 +38,11 @@ namespace TEN::Scripting::DisplayItem
 		g_Hud.DrawItems.SetItemScale(objectID, newScale);
 	}
 
+	static void SetItemTransparency(GAME_OBJECT_ID objectID, float alpha)
+	{
+		g_Hud.DrawItems.SetItemAlpha(objectID, alpha);
+	}
+
 	static Vec3 GetItemPosition(GAME_OBJECT_ID objectID)
 	{
 		auto position = g_Hud.DrawItems.GetItemPosition(objectID);
@@ -65,6 +70,7 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetPosition, &SetItemPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetRotation, &SetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetScale, &SetItemScale);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetScale, &SetItemTransparency);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetPosition, &GetItemPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetRotation, &GetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetScale, &GetItemScale);

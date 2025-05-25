@@ -110,6 +110,19 @@ namespace TEN::Hud
 		}
 	}
 
+	void DrawItemsController::SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha)
+	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			item->Opacity = newAlpha;
+		}
+	}
+
+	void DrawItemsController::SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, EulerAngles& rot)
+	{
+
+	}
+
 	Vector3 DrawItemsController::GetItemPosition(GAME_OBJECT_ID objectID)
 	{
 		if (auto* item = SelectItemByID(objectID))
