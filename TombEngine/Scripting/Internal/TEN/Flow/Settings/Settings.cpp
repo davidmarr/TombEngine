@@ -172,6 +172,10 @@ namespace TEN::Scripting
 		// @tfield bool smoke Smoke effect. Determines whether flare generates smoke when burning.
 		"smoke", &FlareSettings::Smoke,
 
+		/// Toggle glow effect.
+		// @tfield bool glow Glow effect. Determines whether flare generates glow when burning.
+		"glow", &FlareSettings::Glow,
+
 		/// Toggle flicker effect.
 		// @tfield bool flicker Light and lensflare flickering. When turned off, flare light will be constant.
 		"flicker", &FlareSettings::Flicker);

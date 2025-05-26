@@ -596,6 +596,41 @@ void TriggerRicochetSpark(const GameVector& pos, short angle, bool sound)
 	SoundEffect(SFX_TR4_WEAPON_RICOCHET, &Pose(pos.ToVector3i()));
 }
 
+void TriggerGlow(const GameVector& pos, const Vector3& color, int scale)
+{
+	auto& part = *GetFreeParticle();
+
+	part.on = true;
+	part.SpriteSeqID = ID_DEFAULT_SPRITES;
+	part.SpriteID = 11;
+	part.blendMode = BlendMode::Additive;
+
+	part.x = pos.x;
+	part.y = pos.y;
+	part.z = pos.z;
+	part.roomNumber = pos.RoomNumber;
+
+	part.rotAng = ANGLE(TO_DEGREES(Random::GenerateAngle())) >> 4;
+	part.rotAdd = 0;
+
+	part.sSize = part.size = part.dSize = 192;
+	part.scalar = 2;
+
+	part.xVel = part.yVel = part.zVel = 0;
+	part.gravity = part.friction = part.maxYvel = 0;
+
+	// Normalize color from Monty's range
+	part.sR = part.dR = std::clamp(color.x / 2.0f, 0.0f, 1.0f) * UCHAR_MAX;
+	part.sG = part.dG = std::clamp(color.y / 2.0f, 0.0f, 1.0f) * UCHAR_MAX;
+	part.sB = part.dB = std::clamp(color.z / 2.0f, 0.0f, 1.0f) * UCHAR_MAX;
+
+	part.life = part.sLife = 2;
+	part.colFadeSpeed = 1;
+	part.fadeToBlack = 1;
+
+	part.flags = SP_SCALE | SP_DEF | SP_EXPDEF;
+}
+
 void TriggerCyborgSpark(int x, int y, int z, short xv, short yv, short zv)
 {
 	int dx = LaraItem->Pose.Position.x - x;

@@ -33,6 +33,9 @@ e.g. `myItem.rotAxisWhenCurrent = RotationAxis.X`
 
 namespace TEN::Scripting
 {
+
+	constexpr long long SUPPORTED_ITEM_BITMASK = ~((OPT_CHOOSE_AMMO_ROCKET << 1) - 1);
+
 	InventoryItem::InventoryItem(const std::string& name, GAME_OBJECT_ID objectID, float yOffset, float scale, const Rotation& rot, RotationFlags rotFlags, int meshBits, ItemOptions action) :
 		Name(name),
 		YOffset(yOffset),
@@ -67,10 +70,7 @@ namespace TEN::Scripting
 	// TODO: Add validation so the user can't choose something unimplemented.
 	void InventoryItem::SetAction(ItemOptions menuAction)
 	{
-		bool isSupported = (menuAction & ItemOptions::OPT_EQUIP) != 0 ||
-						   (menuAction & ItemOptions::OPT_USE) != 0 || 
-						   (menuAction & ItemOptions::OPT_EXAMINABLE) != 0 || 
-						   (menuAction & ItemOptions::OPT_COMBINABLE) != 0;
+		bool isSupported = (menuAction & SUPPORTED_ITEM_BITMASK) == 0;
 
 		if (!ScriptAssert(isSupported, "Unsupported item menu action: " + std::to_string(menuAction)))
 		{
@@ -82,9 +82,6 @@ namespace TEN::Scripting
 		{
 			MenuAction = menuAction;
 		}
-	}
-	ItemOptions InventoryItem::GetAction() const
-	{
-		return MenuAction;
+
 	}
 }

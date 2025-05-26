@@ -8,7 +8,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## New features
 * Added skinned meshes support for any object.
 * Added video playback and video texture streaming support.
-* Added muzzle glow effect for firearms.
+* Added muzzle glow effect for firearms and flare.
 * Added weather particle clustering and increase weather particle density and performance.
 * Added examine mode text rendering (string key should be in the format like `examine1_text`, `examine2_text`, and so on).
 * Added breakable wall object with land and underwater modes.
@@ -24,6 +24,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed SPIKY_CEILING object not having default speed assigned.
 * Fixed FISH_EMITTER object missing random targets due to distance.
 * Fixed FISH_EMITTER and COMPSOGNATHUS objects not attacking corpses.
+* Fixed locked camera flag and glide timer not working for fixed cameras.
+* Fixed weapon hotkeys not unholstering already selected weapon.
 * Fixed collision issues for subsector bridges and bridges moving between rooms.
 * Fixed missing step up animation when switching from tread to wade.
 * Fixed ledge grabbing on platforms made from lowered ceilings.
