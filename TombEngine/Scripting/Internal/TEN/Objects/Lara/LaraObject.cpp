@@ -237,6 +237,57 @@ void LaraObject::SetWeaponType(LaraWeaponType weaponType, bool activate)
 	}
 }
 
+bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
+{
+	auto* lara = GetLaraInfo(_moveable);
+
+	switch (weaponType)
+	{
+	case LaraWeaponType::Revolver:
+	case LaraWeaponType::Crossbow:
+	case LaraWeaponType::HK:
+		return lara->Weapons[static_cast<int>(weaponType)].HasLasersight;
+
+	default:
+		return false;
+	}
+}
+
+void LaraObject::SetLaserSight(LaraWeaponType weaponType, bool activate)
+{
+	auto* lara = GetLaraInfo(_moveable);
+
+	switch (weaponType)
+	{
+	case LaraWeaponType::Revolver:
+	case LaraWeaponType::Crossbow:
+	case LaraWeaponType::HK:
+
+		// Check if laser sight is already attached to any other weapon
+		for (LaraWeaponType type : { LaraWeaponType::Revolver, LaraWeaponType::Crossbow, LaraWeaponType::HK })
+		{
+			if (type != weaponType && lara->Weapons[static_cast<int>(type)].HasLasersight)
+			{
+				// Laser sight is already in use, do nothing
+				return;
+			}
+		}
+
+		// Attach laser sight
+		lara->Weapons[static_cast<int>(weaponType)].HasLasersight = true;
+
+		//Activate weapon if required
+		if (activate == false)
+			lara->Control.Weapon.LastGunType = weaponType;
+		else
+			lara->Control.Weapon.RequestGunType = weaponType;
+		break;
+
+	default:
+		break;
+	}
+}
+
 /// Get player weapon ammo type.
 // @function LaraObject:GetAmmoType
 // @treturn Objects.AmmoType Player weapon ammo type.
@@ -517,6 +568,8 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_GetHandStatus, &LaraObject::GetHandStatus,
 		ScriptReserved_GetWeaponType, &LaraObject::GetWeaponType,
 		ScriptReserved_SetWeaponType, &LaraObject::SetWeaponType,
+		ScriptReserved_GetLaserSight, & LaraObject::GetLaserSight,
+		ScriptReserved_SetLaserSight, & LaraObject::SetLaserSight,
 		ScriptReserved_GetAmmoType, &LaraObject::GetAmmoType,
 		ScriptReserved_GetAmmoCount, &LaraObject::GetAmmoCount,
 		ScriptReserved_GetVehicle, &LaraObject::GetVehicle,
