@@ -619,6 +619,7 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_GetLaserSight, & LaraObject::GetLaserSight,
 		ScriptReserved_SetLaserSight, & LaraObject::SetLaserSight,
 		ScriptReserved_GetAmmoType, &LaraObject::GetAmmoType,
+		ScriptReserved_SetAmmoType, & LaraObject::SetAmmoType,
 		ScriptReserved_GetAmmoCount, &LaraObject::GetAmmoCount,
 		ScriptReserved_GetVehicle, &LaraObject::GetVehicle,
 		ScriptReserved_GetTarget, &LaraObject::GetTarget,
