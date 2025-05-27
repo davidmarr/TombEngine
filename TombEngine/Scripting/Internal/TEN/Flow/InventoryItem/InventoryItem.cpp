@@ -84,4 +84,8 @@ namespace TEN::Scripting
 		}
 
 	}
+	ItemOptions InventoryItem::GetAction() const
+	{
+		return MenuAction;
+	}
 }
