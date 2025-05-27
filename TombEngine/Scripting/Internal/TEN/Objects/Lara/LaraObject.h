@@ -28,7 +28,7 @@ public:
 	LaraWeaponType GetWeaponType() const;
 	void SetWeaponType(LaraWeaponType weaponType, bool activate);
 	bool GetLaserSight(LaraWeaponType weaponType) const;
-	void SetLaserSight(LaraWeaponType weaponType, bool activate);
+	void SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate);
 	int GetAmmoType() const;
 	int GetAmmoCount() const;
 

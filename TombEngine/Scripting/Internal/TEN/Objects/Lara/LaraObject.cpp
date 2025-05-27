@@ -253,10 +253,10 @@ bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
 	}
 }
 
-void LaraObject::SetLaserSight(LaraWeaponType weaponType, bool activate)
+void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate)
 {
 	auto* lara = GetLaraInfo(_moveable);
-
+	auto convertedActivate = ValueOr<bool>(activate, false);
 	switch (weaponType)
 	{
 	case LaraWeaponType::Revolver:
@@ -277,7 +277,7 @@ void LaraObject::SetLaserSight(LaraWeaponType weaponType, bool activate)
 		lara->Weapons[static_cast<int>(weaponType)].HasLasersight = true;
 
 		//Activate weapon if required
-		if (activate == false)
+		if (convertedActivate == false)
 			lara->Control.Weapon.LastGunType = weaponType;
 		else
 			lara->Control.Weapon.RequestGunType = weaponType;
