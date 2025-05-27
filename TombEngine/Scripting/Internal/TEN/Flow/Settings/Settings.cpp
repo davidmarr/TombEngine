@@ -295,7 +295,7 @@ namespace TEN::Scripting
 		"damage", &WeaponSettings::Damage,
 
 		/// Alternate damage.
-		// @tfield int alternateDamage For Revolver and HK, specifies damage in lasersight mode. For crossbow, specifies damage for explosive ammo.
+		// @tfield int alternateDamage For crossbow, specifies damage for explosive ammo.
 		"alternateDamage", &WeaponSettings::AlternateDamage,
 
 		/// Water level.
