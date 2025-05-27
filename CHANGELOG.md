@@ -8,7 +8,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## New features
 * Added skinned meshes support for any object.
 * Added video playback and video texture streaming support.
-* Added muzzle glow effect for firearms and flare.
+* Added muzzle glow effect for firearms and flares.
 * Added weather particle clustering and increase weather particle density and performance.
 * Added examine mode text rendering (string key should be in the format like `examine1_text`, `examine2_text`, and so on).
 * Added breakable wall object with land and underwater modes.
@@ -32,7 +32,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed ledge grabbing on platforms made from lowered ceilings.
 * Fixed lensflare enabled status and far view not saved in a savegame.
 * Fixed HK sound effects.
-* Fixed HK shots not being registered in statistics.
+* Fixed HK and crossbow shots not being registered in statistics.
 * Fixed incorrect arm rotation for revolver animations in crouched state.
 * Fixed distorted knee and elbow joint vertices.
 * Fixed multi-mesh objects not shattering correctly.
