@@ -256,6 +256,11 @@ bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
 void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate)
 {
 	auto* lara = GetLaraInfo(_moveable);
+
+	//Check for inventory to have lasersight
+	if (!lara->Inventory.HasLasersight)
+		return;
+
 	auto convertedActivate = ValueOr<bool>(activate, false);
 	switch (weaponType)
 	{
