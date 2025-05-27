@@ -30,6 +30,7 @@ public:
 	bool GetLaserSight(LaraWeaponType weaponType) const;
 	void SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate);
 	int GetAmmoType() const;
+	void SetAmmoType(PlayerAmmoType ammoType);
 	int GetAmmoCount() const;
 
 	void UndrawWeapon();

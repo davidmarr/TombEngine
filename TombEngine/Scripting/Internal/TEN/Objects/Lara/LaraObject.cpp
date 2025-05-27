@@ -386,6 +386,49 @@ int LaraObject::GetAmmoType() const
 	return (int)*ammoType;
 }
 
+void LaraObject::SetAmmoType(PlayerAmmoType ammoType)
+{
+	auto& player = GetLaraInfo(*_moveable);
+
+	switch (ammoType)
+	{
+	case PlayerAmmoType::ShotgunNormal:
+		player.Weapons[(int)LaraWeaponType::Shotgun].SelectedAmmo = WeaponAmmoType::Ammo1;
+		break;
+
+	case PlayerAmmoType::ShotgunWide:
+		player.Weapons[(int)LaraWeaponType::Shotgun].SelectedAmmo = WeaponAmmoType::Ammo2;
+		break;
+
+	case PlayerAmmoType::CrossbowBoltNormal:
+		player.Weapons[(int)LaraWeaponType::Crossbow].SelectedAmmo = WeaponAmmoType::Ammo1;
+		break;
+
+	case PlayerAmmoType::CrossbowBoltPoison:
+		player.Weapons[(int)LaraWeaponType::Crossbow].SelectedAmmo = WeaponAmmoType::Ammo2;
+		break;
+
+	case PlayerAmmoType::CrossbowBoltExplosive:
+		player.Weapons[(int)LaraWeaponType::Crossbow].SelectedAmmo = WeaponAmmoType::Ammo3;
+		break;
+
+	case PlayerAmmoType::GrenadeNormal:
+		player.Weapons[(int)LaraWeaponType::GrenadeLauncher].SelectedAmmo = WeaponAmmoType::Ammo1;
+		break;
+
+	case PlayerAmmoType::GrenadeFrag:
+		player.Weapons[(int)LaraWeaponType::GrenadeLauncher].SelectedAmmo = WeaponAmmoType::Ammo2;
+		break;
+
+	case PlayerAmmoType::GrenadeFlash:
+		player.Weapons[(int)LaraWeaponType::GrenadeLauncher].SelectedAmmo = WeaponAmmoType::Ammo3;
+		break;
+
+	default:
+		break;
+	}
+}
+
 /// Get current weapon's ammo count.
 // @function LaraObject:GetAmmoCount
 // @treturn int Current ammo count (-1 if infinite).
