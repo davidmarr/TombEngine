@@ -690,7 +690,6 @@ void LaraCheat(ItemInfo* item, CollisionInfo* coll)
 		item->HitPoints = LARA_HEALTH_MAX;
 		player.Control.HandStatus = HandStatus::Free;
 		player.ExtraAnim = NO_VALUE;
-		UseForcedFixedCamera = false;
 	}
 }
 
