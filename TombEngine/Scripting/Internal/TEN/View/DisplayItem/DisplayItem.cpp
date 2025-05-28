@@ -60,6 +60,11 @@ namespace TEN::Scripting::DisplayItem
 		return g_Hud.DrawItems.GetItemScale(objectID);
 	}
 
+	static void ClearItems()
+	{
+		g_Hud.DrawItems.Clear();
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableDrawItems = sol::table(state->lua_state(), sol::create);
@@ -74,6 +79,7 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetPosition, &GetItemPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetRotation, &GetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetScale, &GetItemScale);
+		tableDrawItems.set_function(ScriptReserved_ClearItems, &ClearItems);
 
 	}
 }

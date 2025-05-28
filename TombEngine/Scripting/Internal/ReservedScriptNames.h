@@ -521,6 +521,8 @@ constexpr char ScriptReserved_DrawItemSetAlpha[]	= "SetItemTransparency";
 constexpr char ScriptReserved_DrawItemGetPosition[] = "GetItemPosition";
 constexpr char ScriptReserved_DrawItemGetRotation[] = "GetItemRotation";
 constexpr char ScriptReserved_DrawItemGetScale[]	= "GetItemScale";
+constexpr char ScriptReserved_ClearItems[]			= "ClearAllItems";
+
 
 // =====
 // TYPES
