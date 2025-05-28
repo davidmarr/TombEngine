@@ -30,6 +30,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed collision issues for subsector bridges and bridges moving between rooms.
 * Fixed missing step up animation when switching from tread to wade.
 * Fixed ledge grabbing on platforms made from lowered ceilings.
+* Fixed dozy mode switching to a swim state after special death animation has played.
 * Fixed lensflare enabled status and far view not saved in a savegame.
 * Fixed HK sound effects.
 * Fixed HK and crossbow shots not being registered in statistics.
