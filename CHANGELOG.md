@@ -19,11 +19,12 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Bug fixes
 * Fixed LASER_BEAM object going through walls.
-* Fixed TELEPORTER object.
 * Fixed WRAITH objects not working correctly in flipped rooms.
 * Fixed SPIKY_CEILING object not having default speed assigned.
 * Fixed FISH_EMITTER object missing random targets due to distance.
 * Fixed FISH_EMITTER and COMPSOGNATHUS objects not attacking corpses.
+* Fixed TELEPORTER object.
+* Fixed AI_PATROL object.
 * Fixed locked camera flag and glide timer not working for fixed cameras.
 * Fixed weapon hotkeys not unholstering already selected weapon.
 * Fixed weapons not hitting non-intelligent objects.

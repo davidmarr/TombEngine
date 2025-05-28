@@ -1754,11 +1754,8 @@ void GetAIPickups()
 					object->roomNumber == item->RoomNumber &&
 					object->objectNumber < ID_AI_PATROL2)
 				{
-					item->AIBits = (1 << (object->objectNumber - ID_AI_GUARD)) & 0x1F;
+					item->AIBits |= (1 << (object->objectNumber - ID_AI_GUARD)) & 0x1F;
 					item->ItemFlags[3] = object->triggerFlags;
-
-					if (object->objectNumber != ID_AI_GUARD)
-						object->roomNumber = NO_VALUE;
 				}
 			}
 
