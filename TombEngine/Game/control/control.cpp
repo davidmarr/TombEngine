@@ -320,6 +320,8 @@ GameStatus FreezePhase()
 
 		PlaySoundSources();
 		Sound_UpdateScene();
+
+		g_Hud.Update(*LaraItem);
 	}
 
 	// HACK: Update player hair if animation was switched in spectator mode.

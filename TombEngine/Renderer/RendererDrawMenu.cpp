@@ -1256,6 +1256,7 @@ namespace TEN::Renderer
 
 		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
 		// Draw3DObjectsIn2DSpace(_gameCamera);
+		g_Hud.Draw(*LaraItem);
 
 		// Draw display sprites sorted by priority.
 		CollectDisplaySprites(_gameCamera);
