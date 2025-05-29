@@ -125,6 +125,9 @@ private:
 
 	int GetIndexByName(std::string const& name) const override
 	{
+		if (_nameMap.find(name) == _nameMap.end())
+			return NO_VALUE;
+
 		return std::get<int>(_nameMap.at(name));
 	}
 
