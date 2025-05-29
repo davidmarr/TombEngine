@@ -367,7 +367,8 @@ namespace TEN::Scripting::View
 		tableView.set_function("PlayFlyBy", &PlayFlyby);
 
 		// Register types.
-		ScriptDisplaySprite::Register(*state, parent);
+		ScriptDisplaySprite::Register(*state, tableView);
+		ScriptDisplaySprite::Register(*state, parent); // COMPATIBILITY
 
 		// Register enums.
 		auto handler = LuaHandler(state);
