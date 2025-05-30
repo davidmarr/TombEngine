@@ -987,8 +987,6 @@ void BinocularCamera(ItemInfo* item)
 	LookAt(&Camera, 0);
 	UpdateMikePos(*item);
 	Camera.oldType = Camera.type;
-
-	GetTargetOnLOS(&Camera.pos, &Camera.target, false, false);
 }
 
 void ConfirmCameraTargetPos()
