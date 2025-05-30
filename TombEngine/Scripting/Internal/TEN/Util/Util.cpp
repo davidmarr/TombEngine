@@ -5,6 +5,7 @@
 #include "Game/collision/Los.h"
 #include "Game/control/los.h"
 #include "Game/Lara/lara.h"
+#include "Game/Lara/lara_helpers.h"
 #include "Game/room.h"
 #include "Renderer/Renderer.h"
 #include "Scripting/Internal/LuaHandler.h"
@@ -18,6 +19,7 @@
 #include "Scripting/Internal/TEN/Util/LevelLog.h"
 #include "Specific/configuration.h"
 #include "Specific/level.h"
+#include <Game/Lara/lara_helpers.h>
 
 using namespace TEN::Collision::Los;
 using TEN::Renderer::g_Renderer;
@@ -187,6 +189,23 @@ namespace TEN::Scripting::Util
 		return posA.Distance(posB);
 	}
 
+	//Private function required for inventory
+	static int ConvertObjectToInventoryItem(int objectID)
+	{
+		return g_Gui.ConvertObjectToInventoryItem(objectID);
+	}
+
+	//Private function required for inventory
+	static int ConvertInventoryItemToObject(int objectNumber)
+	{
+		return g_Gui.ConvertInventoryItemToObject(objectNumber);
+	}
+
+	static void UseBinoculars()
+	{
+
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableUtil = sol::table(state->lua_state(), sol::create);
@@ -199,6 +218,9 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_PickStatic, &PickStatic);
 		tableUtil.set_function(ScriptReserved_PercentToScreen, &PercentToScreen);
 		tableUtil.set_function(ScriptReserved_ScreenToPercent, &ScreenToPercent);
+		tableUtil.set_function("ConvertObjectToInventoryItem", &ConvertObjectToInventoryItem);
+		tableUtil.set_function("ConvertInventoryItemToObject", &ConvertInventoryItemToObject);
+		tableUtil.set_function("UseBinoculars", &UseBinoculars);
 		tableUtil.set_function(ScriptReserved_PrintLog, &PrintLog);
 
 		// COMPATIBILITY
