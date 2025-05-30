@@ -957,41 +957,12 @@ void UpdateGunFlashes()
 		if ((hand ? Lara.RightArm.GunFlash : Lara.LeftArm.GunFlash) == 0)
 			continue;
 
-		auto& part = *GetFreeParticle();
-
-		part.on = true;
-		part.SpriteSeqID = ID_DEFAULT_SPRITES;
-		part.SpriteID = 11;
-		part.blendMode = BlendMode::Additive;
-
 		auto offset = settings.MuzzleOffset.ToVector3i();
 		if (!hand)
 			offset.x = -offset.x;
 
 		auto pos = GetJointPosition(LaraItem, hand ? LM_RHAND : LM_LHAND, offset);
-		part.x = pos.x;
-		part.y = pos.y;
-		part.z = pos.z;
-		part.roomNumber = LaraItem->RoomNumber;
-
-		part.rotAng = ANGLE(TO_DEGREES(Random::GenerateAngle())) >> 4;
-		part.rotAdd = 0;
-
-		part.sSize = part.size = part.dSize = 192;
-		part.scalar = 2;
-
-		part.xVel = part.yVel = part.zVel = 0;
-		part.gravity = part.friction = part.maxYvel = 0;
-
-		part.sR = part.dR = settings.FlashColor.GetR() / 2;
-		part.sG = part.dG = settings.FlashColor.GetG() / 2;
-		part.sB = part.dB = settings.FlashColor.GetB() / 2;
-
-		part.life = part.sLife = 2;
-		part.colFadeSpeed = 1;
-		part.fadeToBlack  = 1;
-
-		part.flags = SP_SCALE | SP_DEF | SP_EXPDEF;
+		TriggerGlow(GameVector(pos, LaraItem->RoomNumber), (Vector3)settings.FlashColor / 2, 192);
 	}
 }
 
