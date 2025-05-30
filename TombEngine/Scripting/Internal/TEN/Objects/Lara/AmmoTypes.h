@@ -24,9 +24,6 @@
 // - `GRENADE_FLASH`
 // - `HARPOON`
 // - `ROCKET`
-// - `HK_RAPID_MODE`
-// - `HK_BURST_MODE`
-// - `HK_SNIPER_MODE`
 //
 // @table Objects.AmmoType
 
