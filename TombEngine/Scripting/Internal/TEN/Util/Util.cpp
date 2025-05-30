@@ -6,7 +6,6 @@
 #include "Game/control/los.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
-#include "Game/Lara/Optics.h"
 #include "Game/room.h"
 #include "Game/spotcam.h"
 #include "Renderer/Renderer.h"
@@ -190,33 +189,6 @@ namespace TEN::Scripting::Util
 		return posA.Distance(posB);
 	}
 
-	//Private function required for inventory
-	static int ConvertObjectToInventoryItem(int objectID)
-	{
-		return g_Gui.ConvertObjectToInventoryItem(objectID);
-	}
-
-	//Private function required for inventory
-	static int ConvertInventoryItemToObject(int objectNumber)
-	{
-		return g_Gui.ConvertInventoryItemToObject(objectNumber);
-	}
-
-	static void UseBinoculars()
-	{
-		auto& item = *LaraItem;
-		if (((item.Animation.ActiveState == LS_IDLE && item.Animation.AnimNumber == LA_STAND_IDLE) ||
-			(Lara.Control.IsLow && !IsHeld(In::Crouch))) &&
-			!UseSpotCam && !TrackCameraInit)
-		{
-			SetScreenFadeIn(OPTICS_FADE_SPEED);
-			BinocularOldCamera = Camera.oldType;
-			Lara.Control.Look.OpticRange = OPTICS_RANGE_DEFAULT;
-			Lara.Control.Look.IsUsingBinoculars = true;
-			Lara.Inventory.OldBusy = true;
-		}
-	}
-
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableUtil = sol::table(state->lua_state(), sol::create);
@@ -229,9 +201,6 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_PickStatic, &PickStatic);
 		tableUtil.set_function(ScriptReserved_PercentToScreen, &PercentToScreen);
 		tableUtil.set_function(ScriptReserved_ScreenToPercent, &ScreenToPercent);
-		tableUtil.set_function("ConvertObjectToInventoryItem", &ConvertObjectToInventoryItem);
-		tableUtil.set_function("ConvertInventoryItemToObject", &ConvertInventoryItemToObject);
-		tableUtil.set_function("UseBinoculars", &UseBinoculars);
 		tableUtil.set_function(ScriptReserved_PrintLog, &PrintLog);
 
 		// COMPATIBILITY

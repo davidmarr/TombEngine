@@ -4,6 +4,7 @@
 #include "Game/camera.h"
 #include "Game/effects/weather.h"
 #include "Game/Lara/lara.h"
+#include "Game/Lara/Optics.h"
 #include "Game/spotcam.h"
 #include "Renderer/Renderer.h"
 #include "Scripting/Internal/LuaHandler.h"
@@ -217,6 +218,22 @@ namespace TEN::Scripting::View
 		g_Renderer.SetPostProcessTint(vec);
 	}
 
+	//Private function required for inventory
+	static void UseBinoculars()
+	{
+		auto& item = *LaraItem;
+		if (((item.Animation.ActiveState == LS_IDLE && item.Animation.AnimNumber == LA_STAND_IDLE) ||
+			(Lara.Control.IsLow && !IsHeld(In::Crouch))) &&
+			!UseSpotCam && !TrackCameraInit)
+		{
+			SetScreenFadeIn(OPTICS_FADE_SPEED);
+			BinocularOldCamera = Camera.oldType;
+			Lara.Control.Look.OpticRange = OPTICS_RANGE_DEFAULT;
+			Lara.Control.Look.IsUsingBinoculars = true;
+			Lara.Inventory.OldBusy = true;
+		}
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableView = sol::table(state->lua_state(), sol::create);
@@ -365,6 +382,9 @@ namespace TEN::Scripting::View
 
 		// COMPATIBILITY
 		tableView.set_function("PlayFlyBy", &PlayFlyby);
+
+		//Private function required for inventory
+		tableView.set_function("UseBinoculars", &UseBinoculars);
 
 		// Register types.
 		ScriptDisplaySprite::Register(*state, parent);
