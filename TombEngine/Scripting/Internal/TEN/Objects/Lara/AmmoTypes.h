@@ -24,6 +24,9 @@
 // - `GRENADE_FLASH`
 // - `HARPOON`
 // - `ROCKET`
+// - `HK_RAPID_MODE`
+// - `HK_BURST_MODE`
+// - `HK_SNIPER_MODE`
 //
 // @table Objects.AmmoType
 
@@ -44,6 +47,6 @@ namespace TEN::Scripting
 		{ "GRENADE_FRAG", PlayerAmmoType::GrenadeFrag },
 		{ "GRENADE_FLASH", PlayerAmmoType::GrenadeFlash },
 		{ "HARPOON", PlayerAmmoType::Harpoon },
-		{ "ROCKET", PlayerAmmoType::Rocket }
+		{ "ROCKET", PlayerAmmoType::Rocket },
 	};
 }

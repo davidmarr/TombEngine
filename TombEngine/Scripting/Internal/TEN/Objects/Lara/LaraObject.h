@@ -32,6 +32,8 @@ public:
 	int GetAmmoType() const;
 	void SetAmmoType(PlayerAmmoType ammoType);
 	int GetAmmoCount() const;
+	int GetWeaponMode() const;
+	void SetWeaponMode(PlayerWeaponMode ammoType);
 
 	void UndrawWeapon();
 	void DiscardTorch();

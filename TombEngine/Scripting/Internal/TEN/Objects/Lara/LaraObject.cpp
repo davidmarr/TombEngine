@@ -12,6 +12,7 @@
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/TEN/Input/ActionIDs.h"
 #include "Scripting/Internal/TEN/Objects/Lara/AmmoTypes.h"
+#include "Scripting/Internal/TEN/Objects/Lara/WeaponModes.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
@@ -441,6 +442,69 @@ int LaraObject::GetAmmoCount() const
 	return (ammo.HasInfinite()) ? -1 : (int)ammo.GetCount();
 }
 
+//Private function required for inventory
+int LaraObject::GetWeaponMode() const
+{
+	const auto& player = GetLaraInfo(*_moveable);
+
+	auto weaponMode = std::optional<PlayerWeaponMode>(std::nullopt);
+	
+	switch (player.Control.Weapon.GunType)
+	{
+
+	case::LaraWeaponType::HK:
+		if (player.Weapons[(int)LaraWeaponType::GrenadeLauncher].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_1)
+		{
+			weaponMode = PlayerWeaponMode::HKRapid;
+		}
+		else if (player.Weapons[(int)LaraWeaponType::GrenadeLauncher].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_2)
+		{
+			weaponMode = PlayerWeaponMode::HKBurst;
+		}
+		else
+		{
+			weaponMode = PlayerWeaponMode::HKSniper;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	if (!weaponMode.has_value())
+	{
+		TENLog("GetWeaponMode() error; no weapon mode type.", LogLevel::Warning, LogConfig::All);
+		weaponMode = PlayerWeaponMode::None;
+	}
+
+	return static_cast<int>(weaponMode.value());
+}
+
+//Private function required for inventory
+void LaraObject::SetWeaponMode(PlayerWeaponMode weaponMode)
+{
+	auto& player = GetLaraInfo(*_moveable);
+
+	switch (weaponMode)
+	{
+	case PlayerWeaponMode::HKRapid:
+		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_1;
+		break;
+
+	case PlayerWeaponMode::HKBurst:
+		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_2;
+		break;
+
+	case PlayerWeaponMode::HKSniper:
+		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_3;
+		break;
+
+	default:
+		break;
+	}
+}
+
 /// Get current vehicle, if it exists.
 // @function LaraObject:GetVehicle
 // @treturn Objects.Moveable Current vehicle (nil if no vehicle present).
@@ -621,6 +685,8 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_GetAmmoType, &LaraObject::GetAmmoType,
 		ScriptReserved_SetAmmoType, & LaraObject::SetAmmoType,
 		ScriptReserved_GetAmmoCount, &LaraObject::GetAmmoCount,
+		ScriptReserved_GetWeaponMode, & LaraObject::GetWeaponMode,
+		ScriptReserved_SetWeaponMode, & LaraObject::SetWeaponMode,
 		ScriptReserved_GetVehicle, &LaraObject::GetVehicle,
 		ScriptReserved_GetTarget, &LaraObject::GetTarget,
 		ScriptReserved_GetPlayerInteractedMoveable, &LaraObject::GetPlayerInteractedMoveable,

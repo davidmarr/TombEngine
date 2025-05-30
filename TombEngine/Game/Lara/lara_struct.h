@@ -923,6 +923,16 @@ enum class PlayerAmmoType
 	Count
 };
 
+enum class PlayerWeaponMode
+{
+	None,
+	HKRapid,
+	HKBurst,
+	HKSniper,
+
+	Count
+};
+
 enum class LaraWeaponType
 {
 	None,
