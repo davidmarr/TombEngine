@@ -6,7 +6,9 @@
 #include "Game/control/los.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
+#include "Game/Lara/Optics.h"
 #include "Game/room.h"
+#include "Game/spotcam.h"
 #include "Renderer/Renderer.h"
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
@@ -19,7 +21,6 @@
 #include "Scripting/Internal/TEN/Util/LevelLog.h"
 #include "Specific/configuration.h"
 #include "Specific/level.h"
-#include <Game/Lara/lara_helpers.h>
 
 using namespace TEN::Collision::Los;
 using TEN::Renderer::g_Renderer;
@@ -203,7 +204,17 @@ namespace TEN::Scripting::Util
 
 	static void UseBinoculars()
 	{
-
+		auto& item = *LaraItem;
+		if (((item.Animation.ActiveState == LS_IDLE && item.Animation.AnimNumber == LA_STAND_IDLE) ||
+			(Lara.Control.IsLow && !IsHeld(In::Crouch))) &&
+			!UseSpotCam && !TrackCameraInit)
+		{
+			SetScreenFadeIn(OPTICS_FADE_SPEED);
+			BinocularOldCamera = Camera.oldType;
+			Lara.Control.Look.OpticRange = OPTICS_RANGE_DEFAULT;
+			Lara.Control.Look.IsUsingBinoculars = true;
+			Lara.Inventory.OldBusy = true;
+		}
 	}
 
 	void Register(sol::state* state, sol::table& parent)
