@@ -13,9 +13,9 @@ using namespace TEN::Hud;
 
 namespace TEN::Scripting::DisplayItem
 {
-	static void AddItem(GAME_OBJECT_ID objectID, const Vec3& origin, float scale)
+	static void AddItem(GAME_OBJECT_ID objectID, const Vec3& origin, float scale, float opacity = 1.0f, int meshBits = 0u)
 	{
-		g_Hud.DrawItems.AddItem(objectID, origin, scale);
+		g_Hud.DrawItems.AddItem(objectID, origin, scale, opacity, meshBits);
 	}
 	static void RemoveItem(GAME_OBJECT_ID objectID)
 	{

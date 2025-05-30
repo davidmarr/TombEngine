@@ -11,7 +11,7 @@ using TEN::Renderer::g_Renderer;
 
 namespace TEN::Hud
 {
-	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale)
+	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity, int meshBits)
 	{
 		// Check if item already exists
 		for (auto& item : _displayItems)
@@ -36,8 +36,8 @@ namespace TEN::Hud
 		newItem.PrevPosition = newItem.Position;
 
 		newItem.Scale = newItem.PrevScale = scale;
-		newItem.Opacity = newItem.PrevOpacity = 1.0f;
-
+		newItem.Opacity = newItem.PrevOpacity = opacity;
+		newItem.MeshBits = meshBits;
 		_displayItems.push_back(newItem);
 	}
 	void DrawItemsController::RemoveItem(GAME_OBJECT_ID objectID)

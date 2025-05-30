@@ -6,7 +6,6 @@ using namespace TEN::Math;
 
 namespace TEN::Hud
 {
-	constexpr auto NO_JOINT_BITS = 0u;
 
 	struct DisplayItem
 	{
@@ -19,7 +18,7 @@ namespace TEN::Hud
 		float Scale		   = 0.0f;
 		float Opacity	   = 0.0f;
 
-		int MeshBits = NO_JOINT_BITS;
+		int MeshBits = 0u;
 		
 		Vector3		PrevPosition	= Vector3::Zero;
 		EulerAngles PrevOrientation = EulerAngles::Identity;
@@ -67,7 +66,7 @@ namespace TEN::Hud
 
 	public:
 
-		void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale);
+		void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity = 1.0f, int meshBits = 0u);
 		void RemoveItem(GAME_OBJECT_ID objectID);
 
 		void Update();
