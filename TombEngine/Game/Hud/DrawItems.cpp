@@ -118,6 +118,15 @@ namespace TEN::Hud
 		}
 	}
 
+	void DrawItemsController::SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits)
+	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			item->MeshBits = meshbits;
+		}
+
+	}
+
 	void DrawItemsController::SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, EulerAngles& rot)
 	{
 

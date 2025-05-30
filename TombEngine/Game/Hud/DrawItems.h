@@ -6,6 +6,8 @@ using namespace TEN::Math;
 
 namespace TEN::Hud
 {
+	constexpr auto NO_JOINT_BITS = 0u;
+
 	struct DisplayItem
 	{
 
@@ -16,6 +18,8 @@ namespace TEN::Hud
 
 		float Scale		   = 0.0f;
 		float Opacity	   = 0.0f;
+
+		int MeshBits = NO_JOINT_BITS;
 		
 		Vector3		PrevPosition	= Vector3::Zero;
 		EulerAngles PrevOrientation = EulerAngles::Identity;
@@ -76,6 +80,7 @@ namespace TEN::Hud
 		void SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot);
 		void SetItemScale(GAME_OBJECT_ID objectID, float newScale);
 		void SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha);
+		void SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits);
 		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, EulerAngles& rot);
 
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);

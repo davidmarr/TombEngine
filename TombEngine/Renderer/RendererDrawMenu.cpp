@@ -787,7 +787,8 @@ namespace TEN::Renderer
 			item.GetInterpolatedPosition(t),
 			item.GetInterpolatedOrientation(t),
 			item.GetInterpolatedScale(t),
-			item.GetInterpolatedOpacity(t)
+			item.GetInterpolatedOpacity(t),
+			item.MeshBits
 		);
 	}
 

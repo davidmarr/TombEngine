@@ -518,10 +518,11 @@ constexpr char ScriptReserved_DrawItemSetPosition[] = "SetItemPosition";
 constexpr char ScriptReserved_DrawItemSetRotation[] = "SetItemRotation";
 constexpr char ScriptReserved_DrawItemSetScale[]	= "SetItemScale";
 constexpr char ScriptReserved_DrawItemSetAlpha[]	= "SetItemTransparency";
+constexpr char ScriptReserved_DrawItemSetMeshBits[] = "SetItemMeshbits";
 constexpr char ScriptReserved_DrawItemGetPosition[] = "GetItemPosition";
 constexpr char ScriptReserved_DrawItemGetRotation[] = "GetItemRotation";
 constexpr char ScriptReserved_DrawItemGetScale[]	= "GetItemScale";
-constexpr char ScriptReserved_ClearItems[]			= "ClearAllItems";
+constexpr char ScriptReserved_DrawItemClearAll[]	= "ClearAllItems";
 
 
 // =====
