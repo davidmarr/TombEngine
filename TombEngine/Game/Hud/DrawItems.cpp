@@ -73,6 +73,9 @@ namespace TEN::Hud
 
 	void DrawItemsController::Clear()
 	{
+		if (_displayItems.empty())
+			return;
+
 		_displayItems.clear();
 	}
 
