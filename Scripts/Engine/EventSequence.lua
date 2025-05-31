@@ -1,5 +1,5 @@
 -----<style>.section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Event sequence - a chain of functions to call at specified times, modeled after TRNG's organizers.
+--- A chain of functions to call at specified times, modeled after TRNG's organizers.
 --
 -- Works atop the Timer, and so is updated automatically pre-OnControlPhase, and saved automatically when the game is saved.
 -- The sequence can be paused, unpaused, stopped, and started, and can be set to loop.
