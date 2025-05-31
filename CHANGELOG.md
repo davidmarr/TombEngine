@@ -62,6 +62,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Flow.ItemAction` enum to reconfigure inventory item actions.
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
 * Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxisValue` functions.
+* Added `Objects.IsNameInUse` function to check if script name is already in use.
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
 * Added `Moveable:SwapSkinnedMesh` and `Moveable:UnswapSkinnedMesh` for skinned mesh management.
 * Added `Lara:Interact` function to allow alignment with moveables.
