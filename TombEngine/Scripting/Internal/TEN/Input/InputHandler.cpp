@@ -154,6 +154,14 @@ namespace TEN::Scripting::Input
 		Rumble(strength, time.value_or(0.3f), RumbleMode::Both);
 	}
 
+	static int GetActionTimeActive(int actionID)
+	{
+		if (!IsValidAction(actionID))
+			return false;
+
+		return GetActionTimeActive((ActionID)actionID);
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto table = sol::table(state->lua_state(), sol::create);
@@ -170,6 +178,7 @@ namespace TEN::Scripting::Input
 		table.set_function(ScriptReserved_InputClearKey, &ClearKey);
 		table.set_function(ScriptReserved_InputClearAllKeys, &ClearAllKeys);
 		table.set_function(ScriptReserved_InputVibrate, &Vibrate);
+		table.set_function(ScriptReserved_GetActionTimeActive, &GetActionTimeActive);
 
 		// COMPATIBILITY
 		table.set_function("KeyIsHit", &IsKeyHit);

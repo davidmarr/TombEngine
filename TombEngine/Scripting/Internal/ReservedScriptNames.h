@@ -368,6 +368,7 @@ static constexpr char ScriptReserved_InputIsKeyPulsed[]					= "IsKeyPulsed";
 static constexpr char ScriptReserved_InputIsKeyReleased[]				= "IsKeyReleased";
 static constexpr char ScriptReserved_InputVibrate[]						= "Vibrate";
 static constexpr char ScriptReserved_InputPushKey[]						= "PushKey";
+static constexpr char ScriptReserved_GetActionTimeActive[]				= "GetActionTimeActive";
 
 static constexpr char ScriptReserved_FlipMap[]						= "FlipMap";
 static constexpr char ScriptReserved_GetFlipMapStatus[]				= "GetFlipMapStatus";
