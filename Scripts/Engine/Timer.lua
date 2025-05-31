@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Basic timer: Countdown, when it expires you can set a specific *LevelFuncs* function to be activated.<br>Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
+--- Basic timer that performs countdown. When it expires, you can set a specific *LevelFuncs* function to be activated.<br>Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
 --	local Timer = require("Engine.Timer")
 --
 -- Example usage:
@@ -49,7 +49,7 @@
 --Use this sparingly; in the classics, timed challenges did not have visible countdowns.<br>For shorter timers, the gameplay benefit from showing the remaining time might not be necessary, and could interfere with the atmosphere of the level.<br>At any given time, multiple timers can show their countdown.
 -- @luautil Timer
 
-local Type= require("Engine.Type")
+local Type = require("Engine.Type")
 local Utility = require("Engine.Util")
 
 local zero = TEN.Time()

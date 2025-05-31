@@ -4,10 +4,8 @@
 -- Works atop the Timer, and so is updated automatically pre-OnControlPhase, and saved automatically when the game is saved.
 -- The sequence can be paused, unpaused, stopped, and started, and can be set to loop.
 --
---
 -- To use EventSequence inside scripts you need to call the module:
 --	local EventSequence = require("Engine.EventSequence")
---
 --
 -- Example usage:
 --	local EventSequence = require("Engine.EventSequence")
@@ -49,7 +47,7 @@
 -- @luautil EventSequence
 
 local Timer = require("Engine.Timer")
-local Type= require("Engine.Type")
+local Type = require("Engine.Type")
 local Utility = require("Engine.Util")
 
 local EventSequence = {}
