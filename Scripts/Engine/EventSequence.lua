@@ -76,12 +76,12 @@ end
 --- Create (but do not start) a new event sequence.
 --
 -- @tparam string name A label to give the sequence; used to retrieve the timer later as well as internally by TEN.
--- @tparam bool loop if true, the sequence will start again from its first timer once its final function has been called
+-- @tparam bool loop If `true`, the sequence will start again from its first timer once its final function has been called.
 -- @tparam ?table|bool timerFormat Same as in <a href="Timer.html#timerFormat">Timer format</a> for Timer. This is mainly for debugging. __This will not work properly if another sequence or timer is showing a countdown.__
 -- @tparam float|LevelFuncs|table ... A variable number of pairs of arguments, each pair consisting of:<br>
--- a time in seconds (positive values are accepted and with only 1 tenth of a second [__0.1__]),<br>
--- followed by the function defined in the *LevelFuncs* table to call once the time has elapsed,<br>
--- followed by another duration in seconds, another function name, etc.
+-- - a time in seconds (positive values are accepted and with only 1 tenth of a second [__0.1__]),<br>
+-- - followed by the function defined in the *LevelFuncs* table to call once the time has elapsed,<br>
+-- - followed by another duration in seconds, another function name, etc.
 --
 -- You can specify a function either by its name, or by a *table* __{ }__ with the function name as the first member, followed by its arguments (see example).
 -- @treturn EventSequence The inactive sequence.
@@ -206,8 +206,8 @@ EventSequence.Create = function (name, loop, timerFormat, ...)
 end
 
 --- Get an event sequence by its name.
--- @tparam string name The label that was given to the sequence when it was created
--- @treturn EventSequence|nil The sequence if it exists, nil if it does not exist
+-- @tparam string name The label that was given to the sequence when it was created.
+-- @treturn EventSequence|nil The sequence if it exists, `nil` if it does not exist.
 -- @usage
 -- -- Example:
 -- EventSequence.Get("my_seq")
@@ -224,8 +224,8 @@ EventSequence.Get = function(name)
 end
 
 --- Check if an event sequence exists.
--- @tparam string name The label that was given to the event sequence when it was created
--- @treturn bool true if the event sequence exists, false if it does not exist
+-- @tparam string name The label that was given to the event sequence when it was created.
+-- @treturn bool `true` if the event sequence exists, `false` if it does not exist.
 -- @usage
 -- -- Example:
 -- -- This function checks if an event sequence named "my_seq" exists and starts it
@@ -243,7 +243,7 @@ EventSequence.IfExists = function (name)
 end
 
 --- Delete an event sequence.
--- @tparam string name The label that was given to the event sequence when it was created
+-- @tparam string name The label that was given to the event sequence when it was created.
 -- @usage
 -- -- Example:
 -- EventSequence.Delete("my_seq")
@@ -287,7 +287,7 @@ function EventSequence:Start()
 end
 
 --- Pause or unpause the sequence. If showing the remaining time on-screen, its color will be set to yellow (paused) or white (unpaused).
--- @tparam bool p If true, the sequence will be paused; if false, it will be unpaused
+-- @tparam bool p If `true`, the sequence will be paused; if `false`, it will be unpaused.
 -- @usage
 -- -- Example 1: Pause the sequence
 -- if EventSequence.IfExists("my_seq") then
@@ -324,8 +324,8 @@ function EventSequence:Stop()
 	end
 end
 
---- Get whether or not the sequence is paused
--- @treturn bool true If the timer is paused, false if otherwise
+--- Returns whether the sequence is paused.
+-- @treturn bool `true` If the timer is paused, `false` if otherwise.
 -- @usage
 -- -- Example 1: paused sequence
 -- if not EventSequence.Get("my_seq"):IsPaused() then
@@ -345,8 +345,8 @@ function EventSequence:IsPaused()
 	return Timer.Get(thisES.timers[thisES.currentTimer]):IsPaused()
 end
 
---- Get whether or not the sequence is active
--- @treturn bool true If the sequence is active, false if otherwise
+--- Returns whether the sequence is active.
+-- @treturn bool `true` If the sequence is active, `false` if otherwise.
 -- @usage
 -- -- Example:
 -- if not EventSequence.Get("my_seq"):IsActive() then
