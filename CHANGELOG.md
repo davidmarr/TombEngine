@@ -44,6 +44,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed SSAO incorrectly applied through alpha blended textures.
 * Fixed hair not rendered correctly if alpha blended textures are present.
 * Fixed disappearing Lara when climbing through specific L-shaped portal setups.
+* Fixed flickering Lara color when running into static meshes submerged in water.
 * Fixed clipping of overlapped rooms during flyby sequences.
 * Fixed static meshes not interpolating when dynamically changing their positional data.
 * Fixed crashes when shooting, if gunflash or gunshell objects are not present in a level.
@@ -62,6 +63,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Flow.ItemAction` enum to reconfigure inventory item actions.
 * Added `Flow.SetIntroVideoPath` function to specify intro video.
 * Added `Input.IsKeyPulsed`, `Input.IsKeyReleased`, `Input.GetAnalogKeyValue`, and `Input.GetAnalogAxisValue` functions.
+* Added `Objects.IsNameInUse` function to check if script name is already in use.
 * Added `View.PlayVideo`, `View.StopVideo`, and other helper functions for the video playback.
 * Added `Moveable:SwapSkinnedMesh` and `Moveable:UnswapSkinnedMesh` for skinned mesh management.
 * Added `Lara:Interact` function to allow alignment with moveables.
@@ -76,6 +78,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Updated `Input.IsKeyHeld` with additional parameter indicating key hold delay.
 * Updated `Effects.MakeExplosion` and `Effects.EmitBlood` to spawn correct effects when used underwater.
 * Fixed `Rotation` class to use unsigned 0-360 degree range, and provide `Rotation:Signed` method to get legacy -180-180 range.
+* Fixed `Inventory.GiveItem` screen position to start from the side of the screen.
 * Fixed `Moveable.GetJointPosition` not returning correct results if moveable is invisible or not rendered.
 * Fixed `Util.PickMoveableByDisplayPosition`.
 

@@ -134,6 +134,11 @@ private:
 		return std::get<int>(_nameMap.at(name));
 	}
 
+	bool IsNameInUse(const std::string& key) const
+	{
+		return _nameMap.find(key) != _nameMap.end();
+	}
+
 	bool AddName(const std::string& key, VarMapVal val) override
 	{
 		if (key.empty())
