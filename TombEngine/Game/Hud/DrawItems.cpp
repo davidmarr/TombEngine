@@ -11,6 +11,8 @@ using TEN::Renderer::g_Renderer;
 
 namespace TEN::Hud
 {
+	DrawItemsController g_DrawItems = {};
+
 	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity, int meshBits)
 	{
 		// Check if item already exists

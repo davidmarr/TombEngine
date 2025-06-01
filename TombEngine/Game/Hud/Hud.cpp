@@ -17,7 +17,6 @@ namespace TEN::Hud
 		Speedometer.Update();
 		PickupSummary.Update();
 		StatusBars.Update(playerItem);
-		DrawItems.Update();
 	}
 
 	void HudController::Draw(const ItemInfo& playerItem) const
@@ -26,7 +25,6 @@ namespace TEN::Hud
 		Speedometer.Draw();
 		PickupSummary.Draw();
 		StatusBars.Draw(playerItem);
-		DrawItems.Draw();
 	}
 
 	void HudController::Clear()
@@ -35,6 +33,5 @@ namespace TEN::Hud
 		Speedometer.Clear();
 		PickupSummary.Clear();
 		StatusBars.Clear();
-		DrawItems.Clear();
 	}
 }

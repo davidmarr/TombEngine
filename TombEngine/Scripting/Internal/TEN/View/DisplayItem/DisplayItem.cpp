@@ -15,79 +15,79 @@ namespace TEN::Scripting::DisplayItem
 {
 	static void AddItem(GAME_OBJECT_ID objectID, const Vec3& origin, float scale, float opacity = 1.0f, int meshBits = 0u)
 	{
-		g_Hud.DrawItems.AddItem(objectID, origin, scale, opacity, meshBits);
+		g_DrawItems.AddItem(objectID, origin, scale, opacity, meshBits);
 	}
 	static void RemoveItem(GAME_OBJECT_ID objectID)
 	{
-		g_Hud.DrawItems.RemoveItem(objectID);
+		g_DrawItems.RemoveItem(objectID);
 	}
 
 	static void SetItemPosition(GAME_OBJECT_ID objectID, const Vec3& newPos)
 	{
-		g_Hud.DrawItems.SetItemPosition(objectID, newPos);
+		g_DrawItems.SetItemPosition(objectID, newPos);
 	}
 
 	static void SetItemRotation(GAME_OBJECT_ID objectID, const Rotation& newRot)
 	{
 		auto rotation = newRot.ToEulerAngles();
-		g_Hud.DrawItems.SetItemRotation(objectID, rotation);
+		g_DrawItems.SetItemRotation(objectID, rotation);
 	}
 
 	static void SetItemScale(GAME_OBJECT_ID objectID, float newScale)
 	{
-		g_Hud.DrawItems.SetItemScale(objectID, newScale);
+		g_DrawItems.SetItemScale(objectID, newScale);
 	}
 
 	static void SetItemTransparency(GAME_OBJECT_ID objectID, float alpha)
 	{
-		g_Hud.DrawItems.SetItemAlpha(objectID, alpha);
+		g_DrawItems.SetItemAlpha(objectID, alpha);
 	}
 
 	static void SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits)
 	{
-		g_Hud.DrawItems.SetItemMeshBits(objectID, meshbits);
+		g_DrawItems.SetItemMeshBits(objectID, meshbits);
 	}
 
 	static Vec3 GetItemPosition(GAME_OBJECT_ID objectID)
 	{
-		auto position = g_Hud.DrawItems.GetItemPosition(objectID);
+		auto position = g_DrawItems.GetItemPosition(objectID);
 		return Vec3(position);
 	}
 
 	static Rotation GetItemRotation(GAME_OBJECT_ID objectID)
 	{
-		auto rotation = g_Hud.DrawItems.GetItemRotation(objectID);
+		auto rotation = g_DrawItems.GetItemRotation(objectID);
 		return Rotation(rotation);
 	}
 
 	static float GetItemScale(GAME_OBJECT_ID objectID)
 	{
-		return g_Hud.DrawItems.GetItemScale(objectID);
+		return g_DrawItems.GetItemScale(objectID);
 	}
 
 	static void ClearItems()
 	{
-		g_Hud.DrawItems.Clear();
+		g_DrawItems.Clear();
 	}
 
 	static void SetCameraPosition(const Vec3& newPos)
 	{
-		g_Hud.DrawItems.SetCameraPosition(newPos);
+		g_DrawItems.SetCameraPosition(newPos);
 	}
 
 	static void SetTargetPosition(const Vec3& newPos)
 	{
-		g_Hud.DrawItems.SetCameraTarget(newPos);
+		g_DrawItems.SetCameraTarget(newPos);
 	}
 
 	static Vec3 GetCameraPosition()
 	{
-		return g_Hud.DrawItems.GetCameraPosition();
+		return g_DrawItems.GetCameraPosition();
 	}
 
 	static Vec3 GetTargetPosition()
 	{
-		return g_Hud.DrawItems.GetTargetPosition();
+		return g_DrawItems.GetTargetPosition();
 	}
 
 	void Register(sol::state* state, sol::table& parent)

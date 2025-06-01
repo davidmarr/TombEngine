@@ -221,6 +221,7 @@ GameStatus GamePhase(bool insideMenu)
 
 	// Update HUD.
 	g_Hud.Update(*LaraItem);
+	g_DrawItems.Update();
 	UpdateFadeScreenAndCinematicBars();
 
 	// Rumble screen (like in submarine level of TRC).
@@ -320,9 +321,9 @@ GameStatus FreezePhase()
 
 		PlaySoundSources();
 		Sound_UpdateScene();
-
-		g_Hud.Update(*LaraItem);
 	}
+
+	g_DrawItems.Update();
 
 	// HACK: Update player hair if animation was switched in spectator mode.
 	// Needed for photo mode and other similar functionality.
@@ -557,6 +558,7 @@ void CleanUp()
 
 	// Clear HUD.
 	g_Hud.Clear();
+	g_DrawItems.Clear();
 
 	// Clear soundtrack masks.
 	ClearSoundTrackMasks();

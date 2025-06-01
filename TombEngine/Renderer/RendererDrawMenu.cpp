@@ -931,7 +931,7 @@ namespace TEN::Renderer
 		float aspectRatio = static_cast<float>(_screenWidth) / _screenHeight;
 
 		//auto viewMatrix = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, -BLOCK(1)), Vector3::Zero, Vector3::Up);
-		auto viewMatrix = Matrix::CreateLookAt(g_Hud.DrawItems.GetCameraPosition(), g_Hud.DrawItems.GetTargetPosition(), Vector3::Up);
+		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetCameraPosition(), g_DrawItems.GetTargetPosition(), Vector3::Up);
 		auto projMatrix = Matrix::CreatePerspectiveFieldOfView(
 			CurrentFOV, aspectRatio, NearPlane, FarPlane);
 		
@@ -1256,15 +1256,15 @@ namespace TEN::Renderer
 			RenderScene(&_backBuffer, _gameCamera, SceneRenderMode::NoHud);
 		}
 
-		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
-		// Draw3DObjectsIn2DSpace(_gameCamera);
-		g_Hud.Draw(*LaraItem);
-
 		// Draw display sprites sorted by priority.
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
 		DrawAllStrings();
 		DrawDisplaySprites(_gameCamera, true);
+
+		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
+		// Draw3DObjectsIn2DSpace(_gameCamera);
+		g_DrawItems.Draw();
 
 		ClearScene();
 

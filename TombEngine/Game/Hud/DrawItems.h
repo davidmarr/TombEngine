@@ -97,4 +97,6 @@ namespace TEN::Hud
 		Vector3 GetCameraPosition() const;
 		Vector3 GetTargetPosition() const;
 	};
+
+	extern DrawItemsController g_DrawItems;
 }
