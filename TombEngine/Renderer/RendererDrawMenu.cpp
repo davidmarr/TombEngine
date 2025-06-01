@@ -1260,11 +1260,8 @@ namespace TEN::Renderer
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
 		DrawAllStrings();
-		DrawDisplaySprites(_gameCamera, true);
-
-		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
-		// Draw3DObjectsIn2DSpace(_gameCamera);
 		g_DrawItems.Draw();
+		DrawDisplaySprites(_gameCamera, true);
 
 		ClearScene();
 
