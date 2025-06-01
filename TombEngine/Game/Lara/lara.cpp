@@ -450,7 +450,7 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 	}
 	player.Control.Look.Mode = LookMode::None;
 
-	UpdateLaraRoom(item, -LARA_HEIGHT / 2);
+	UpdateLaraRoom(item, -coll->Setup.Height / 2);
 
 	// Process vehicles.
 	if (HandleLaraVehicle(item, coll))
@@ -544,7 +544,7 @@ void LaraWaterSurface(ItemInfo* item, CollisionInfo* coll)
 	if (player.Context.Vehicle == NO_VALUE)
 		HandlePlayerBehaviorState(*item, *coll, PlayerBehaviorStateRoutineType::Collision);
 
-	UpdateLaraRoom(item, LARA_RADIUS);
+	UpdateLaraRoom(item, coll->Setup.Radius);
 	HandleWeapon(*item);
 
 	ProcessSectorFlags(item);

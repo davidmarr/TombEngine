@@ -44,6 +44,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed SSAO incorrectly applied through alpha blended textures.
 * Fixed hair not rendered correctly if alpha blended textures are present.
 * Fixed disappearing Lara when climbing through specific L-shaped portal setups.
+* Fixed flickering Lara color when running into static meshes submerged in water.
 * Fixed clipping of overlapped rooms during flyby sequences.
 * Fixed static meshes not interpolating when dynamically changing their positional data.
 * Fixed crashes when shooting, if gunflash or gunshell objects are not present in a level.
