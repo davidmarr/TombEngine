@@ -63,6 +63,9 @@ namespace TEN::Hud
 
 		// Fields
 		std::vector<DisplayItem> _displayItems = {};
+		
+		Vector3 _cameraPosition = Vector3(0.0f, 0.0f, -BLOCK(1));
+		Vector3 _targetPosition = Vector3::Zero;
 
 	public:
 
@@ -87,5 +90,11 @@ namespace TEN::Hud
 		float GetItemScale(GAME_OBJECT_ID objectID);
 
 		std::vector<DisplayItem>& GetItems();
+
+		void SetCameraPosition(const Vector3& pos);
+		void SetCameraTarget(const Vector3& target);
+
+		Vector3 GetCameraPosition() const;
+		Vector3 GetTargetPosition() const;
 	};
 }

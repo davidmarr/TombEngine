@@ -527,6 +527,10 @@ constexpr char ScriptReserved_DrawItemGetPosition[] = "GetItemPosition";
 constexpr char ScriptReserved_DrawItemGetRotation[] = "GetItemRotation";
 constexpr char ScriptReserved_DrawItemGetScale[]	= "GetItemScale";
 constexpr char ScriptReserved_DrawItemClearAll[]	= "ClearAllItems";
+constexpr char ScriptReserved_DrawItemGetCamera[]	= "GetCameraPosition";
+constexpr char ScriptReserved_DrawItemSetCamera[]	= "SetCameraPosition";
+constexpr char ScriptReserved_DrawItemGetTarget[]	= "GetTargetPosition";
+constexpr char ScriptReserved_DrawItemSetTarget[]	= "SetTargetPosition";
 
 
 // =====

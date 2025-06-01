@@ -70,6 +70,26 @@ namespace TEN::Scripting::DisplayItem
 		g_Hud.DrawItems.Clear();
 	}
 
+	static void SetCameraPosition(const Vec3& newPos)
+	{
+		g_Hud.DrawItems.SetCameraPosition(newPos);
+	}
+
+	static void SetTargetPosition(const Vec3& newPos)
+	{
+		g_Hud.DrawItems.SetCameraTarget(newPos);
+	}
+
+	static Vec3 GetCameraPosition()
+	{
+		return g_Hud.DrawItems.GetCameraPosition();
+	}
+
+	static Vec3 GetTargetPosition()
+	{
+		return g_Hud.DrawItems.GetTargetPosition();
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableDrawItems = sol::table(state->lua_state(), sol::create);
@@ -86,6 +106,10 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetRotation, &GetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetScale, &GetItemScale);
 		tableDrawItems.set_function(ScriptReserved_DrawItemClearAll, &ClearItems);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetCamera, &SetCameraPosition);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetCamera, &GetCameraPosition);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetTarget, &SetTargetPosition);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetTarget, &GetTargetPosition);
 
 	}
 }

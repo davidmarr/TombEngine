@@ -930,7 +930,8 @@ namespace TEN::Renderer
 		
 		float aspectRatio = static_cast<float>(_screenWidth) / _screenHeight;
 
-		auto viewMatrix = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, -BLOCK(1)), Vector3::Zero, Vector3::Up);
+		//auto viewMatrix = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, -BLOCK(1)), Vector3::Zero, Vector3::Up);
+		auto viewMatrix = Matrix::CreateLookAt(g_Hud.DrawItems.GetCameraPosition(), g_Hud.DrawItems.GetTargetPosition(), Vector3::Up);
 		auto projMatrix = Matrix::CreatePerspectiveFieldOfView(
 			CurrentFOV, aspectRatio, NearPlane, FarPlane);
 		

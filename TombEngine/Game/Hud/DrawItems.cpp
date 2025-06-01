@@ -170,4 +170,24 @@ namespace TEN::Hud
 		return _displayItems;
 	}
 
+	void DrawItemsController::SetCameraPosition(const Vector3& pos)
+	{
+		_cameraPosition = pos;
+	}
+
+	void DrawItemsController::SetCameraTarget(const Vector3& target)
+	{
+		_targetPosition = target;
+	}
+
+	Vector3 DrawItemsController::GetCameraPosition() const
+	{
+		return _cameraPosition;
+	}
+
+	Vector3 DrawItemsController::GetTargetPosition() const
+	{
+		return _targetPosition;
+	}
+
 }
