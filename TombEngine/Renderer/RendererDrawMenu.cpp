@@ -918,6 +918,8 @@ namespace TEN::Renderer
 
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
+		
+		float t = GetInterpolationFactor();
 
 		int invObjectID = g_Gui.ConvertObjectToInventoryItem(objectNumber);
 		if (invObjectID != NO_VALUE)
@@ -930,8 +932,7 @@ namespace TEN::Renderer
 		
 		float aspectRatio = static_cast<float>(_screenWidth) / _screenHeight;
 
-		//auto viewMatrix = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, -BLOCK(1)), Vector3::Zero, Vector3::Up);
-		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetCameraPosition(), g_DrawItems.GetTargetPosition(), Vector3::Up);
+		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(t), g_DrawItems.GetInterpolatedCameraTargetPosition(t), Vector3::Up);
 		auto projMatrix = Matrix::CreatePerspectiveFieldOfView(
 			CurrentFOV, aspectRatio, NearPlane, FarPlane);
 		

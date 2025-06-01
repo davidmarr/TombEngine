@@ -63,6 +63,8 @@ namespace TEN::Hud
 		{
 			item.StoreInterpolationData();
 		}
+
+		StoreCameraInterpolationData();
 	}
 
 	void DrawItemsController::Draw() const
@@ -177,7 +179,7 @@ namespace TEN::Hud
 		_cameraPosition = pos;
 	}
 
-	void DrawItemsController::SetCameraTarget(const Vector3& target)
+	void DrawItemsController::SetCameraTargetPosition(const Vector3& target)
 	{
 		_targetPosition = target;
 	}
@@ -187,9 +189,25 @@ namespace TEN::Hud
 		return _cameraPosition;
 	}
 
-	Vector3 DrawItemsController::GetTargetPosition() const
+	Vector3 DrawItemsController::GetCameraTargetPosition() const
 	{
 		return _targetPosition;
+	}
+
+	Vector3 DrawItemsController::GetInterpolatedCameraPosition(float t) const
+	{
+		return Vector3::Lerp(_cameraPreviousPosition, _cameraPosition, t);
+	}
+
+	Vector3 DrawItemsController::GetInterpolatedCameraTargetPosition(float t) const
+	{
+		return Vector3::Lerp(_targetPreviousPosition, _targetPosition, t);
+	}
+
+	void DrawItemsController::StoreCameraInterpolationData()
+	{
+		_cameraPreviousPosition = _cameraPosition;
+		_targetPreviousPosition = _targetPosition;
 	}
 
 }

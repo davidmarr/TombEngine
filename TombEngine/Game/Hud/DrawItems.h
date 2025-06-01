@@ -67,6 +67,9 @@ namespace TEN::Hud
 		Vector3 _cameraPosition = Vector3(0.0f, 0.0f, -BLOCK(1));
 		Vector3 _targetPosition = Vector3::Zero;
 
+		Vector3 _cameraPreviousPosition = _cameraPosition;
+		Vector3 _targetPreviousPosition = _targetPosition;
+
 	public:
 
 		void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity = 1.0f, int meshBits = 0u);
@@ -91,11 +94,17 @@ namespace TEN::Hud
 
 		std::vector<DisplayItem>& GetItems();
 
+		//Camera settings
 		void SetCameraPosition(const Vector3& pos);
-		void SetCameraTarget(const Vector3& target);
+		void SetCameraTargetPosition(const Vector3& target);
 
 		Vector3 GetCameraPosition() const;
-		Vector3 GetTargetPosition() const;
+		Vector3 GetCameraTargetPosition() const;
+
+		Vector3 GetInterpolatedCameraPosition(float t) const;
+		Vector3 GetInterpolatedCameraTargetPosition(float t) const;
+
+		void StoreCameraInterpolationData();
 	};
 
 	extern DrawItemsController g_DrawItems;

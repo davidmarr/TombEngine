@@ -77,7 +77,7 @@ namespace TEN::Scripting::DisplayItem
 
 	static void SetTargetPosition(const Vec3& newPos)
 	{
-		g_DrawItems.SetCameraTarget(newPos);
+		g_DrawItems.SetCameraTargetPosition(newPos);
 	}
 
 	static Vec3 GetCameraPosition()
@@ -87,7 +87,7 @@ namespace TEN::Scripting::DisplayItem
 
 	static Vec3 GetTargetPosition()
 	{
-		return g_DrawItems.GetTargetPosition();
+		return g_DrawItems.GetCameraTargetPosition();
 	}
 
 	void Register(sol::state* state, sol::table& parent)
