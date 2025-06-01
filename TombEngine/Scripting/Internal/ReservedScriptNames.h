@@ -276,6 +276,7 @@ static constexpr char ScriptReserved_GameStatus[]	  = "GameStatus";
 static constexpr char ScriptReserved_FreezeMode[]	  = "FreezeMode";
 
 // Functions
+static constexpr char ScriptReserved_IsNameInUse[]					= "IsNameInUse";
 static constexpr char ScriptReserved_ShowString[]					= "ShowString";
 static constexpr char ScriptReserved_HideString[]					= "HideString";
 static constexpr char ScriptReserved_IsStringDisplaying[]			= "IsStringDisplaying";
@@ -354,21 +355,21 @@ static constexpr char ScriptReserved_GetCameraTarget[]				= "GetCameraTarget";
 
 // Input
 
-static constexpr char ScriptReserved_Input[]							= "Input";
-static constexpr char ScriptReserved_InputActionID[]					= "ActionID";
-static constexpr char ScriptReserved_InputAxisID[]						= "AxisID";
-static constexpr char ScriptReserved_InputClearAllKeys[]				= "ClearAllKeys";
-static constexpr char ScriptReserved_InputClearKey[]					= "ClearKey";
-static constexpr char ScriptReserved_InputGetAnalogKeyValue[]			= "GetAnalogKeyValue";
-static constexpr char ScriptReserved_InputGetAnalogAxisValue[]			= "GetAnalogAxisValue";
-static constexpr char ScriptReserved_InputGetMouseDisplayPosition[]		= "GetMouseDisplayPosition";
-static constexpr char ScriptReserved_InputIsKeyHeld[]					= "IsKeyHeld";
-static constexpr char ScriptReserved_InputIsKeyHit[]					= "IsKeyHit";
-static constexpr char ScriptReserved_InputIsKeyPulsed[]					= "IsKeyPulsed";
-static constexpr char ScriptReserved_InputIsKeyReleased[]				= "IsKeyReleased";
-static constexpr char ScriptReserved_InputVibrate[]						= "Vibrate";
-static constexpr char ScriptReserved_InputPushKey[]						= "PushKey";
-static constexpr char ScriptReserved_GetActionTimeActive[]				= "GetActionTimeActive";
+static constexpr char ScriptReserved_Input[]						= "Input";
+static constexpr char ScriptReserved_InputActionID[]				= "ActionID";
+static constexpr char ScriptReserved_InputAxisID[]					= "AxisID";
+static constexpr char ScriptReserved_InputClearAllKeys[]			= "ClearAllKeys";
+static constexpr char ScriptReserved_InputClearKey[]				= "ClearKey";
+static constexpr char ScriptReserved_InputGetAnalogKeyValue[]		= "GetAnalogKeyValue";
+static constexpr char ScriptReserved_InputGetAnalogAxisValue[]		= "GetAnalogAxisValue";
+static constexpr char ScriptReserved_InputGetMouseDisplayPosition[]	= "GetMouseDisplayPosition";
+static constexpr char ScriptReserved_InputIsKeyHeld[]				= "IsKeyHeld";
+static constexpr char ScriptReserved_InputIsKeyHit[]				= "IsKeyHit";
+static constexpr char ScriptReserved_InputIsKeyPulsed[]				= "IsKeyPulsed";
+static constexpr char ScriptReserved_InputIsKeyReleased[]			= "IsKeyReleased";
+static constexpr char ScriptReserved_InputVibrate[]					= "Vibrate";
+static constexpr char ScriptReserved_InputPushKey[]					= "PushKey";
+static constexpr char ScriptReserved_GetActionTimeActive[]			= "GetActionTimeActive";
 
 static constexpr char ScriptReserved_FlipMap[]						= "FlipMap";
 static constexpr char ScriptReserved_GetFlipMapStatus[]				= "GetFlipMapStatus";
@@ -542,6 +543,7 @@ constexpr char ScriptReserved_DrawItemSetTarget[]	= "SetTargetPosition";
 constexpr char ScriptReserved_Rotation[]			= "Rotation";
 constexpr char ScriptReserved_RotationDirection[]	= "Direction";
 constexpr char ScriptReserved_RotationLerp[]		= "Lerp";
+constexpr char ScriptReserved_RotationSigned[]		= "Signed";
 
 // Vec2
 
