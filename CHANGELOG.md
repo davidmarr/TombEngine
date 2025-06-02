@@ -14,7 +14,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added breakable wall object with land and underwater modes.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_BreakableWall.wad2).
 * Added land mode for underwater switches. Asset change required for both types of underwater switches.
-  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_WallSwitch.wad2).
+  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Puzzles_Switches/TEN_WallSwitch.wad2).
 * Added ability to use big push switch (OCB 3) underwater.
 
 ### Bug fixes
@@ -53,7 +53,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect conversion of non-Latin characters in the setup dialog.
 * Fixed PUZZLE_HOLE Poseidon statue animation (ID 423). You must use updated Lara object from base wad.
 * Refactored PULLEY object. There is no need to use OCB 1 for a single pull.
-  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Interactables/TEN_Pulley.wad2).
+  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Puzzles_Switches/TEN_Pulley.wad2).
 * Removed legacy TR5 code for SEARCH_OBJECT1 which caused issues with meshswaps.
 * Removed excessive HK nerfing in running state.
 * Removed mipmapping for point filter rendering mode.
