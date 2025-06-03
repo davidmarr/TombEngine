@@ -532,7 +532,10 @@ constexpr char ScriptReserved_DrawItemGetCamera[]	= "GetCameraPosition";
 constexpr char ScriptReserved_DrawItemSetCamera[]	= "SetCameraPosition";
 constexpr char ScriptReserved_DrawItemGetTarget[]	= "GetTargetPosition";
 constexpr char ScriptReserved_DrawItemSetTarget[]	= "SetTargetPosition";
-
+constexpr char ScriptReserved_DrawItemSetInvOverride[] = "SetInventoryOverride";
+constexpr char ScriptReserved_DrawItemGetInvOverride[] = "GetInventoryOverride";
+constexpr char ScriptReserved_DrawItemSetOpenInv[]	= "SetOpenInventory";
+constexpr char ScriptReserved_DrawItemGetOpenInv[]	= "GetOpenInventory";
 
 // =====
 // TYPES

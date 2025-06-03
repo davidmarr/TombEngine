@@ -70,6 +70,9 @@ namespace TEN::Hud
 		Vector3 _cameraPreviousPosition = _cameraPosition;
 		Vector3 _targetPreviousPosition = _targetPosition;
 
+		bool _inventoryOverride = false;
+		bool _openInventory = false;
+
 	public:
 
 		void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity = 1.0f, int meshBits = 0u);
@@ -105,6 +108,14 @@ namespace TEN::Hud
 		Vector3 GetInterpolatedCameraTargetPosition(float t) const;
 
 		void StoreCameraInterpolationData();
+
+		//Inventory override
+		bool GetInventoryOverride() const;
+		void SetInventoryOverride(bool value);
+
+		bool GetInventoryOpenStatus() const;
+		void SetInventoryOpenStatus(bool value);
+
 	};
 
 	extern DrawItemsController g_DrawItems;

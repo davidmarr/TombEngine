@@ -257,7 +257,11 @@ namespace TEN::Gui
 
 	void GuiController::SetEnterInventory(int number)
 	{
+		if (g_DrawItems.GetInventoryOverride())
+			g_DrawItems.SetInventoryOpenStatus(true);
+		else
 		EnterInventory = number;
+
 	}
 
 	int GuiController::GetEnterInventory()

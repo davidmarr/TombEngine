@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Scripting/Internal/TEN/View/DisplayItem/DisplayItem.h"
 
-#include "Game/Hud/Hud.h"
+#include "Game/Hud/DrawItems.h"
 
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
@@ -90,6 +90,26 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetCameraTargetPosition();
 	}
 
+	static bool GetInventoryOverride()
+	{
+		return g_DrawItems.GetInventoryOverride();
+	}
+
+	static void SetInventoryOverride(bool value)
+	{
+		g_DrawItems.SetInventoryOverride(value);
+	}
+
+	static bool GetInventoryOpenStatus()
+	{
+		return g_DrawItems.GetInventoryOpenStatus();
+	}
+
+	static void SetInventoryOpenStatus(bool value)
+	{
+		g_DrawItems.SetInventoryOpenStatus(value);
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableDrawItems = sol::table(state->lua_state(), sol::create);
@@ -109,7 +129,10 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetCamera, &SetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetCamera, &GetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetTarget, &SetTargetPosition);
-		tableDrawItems.set_function(ScriptReserved_DrawItemGetTarget, &GetTargetPosition);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetInvOverride, &GetInventoryOverride);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetInvOverride, &SetInventoryOverride);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetOpenInv, &GetInventoryOpenStatus);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetOpenInv, &SetInventoryOpenStatus);
 
 	}
 }

@@ -210,4 +210,25 @@ namespace TEN::Hud
 		_targetPreviousPosition = _targetPosition;
 	}
 
+	bool DrawItemsController::GetInventoryOverride() const
+	{
+		return _inventoryOverride;
+	}
+
+	void DrawItemsController::SetInventoryOverride(bool value)
+	{
+		_inventoryOverride = value;
+
+	}
+
+	bool DrawItemsController::GetInventoryOpenStatus() const
+	{
+		return _openInventory;
+	}
+
+	void DrawItemsController::SetInventoryOpenStatus(bool value)
+	{
+		_openInventory = value;
+	}
+
 }
