@@ -170,8 +170,8 @@ namespace TEN::Video
 
 		// Disable video output and title because rendering is done to a D3D texture.
 #ifdef _DEBUG
-		const char* args[] = { "--vout=none", "--no-video-title", "--no-media-library"};
-		_vlcInstance = libvlc_new(3, args);
+		const char* args[] = { "--vout=none", "--aout=amem", "--no-video-title", "--no-media-library"};
+		_vlcInstance = libvlc_new(4, args);
 		//libvlc_log_set(_vlcInstance, OnLog, nullptr);
 #else
 		const char* args[] = { "--vout=none", "--no-video-title", "--no-media-library", "--quiet" };
@@ -215,30 +215,6 @@ namespace TEN::Video
 			libvlc_release(_vlcInstance);
 
 		_vlcInstance = nullptr;
-	}
-
-	void VideoHandler::SetAudioDevice(std::string suggestedDeviceName)
-	{
-		if (_vlcInstance == nullptr || _player == nullptr)
-		{
-			TENLog("VLC player is not initialized.", LogLevel::Error);
-			return;
-		}
-
-		auto* devList = libvlc_audio_output_device_enum(_player);
-		for (auto* node = devList; node != nullptr; node = node->p_next)
-		{
-			if (node->psz_description != suggestedDeviceName)
-				continue;
-
-			if (libvlc_audio_output_device_set(_player, node->psz_device) != 0)
-				TENLog("Failed to set VLC audio output device: " + suggestedDeviceName, LogLevel::Error);
-
-			break;
-		}
-
-		libvlc_audio_output_device_list_release(devList);
-		HandleError();
 	}
 
 	bool VideoHandler::Play(const std::string& filename, VideoPlaybackMode mode, bool silent, bool loop)
@@ -307,11 +283,17 @@ namespace TEN::Video
 			return false;
 		}
 
-		SetAudioDevice(Sound_GetDeviceName());
-		SetVolume(_volume);
+		// Route sound data to BASS, if video is not played in silent mode.
+		if (!_silent)
+		{
+			SetVolume(_volume);
+			libvlc_audio_set_format_callbacks(_player, OnAudioSetup, nullptr);
+			libvlc_audio_set_callbacks(_player, Sound_VideoPlayCallback, nullptr, nullptr, Sound_VideoFlushCallback, nullptr, this);
+		}
 
+		// Route video data to D3D texture and play video.
 		libvlc_video_set_callbacks(_player, OnLockFrame, OnUnlockFrame, nullptr, this);
-		libvlc_video_set_format_callbacks(_player, OnSetup, nullptr);
+		libvlc_video_set_format_callbacks(_player, OnVideoSetup, nullptr);
 		libvlc_media_player_play(_player);
 
 		if (!HandleError())
@@ -321,7 +303,7 @@ namespace TEN::Video
 		TENLog("Playing video file: " + filePath.filename().string() + " (" + (mode == VideoPlaybackMode::Exclusive ? "Exclusive" : "Background") + " mode)", LogLevel::Info);
 
 		if (_playbackMode == VideoPlaybackMode::Exclusive)
-			PauseAllSounds(SoundPauseMode::Global);
+			PauseAllSounds(SoundPauseMode::Pause);
 
 		// Starting flag is needed to avoid race conditions with asynchronous playback.
 		_starting = true;
@@ -450,7 +432,7 @@ namespace TEN::Video
 		{
 			Stop();
 			ClearAction(In::Pause); // HACK: Otherwise pause key won't work after video ends.
-			ResumeAllSounds(SoundPauseMode::Global);
+			ResumeAllSounds(SoundPauseMode::Pause);
 		}
 
 		HandleError();
@@ -629,7 +611,16 @@ namespace TEN::Video
 		TENLog("VLC: " + std::string(logMgs), logLevel);
 	}
 
-	unsigned int VideoHandler::OnSetup(void** data, char* chroma, unsigned* width, unsigned* height, unsigned* pitches, unsigned* lines)
+	int VideoHandler::OnAudioSetup(void** data, char* format, unsigned* rate, unsigned* channels)
+	{
+		strncpy(format, "FL32", 4); // 32-bit float, little-endian (default format)
+		*rate = SOUND_SAMPLE_RATE;
+		*channels = SOUND_CHANNEL_COUNT;
+
+		return 0;
+	}
+
+	unsigned int VideoHandler::OnVideoSetup(void** data, char* chroma, unsigned* width, unsigned* height, unsigned* pitches, unsigned* lines)
 	{
 		strncpy(chroma, "BGRA", 4);
 
