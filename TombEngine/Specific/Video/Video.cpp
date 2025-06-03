@@ -144,17 +144,6 @@ namespace TEN::Video
 		HandleError();
 	}
 
-	void VideoHandler::SetVolume(int volume)
-	{
-		// Set volume even if player is not available because volume may be externally changed from settings.
-		_volume = std::clamp(volume, 0, 100);
-
-		if (_player != nullptr)
-			libvlc_audio_set_volume(_player, _silent ? 0.0f : _volume);
-
-		HandleError();
-	}
-
 	bool VideoHandler::IsPlaying() const
 	{
 		if (_player == nullptr)
@@ -170,12 +159,12 @@ namespace TEN::Video
 
 		// Disable video output and title because rendering is done to a D3D texture.
 #ifdef _DEBUG
-		const char* args[] = { "--vout=none", "--aout=amem", "--no-video-title", "--no-media-library"};
+		const char* args[] = { "--vout=none", "--aout=adummy", "--no-video-title", "--no-media-library"};
 		_vlcInstance = libvlc_new(4, args);
 		//libvlc_log_set(_vlcInstance, OnLog, nullptr);
 #else
-		const char* args[] = { "--vout=none", "--no-video-title", "--no-media-library", "--quiet" };
-		_vlcInstance = libvlc_new(4, args);
+		const char* args[] = { "--vout=none", "--aout=adummy", "--no-video-title", "--no-media-library", "--quiet" };
+		_vlcInstance = libvlc_new(5, args);
 #endif
 
 		HandleError();
@@ -286,7 +275,6 @@ namespace TEN::Video
 		// Route sound data to BASS, if video is not played in silent mode.
 		if (!_silent)
 		{
-			SetVolume(_volume);
 			libvlc_audio_set_format_callbacks(_player, OnAudioSetup, nullptr);
 			libvlc_audio_set_callbacks(_player, Sound_VideoPlayCallback, nullptr, nullptr, Sound_VideoFlushCallback, nullptr, this);
 		}

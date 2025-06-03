@@ -79,7 +79,6 @@ void SetVolumeTracks(int vol)
 void SetVolumeFX(int vol)
 {
 	GlobalFXVolume = vol;
-	g_VideoPlayer.SetVolume(vol);
 }
 
 bool LoadSample(char* pointer, int compSize, int uncompSize, int index)
@@ -717,7 +716,10 @@ static void CALLBACK Sound_FinishOneshotTrack(HSYNC handle, DWORD channel, DWORD
 void Sound_VideoPlayCallback(void* data, const void* samples, unsigned count, int64_t pts)
 {
 	if (!BASS_ChannelIsActive(BASS_Video))
+	{
 		BASS_ChannelPlay(BASS_Video, false);
+		BASS_ChannelSetAttribute(BASS_Video, BASS_ATTRIB_VOL, GlobalFXVolume / 100.0f);
+	}
 
 	int bytes = count * SOUND_CHANNEL_COUNT * sizeof(float);
 	BASS_StreamPutData(BASS_Video, samples, bytes);
@@ -1026,7 +1028,6 @@ void Sound_Init(const std::string& gameDirectory)
 
 	// Create video channel for video playback.
 	BASS_Video = BASS_StreamCreate(SOUND_SAMPLE_RATE, SOUND_CHANNEL_COUNT, BASS_SAMPLE_FLOAT, STREAMPROC_PUSH, NULL);
-	BASS_ChannelPlay(BASS_Video, false);
 
 	// Reset buffer back to normal value.
 	BASS_SetConfig(BASS_CONFIG_BUFFER, 300);

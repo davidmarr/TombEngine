@@ -66,7 +66,6 @@ namespace TEN::Video
 
 		void SetPosition(int frameCount);
 		void SetNormalizedPosition(float pos);
-		void SetVolume(int volume);
 
 		// Inquirers
 
