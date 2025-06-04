@@ -24,7 +24,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed FISH_EMITTER object missing random targets due to distance.
 * Fixed FISH_EMITTER and COMPSOGNATHUS objects not attacking corpses.
 * Fixed TELEPORTER object.
-* Fixed AI_PATROL and AI_AMBUSH objects.
+* Fixed AI_PATROL and AI_AMBUSH objects to work with suitable enemies.
 * Fixed locked camera flag and glide timer not working for fixed cameras.
 * Fixed weapon hotkeys not unholstering already selected weapon.
 * Fixed weapons not hitting non-intelligent objects.
