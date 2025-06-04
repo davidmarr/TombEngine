@@ -972,8 +972,11 @@ namespace TEN::Renderer
 				continue;
 
 			// If there's a mesh-specific override, apply it
-			if (auto overrideRot = item.GetMeshRotationOverride(i); overrideRot.has_value())
-				moveableObject->LinearizedBones[i]->ExtraRotation = overrideRot->ToQuaternion();
+			if (item.MeshRotations.find(i) != item.MeshRotations.end())
+			{
+				auto rotOverride = item.GetInterpolatedMeshRotation(i, t);
+				moveableObject->LinearizedBones[i]->ExtraRotation = rotOverride.ToQuaternion();
+			}
 
 			// Construct world matrix. // pos.x, pos.y, pos.z
 			auto translationMatrix = Matrix::CreateTranslation(pos3D.x, pos3D.y, pos3D.z);

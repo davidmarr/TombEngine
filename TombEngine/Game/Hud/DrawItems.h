@@ -26,6 +26,7 @@ namespace TEN::Hud
 		float		PrevOpacity		= 0.0f;
 
 		std::unordered_map<int, EulerAngles> MeshRotations;
+		std::unordered_map<int, EulerAngles> PrevMeshRotations;
 
 		void StoreInterpolationData()
 		{
@@ -33,6 +34,7 @@ namespace TEN::Hud
 			PrevOrientation = Orientation;
 			PrevScale = Scale;
 			PrevOpacity = Opacity;
+			PrevMeshRotations = MeshRotations;
 		}
 
 		// Interpolation Helpers
@@ -56,13 +58,20 @@ namespace TEN::Hud
 			return Lerp(PrevOpacity, Opacity, t);
 		}
 
-		std::optional<EulerAngles> GetMeshRotationOverride(int meshIndex) const
+		EulerAngles GetInterpolatedMeshRotation(int meshIndex, float t) const
 		{
-			auto it = MeshRotations.find(meshIndex);
-			if (it != MeshRotations.end())
-				return it->second;
-			return std::nullopt;
+			auto itNow = MeshRotations.find(meshIndex);
+			auto itPrev = PrevMeshRotations.find(meshIndex);
+
+			// If only current rotation exists, or no interpolation available, return it
+			if (itNow == MeshRotations.end())
+				return EulerAngles::Identity;
+			if (itPrev == PrevMeshRotations.end())
+				return itNow->second;
+
+			return EulerAngles::Lerp(itPrev->second, itNow->second, t);
 		}
+
 	};
 
 	class DrawItemsController
