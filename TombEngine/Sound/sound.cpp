@@ -719,15 +719,18 @@ void Sound_VideoPlayCallback(void* data, const void* samples, unsigned count, in
 	{
 		BASS_ChannelPlay(BASS_Video, false);
 		BASS_ChannelSetAttribute(BASS_Video, BASS_ATTRIB_VOL, GlobalFXVolume / 100.0f);
+		Sound_CheckBASSError("Starting audio stream routing for video playback", false);
 	}
 
 	int bytes = count * SOUND_CHANNEL_COUNT * sizeof(float);
 	BASS_StreamPutData(BASS_Video, samples, bytes);
+	Sound_CheckBASSError("Video playback audio stream buffering", false);
 }
 
 void Sound_VideoFlushCallback(void* data, int64_t pts)
 {
 	BASS_ChannelStop(BASS_Video);
+	Sound_CheckBASSError("Stopping audio stream routing for video playback", false);
 }
 
 void Sound_FreeSample(int index)
