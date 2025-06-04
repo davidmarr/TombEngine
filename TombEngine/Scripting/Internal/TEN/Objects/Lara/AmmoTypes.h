@@ -44,6 +44,6 @@ namespace TEN::Scripting
 		{ "GRENADE_FRAG", PlayerAmmoType::GrenadeFrag },
 		{ "GRENADE_FLASH", PlayerAmmoType::GrenadeFlash },
 		{ "HARPOON", PlayerAmmoType::Harpoon },
-		{ "ROCKET", PlayerAmmoType::Rocket },
+		{ "ROCKET", PlayerAmmoType::Rocket }
 	};
 }

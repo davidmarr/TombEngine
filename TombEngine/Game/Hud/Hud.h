@@ -12,6 +12,7 @@ namespace TEN::Hud
 	{
 	public:
 		// Fields
+
 		StatusBarsController		StatusBars		  = {};
 		PickupSummaryController		PickupSummary	  = {};
 		SpeedometerController		Speedometer		  = {};
