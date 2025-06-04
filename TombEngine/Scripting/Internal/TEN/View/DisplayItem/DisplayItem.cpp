@@ -65,11 +65,23 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetItemScale(objectID);
 	}
 
+	static void SetMeshRotation(GAME_OBJECT_ID objectID, int mesh, Rotation angles)
+	{
+		g_DrawItems.SetItemMeshRotation(objectID, mesh, angles.ToEulerAngles());
+	}
+
+	static Vec3 GetMeshRotation(GAME_OBJECT_ID objectID, int mesh)
+	{
+		auto rotation = g_DrawItems.GetItemMeshRotation(objectID, mesh);
+		return Rotation(rotation);
+	}
+
 	static void ClearItems()
 	{
 		g_DrawItems.Clear();
 	}
 
+	//Camera functions
 	static void SetCameraPosition(const Vec3& newPos)
 	{
 		g_DrawItems.SetCameraPosition(newPos);
@@ -90,6 +102,7 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetCameraTargetPosition();
 	}
 
+	//Inventory overrides
 	static bool GetInventoryOverride()
 	{
 		return g_DrawItems.GetInventoryOverride();
@@ -100,12 +113,12 @@ namespace TEN::Scripting::DisplayItem
 		g_DrawItems.SetInventoryOverride(value);
 	}
 
-	static bool GetInventoryOpenStatus()
+	static int GetInventoryOpenStatus()
 	{
 		return g_DrawItems.GetInventoryOpenStatus();
 	}
 
-	static void SetInventoryOpenStatus(bool value)
+	static void SetInventoryOpenStatus(int value)
 	{
 		g_DrawItems.SetInventoryOpenStatus(value);
 	}
@@ -126,6 +139,8 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetRotation, &GetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetScale, &GetItemScale);
 		tableDrawItems.set_function(ScriptReserved_DrawItemClearAll, &ClearItems);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetMeshRotation, &GetMeshRotation);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetMeshRotation, &SetMeshRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetCamera, &SetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetCamera, &GetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetTarget, &SetTargetPosition);

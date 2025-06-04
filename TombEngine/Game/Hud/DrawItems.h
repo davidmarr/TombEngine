@@ -25,6 +25,8 @@ namespace TEN::Hud
 		float		PrevScale		= 0.0f;
 		float		PrevOpacity		= 0.0f;
 
+		std::unordered_map<int, EulerAngles> MeshRotations;
+
 		void StoreInterpolationData()
 		{
 			PrevPosition = Position;
@@ -53,6 +55,14 @@ namespace TEN::Hud
 		{
 			return Lerp(PrevOpacity, Opacity, t);
 		}
+
+		std::optional<EulerAngles> GetMeshRotationOverride(int meshIndex) const
+		{
+			auto it = MeshRotations.find(meshIndex);
+			if (it != MeshRotations.end())
+				return it->second;
+			return std::nullopt;
+		}
 	};
 
 	class DrawItemsController
@@ -71,7 +81,7 @@ namespace TEN::Hud
 		Vector3 _targetPreviousPosition = _targetPosition;
 
 		bool _inventoryOverride = false;
-		bool _openInventory = false;
+		int _openInventory = NO_VALUE;
 
 	public:
 
@@ -89,11 +99,12 @@ namespace TEN::Hud
 		void SetItemScale(GAME_OBJECT_ID objectID, float newScale);
 		void SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha);
 		void SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits);
-		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, EulerAngles& rot);
+		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot);
 
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);
 		float GetItemScale(GAME_OBJECT_ID objectID);
+		EulerAngles GetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex);
 
 		std::vector<DisplayItem>& GetItems();
 
@@ -113,8 +124,8 @@ namespace TEN::Hud
 		bool GetInventoryOverride() const;
 		void SetInventoryOverride(bool value);
 
-		bool GetInventoryOpenStatus() const;
-		void SetInventoryOpenStatus(bool value);
+		int GetInventoryOpenStatus() const;
+		void SetInventoryOpenStatus(int value);
 
 	};
 

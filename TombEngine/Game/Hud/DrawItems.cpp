@@ -23,6 +23,8 @@ namespace TEN::Hud
 				// Update existing item
 				item.Position = origin;
 				item.Scale = scale;
+				item.Opacity = opacity;
+				item.MeshBits = meshBits;
 				return;
 			}
 		}
@@ -134,8 +136,12 @@ namespace TEN::Hud
 
 	}
 
-	void DrawItemsController::SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, EulerAngles& rot)
+	void DrawItemsController::SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot)
 	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			item->MeshRotations[meshIndex] = rot;
+		}
 
 	}
 
@@ -167,6 +173,19 @@ namespace TEN::Hud
 		}
 
 		return 0.0f;
+	}
+
+	EulerAngles DrawItemsController::GetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex)
+	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			auto it = item->MeshRotations.find(meshIndex);
+			if (it != item->MeshRotations.end())
+				return it->second;
+			else
+				return EulerAngles::Identity;
+		}
+		return EulerAngles::Identity;
 	}
 
 	std::vector<DisplayItem>& DrawItemsController::GetItems()
@@ -221,12 +240,12 @@ namespace TEN::Hud
 
 	}
 
-	bool DrawItemsController::GetInventoryOpenStatus() const
+	int DrawItemsController::GetInventoryOpenStatus() const
 	{
 		return _openInventory;
 	}
 
-	void DrawItemsController::SetInventoryOpenStatus(bool value)
+	void DrawItemsController::SetInventoryOpenStatus(int value)
 	{
 		_openInventory = value;
 	}

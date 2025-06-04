@@ -780,16 +780,7 @@ namespace TEN::Renderer
 
 	void Renderer::DrawItem(const DisplayItem& item)
 	{
-		float t = GetInterpolationFactor();
-
-		DrawObjectIn3DSpace(
-			item.ObjectID,
-			item.GetInterpolatedPosition(t),
-			item.GetInterpolatedOrientation(t),
-			item.GetInterpolatedScale(t),
-			item.GetInterpolatedOpacity(t),
-			item.MeshBits
-		);
+		DrawObjectIn3DSpace(item);;
 	}
 
 	// TODO: Handle opacity
@@ -910,17 +901,24 @@ namespace TEN::Renderer
 		}
 	}
 
-	void Renderer::DrawObjectIn3DSpace(int objectNumber, Vector3 pos3D, EulerAngles orient, float scale, float opacity, int meshBits)
+	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
 	{
+		float t = GetInterpolationFactor();
+
+		auto objectNumber = item.ObjectID;
+		auto pos3D = item.GetInterpolatedPosition(t);
+		auto orient = item.GetInterpolatedOrientation(t);
+		float scale = item.GetInterpolatedScale(t);
+		float opacity = item.GetInterpolatedOpacity(t);
+		int meshBits = item.MeshBits;
+
 		constexpr auto AMBIENT_LIGHT_COLOR = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
 		constexpr float NearPlane = 0.1f; // Near clipping plane
 		constexpr float FarPlane = BLOCK(100); // Far clipping plane
 
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
-		
-		float t = GetInterpolationFactor();
-
+	
 		int invObjectID = g_Gui.ConvertObjectToInventoryItem(objectNumber);
 		if (invObjectID != NO_VALUE)
 		{
@@ -973,9 +971,9 @@ namespace TEN::Renderer
 			if (meshBits && !(meshBits & (1 << i)))
 				continue;
 
-			// HACK: Rotate compass needle.
-			if (objectNumber == ID_COMPASS_ITEM && i == 1)
-				moveableObject->LinearizedBones[i]->ExtraRotation = EulerAngles(0, g_Gui.CompassNeedleAngle - ANGLE(180.0f), 0).ToQuaternion();
+			// If there's a mesh-specific override, apply it
+			if (auto overrideRot = item.GetMeshRotationOverride(i); overrideRot.has_value())
+				moveableObject->LinearizedBones[i]->ExtraRotation = overrideRot->ToQuaternion();
 
 			// Construct world matrix. // pos.x, pos.y, pos.z
 			auto translationMatrix = Matrix::CreateTranslation(pos3D.x, pos3D.y, pos3D.z);
