@@ -4,6 +4,7 @@
 #include "Renderer/Renderer.h"
 #include "Sound/sound.h"
 #include "Specific/Input/Input.h"
+#include "Specific/trutils.h"
 #include "Specific/winmain.h"
 
 using namespace TEN::Input;
@@ -13,6 +14,7 @@ namespace TEN::Video
 	VideoHandler g_VideoPlayer = {};
 
 	static const std::string			  VIDEO_PATH	   = "FMV/";
+	static const std::wstring			  VIDEO_PLUGIN_CACHE_PATH = L"plugins/plugins.dat";
 	static const std::vector<std::string> VIDEO_EXTENSIONS = { ".mp4", ".avi", ".mkv", ".mov" };
 
 	int VideoHandler::GetPosition() const
@@ -157,14 +159,28 @@ namespace TEN::Video
 	{
 		TENLog("Initializing video player...", LogLevel::Info);
 
-		// Disable video output and title because rendering is done to a D3D texture.
+		auto pluginCachePath = GetBinaryPath(false) + VIDEO_PLUGIN_CACHE_PATH;
+
+		std::vector<const char*> vlcArgs;
+		vlcArgs.push_back("--vout=none");		 // Disable video output and title because rendering is done to a D3D texture.
+		vlcArgs.push_back("--aout=adummy");		 // Disable audio output because audio is routed to BASS.
+		vlcArgs.push_back("--no-video-title");	 // Disable video title display.
+		vlcArgs.push_back("--no-media-library"); // Disable media library to increase loading speed.
+
+#ifndef _DEBUG
+		vlcArgs.push_back("--quiet");			 // Don't generate excessive VLC warnings in the console.
+#endif
+
+		if (!std::filesystem::is_regular_file(pluginCachePath))
+		{
+			TENLog("Rebuilding video plugin cache", LogLevel::Info);
+			vlcArgs.push_back("--reset-plugins-cache");
+		}
+
+		_vlcInstance = libvlc_new(static_cast<int>(vlcArgs.size()), vlcArgs.data());
+
 #ifdef _DEBUG
-		const char* args[] = { "--vout=none", "--aout=adummy", "--no-video-title", "--no-media-library"};
-		_vlcInstance = libvlc_new(4, args);
 		//libvlc_log_set(_vlcInstance, OnLog, nullptr);
-#else
-		const char* args[] = { "--vout=none", "--aout=adummy", "--no-video-title", "--no-media-library", "--quiet" };
-		_vlcInstance = libvlc_new(5, args);
 #endif
 
 		HandleError();
