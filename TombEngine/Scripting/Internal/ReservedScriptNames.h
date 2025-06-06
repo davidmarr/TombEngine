@@ -394,6 +394,7 @@ static constexpr char ScriptReserved_GetLaserSight[]				= "GetLaserSight";
 static constexpr char ScriptReserved_SetLaserSight[]				= "SetLaserSight";
 static constexpr char ScriptReserved_PlayerIsTorchLit[]				= "IsTorchLit";
 static constexpr char ScriptReserved_PrintLog[]						= "PrintLog";
+static constexpr char ScriptReserved_GetObjectIDString[]			= "GetObjectIDString";
 static constexpr char ScriptReserved_PickMoveable[]					= "PickMoveableByDisplayPosition";
 static constexpr char ScriptReserved_PickStatic[]					= "PickStaticByDisplayPosition";
 static constexpr char ScriptReserved_GetDisplayPosition[]			= "GetDisplayPosition";

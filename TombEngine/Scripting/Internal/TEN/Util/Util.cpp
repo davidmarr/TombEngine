@@ -4,6 +4,7 @@
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Los.h"
 #include "Game/control/los.h"
+#include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/room.h"
 #include "Renderer/Renderer.h"
@@ -187,6 +188,12 @@ namespace TEN::Scripting::Util
 		return posA.Distance(posB);
 	}
 
+	//Internal function required for diary
+	static std::string GetObjectIDString(GAME_OBJECT_ID objectID)
+	{
+		return GetObjectName(objectID);
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableUtil = sol::table(state->lua_state(), sol::create);
@@ -200,6 +207,7 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_PercentToScreen, &PercentToScreen);
 		tableUtil.set_function(ScriptReserved_ScreenToPercent, &ScreenToPercent);
 		tableUtil.set_function(ScriptReserved_PrintLog, &PrintLog);
+		tableUtil.set_function(ScriptReserved_GetObjectIDString, &GetObjectIDString);
 
 		// COMPATIBILITY
 		tableUtil.set_function("CalculateDistance", &CalculateDistance);
