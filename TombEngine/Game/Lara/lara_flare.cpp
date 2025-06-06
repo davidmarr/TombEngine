@@ -516,7 +516,7 @@ bool DoFlareLight(ItemInfo& item, const Vector3i& pos, int flareLife)
 
 	// Spawn glow effect.
 	if (settings.MuzzleGlow)
-		TriggerGlow(GameVector(lightPos, item.RoomNumber), color, 192);
+		TriggerGlow(GameVector(pos, item.RoomNumber), color, 192);
 
 	// Return chaff spawn status.
 	return ((isDying || isEnding) ? spawnChaff : true);
