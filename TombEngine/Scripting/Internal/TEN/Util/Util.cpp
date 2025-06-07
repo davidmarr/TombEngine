@@ -4,6 +4,7 @@
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Los.h"
 #include "Game/control/los.h"
+#include "Game/Gui.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/room.h"
@@ -19,6 +20,10 @@
 #include "Scripting/Internal/TEN/Util/LevelLog.h"
 #include "Specific/configuration.h"
 #include "Specific/level.h"
+
+#include "Scripting/Include/ScriptInterfaceGame.h"
+#include "Scripting/Include/ScriptInterfaceLevel.h"
+#include "Game/control/volume.h"
 
 using namespace TEN::Collision::Los;
 using TEN::Renderer::g_Renderer;
@@ -192,6 +197,13 @@ namespace TEN::Scripting::Util
 	static std::string GetObjectIDString(GAME_OBJECT_ID objectID)
 	{
 		return GetObjectName(objectID);
+	}
+
+	static void OnUseItemCallBack()
+	{
+		g_GameScript->OnUseItem((GAME_OBJECT_ID)g_Gui.GetInventoryItemChosen());
+		HandleAllGlobalEvents(EventType::UseItem, (Activator)short(LaraItem->Index));
+
 	}
 
 	void Register(sol::state* state, sol::table& parent)
