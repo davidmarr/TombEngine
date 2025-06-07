@@ -16,7 +16,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added land mode for underwater switches. Asset change required for both types of underwater switches.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Puzzles_Switches/TEN_WallSwitch.wad2).
 * Added ability to use big push switch (OCB 3) underwater.
-* Added extra behavior for PIERRE and LARSON objects with non-zero OCBs to escape to either AI_AMBUSH with same OCB, if it exists, or to first available corner.
+* Added extra behaviour for PIERRE and LARSON objects with non-zero OCBs to escape to either AI_AMBUSH with the same OCB, if it exists, or to the first available corner.
 
 ### Bug fixes
 * Fixed LASER_BEAM object going through walls.
