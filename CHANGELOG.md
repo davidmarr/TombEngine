@@ -82,6 +82,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed `Rotation` class to use unsigned 0-360 degree range, and provide `Rotation:Signed` method to get legacy -180-180 range.
 * Fixed `Inventory.GiveItem` screen position to start from the side of the screen.
 * Fixed `Moveable.GetJointPosition` not returning correct results if moveable is invisible or not rendered.
+* Fixed `Moveable.GetMeshSwapped` function not working correctly.
 * Fixed `Util.PickMoveableByDisplayPosition`.
 
 ## [Version 1.8.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.8.1) - 2025-03-29
