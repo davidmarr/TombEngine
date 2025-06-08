@@ -54,6 +54,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed crashes when activating objects without animations.
 * Fixed crashes when Lara is on a vehicle unreachable by friendly NPCs.
 * Fixed incorrect conversion of non-Latin characters in the setup dialog.
+* Fixed menu option scrolling when input keys are held.
 * Fixed PUZZLE_HOLE Poseidon statue animation (ID 423). You must use updated Lara object from base wad.
 * Refactored PULLEY object. There is no need to use OCB 1 for a single pull.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Puzzles_Switches/TEN_Pulley.wad2).
