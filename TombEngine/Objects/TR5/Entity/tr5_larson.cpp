@@ -83,11 +83,15 @@ namespace TEN::Entities::Creatures::TR5
 			if (creature->Flags)
 				item->AIBits |= AMBUSH;
 
+			// HACK: Reset enemy if AI bits were unset, otherwise Larson will run around last used AI object.
+			if (!item->AIBits)
+				creature->Enemy = nullptr;
+
 			AI_INFO AI;
 			GetAITarget(creature);
 			CreatureAIInfo(item, &AI);
 
-			// Reset Lara enemy in case no AI_AMBUSH object is present.
+			// HACK: Reset Lara enemy in case no AI_AMBUSH object is present.
 			// Technically it's illegal, but TEN code forces enemy to Lara after calling GetAITarget, resulting
 			// in Larson never running away.
 			if (item->AIBits & AMBUSH && creature->Enemy->ObjectNumber != GAME_OBJECT_ID::ID_AI_AMBUSH)
