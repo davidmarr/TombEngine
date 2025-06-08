@@ -16,7 +16,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added land mode for underwater switches. Asset change required for both types of underwater switches.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Puzzles_Switches/TEN_WallSwitch.wad2).
 * Added ability to use big push switch (OCB 3) underwater.
-* Added extra behaviour for PIERRE and LARSON objects with non-zero OCBs to escape to either AI_AMBUSH with the same OCB, if it exists, or to the first available corner.
+* Added extra behaviour for PIERRE and LARSON objects with non-zero OCBs to escape to either AI_AMBUSH with the same OCB, if it exists, or to any other point.
 
 ### Bug fixes
 * Fixed LASER_BEAM object going through walls.
@@ -37,6 +37,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed HK sound effects.
 * Fixed HK and crossbow shots not being registered in statistics.
 * Fixed incorrect arm rotation for revolver animations in crouched state.
+* Fixed incorrect flare effects position in crouched state.
 * Fixed distorted knee and elbow joint vertices.
 * Fixed multi-mesh objects not shattering correctly.
 * Fixed splash effects remaining in the level after reloading from the savegame.
