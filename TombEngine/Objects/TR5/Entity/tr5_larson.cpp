@@ -79,21 +79,19 @@ namespace TEN::Entities::Creatures::TR5
 
 		if (item->HitPoints > 0)
 		{
-			GetAITarget(creature);
-
 			// If Larson is in the process of escaping, force ambush AI flag on him.
 			if (creature->Flags)
 				item->AIBits |= AMBUSH;
 
 			AI_INFO AI;
+			GetAITarget(creature);
 			CreatureAIInfo(item, &AI);
 
-			// If Larson is in ambush state, reset enemy to null.
-			if ((item->AIBits & AMBUSH) && (creature->Enemy->IsCreature() || creature->Enemy->IsLara()))
-			{
+			// Reset Lara enemy in case no AI_AMBUSH object is present.
+			// Technically it's illegal, but TEN code forces enemy to Lara after calling GetAITarget, resulting
+			// in Larson never running away.
+			if (item->AIBits & AMBUSH && creature->Enemy->ObjectNumber != GAME_OBJECT_ID::ID_AI_AMBUSH)
 				creature->Enemy = nullptr;
-				AI.enemyZone = NO_VALUE;
-			}
 
 			if (AI.ahead)
 				joint2 = AI.angle;
@@ -101,18 +99,21 @@ namespace TEN::Entities::Creatures::TR5
 			GetCreatureMood(item, &AI, true);
 			CreatureMood(item, &AI, true);
 
-			// Set Larson to attack if enemy is moving fast enough and close enough, or if Larson was hit,
-			// or if enemy is directly visible.
-			if ((AI.distance < LARSON_ALERT_RANGE && creature->Enemy->Animation.Velocity.z > 20.0f) ||
-				item->HitStatus ||
-				((creature->Enemy->IsLara() || creature->Enemy->IsCreature()) && TargetVisible(item, &AI) != 0))
+			if (!(item->AIBits & AMBUSH))
 			{
-				item->AIBits &= ~GUARD;
-				creature->Alerted = true;
+				// Set Larson to attack if player is moving fast enough and close enough, or if Larson was hit,
+				// or if player is directly visible.
+				if ((AI.distance < LARSON_ALERT_RANGE && creature->Enemy->Animation.Velocity.z > 20.0f) ||
+					(TargetVisible(item, &AI) != 0) ||
+					item->HitStatus)
+				{
+					item->AIBits &= ~GUARD;
+					creature->Alerted = true;
 
-				// creature->Enemy will contain AI object when Larson is patrolling or guarding, so we reset it.
-				if (!creature->Enemy->IsLara() && !creature->Enemy->IsCreature())
-					creature->Enemy = nullptr;
+					// creature->Enemy will contain AI object when Larson is patrolling or guarding, so we reset it.
+					if (!creature->Enemy->IsLara())
+						creature->Enemy = nullptr;
+				}
 			}
 
 			angle = CreatureTurn(item, creature->MaxTurn);
