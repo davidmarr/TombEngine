@@ -58,6 +58,7 @@ namespace TEN::Entities::Switches
 
 	
 	};
+
 	const auto CeilingSwitchPos = Vector3i(0, BLOCK(1 / 32), 0);
 	const ObjectCollisionBounds CeilingSwitchBounds1 =
 	{
@@ -83,8 +84,6 @@ namespace TEN::Entities::Switches
 			EulerAngles(ANGLE(-80.0f), ANGLE(-80.0f), ANGLE(-80.0f)),
 			EulerAngles(ANGLE(80.0f), ANGLE(80.0f), ANGLE(80.0f))
 		)
-
-
 	};
 
 	void CollideUnderwaterWallSwitch(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
@@ -107,7 +106,13 @@ namespace TEN::Entities::Switches
 			if (!TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, switchItem))
 				switchItem->Pose.Position.y += CLICK(2);
 
-			if (TestLaraPosition(UnderwaterSwitchBounds, switchItem, laraItem))
+			// Zero out vertical switch bounds for land mode to prevent endless attempts to align to misplaced switch.
+			auto landSwitchBounds = UnderwaterSwitchBounds;
+			landSwitchBounds.BoundingBox.Y1 = landSwitchBounds.BoundingBox.Y2 = 0;
+
+			auto switchBounds = isUnderwater ? UnderwaterSwitchBounds : landSwitchBounds;
+
+			if (TestLaraPosition(switchBounds, switchItem, laraItem))
 			{
 				if (MoveLaraPosition(UnderwaterSwitchPos, switchItem, laraItem))
 				{	
@@ -155,9 +160,9 @@ namespace TEN::Entities::Switches
 		bool doInteraction = false;
 
 		bool isUnderwater = (lara->Control.WaterStatus == WaterStatus::Underwater);
+
 		if (isUnderwater)
 		{
-
 			if ((IsHeld(In::Action) &&
 				laraItem->Animation.ActiveState == LS_UNDERWATER_IDLE &&
 				laraItem->Animation.AnimNumber == LA_UNDERWATER_IDLE &&
