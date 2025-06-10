@@ -104,7 +104,7 @@ namespace TEN::Entities::Switches
 		if (isActionActive || (isActionReady && isPlayerAvailable && isPlayerIdle))
 		{
 			// HACK: If switch is placed in the dry room, temporarily move switch up to account for different Lara baseline height.
-			if (!!TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, switchItem))
+			if (!TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, switchItem))
 				switchItem->Pose.Position.y += CLICK(2);
 
 			if (TestLaraPosition(UnderwaterSwitchBounds, switchItem, laraItem))
