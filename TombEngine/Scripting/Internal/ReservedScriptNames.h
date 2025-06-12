@@ -272,6 +272,7 @@ static constexpr char ScriptReserved_ErrorMode[]	  = "ErrorMode";
 static constexpr char ScriptReserved_FastReload[]	  = "FastReload";
 static constexpr char ScriptReserved_InventoryItem[]  = "InventoryItem";
 static constexpr char ScriptReserved_HandStatus[]	  = "HandStatus";
+static constexpr char ScriptReserved_WaterStatus[]	  = "WaterStatus";
 static constexpr char ScriptReserved_GameStatus[]	  = "GameStatus";
 static constexpr char ScriptReserved_FreezeMode[]	  = "FreezeMode";
 
@@ -398,6 +399,7 @@ static constexpr char ScriptReserved_GetObjectIDString[]			= "GetObjectIDString"
 static constexpr char ScriptReserved_PickMoveable[]					= "PickMoveableByDisplayPosition";
 static constexpr char ScriptReserved_PickStatic[]					= "PickStaticByDisplayPosition";
 static constexpr char ScriptReserved_GetDisplayPosition[]			= "GetDisplayPosition";
+static constexpr char ScriptReserved_GetWaterStatus[]				= "GeWaterStatus";
 static constexpr char ScriptReserved_PlayerInteract[]				= "Interact";
 static constexpr char ScriptReserved_PlayerTestInteraction[]		= "TestInteraction";
 

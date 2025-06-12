@@ -561,6 +561,13 @@ bool LaraObject::IsTorchLit() const
 	return player.Torch.IsLit;
 }
 
+
+WaterStatus LaraObject::GetWaterStatus() const
+{
+	auto* lara = GetLaraInfo(_moveable);
+	return  WaterStatus{ lara->Control.WaterStatus };
+}
+
 /// Align the player with a moveable object for interaction.
 // @function LaraObject:Interact
 // @tparam Objects.Moveable mov Moveable object to align the player with.
@@ -691,7 +698,7 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_GetTarget, &LaraObject::GetTarget,
 		ScriptReserved_GetPlayerInteractedMoveable, &LaraObject::GetPlayerInteractedMoveable,
 		ScriptReserved_PlayerIsTorchLit, &LaraObject::IsTorchLit,
-
+		ScriptReserved_GetWaterStatus, & LaraObject::GetWaterStatus,
 		ScriptReserved_PlayerInteract, &LaraObject::Interact,
 		ScriptReserved_PlayerTestInteraction, &LaraObject::TestInteraction,
 
