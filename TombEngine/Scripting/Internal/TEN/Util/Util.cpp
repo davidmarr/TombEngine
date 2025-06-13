@@ -220,6 +220,7 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_ScreenToPercent, &ScreenToPercent);
 		tableUtil.set_function(ScriptReserved_PrintLog, &PrintLog);
 		tableUtil.set_function(ScriptReserved_GetObjectIDString, &GetObjectIDString);
+		tableUtil.set_function(ScriptReserved_OnUseItemCallBack, &OnUseItemCallBack);
 
 		// COMPATIBILITY
 		tableUtil.set_function("CalculateDistance", &CalculateDistance);
