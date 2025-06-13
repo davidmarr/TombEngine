@@ -197,6 +197,15 @@ HandStatus LaraObject::GetHandStatus() const
 	return  HandStatus{ lara->Control.HandStatus };
 }
 
+/// Set the player's hand status.
+// @function LaraObject:SetHandStatus
+// @tparam Objects.HandStatus status Status type to set.
+void LaraObject::SetHandStatus(HandStatus status)
+{
+	auto* lara = GetLaraInfo(_moveable);
+	lara->Control.HandStatus = status;
+}
+
 /// Get the player's weapon type.
 // @function LaraObject:GetWeaponType
 // @usage
@@ -238,6 +247,7 @@ void LaraObject::SetWeaponType(LaraWeaponType weaponType, bool activate)
 	}
 }
 
+//docs required
 bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
 {
 	auto* lara = GetLaraInfo(_moveable);
@@ -254,6 +264,7 @@ bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
 	}
 }
 
+//docs required
 void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate)
 {
 	auto* lara = GetLaraInfo(_moveable);
@@ -386,7 +397,7 @@ int LaraObject::GetAmmoType() const
 
 	return (int)*ammoType;
 }
-
+//docs required
 void LaraObject::SetAmmoType(PlayerAmmoType ammoType)
 {
 	auto& player = GetLaraInfo(*_moveable);
@@ -685,6 +696,7 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_UndrawWeapon, &LaraObject::UndrawWeapon,
 		ScriptReserved_PlayerDiscardTorch, &LaraObject::DiscardTorch,
 		ScriptReserved_GetHandStatus, &LaraObject::GetHandStatus,
+		ScriptReserved_SetHandStatus, & LaraObject::SetHandStatus,
 		ScriptReserved_GetWeaponType, &LaraObject::GetWeaponType,
 		ScriptReserved_SetWeaponType, &LaraObject::SetWeaponType,
 		ScriptReserved_GetLaserSight, & LaraObject::GetLaserSight,

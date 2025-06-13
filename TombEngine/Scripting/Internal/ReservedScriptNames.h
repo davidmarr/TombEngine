@@ -390,6 +390,7 @@ static constexpr char ScriptReserved_UndrawWeapon[]					= "UndrawWeapon";
 static constexpr char ScriptReserved_GetHandStatus[]				= "GetHandStatus";
 static constexpr char ScriptReserved_GetWeaponType[]				= "GetWeaponType";
 static constexpr char ScriptReserved_PlayerDiscardTorch[]			= "DiscardTorch";
+static constexpr char ScriptReserved_SetHandStatus[]				= "SetHandStatus";
 static constexpr char ScriptReserved_SetWeaponType[]				= "SetWeaponType";
 static constexpr char ScriptReserved_GetLaserSight[]				= "GetLaserSight";
 static constexpr char ScriptReserved_SetLaserSight[]				= "SetLaserSight";

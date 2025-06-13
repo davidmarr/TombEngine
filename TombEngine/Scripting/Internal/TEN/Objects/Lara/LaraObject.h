@@ -25,6 +25,7 @@ public:
 	std::unique_ptr<Moveable> GetTarget() const;
 	std::unique_ptr<Moveable> GetPlayerInteractedMoveable() const;
 	HandStatus GetHandStatus() const;
+	void SetHandStatus(HandStatus status);
 	LaraWeaponType GetWeaponType() const;
 	void SetWeaponType(LaraWeaponType weaponType, bool activate);
 	bool GetLaserSight(LaraWeaponType weaponType) const;
