@@ -1,5 +1,17 @@
 -- FILE: Levels\Item_Drawing_Test.lua
 
+--constants
+local NO_VALUE = -1
+local HEALTH_MAX = 1000
+
+--variables
+local rotation = 0
+local alpha = 0
+local interval = 1/10
+local timeInMenu = 0
+local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
+
+--data maps
 local pickupData = require("Levels.InventoryConstants")
 
 local inventoryMode = 
@@ -11,27 +23,31 @@ local inventoryMode =
 
 local soundMap =
 {
-    MENU_CHOOSE = 0,
-    MENU_SELECT = 0,
+    PLAYER_NO = 2,
+    MENU_ROTATE = 108,
+    MENU_SELECT = 109,
+    MENU_CHOOSE = 111,
+    MENU_COMBINE = 114,
+    TR4_MENU_MEDI = 116
 }
 
---variables
-local rotation = 0
-local alpha = 0
-local interval = 1/10
-local timeInMenu = 0
-local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
-local NO_VALUE = -1
+--Structure for weapon data. TEN Weapon type constant, underwater equip allowed, equip while crawling allowed
 local weaponSet = {
-    [TEN.Objects.ObjID.PISTOLS_ITEM] = true,
-    [TEN.Objects.ObjID.UZI_ITEM] = true,
-    [TEN.Objects.ObjID.SHOTGUN_ITEM] = true,
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = true,
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = true,
-    [TEN.Objects.ObjID.HK_ITEM] = true,
-    [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = true,
-    [TEN.Objects.ObjID.HARPOON_ITEM] = true,
-    [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = true
+    [TEN.Objects.ObjID.PISTOLS_ITEM] = {slot = TEN.Objects.WeaponType.PISTOLS, underwater = false, crawl = true}, 
+    [TEN.Objects.ObjID.UZI_ITEM] = {slot = TEN.Objects.WeaponType.UZIS, underwater = false, crawl = true}, 
+    [TEN.Objects.ObjID.SHOTGUN_ITEM] = {slot = TEN.Objects.WeaponType.SHOTGUN, underwater = false, crawl = false},
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {slot = TEN.Objects.WeaponType.REVOLVER, underwater = false, crawl = true},
+    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {slot = TEN.Objects.WeaponType.CROSSBOW, underwater = false, crawl = false},
+    [TEN.Objects.ObjID.HK_ITEM] = {slot = TEN.Objects.WeaponType.HK, underwater = false, crawl = false},
+    [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = {slot = TEN.Objects.WeaponType.GRENADE_LAUNCHER, underwater = false, crawl = false},
+    [TEN.Objects.ObjID.HARPOON_ITEM] = {slot = TEN.Objects.WeaponType.HARPOON_GUN, underwater = true, crawl = false},
+    [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {slot = TEN.Objects.WeaponType.ROCKET_LAUNCHER, underwater = false, crawl = false},
+    [TEN.Objects.ObjID.FLARE_INV_ITEM] = {slot = TEN.Objects.WeaponType.FLARE, underwater = true, crawl = true}
+}
+
+local healthSet = {
+    [TEN.Objects.ObjID.BIGMEDI_ITEM] = HEALTH_MAX,
+    [TEN.Objects.ObjID.SMALLMEDI_ITEM] = HEALTH_MAX / 2
 }
 
 local ammoSet = {
@@ -48,14 +64,89 @@ local ammoSet = {
 
 LevelFuncs.Engine.CustomInventory = {}
 
+--functions
+local percentPos = function(x, y)
+    return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
+end
+
 math.sign = function(x)
     return x > 0 and 1 or (x < 0 and -1 or 0)
 end
 
-LevelFuncs.OnLoad = function() end
-LevelFuncs.OnSave = function() end
+local calculateCompassAngle = function()
+
+    local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
+
+	local wibble =  math.sin((timeInMenu % 0x40) / 0x3F * (2 * math.pi))
+    needleOrient.y = needleOrient.y + wibble
+
+    return needleOrient
+end
+
+local calculateStopWatchRotation = function()
+
+    local angles = {}
+
+    local level_time = Flow.GetStatistics().timeTaken
+
+    angles.hour_hand_angle = Rotation(0,0,-(level_time.h / 12) * 360)
+    angles.minute_hand_angle = Rotation(0,0,-(level_time.m / 60) * 360)
+    angles.second_hand_angle = Rotation(0,0,-(level_time.s / 60) * 360)
+
+    return angles
+
+end
+
+local SetRotationInventoryItems = function()
+
+    local angles = calculateStopWatchRotation()
+
+    --Stopwatch hands
+    TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.STOPWATCH_ITEM, 4, angles.hour_hand_angle)
+    TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.STOPWATCH_ITEM, 5, angles.minute_hand_angle)
+    TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.STOPWATCH_ITEM, 6, angles.second_hand_angle)
+
+    --Compass Needle
+    TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.COMPASS_ITEM, 1, calculateCompassAngle())
+
+end
+
+local combine = function(item1, item2)
+	
+    for _, combo in ipairs(pickupData.combineTable) do
+		
+        local a, b, result = combo[1], combo[2], combo[3]
+
+		if (item1 == a and item2 == b) or (item1 == b and item2 == a) then
+
+            -- Check if both items are actually present
+            local count1 = TEN.Inventory.GetItemCount(item1)
+            local count2 = TEN.Inventory.GetItemCount(item2)
+
+            if count1 == 0 or count2 == 0 then
+                return false
+            end
+
+            -- Remove the original items
+            TEN.Inventory.TakeItem(item1, 1)
+            TEN.Inventory.TakeItem(item2, 1)
+
+            -- Add the new combined item
+            TEN.Inventory.GiveItem(result, 1)
+			return true
+		end
+	end
+
+	-- No valid combination found
+	return false
+end
+
 
 LevelFuncs.OnStart = function()
+
+    local stats = Flow.GetStatistics()
+    stats.timeTaken = Time({9,40,36}) 
+    Flow.SetStatistics(stats)
 
     LevelFuncs.Engine.CustomInventory.IntializeInventory()
 
@@ -67,31 +158,9 @@ LevelFuncs.OnFreeze = function()
     --LevelFuncs.AdjustCamera()
 end
 
-LevelFuncs.OnLoop = function()
-
-    -- if LevelVars.Engine.CustomInventory.UseBinoculars then
-    --     TEN.View.UseBinoculars()
-    --     LevelVars.Engine.CustomInventory.UseBinoculars = false
-    -- end
-
-end
-
-local count = 0
+--required for positioning the inventory
 local selectedIndex = 1
 local vector
-LevelFuncs.Count = function(keydown)
-
-    count = count + 1
-
-    if count > 4 then
-        count = 0
-        return true
-    end
-
-    return false
-end
-
-
 LevelFuncs.AdjustCamera = function()
 
     local entrySprite2 = TEN.DisplaySprite(TEN.Objects.ObjID.DIARY_ENTRY_SPRITES, 0, TEN.Vec2(50, 50), 0, TEN.Vec2(100,100), TEN.Color(255,255,255))
@@ -151,9 +220,9 @@ LevelFuncs.AdjustCamera = function()
 
 
     if selectedItem == "Camera" then
-        TEN.DrawItem.SetCameraPosition(vector)
+        TEN.DrawItem.SetInvCameraPosition(vector)
     elseif selectedItem == "Target" then
-        TEN.DrawItem.SetTargetPosition(vector)
+        TEN.DrawItem.SetInvTargetPosition(vector)
     elseif selectedItem == "FOV" then
         View.SetFOV(vector.y)
     end
@@ -162,21 +231,27 @@ end
 
 LevelFuncs.Engine.CustomInventory.StartInventory = function()
 
-    if (IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE)and not LevelVars.Engine.CustomInventory.InventoryOpen  then
-        --ClearKey(TEN.Input.ActionID.INVENTORY)
-        print("running inventory")
+    if LevelVars.Engine.CustomInventory.UseBinoculars then
+        TEN.View.UseBinoculars()
+        LevelVars.Engine.CustomInventory.UseBinoculars = false
+    end
+
+    local playerHp = Lara:GetHP() > 0
+    local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
+
+    if (IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
         LevelVars.Engine.CustomInventory.InventoryOpen = true
         inventoryDelay = 0
     end
 
     if LevelVars.Engine.CustomInventory.InventoryOpen == true then
-        --ClearKey(TEN.Input.ActionID.INVENTORY)
         inventoryDelay = inventoryDelay + 1
         SetPostProcessMode(View.PostProcessMode.MONOCHROME)
         SetPostProcessStrength(1)
         SetPostProcessTint(Color(128,128,128))
 
         if inventoryDelay >= 2 then
+            TEN.Sound.PlaySound(soundMap.MENU_SELECT)
             TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
             Flow.SetFreezeMode(Flow.FreezeMode.SPECTATOR) -- SHOULD RUN IN FULL MODE
         end
@@ -195,12 +270,12 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
     TEN.DrawItem.ClearAllItems()
     TEN.DrawItem.SetOpenInventory(NO_VALUE)
-    TEN.Inventory.SetUsedItem(TEN.Objects.ObjID.PUZZLE_ITEM10)
     View.SetFOV(80)
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     LevelVars.Engine.CustomInventory.InventoryClosed = true
     timeInMenu = 0
     rotation = 0
+
 end
 
 LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
@@ -216,10 +291,9 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         LevelFuncs.Engine.CustomInventory.Input()
         LevelFuncs.Engine.CustomInventory.RotateInventory()
 
-        TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.STOPWATCH_ITEM, 6, Rotation(0,0,(rotation) % 360))
-        TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.STOPWATCH_ITEM, 4, Rotation(0,0,(rotation+90) % 360))
-        TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.STOPWATCH_ITEM, 5, Rotation(0,0,(rotation+180) % 360))
-        TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.COMPASS_ITEM, 1, Rotation(0,(rotation) % 360,0))
+        --Set rotation of InventoryItems
+        SetRotationInventoryItems()
+
     end
 end
 
@@ -256,8 +330,8 @@ LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
 
     TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.CustomInventory.StartInventory)
 
-    TEN.DrawItem.SetCameraPosition(Vec3(0,-36,-1151))
-    TEN.DrawItem.SetTargetPosition(Vec3(0,110,0))
+    TEN.DrawItem.SetInvCameraPosition(Vec3(0,-36,-1151))
+    TEN.DrawItem.SetInvTargetPosition(Vec3(0,110,0))
 
     TEN.DrawItem.SetInventoryOverride(true)
 
@@ -370,15 +444,19 @@ local inventoryTable = LevelVars.Engine.CustomInventory.Inventory
             LevelVars.Engine.CustomInventory.SelectedItem = ((LevelVars.Engine.CustomInventory.SelectedItem - 2) % #inventoryTable) + 1
             LevelVars.Engine.CustomInventory.TargetAngle = LevelVars.Engine.CustomInventory.CurrentAngle + LevelVars.Engine.CustomInventory.InventorySlice
             LevelVars.Engine.CustomInventory.RotationInProgress = true
+            TEN.Sound.PlaySound(soundMap.MENU_ROTATE)
         elseif LevelFuncs.Engine.CustomInventory.GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
             LevelVars.Engine.CustomInventory.SelectedItem = (LevelVars.Engine.CustomInventory.SelectedItem % #inventoryTable) + 1
             LevelVars.Engine.CustomInventory.TargetAngle = LevelVars.Engine.CustomInventory.CurrentAngle - LevelVars.Engine.CustomInventory.InventorySlice
             LevelVars.Engine.CustomInventory.RotationInProgress = true
-        elseif LevelFuncs.Engine.CustomInventory.GuiIsPulsed(TEN.Input.ActionID.DRAW) then
-            LevelVars.Engine.CustomInventory.SelectedItem = (LevelVars.Engine.CustomInventory.SelectedItem % #inventoryTable) + 1
-            LevelVars.Engine.CustomInventory.TargetAngle = LevelVars.Engine.CustomInventory.CurrentAngle - LevelVars.Engine.CustomInventory.InventorySlice
-            LevelVars.Engine.CustomInventory.RotationInProgress = true
+            TEN.Sound.PlaySound(soundMap.MENU_ROTATE)
+        elseif LevelFuncs.Engine.CustomInventory.GuiIsPulsed(TEN.Input.ActionID.ACTION) then
+            local item = LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].item
+            TEN.Sound.PlaySound(soundMap.MENU_CHOOSE)
+            LevelFuncs.Engine.CustomInventory.UseItem(item)
+            LevelFuncs.Engine.CustomInventory.ExitInventory()
         elseif LevelFuncs.Engine.CustomInventory.GuiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
+            TEN.Sound.PlaySound(soundMap.MENU_SELECT)
             LevelFuncs.Engine.CustomInventory.ExitInventory()
             return
         end
@@ -396,7 +474,6 @@ LevelFuncs.Engine.CustomInventory.RotateInventory = function()
         alpha = math.min(alpha + interval, 1)
         local factor = LevelFuncs.Engine.Node.Smoothstep(alpha)
         local newValue1 = LevelFuncs.Engine.Node.Lerp(0, LevelVars.Engine.CustomInventory.Radius, factor)
-        print(newValue1)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryTable, LevelVars.Engine.CustomInventory.Centre, newValue1, LevelVars.Engine.CustomInventory.CurrentAngle)
 
         if alpha >=1 then
@@ -429,11 +506,10 @@ LevelFuncs.Engine.CustomInventory.RotateInventory = function()
         end
 
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryTable, LevelVars.Engine.CustomInventory.Centre, LevelVars.Engine.CustomInventory.Radius, LevelVars.Engine.CustomInventory.CurrentAngle)
-
+        
         if not LevelVars.Engine.CustomInventory.RotationInProgress then
-            -- Optional: Rotate selected item
             local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem].item
-            --TEN.DrawItem.SetItemRotation(selectedItem, Rotation(0, (rotation) % 360, 0))
+            TEN.DrawItem.SetItemRotation(selectedItem, Rotation(0, (rotation) % 360, 0))
             rotation  = rotation  + 4
             LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem)
         end
@@ -452,22 +528,156 @@ LevelFuncs.Engine.CustomInventory.ReduceItem = function(item, count)
 
 end
 
-LevelFuncs.Engine.CustomInventory.UseItem = function(item, count)
+LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
-    LevelFuncs.Engine.CustomInventory.ReduceItem(item, count)
+    local levelStatistics = Flow.GetStatistics()
+    local gameStatistics = Flow.GetStatistics(true)
+
+    local CROUCH_STATES ={
+			LS_CROUCH_IDLE = 71,
+			LS_CROUCH_TURN_LEFT = 105,
+			LS_CROUCH_TURN_RIGHT = 106,
+			LS_CROUCH_TURN_180 = 171
+		}
+
+    local CRAWL_STATES = {
+			LS_CRAWL_IDLE = 80,
+			LS_CRAWL_FORWARD = 81,
+			LS_CRAWL_BACK = 86,
+			LS_CRAWL_TURN_LEFT = 84,
+			LS_CRAWL_TURN_RIGHT = 85,
+			LS_CRAWL_TURN_180 = 172,
+			LS_CRAWL_TO_HANG = 88
+		}
+
+    local TestState = function(table)
+        local currentState = Lara:GetState()
+        for _, state in pairs(table) do
+            if currentState == state then
+                return true
+            end
+        end
+        return false
+    end
+
+    local CrawlTest = function(item)
+
+        if item.crawl then
+            return true
+        end
+
+        return not (TestState(CROUCH_STATES) or TestState(CRAWL_STATES))
+
+    end
+
+    local WaterTest = function(item)
+        
+        if item.underwater then
+            return true
+        end
+
+        return (Lara:GetWaterStatus() == TEN.Objects.WaterStatus.DRY or Lara:GetWaterStatus() == TEN.Objects.WaterStatus.WADE)
+
+    end
+
+	TEN.Inventory.SetUsedItem(item)
+
+	--Use item event handling.
+	TEN.Util.OnUseItemCallBack()
+    
+    --Quickly discard further processing if chosen item was reset in script.
+    if (TEN.Inventory.GetUsedItem() == NO_VALUE) then
+        return
+    end
+
+    if weaponSet[item] and WaterTest(weaponSet[item]) and CrawlTest(weaponSet[item]) then
+        
+        TEN.Inventory.ClearUsedItem()
+
+        local currentWeapon = Lara:GetWeaponType()
+
+        --Return if flare is already equipped
+        if currentWeapon == TEN.Objects.WeaponType.FLARE then
+            return
+        end
+        
+        Lara:SetWeaponType(weaponSet[item].slot, true)
+
+        if currentWeapon == weaponSet[item].slot and Lara:GetHandStatus() ~= TEN.Objects.HandStatus.WEAPON_READY then
+            Lara:SetHandStatus(TEN.Objects.HandStatus.WEAPON_DRAW)
+        end
+
+        if item == TEN.Objects.ObjID.FLARE_INV_ITEM then
+            LevelFuncs.Engine.CustomInventory.ReduceItem(item, 1)
+        end
+        
+    end
+
+    if healthSet[item] then
+
+        TEN.Inventory.ClearUsedItem()
+
+        local hp = Lara:GetHP()
+        local poison = Lara:GetPoison()
+
+        if hp <= 0 or hp >= HEALTH_MAX then
+            if poison == 0 then
+                return
+            end
+        end
+        local count = TEN.Inventory.GetItemCount(item)
+        
+        
+
+        if count then
+            if count ~= NO_VALUE then
+                LevelFuncs.Engine.CustomInventory.ReduceItem(item, 1)
+            end
+
+            Lara:SetPoison(0)
+            
+            local setHP = math.min(1000, (hp + healthSet[item]))
+            Lara:SetHP(setHP)
+
+            TEN.Sound.PlaySound(soundMap.TR4_MENU_MEDI)
+            
+            --update statistics for health item used
+            levelStatistics.healthPacksUsed = levelStatistics.healthPacksUsed + 1
+            gameStatistics.healthPacksUsed = gameStatistics.healthPacksUsed + 1
+            Flow.SetStatistics(levelStatistics)
+            Flow.SetStatistics(gameStatistics, true)
+        end
+
+    end
+
+    if item == TEN.Objects.ObjID.BINOCULARS_ITEM then
+        
+        TEN.Inventory.ClearUsedItem()
+        LevelVars.Engine.CustomInventory.UseBinoculars = true
+
+    end
 
 end
 
+LevelFuncs.Engine.CustomInventory.CombineItem = function(item1, item2)
+
+    if combine(item1, item2) then
+     
+        LevelFuncs.Engine.CustomInventory.ConstructObjectList() 
+        
+    end
+
+end
+
+local examineOrient = Rotation(0,0,0)
+local examineScaler = 1.2
 LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
 
-    local screenPos = TEN.Vec2(TEN.Util.PercentToScreen(50, 50))
+    local screenPos = percentPos(50, 50)
 
     -- Static variables
-    local orient = Rotation(0,0,0)
-
-    local scaler = 1.2
-   
-
+    
+    
     local multiplier = 1/30
 
     -- Get current inventory item
@@ -477,54 +687,42 @@ LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
     local object = InventoryObjectTable[currentItemID]
 
     -- Handle rotation input
-    if IsHeld(In.Forward) then
-        orient.x = orient.x + 3.0 / multiplier
+    if IsKeyHeld(Input.ActionID.FORWARD) then
+        examineOrient.x = examineOrient.x + 3.0 / multiplier
     end
 
-    if IsHeld(In.Back) then
-        orient.x = orient.x - (3.0 / multiplier)
+    if IsKeyHeld(Input.ActionID.BACK) then
+        examineOrient.x = examineOrient.x - (3.0 / multiplier)
     end
 
-    if IsHeld(In.Left) then
-        orient.y = orient.y + (3.0 / multiplier)
+    if IsKeyHeld(Input.ActionID.LEFT) then
+        examineOrient.y = examineOrient.y + (3.0 / multiplier)
     end
 
-    if IsHeld(In.Right) then
-        orient.y = orient.y - (3.0 / multiplier)
+    if IsKeyHeld(Input.ActionID.RIGHT) then
+        examineOrient.y = examineOrient.y - (3.0 / multiplier)
     end
 
     -- Handle scaling input
-    if IsHeld(In.Sprint) then
-        scaler = scaler + (0.03 / multiplier)
+    if IsKeyHeld(Input.ActionID.SPRINT) then
+        examineScaler = examineScaler + (0.03 / multiplier)
     end
 
-    if IsHeld(In.Crouch) then
-        scaler = scaler - (0.03 / multiplier)
+    if IsKeyHeld(Input.ActionID.CROUCH) then
+        examineScaler = examineScaler - (0.03 / multiplier)
     end
 
     -- Clamp scale
-    if scaler > 1.6 then
-        scaler = 1.6
-    elseif scaler < 0.8 then
-        scaler = 0.8
+    if examineScaler > 1.6 then
+        examineScaler = 1.6
+    elseif examineScaler < 0.8 then
+        examineScaler = 0.8
     end
 
     -- Get the localized string key
-    local objectName = GetObjectName(object.ObjectNumber)
-    local stringKey = ToLower(objectName) .. "_text"
-    local localizedString = g_GameFlow:GetString(stringKey)
-
-    -- If string found (hash differs), draw it and shift position upward
-    if GetHash(localizedString) ~= GetHash(stringKey) then
-        AddString(
-            screenPos.x,
-            screenPos.y + screenPos.y / 2.0,
-            localizedString,
-            PRINTSTRING_COLOR_WHITE,
-            SF_Center() + PrintStringFlags.VerticalCenter
-        )
-        screenPos.y = screenPos.y - (screenPos.y / 4.0)
-    end
+    local objectName = Util.GetObjectIDString(TEN.Objects.ObjID.PISTOLS_ITEM)
+    local stringKey = objectName:lower() .. "_text"
+    local localizedString = GetString(stringKey)
 
     -- Draw the inventory object with scale applied
     local savedScale = object.Scale1
@@ -540,7 +738,7 @@ end
 
 LevelFuncs.Engine.CustomInventory.DrawItemLabel = function(item)
 
-    local entryPosInPixel = TEN.Vec2(TEN.Util.PercentToScreen(50, 86)) --Item label
+    local entryPosInPixel = percentPos(50, 86) --Item label
     local label = GetString(LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].name)
     local count = LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].count
     local result
@@ -582,7 +780,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
     local scale = entry[3]
     local color = entry[4]
 
-    local entryPosInPixel = TEN.Vec2(TEN.Util.PercentToScreen(position.x, position.y))
+    local entryPosInPixel = percentPos(position.x, position.y)
 
     local entryText = TEN.Strings.DisplayString(string, entryPosInPixel, scale, color, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
     ShowString(entryText, 1 / 30)
