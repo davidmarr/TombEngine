@@ -37,7 +37,7 @@ local Type = {}
 
 --- Check if the variable is a number.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a number, `false` otherwise.
+-- @treturn bool `true` if the variable is a number, `false` otherwise.
 -- @usage
 -- --example of use
 --  local num = 255
@@ -50,7 +50,7 @@ end
 
 --- Check if the variable is a string.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a string, `false` otherwise.
+-- @treturn bool `true` if the variable is a string, `false` otherwise.
 -- @usage
 -- --example of use
 --  local str = "Hi"
@@ -64,7 +64,7 @@ end
 
 --- Check if the variable is a boolean.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a boolean, `false` otherwise.
+-- @treturn bool `true` if the variable is a boolean, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.test = function (test)
@@ -80,7 +80,7 @@ end
 
 --- Check if the variable is a table.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a table, `false` otherwise.
+-- @treturn bool `true` if the variable is a table, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.PairsTable = function (table)
@@ -96,7 +96,7 @@ end
 
 --- Check if the variable has a null value.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a null, `false` otherwise.
+-- @treturn bool `true` if the variable is a null, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.AddProp = function (prop)
@@ -112,7 +112,7 @@ end
 
 --- Check if the variable is a function.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a function, `false` otherwise.
+-- @treturn bool `true` if the variable is a function, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.RunFunc = function (func)
@@ -126,7 +126,7 @@ end
 
 --- Check if the variable is a @{Color}.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a Color, `false` otherwise.
+-- @treturn bool `true` if the variable is a Color, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.SetColor = function(color)
@@ -140,7 +140,7 @@ end
 
 --- Check if the variable is a @{Rotation}.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a Rotation, `false` otherwise.
+-- @treturn bool `true` if the variable is a Rotation, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.SetRotation = function (rot)
@@ -154,7 +154,7 @@ end
 
 --- Check if the variable is a @{Vec2}.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a Vec2, `false` otherwise.
+-- @treturn bool `true` if the variable is a Vec2, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.SetSpritePos = function (pos)
@@ -168,7 +168,7 @@ end
 
 --- Check if the variable is a @{Vec3}.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `rue` if the variable is a Vec3, `false` otherwise.
+-- @treturn bool `rue` if the variable is a Vec3, `false` otherwise.
 -- @usage
 -- --example of use
 --	LevelFuncs.SetLaraPos = function (pos)
@@ -182,7 +182,7 @@ end
 
 --- Check if the variable is a @{Time} object.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a Time object, `false` otherwise.
+-- @treturn bool `true` if the variable is a Time object, `false` otherwise.
 -- @usage
 -- --example of use
 --	LevelFuncs.IncreaseTime = function (time)
@@ -196,7 +196,7 @@ end
 
 --- Check if the variable is a LevelFunc.
 -- @tparam variable variable Variable to be checked.
--- @treturn boolean `true` if the variable is a LevelFunc, `false` otherwise.
+-- @treturn bool `true` if the variable is a LevelFunc, `false` otherwise.
 -- @usage
 -- --example of use
 --  LevelFuncs.SetCallback = function (func)
