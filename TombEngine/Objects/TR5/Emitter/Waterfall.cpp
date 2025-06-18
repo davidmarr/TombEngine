@@ -145,7 +145,6 @@ namespace TEN::Effects::WaterfallEmitter
                     targetPos.y = GetPointCollision(Vector3i(targetPos.x, targetPos.y, targetPos.z), part.roomNumber).GetWaterSurfaceHeight();
                     break;
                 }
-
                 else if (!LOS(&originPoint, &target))
                 {
                     if (pointColl.GetRoomNumber() == NO_VALUE || pointColl.GetSector().IsWall(targetPos.x, targetPos.z))
@@ -156,6 +155,17 @@ namespace TEN::Effects::WaterfallEmitter
                     else
                     {
                         targetPos.y = pointColl.GetFloorHeight();
+                        break;
+                    }
+                }
+                else
+                {
+                    auto floorHeight = GetPointCollision(originPoint.ToVector3i(), originPoint.RoomNumber).GetFloorHeight();
+
+                    if (floorHeight <= originPoint.y)
+                    {
+                        targetPos.y = floorHeight;
+                        part.y = floorHeight - yVel;
                         break;
                     }
                 }

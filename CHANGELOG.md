@@ -8,6 +8,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ### Bug fixes
 * Fixed incorrect room collision for negative room coordinates.
 * Fixed exclusive video playback not working when triggered at the end of a level.
+* Fixed freezes when waterfall emitter objects submerged into room geometry are active.
 
 ## [Version 1.9]
 
