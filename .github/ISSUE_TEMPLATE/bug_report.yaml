@@ -19,9 +19,9 @@ body:
       description: |
         Please select the TombEngine version you are using.
       options:
-        - v1.9.0 (Pre-release)
-        - v1.8.1 (latest public release)
-        - v1.8.0
+        - Development build 
+        - v1.9.0 (latest public release)
+        - v1.8.1 
     validations:
       required: true
 
