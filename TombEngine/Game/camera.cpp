@@ -416,6 +416,9 @@ void MoveCamera(GameVector* ideal, int speed)
 
 void ObjCamera(ItemInfo* camSlotId, int camMeshId, ItemInfo* targetItem, int targetMeshId, bool cond)
 {
+	if (ItemCameraOn != cond)
+		Camera.DisableInterpolation = true;
+
 	//camSlotId and targetItem stay the same object until I know how to expand targetItem to another object.
 	//activates code below ->  void CalculateCamera().
 	ItemCameraOn = cond;
@@ -431,6 +434,7 @@ void ObjCamera(ItemInfo* camSlotId, int camMeshId, ItemInfo* targetItem, int tar
 
 	MoveObjCamera(&from, camSlotId, camMeshId, targetItem, targetMeshId);
 	Camera.timer = NO_VALUE;
+	Camera.speed = 1;
 }
 
 void ClearObjCamera()
