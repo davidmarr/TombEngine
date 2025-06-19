@@ -12,6 +12,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed WATERFALL_EMITTER performance and occasional game freezes.
 * Fixed underwater drifting when using PULLEY object.
 * Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
+* Fixed issues with sound initialization if sound device list has changed.
 
 ### Lua API changes
 * Rename `Camera:PlayCamera` to `Camera:Play`.
