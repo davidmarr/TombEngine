@@ -9,10 +9,11 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect room collision for negative room coordinates.
 * Fixed exclusive video playback not working when triggered at the end of a level.
 * Fixed issues with garbage camera movement when switching between fixed cameras.
+* Fixed issues with sound initialization if sound device list has changed.
 * Fixed WATERFALL_EMITTER performance and occasional game freezes.
 * Fixed underwater drifting when using PULLEY object.
 * Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
-* Fixed issues with sound initialization if sound device list has changed.
+* Fixed SENTRY_GUN object not tracking Lara at some angles.
 
 ### Lua API changes
 * Rename `Camera:PlayCamera` to `Camera:Play`.
