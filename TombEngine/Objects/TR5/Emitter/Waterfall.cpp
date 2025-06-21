@@ -18,6 +18,8 @@ using namespace TEN::Math;
 
 constexpr int WATERFALL_SPRITE_SIZE = 62;
 constexpr int WATERFALL_MAX_HEIGHT = BLOCK(16);
+constexpr auto WATERFALL_DEFAULT_WIDTH = CLICK(0.1f);
+constexpr auto WATERFALL_WIDTH_TOLERANCE = WATERFALL_DEFAULT_WIDTH * 2;
 
 // NOTES
 // item.TriggetFlags: Waterfall width. 1 unit = BLOCK(1 / 8.0f).
@@ -76,14 +78,17 @@ namespace TEN::Effects::WaterfallEmitter
         if (!item.ItemFlags[WaterfallItemFlags::Sound])
             SoundEffect(SFX_TR4_WATERFALL_LOOP, &item.Pose);
 
-        float waterfallWidth = std::max(CLICK(float(item.TriggerFlags)), CLICK(0.1f));
+        float waterfallWidth = std::max(CLICK(float(item.TriggerFlags)), WATERFALL_DEFAULT_WIDTH);
         auto vel = item.Pose.Orientation.ToDirection() * BLOCK(customVel);
 
         auto startColor = (item.Model.Color / 4) * SCHAR_MAX;
         auto endColor = (item.Model.Color / 8) * UCHAR_MAX;
 
+        auto lastOffset = Vector3(FLT_MAX);
+        auto lastTargetPos = Vector3::Zero;
+
         // Spawn particles.
-        unsigned int partCount = (int)round(waterfallWidth / BLOCK(density));
+        unsigned int partCount = (int)ceil(waterfallWidth / BLOCK(density));
         for (int i = 0; i < partCount; i++)
         {
             auto& part = *GetFreeParticle();
@@ -128,6 +133,14 @@ namespace TEN::Effects::WaterfallEmitter
             {
                 while (true)
                 {
+                    // If last offset is not far from current one, don't do LOS test and use
+                    // previous target distance.
+                    if (Vector3::Distance(offset, lastOffset) <= WATERFALL_WIDTH_TOLERANCE)
+                    {
+                        targetPos = lastTargetPos;
+                        break;
+                    }
+
                     yVel += gravity;
 
                     if (part.friction & 0x0F)
@@ -170,7 +183,8 @@ namespace TEN::Effects::WaterfallEmitter
                 }
             }
 
-            part.targetPos = targetPos;
+            part.targetPos = lastTargetPos = targetPos;
+            lastOffset = offset;
 
             char colorOffset = Random::GenerateInt(-8, 8);
 
