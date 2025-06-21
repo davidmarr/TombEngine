@@ -22,30 +22,45 @@ namespace TEN::Scripting::DisplayItem
 		g_DrawItems.RemoveItem(objectID);
 	}
 
-	static void SetItemPosition(GAME_OBJECT_ID objectID, const Vec3& newPos)
+	static void SetItemPosition(GAME_OBJECT_ID objectID, const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
-		g_DrawItems.SetItemPosition(objectID, newPos);
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetItemPosition(objectID, newPos, convertedBool);
 	}
 
-	static void SetItemRotation(GAME_OBJECT_ID objectID, const Rotation& newRot)
+	static void SetItemRotation(GAME_OBJECT_ID objectID, const Rotation& newRot, TypeOrNil<bool> disableInterpolation)
 	{
 		auto rotation = newRot.ToEulerAngles();
-		g_DrawItems.SetItemRotation(objectID, rotation);
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetItemRotation(objectID, rotation, convertedBool);
 	}
 
-	static void SetItemScale(GAME_OBJECT_ID objectID, float newScale)
+	static void SetItemScale(GAME_OBJECT_ID objectID, float newScale, TypeOrNil<bool> disableInterpolation)
 	{
-		g_DrawItems.SetItemScale(objectID, newScale);
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetItemScale(objectID, newScale, convertedBool);
 	}
 
-	static void SetItemTransparency(GAME_OBJECT_ID objectID, float alpha)
+	static void SetItemTransparency(GAME_OBJECT_ID objectID, float alpha, TypeOrNil<bool> disableInterpolation)
 	{
-		g_DrawItems.SetItemAlpha(objectID, alpha);
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetItemAlpha(objectID, alpha, convertedBool);
+	}
+
+	static void SetItemVisibility(GAME_OBJECT_ID objectID, bool visibility)
+	{
+		g_DrawItems.SetItemVisibility(objectID, visibility);
 	}
 
 	static void SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits)
 	{
 		g_DrawItems.SetItemMeshBits(objectID, meshbits);
+	}
+
+	static void SetMeshRotation(GAME_OBJECT_ID objectID, int mesh, Rotation angles, TypeOrNil<bool> disableInterpolation)
+	{
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetItemMeshRotation(objectID, mesh, angles.ToEulerAngles(), convertedBool);
 	}
 
 	static Vec3 GetItemPosition(GAME_OBJECT_ID objectID)
@@ -65,9 +80,9 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetItemScale(objectID);
 	}
 
-	static void SetMeshRotation(GAME_OBJECT_ID objectID, int mesh, Rotation angles)
+	static bool GetItemVisibility(GAME_OBJECT_ID objectID)
 	{
-		g_DrawItems.SetItemMeshRotation(objectID, mesh, angles.ToEulerAngles());
+		return g_DrawItems.GetItemVisibility(objectID);
 	}
 
 	static Vec3 GetMeshRotation(GAME_OBJECT_ID objectID, int mesh)
@@ -82,14 +97,16 @@ namespace TEN::Scripting::DisplayItem
 	}
 
 	//Camera functions
-	static void SetCameraPosition(const Vec3& newPos)
+	static void SetCameraPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
-		g_DrawItems.SetCameraPosition(newPos);
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetCameraPosition(newPos, convertedBool);
 	}
 
-	static void SetTargetPosition(const Vec3& newPos)
+	static void SetTargetPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
-		g_DrawItems.SetCameraTargetPosition(newPos);
+		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		g_DrawItems.SetCameraTargetPosition(newPos, convertedBool);
 	}
 
 	static Vec3 GetCameraPosition()
@@ -133,11 +150,13 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetPosition, &SetItemPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetRotation, &SetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetScale, &SetItemScale);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetVisibility, &SetItemVisibility);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetAlpha, &SetItemTransparency);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetMeshBits, &SetItemMeshBits);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetPosition, &GetItemPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetRotation, &GetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetScale, &GetItemScale);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetVisibility, &GetItemVisibility);
 		tableDrawItems.set_function(ScriptReserved_DrawItemClearAll, &ClearItems);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetMeshRotation, &GetMeshRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetMeshRotation, &SetMeshRotation);

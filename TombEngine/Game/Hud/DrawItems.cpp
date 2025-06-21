@@ -95,34 +95,46 @@ namespace TEN::Hud
 		return nullptr;
 	}
 
-	void DrawItemsController::SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos)
+	void DrawItemsController::SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos, bool disableInterpolation)
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
+			if (disableInterpolation)
+				item->PrevPosition = newPos;
+
 			item->Position = newPos;
 		}
 	}
 
-	void DrawItemsController::SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot)
+	void DrawItemsController::SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot, bool disableInterpolation)
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
+			if (disableInterpolation)
+				item->PrevOrientation = newRot;
+
 			item->Orientation = newRot;
 		}
 	}
 
-	void DrawItemsController::SetItemScale(GAME_OBJECT_ID objectID, float newScale)
+	void DrawItemsController::SetItemScale(GAME_OBJECT_ID objectID, float newScale, bool disableInterpolation)
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
+			if (disableInterpolation)
+				item->PrevScale = newScale;
+
 			item->Scale = newScale;
 		}
 	}
 
-	void DrawItemsController::SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha)
+	void DrawItemsController::SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha, bool disableInterpolation)
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
+			if (disableInterpolation)
+				item->PrevOpacity = newAlpha;
+
 			item->Opacity = newAlpha;
 		}
 	}
@@ -136,13 +148,24 @@ namespace TEN::Hud
 
 	}
 
-	void DrawItemsController::SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot)
+	void DrawItemsController::SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& newRot, bool disableInterpolation)
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
-			item->MeshRotations[meshIndex] = rot;
+			if (disableInterpolation)
+				item->PrevMeshRotations[meshIndex] = newRot;
+
+			item->MeshRotations[meshIndex] = newRot;
 		}
 
+	}
+
+	void DrawItemsController::SetItemVisibility(GAME_OBJECT_ID objectID, bool visible)
+	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			item->Visible = visible;
+		}
 	}
 
 	Vector3 DrawItemsController::GetItemPosition(GAME_OBJECT_ID objectID)
@@ -175,6 +198,16 @@ namespace TEN::Hud
 		return 0.0f;
 	}
 
+	bool DrawItemsController::GetItemVisibility(GAME_OBJECT_ID objectID)
+	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			return item->Visible;
+		}
+
+		return false;
+	}
+
 	EulerAngles DrawItemsController::GetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex)
 	{
 		if (auto* item = SelectItemByID(objectID))
@@ -193,13 +226,19 @@ namespace TEN::Hud
 		return _displayItems;
 	}
 
-	void DrawItemsController::SetCameraPosition(const Vector3& pos)
+	void DrawItemsController::SetCameraPosition(const Vector3& pos, bool disableInterpolation)
 	{
+		if (disableInterpolation)
+			_cameraPreviousPosition = pos;
+
 		_cameraPosition = pos;
 	}
 
-	void DrawItemsController::SetCameraTargetPosition(const Vector3& target)
+	void DrawItemsController::SetCameraTargetPosition(const Vector3& target, bool disableInterpolation)
 	{
+		if (disableInterpolation)
+			_targetPreviousPosition = target;
+
 		_targetPosition = target;
 	}
 

@@ -25,6 +25,8 @@ namespace TEN::Hud
 		float		PrevScale		= 0.0f;
 		float		PrevOpacity		= 0.0f;
 
+		bool Visible = true;
+
 		std::unordered_map<int, EulerAngles> MeshRotations;
 		std::unordered_map<int, EulerAngles> PrevMeshRotations;
 
@@ -103,23 +105,25 @@ namespace TEN::Hud
 
 		DisplayItem* SelectItemByID(GAME_OBJECT_ID objectID);
 
-		void SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos);
-		void SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot);
-		void SetItemScale(GAME_OBJECT_ID objectID, float newScale);
-		void SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha);
+		void SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos, bool disableInterpolation);
+		void SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot, bool disableInterpolation);
+		void SetItemScale(GAME_OBJECT_ID objectID, float newScale, bool disableInterpolation);
+		void SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha, bool disableInterpolation);
 		void SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits);
-		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot);
+		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot, bool disableInterpolation);
+		void SetItemVisibility(GAME_OBJECT_ID objectID, bool visible);
 
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);
 		float GetItemScale(GAME_OBJECT_ID objectID);
+		bool GetItemVisibility(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex);
 
 		std::vector<DisplayItem>& GetItems();
 
 		//Camera settings
-		void SetCameraPosition(const Vector3& pos);
-		void SetCameraTargetPosition(const Vector3& target);
+		void SetCameraPosition(const Vector3& pos, bool disableInterpolation);
+		void SetCameraTargetPosition(const Vector3& target, bool disableInterpolation);
 
 		Vector3 GetCameraPosition() const;
 		Vector3 GetCameraTargetPosition() const;
