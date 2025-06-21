@@ -5,6 +5,9 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.9.1]
 
+## New features
+* Use spotlight with shadow casting for motorbike headlight.
+
 ### Bug fixes
 * Fixed incorrect room collision for negative room coordinates.
 * Fixed exclusive video playback not working when triggered at the end of a level.
