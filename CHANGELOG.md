@@ -17,6 +17,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
 
 ### Lua API changes
+* Fixed `Camera:SetPosition` interfering with non-fixed camera position.
 * Rename `Camera:PlayCamera` to `Camera:Play`.
 
 ## [Version 1.9]
