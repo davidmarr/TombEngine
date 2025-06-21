@@ -16,7 +16,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed issues with sound initialization if sound device list has changed.
 * Fixed WATERFALL_EMITTER performance and occasional game freezes, and make it work with OCB 0.
 * Fixed SENTRY_GUN object not tracking Lara at some angles.
-* Fixed ENEMY_JEEP object lifting all other objects in a lever one block up.
+* Fixed ENEMY_JEEP object lifting all other objects in a level one block up.
 * Fixed underwater drifting when using PULLEY object.
 * Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
 
