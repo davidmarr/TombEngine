@@ -510,6 +510,9 @@ void MoveObjCamera(GameVector* ideal, ItemInfo* camSlotId, int camMeshId, ItemIn
 
 void RefreshFixedCamera(short camNumber)
 {
+	if (Camera.type != CameraType::Fixed && Camera.type != CameraType::Heavy)
+		return;
+
 	auto& camera = g_Level.Cameras[camNumber];
 
 	auto origin = GameVector(camera.Position, camera.RoomNumber);
