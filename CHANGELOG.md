@@ -10,10 +10,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Use spotlight with shadow casting for motorbike headlight.
 
 ### Bug fixes
-* Fixed incorrect room collision for negative room coordinates.
-* Fixed exclusive video playback not working when triggered at the end of a level.
-* Fixed issues with garbage camera movement when switching between fixed cameras.
-* Fixed issues with sound initialization if sound device list has changed.
 * Fixed WATERFALL_EMITTER performance and occasional game freezes, and make it work with OCB 0.
 * Fixed SENTRY_GUN object not tracking Lara at some angles.
 * Fixed ENEMY_JEEP object lifting all other objects in a level one block up.
@@ -21,6 +17,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed ROLLINGBALL interpolation and collision detection.
 * Fixed underwater drifting when using PULLEY object.
 * Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
+* Fixed incorrect room collision for negative room coordinates.
+* Fixed exclusive video playback not working when triggered at the end of a level.
+* Fixed issues with garbage camera movement when switching between fixed cameras.
+* Fixed issues with sound initialization if sound device list has changed.
 
 ### Lua API changes
 * Fixed `Camera:SetPosition` interfering with non-fixed camera position.
