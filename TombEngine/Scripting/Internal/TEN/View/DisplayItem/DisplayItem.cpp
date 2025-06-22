@@ -13,9 +13,10 @@ using namespace TEN::Hud;
 
 namespace TEN::Scripting::DisplayItem
 {
-	static void AddItem(GAME_OBJECT_ID objectID, const Vec3& origin, float scale, float opacity = 1.0f, int meshBits = 0u)
+	static void AddItem(GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale, int meshBits)
 	{
-		g_DrawItems.AddItem(objectID, origin, scale, opacity, meshBits);
+		auto rot = rotation.ToEulerAngles();
+		g_DrawItems.AddItem(objectID, position, rot, scale, meshBits);
 	}
 	static void RemoveItem(GAME_OBJECT_ID objectID)
 	{

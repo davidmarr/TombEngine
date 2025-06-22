@@ -13,7 +13,7 @@ namespace TEN::Hud
 {
 	DrawItemsController g_DrawItems = {};
 
-	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity, int meshBits)
+	void DrawItemsController::AddItem(GAME_OBJECT_ID objectID, const Vector3& position, const EulerAngles& rotation, float scale, int meshBits)
 	{
 		// Check if item already exists
 		for (auto& item : _displayItems)
@@ -21,9 +21,9 @@ namespace TEN::Hud
 			if (item.ObjectID == objectID)
 			{
 				// Update existing item
-				item.Position = origin;
+				item.Position = position;
+				item.Orientation = rotation;
 				item.Scale = scale;
-				item.Opacity = opacity;
 				item.MeshBits = meshBits;
 				return;
 			}
@@ -36,11 +36,9 @@ namespace TEN::Hud
 		DisplayItem newItem;
 		newItem.ObjectID = objectID;
 
-		newItem.Position = origin;
-		newItem.PrevPosition = newItem.Position;
-
+		newItem.Position = newItem.PrevPosition = newItem.Position;
+		newItem.Orientation = newItem.PrevOrientation = rotation;
 		newItem.Scale = newItem.PrevScale = scale;
-		newItem.Opacity = newItem.PrevOpacity = opacity;
 		newItem.MeshBits = meshBits;
 		_displayItems.push_back(newItem);
 	}

@@ -16,7 +16,7 @@ namespace TEN::Hud
 		EulerAngles Orientation = EulerAngles::Identity;
 
 		float Scale		   = 0.0f;
-		float Opacity	   = 0.0f;
+		float Opacity	   = 1.0f;
 
 		int MeshBits = 0u;
 		
@@ -96,7 +96,7 @@ namespace TEN::Hud
 
 	public:
 
-		void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, float scale, float opacity = 1.0f, int meshBits = 0u);
+		void AddItem(GAME_OBJECT_ID objectID, const Vector3& origin, const EulerAngles& newRot, float scale, int meshBits);
 		void RemoveItem(GAME_OBJECT_ID objectID);
 
 		void Update();
