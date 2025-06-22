@@ -168,9 +168,10 @@ void RollingBallControl(short itemNumber)
 	{
 		int counterZ = 0;
 
-		if ((frontFarHeight - dh) <= CLICK(1))
+		if ((frontHeight - dh) <= CLICK(1) || (frontCeiling - dh) > -CLICK(1))
 		{
-			if (frontFarHeight - dh < -CLICK(4) || frontHeight - dh < -CLICK(1))
+			if ((frontFarHeight - dh) <  -CLICK(4) || (frontHeight - dh) <  -CLICK(1) ||
+				(frontFarCeiling - dh) >  CLICK(4) || (frontCeiling - dh) >  CLICK(1))
 			{
 				if (item->ItemFlags[1] <= 0)
 				{
@@ -189,9 +190,10 @@ void RollingBallControl(short itemNumber)
 				item->ItemFlags[1] += (frontHeight - dh) / 2;
 		}
 
-		if (backHeight - dh <= CLICK(1))
+		if ((backHeight - dh) <= CLICK(1) || (backCeiling - dh) > -CLICK(1))
 		{
-			if (backFarHeight - dh < -CLICK(4) || backHeight - dh < -CLICK(1))
+			if ((backFarHeight - dh) <  -CLICK(4) || (backHeight - dh) <  -CLICK(1) ||
+				(backFarCeiling - dh) >  CLICK(4) || (backCeiling - dh) >  CLICK(1))
 			{
 				if (item->ItemFlags[1] >= 0)
 				{
@@ -220,9 +222,10 @@ void RollingBallControl(short itemNumber)
 
 		int counterX = 0;
 
-		if ((leftHeight - dh) <= CLICK(1))
+		if ((leftHeight - dh) <= CLICK(1) || (leftCeiling - dh) > -CLICK(1))
 		{
-			if ((leftFarHeight - dh) < -CLICK(4) || leftHeight - dh < -CLICK(1))
+			if ((leftFarHeight - dh) < -CLICK(4) || (leftHeight - dh) < -CLICK(1)||
+				(leftFarCeiling - dh) > CLICK(4) || (leftCeiling - dh) > CLICK(1))
 			{
 				if (item->ItemFlags[0] >= 0)
 				{
@@ -241,9 +244,10 @@ void RollingBallControl(short itemNumber)
 				item->ItemFlags[0] -= (leftHeight - dh) / 2;
 		}
 
-		if ((rightHeight - dh) <= CLICK(1))
+		if ((rightHeight - dh) <= CLICK(1) || (rightCeiling - dh) > -CLICK(1))
 		{
-			if ((rightFarHeight - dh) < -CLICK(4) || rightHeight - dh < -CLICK(1))
+			if ((rightFarHeight - dh) < -CLICK(4) || (rightHeight - dh) < -CLICK(1) ||
+				(rightFarCeiling - dh) > CLICK(4) || (rightCeiling - dh) > CLICK(1))
 			{
 				if (item->ItemFlags[0] <= 0)
 				{
