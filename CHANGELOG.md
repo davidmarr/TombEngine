@@ -18,7 +18,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed SENTRY_GUN object not tracking Lara at some angles.
 * Fixed ENEMY_JEEP object lifting all other objects in a level one block up.
 * Fixed ELECTRIC_CLEANER not following correct directions.
-* Fixed ROLLINGBALL collision detection.
+* Fixed ROLLINGBALL interpolation and collision detection.
 * Fixed underwater drifting when using PULLEY object.
 * Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
 
