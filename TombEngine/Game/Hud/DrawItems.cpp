@@ -36,7 +36,7 @@ namespace TEN::Hud
 		DisplayItem newItem;
 		newItem.ObjectID = objectID;
 
-		newItem.Position = newItem.PrevPosition = newItem.Position;
+		newItem.Position = newItem.PrevPosition = position;
 		newItem.Orientation = newItem.PrevOrientation = rotation;
 		newItem.Scale = newItem.PrevScale = scale;
 		newItem.MeshBits = meshBits;
