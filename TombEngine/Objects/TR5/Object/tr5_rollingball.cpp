@@ -319,11 +319,16 @@ void RollingBallControl(short itemNumber)
 		}
 		else
 			item->Pose.Orientation.y = angle;
-
-		item->DisableInterpolation = true;
 	}
 
 	item->Pose.Orientation.x -= ((abs(item->ItemFlags[0]) + abs(item->ItemFlags[1])) / 2) / vDivider;
+
+	// If position or rotation of a rollingball changed significantly, disable interpolation.
+	if (Vector3::Distance(oldPos.Position.ToVector3(), item->Pose.Position.ToVector3()) > CLICK(2) || 
+		!EulerAngles::Compare(oldPos.Orientation, item->Pose.Orientation, ANGLE(10.0f)))
+	{
+		item->DisableInterpolation = true;
+	}
 
 	TestTriggers(item, true);
 	DoVehicleCollision(item, bigRadius * 0.9f);
