@@ -26,6 +26,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed issues with sound initialization if sound device list has changed.
 
 ### Lua API changes
+* Added `weatherClustering` setting to `Flow.Level`.
 * Fixed `Camera:SetPosition` interfering with non-fixed camera position.
 * Renamed `Camera:PlayCamera` to `Camera:Play`.
 
