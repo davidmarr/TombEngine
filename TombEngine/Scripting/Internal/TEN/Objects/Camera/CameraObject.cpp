@@ -133,7 +133,7 @@ void CameraObject::SetRoomNumber(short room)
 
 void CameraObject::PlayCamera(sol::optional<Moveable&> TargetObj)
 {
-	if (Camera.number != m_camera.Index)
+	if (Camera.last != m_camera.Index || Camera.lastType != CameraType::Fixed)
 		Camera.DisableInterpolation = true;
 
 	Camera.number = m_camera.Index;
