@@ -779,11 +779,6 @@ namespace TEN::Renderer
 		}
 	}
 
-	void Renderer::DrawItem(const DisplayItem& item)
-	{
-		DrawObjectIn3DSpace(item);;
-	}
-
 	// TODO: Handle opacity
 	void Renderer::DrawObjectIn2DSpace(int objectNumber, Vector2 pos2D, EulerAngles orient, float scale, float opacity, int meshBits)
 	{
@@ -914,8 +909,7 @@ namespace TEN::Renderer
 			float scale = item.GetInterpolatedScale(t);
 			float opacity = item.GetInterpolatedOpacity(t);
 			int meshBits = item.MeshBits;
-
-			constexpr auto AMBIENT_LIGHT_COLOR = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+			
 			constexpr float NearPlane = 0.1f; // Near clipping plane
 			constexpr float FarPlane = BLOCK(100); // Far clipping plane
 
@@ -998,7 +992,7 @@ namespace TEN::Renderer
 
 				_stItem.BoneLightModes[i] = (int)LightMode::Dynamic;
 				_stItem.Color = Vector4::One;
-				_stItem.AmbientLight = AMBIENT_LIGHT_COLOR;
+				_stItem.AmbientLight = g_DrawItems.GetAmbientLight();
 
 				_cbItem.UpdateData(_stItem, _context.Get());
 				BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());

@@ -16,6 +16,7 @@ namespace TEN::Hud
 		EulerAngles Orientation = EulerAngles::Identity;
 
 		float Scale		   = 0.0f;
+		
 		float Opacity	   = 1.0f;
 
 		int MeshBits = 0u;
@@ -91,6 +92,8 @@ namespace TEN::Hud
 		Vector3 _cameraPreviousPosition = _cameraPosition;
 		Vector3 _targetPreviousPosition = _targetPosition;
 
+		Vector4 _ambientLight = Vector4::One;
+
 		bool _inventoryOverride = false;
 		int _openInventory = NO_VALUE;
 
@@ -124,6 +127,9 @@ namespace TEN::Hud
 		//Camera settings
 		void SetCameraPosition(const Vector3& pos, bool disableInterpolation);
 		void SetCameraTargetPosition(const Vector3& target, bool disableInterpolation);
+
+		void SetAmbientLight(const Vector4& lightColor);
+		Vector4 GetAmbientLight() const;
 
 		Vector3 GetCameraPosition() const;
 		Vector3 GetCameraTargetPosition() const;

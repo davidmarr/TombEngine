@@ -71,7 +71,7 @@ namespace TEN::Hud
 	{
 		for (const auto& item : _displayItems)
 		{
-			g_Renderer.DrawItem(item);
+			g_Renderer.DrawObjectIn3DSpace(item);
 		}
 	}
 
@@ -238,6 +238,16 @@ namespace TEN::Hud
 			_targetPreviousPosition = target;
 
 		_targetPosition = target;
+	}
+
+	void DrawItemsController::SetAmbientLight(const Vector4& lightColor)
+	{
+		_ambientLight = lightColor;
+	}
+
+	Vector4 DrawItemsController::GetAmbientLight() const
+	{
+		return _ambientLight;
 	}
 
 	Vector3 DrawItemsController::GetCameraPosition() const
