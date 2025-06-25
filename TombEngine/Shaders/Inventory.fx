@@ -7,7 +7,7 @@ cbuffer ItemBuffer : register(b1)
 {
 	float4x4 World;
 	float4x4 Bones[32];
-	float4 ItemPosition;
+	float4 Color;
 	float4 AmbientLight;
 };
 
@@ -39,13 +39,13 @@ PixelShaderInput VS(VertexShaderInput input)
 
 float4 PS(PixelShaderInput input) : SV_TARGET
 {
-	float4 output = Texture.Sample(Sampler, input.UV);
+	float4 output = Texture.Sample(Sampler, input.UV) * input.Color;
   float3 normal = normalize(input.Normal);
   float3 pos = normalize(input.WorldPosition);
 
 	DoAlphaTest(output);
 	ShaderLight l;
-	l.Color = float3(1.0f, 1.0f, 0.5f);
+	l.Color = float3(AmbientLight.xyz);
 	l.Intensity = 0.3f;
 	l.Type = LT_SUN;
 	l.Direction = normalize(float3(-1.0f, -0.707f, -0.5f));
@@ -54,7 +54,7 @@ float4 PS(PixelShaderInput input) : SV_TARGET
 		output.xyz += DoSpecularSun(input.Normal, l, input.Sheen);
 
 		//adding some pertubations to the lighting to add a cool effect
-		float3 noise = SimplexNoise(output.xyz);
-		output.xyz = NormalNoise(output, noise, normal);
+		//float3 noise = SimplexNoise(output.xyz);
+		//output.xyz = NormalNoise(output, noise, normal);
 	return output;
 }

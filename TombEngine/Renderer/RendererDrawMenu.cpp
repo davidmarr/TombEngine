@@ -906,8 +906,8 @@ namespace TEN::Renderer
 			auto objectNumber = item.ObjectID;
 			auto pos3D = item.GetInterpolatedPosition(t);
 			auto orient = item.GetInterpolatedOrientation(t);
-			float scale = item.GetInterpolatedScale(t);
-			float opacity = item.GetInterpolatedOpacity(t);
+			auto scale = item.GetInterpolatedScale(t);
+			auto color = item.GetInterpolatedColor(t);
 			int meshBits = item.MeshBits;
 			
 			constexpr float NearPlane = 0.1f; // Near clipping plane
@@ -991,7 +991,7 @@ namespace TEN::Renderer
 				}
 
 				_stItem.BoneLightModes[i] = (int)LightMode::Dynamic;
-				_stItem.Color = Vector4::One;
+				_stItem.Color = color;
 				_stItem.AmbientLight = g_DrawItems.GetAmbientLight();
 
 				_cbItem.UpdateData(_stItem, _context.Get());
@@ -1004,17 +1004,21 @@ namespace TEN::Renderer
 					if (bucket.NumVertices == 0)
 						continue;
 
-					SetBlendMode(BlendMode::Opaque);
+					//SetBlendMode(BlendMode::Opaque);
 					SetCullMode(CullMode::CounterClockwise); //CounterClockwise
 					SetDepthState(DepthState::Write);
 
 					BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 					BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 
-					if (bucket.BlendMode != BlendMode::Opaque)
+					// Always render horizon as alpha-blended surface.
+					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
+					SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+
+					/*if (bucket.BlendMode != BlendMode::Opaque)
 						SetBlendMode(bucket.BlendMode, true);
 
-					SetAlphaTest((bucket.BlendMode == BlendMode::AlphaTest) ? AlphaTestMode::GreatherThan : AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+					SetAlphaTest((bucket.BlendMode == BlendMode::AlphaTest) ? AlphaTestMode::GreatherThan : AlphaTestMode::None, ALPHA_TEST_THRESHOLD);*/
 
 					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
 					_numMoveablesDrawCalls++;

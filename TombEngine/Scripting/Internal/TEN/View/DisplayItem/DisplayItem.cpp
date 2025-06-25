@@ -6,10 +6,13 @@
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
+#include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 
+
 using namespace TEN::Hud;
+using namespace TEN::Scripting::Types;
 
 namespace TEN::Scripting::DisplayItem
 {
@@ -42,10 +45,11 @@ namespace TEN::Scripting::DisplayItem
 		g_DrawItems.SetItemScale(objectID, newScale, convertedBool);
 	}
 
-	static void SetItemTransparency(GAME_OBJECT_ID objectID, float alpha, TypeOrNil<bool> disableInterpolation)
+	static void SetItemColor(GAME_OBJECT_ID objectID, const ScriptColor& color, TypeOrNil<bool> disableInterpolation)
 	{
 		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
-		g_DrawItems.SetItemAlpha(objectID, alpha, convertedBool);
+		Color convertedColor = color;
+		g_DrawItems.SetItemColor(objectID, convertedColor, convertedBool);
 	}
 
 	static void SetItemVisibility(GAME_OBJECT_ID objectID, bool visibility)
@@ -79,6 +83,11 @@ namespace TEN::Scripting::DisplayItem
 	static float GetItemScale(GAME_OBJECT_ID objectID)
 	{
 		return g_DrawItems.GetItemScale(objectID);
+	}
+
+	static ScriptColor GetItemColor(GAME_OBJECT_ID objectID)
+	{
+		return g_DrawItems.GetItemColor(objectID);
 	}
 
 	static bool GetItemVisibility(GAME_OBJECT_ID objectID)
@@ -120,6 +129,11 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetCameraTargetPosition();
 	}
 
+	static void SetAmbientLight(const ScriptColor& color)
+	{
+		g_DrawItems.SetAmbientLight(color);
+	}
+
 	//Inventory overrides
 	static bool GetInventoryOverride()
 	{
@@ -152,11 +166,12 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetRotation, &SetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetScale, &SetItemScale);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetVisibility, &SetItemVisibility);
-		tableDrawItems.set_function(ScriptReserved_DrawItemSetAlpha, &SetItemTransparency);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetColor, &SetItemColor);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetMeshBits, &SetItemMeshBits);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetPosition, &GetItemPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetRotation, &GetItemRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetScale, &GetItemScale);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetColor, &GetItemColor);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetVisibility, &GetItemVisibility);
 		tableDrawItems.set_function(ScriptReserved_DrawItemClearAll, &ClearItems);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetMeshRotation, &GetMeshRotation);
@@ -164,6 +179,7 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetCamera, &SetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetCamera, &GetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetTarget, &SetTargetPosition);
+		tableDrawItems.set_function(ScriptReserved_DrawItemSetAmbientLight, &SetAmbientLight);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetInvOverride, &GetInventoryOverride);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetInvOverride, &SetInventoryOverride);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetOpenInv, &GetInventoryOpenStatus);

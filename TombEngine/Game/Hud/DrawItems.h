@@ -17,14 +17,14 @@ namespace TEN::Hud
 
 		float Scale		   = 0.0f;
 		
-		float Opacity	   = 1.0f;
+		Vector4 Color = Vector4::One;
 
 		int MeshBits = 0u;
 		
 		Vector3		PrevPosition	= Vector3::Zero;
 		EulerAngles PrevOrientation = EulerAngles::Identity;
 		float		PrevScale		= 0.0f;
-		float		PrevOpacity		= 0.0f;
+		Vector4		PrevColor	= Vector4::One;
 
 		bool Visible = true;
 
@@ -36,7 +36,7 @@ namespace TEN::Hud
 			PrevPosition = Position;
 			PrevOrientation = Orientation;
 			PrevScale = Scale;
-			PrevOpacity = Opacity;
+			PrevColor = Color;
 			PrevMeshRotations = MeshRotations;
 		}
 
@@ -56,9 +56,9 @@ namespace TEN::Hud
 			return Lerp(PrevScale, Scale, t);
 		}
 
-		float GetInterpolatedOpacity(float t) const
+		Vector4 GetInterpolatedColor(float t) const
 		{
-			return Lerp(PrevOpacity, Opacity, t);
+			return Vector4::Lerp(PrevColor, Color, t);
 		}
 
 		EulerAngles GetInterpolatedMeshRotation(int meshIndex, float t) const
@@ -111,7 +111,7 @@ namespace TEN::Hud
 		void SetItemPosition(GAME_OBJECT_ID objectID, const Vector3& newPos, bool disableInterpolation);
 		void SetItemRotation(GAME_OBJECT_ID objectID, const EulerAngles& newRot, bool disableInterpolation);
 		void SetItemScale(GAME_OBJECT_ID objectID, float newScale, bool disableInterpolation);
-		void SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha, bool disableInterpolation);
+		void SetItemColor(GAME_OBJECT_ID objectID, Color& newColor, bool disableInterpolation);
 		void SetItemMeshBits(GAME_OBJECT_ID objectID, int meshbits);
 		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 		void SetItemVisibility(GAME_OBJECT_ID objectID, bool visible);
@@ -119,6 +119,7 @@ namespace TEN::Hud
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);
 		float GetItemScale(GAME_OBJECT_ID objectID);
+		Color GetItemColor(GAME_OBJECT_ID objectID);
 		bool GetItemVisibility(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex);
 

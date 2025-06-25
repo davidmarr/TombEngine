@@ -126,14 +126,14 @@ namespace TEN::Hud
 		}
 	}
 
-	void DrawItemsController::SetItemAlpha(GAME_OBJECT_ID objectID, float newAlpha, bool disableInterpolation)
+	void DrawItemsController::SetItemColor(GAME_OBJECT_ID objectID, Color& newColor, bool disableInterpolation)
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
 			if (disableInterpolation)
-				item->PrevOpacity = newAlpha;
+				item->PrevColor = newColor;
 
-			item->Opacity = newAlpha;
+			item->Color = newColor;
 		}
 	}
 
@@ -194,6 +194,16 @@ namespace TEN::Hud
 		}
 
 		return 0.0f;
+	}
+
+	Color DrawItemsController::GetItemColor(GAME_OBJECT_ID objectID)
+	{
+		if (auto* item = SelectItemByID(objectID))
+		{
+			return item->Color;
+		}
+
+		return Vector4::Zero;
 	}
 
 	bool DrawItemsController::GetItemVisibility(GAME_OBJECT_ID objectID)
