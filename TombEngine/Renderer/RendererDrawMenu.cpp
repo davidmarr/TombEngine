@@ -916,15 +916,6 @@ namespace TEN::Renderer
 			unsigned int stride = sizeof(Vertex);
 			unsigned int offset = 0;
 
-			int invObjectID = g_Gui.ConvertObjectToInventoryItem(objectNumber);
-			if (invObjectID != NO_VALUE)
-			{
-				const auto& invObject = InventoryObjectTable[invObjectID];
-
-				pos3D.y += invObject.YOffset;
-				orient += invObject.Orientation;
-			}
-
 			float aspectRatio = static_cast<float>(_screenWidth) / _screenHeight;
 
 			auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(t), g_DrawItems.GetInterpolatedCameraTargetPosition(t), Vector3::Up);
@@ -946,6 +937,10 @@ namespace TEN::Renderer
 				};
 				UpdateAnimation(nullptr, *moveableObject, frameData, UINT_MAX);
 			}
+
+			SetBlendMode(BlendMode::Opaque);
+			SetCullMode(CullMode::CounterClockwise); //CounterClockwise
+			SetDepthState(DepthState::Write);
 
 			// Set vertex buffer.
 			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
@@ -1004,21 +999,12 @@ namespace TEN::Renderer
 					if (bucket.NumVertices == 0)
 						continue;
 
-					//SetBlendMode(BlendMode::Opaque);
-					SetCullMode(CullMode::CounterClockwise); //CounterClockwise
-					SetDepthState(DepthState::Write);
-
 					BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 					BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 
-					// Always render horizon as alpha-blended surface.
+					// Always render items as alpha-blended surface.
 					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
 					SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
-
-					/*if (bucket.BlendMode != BlendMode::Opaque)
-						SetBlendMode(bucket.BlendMode, true);
-
-					SetAlphaTest((bucket.BlendMode == BlendMode::AlphaTest) ? AlphaTestMode::GreatherThan : AlphaTestMode::None, ALPHA_TEST_THRESHOLD);*/
 
 					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
 					_numMoveablesDrawCalls++;

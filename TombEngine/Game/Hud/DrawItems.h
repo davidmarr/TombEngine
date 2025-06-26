@@ -17,14 +17,14 @@ namespace TEN::Hud
 
 		float Scale		   = 0.0f;
 		
-		Vector4 Color = Vector4::One;
+		Color ItemColor = Vector4::One;
 
 		int MeshBits = 0u;
 		
 		Vector3		PrevPosition	= Vector3::Zero;
 		EulerAngles PrevOrientation = EulerAngles::Identity;
 		float		PrevScale		= 0.0f;
-		Vector4		PrevColor	= Vector4::One;
+		Color		PrevColor	= Vector4::One;
 
 		bool Visible = true;
 
@@ -36,7 +36,7 @@ namespace TEN::Hud
 			PrevPosition = Position;
 			PrevOrientation = Orientation;
 			PrevScale = Scale;
-			PrevColor = Color;
+			PrevColor = ItemColor;
 			PrevMeshRotations = MeshRotations;
 		}
 
@@ -56,9 +56,9 @@ namespace TEN::Hud
 			return Lerp(PrevScale, Scale, t);
 		}
 
-		Vector4 GetInterpolatedColor(float t) const
+		Color GetInterpolatedColor(float t) const
 		{
-			return Vector4::Lerp(PrevColor, Color, t);
+			return Color::Lerp(PrevColor, ItemColor, t);
 		}
 
 		EulerAngles GetInterpolatedMeshRotation(int meshIndex, float t) const

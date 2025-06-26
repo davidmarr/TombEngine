@@ -133,7 +133,7 @@ namespace TEN::Hud
 			if (disableInterpolation)
 				item->PrevColor = newColor;
 
-			item->Color = newColor;
+			item->ItemColor = newColor;
 		}
 	}
 
@@ -200,7 +200,7 @@ namespace TEN::Hud
 	{
 		if (auto* item = SelectItemByID(objectID))
 		{
-			return item->Color;
+			return item->ItemColor;
 		}
 
 		return Vector4::Zero;
