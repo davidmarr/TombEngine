@@ -518,6 +518,9 @@ void RefreshFixedCamera(short camNumber)
 	auto origin = GameVector(camera.Position, camera.RoomNumber);
 	int moveSpeed = camera.Speed * 8 + 1;
 
+	if (moveSpeed == 1)
+		Camera.DisableInterpolation = true;
+
 	MoveCamera(&origin, moveSpeed);
 }
 
