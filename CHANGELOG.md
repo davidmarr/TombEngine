@@ -3,6 +3,34 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 1.9.1]
+
+### New features
+* Added ability to open doors with draw weapon key in dozy mode.
+* Added headlight for UPV.
+* Use spotlight with shadow casting for motorbike headlight.
+
+### Bug fixes
+* Fixed WATERFALL_EMITTER performance and occasional game freezes, and make it work with OCB 0.
+* Fixed SENTRY_GUN object not tracking Lara at some angles.
+* Fixed ENEMY_JEEP object lifting all other objects in a level one block up.
+* Fixed ELECTRIC_CLEANER not following correct directions.
+* Fixed ROLLINGBALL interpolation and collision detection.
+* Fixed underwater drifting when using PULLEY object.
+* Fixed incorrect hardcoded sounds for the ZIPLINE_HANDLE.
+* Fixed JEEP vehicle locking incorrect Lara animation after using reverse.
+* Fixed inability to use revolver with lasersight in crouched state.
+* Fixed incorrect room collision for negative room coordinates.
+* Fixed exclusive video playback not working when triggered at the end of a level.
+* Fixed garbage particle positions in high FPS mode.
+* Fixed issues with garbage camera movement when switching between fixed cameras.
+* Fixed issues with sound initialization if sound device list has changed.
+
+### Lua API changes
+* Added `weatherClustering` setting to `Flow.Level`.
+* Fixed `Camera:SetPosition` interfering with non-fixed camera position.
+* Renamed `Camera:PlayCamera` to `Camera:Play`.
+
 ## [Version 1.9]
 
 ## New features
@@ -26,6 +54,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed FISH_EMITTER and COMPSOGNATHUS objects not attacking corpses.
 * Fixed TELEPORTER object.
 * Fixed AI_PATROL and AI_AMBUSH objects to work with suitable enemies.
+* Fixed multiple trap objects not emitting blood on collision.
 * Fixed locked camera flag and glide timer not working for fixed cameras.
 * Fixed weapon hotkeys not unholstering already selected weapon.
 * Fixed weapons not hitting non-intelligent objects.
@@ -72,7 +101,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Moveable:SwapSkinnedMesh` and `Moveable:UnswapSkinnedMesh` for skinned mesh management.
 * Added `Lara:Interact` function to allow alignment with moveables.
 * Added `muzzleGlow` and `muzzleOffset` parameters to weapon settings.
-* Added `glow` parameter to flare settings.
+* Added `muzzleGlow` parameter to flare settings.
 * Added ability to use gunflash parameters for all weapons in weapon settings.
 * Added ability to specify negative priority values for `View.DisplaySprite` to draw it above strings.
 * Added raw mouse and keyboard input action IDs to `Input.ActionID` enumeration.

@@ -700,6 +700,9 @@ GameStatus DoGameLoop(int levelIndex)
 			legacy30FpsDoneDraw = false;
 		}
 
+		if (g_VideoPlayer.IsBackgroundPlaybackQueued())
+			continue;
+
 		if (status != GameStatus::Normal)
 			break;
 

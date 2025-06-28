@@ -155,6 +155,15 @@ namespace TEN::Video
 		return (state == libvlc_Playing);
 	}
 
+	bool VideoHandler::IsBackgroundPlaybackQueued() const
+	{
+		if (_player == nullptr || _playbackMode != VideoPlaybackMode::Exclusive)
+			return false;
+
+		// Using VLC player state is unsafe, because it runs in parallel, so we always return true.
+		return true;
+	}
+
 	void VideoHandler::Initialize(const std::string& gameDir, ID3D11Device* device, ID3D11DeviceContext* context)
 	{
 		TENLog("Initializing video player...", LogLevel::Info);
