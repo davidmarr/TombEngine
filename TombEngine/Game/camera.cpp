@@ -291,7 +291,7 @@ void InitializeCamera()
 	SetScreenFadeIn(FADE_SCREEN_SPEED);
 }
 
-void MoveCamera(GameVector* ideal, int speed)
+void MoveCamera(GameVector* ideal, int speed, bool force)
 {
 	if (Lara.Control.Look.IsUsingBinoculars)
 		speed = 1;
@@ -312,7 +312,8 @@ void MoveCamera(GameVector* ideal, int speed)
 		OldCam.target.y != Camera.target.y ||
 		OldCam.target.z != Camera.target.z ||
 		Camera.oldType != Camera.type ||
-		Lara.Control.Look.IsUsingBinoculars)
+		Lara.Control.Look.IsUsingBinoculars ||
+		force)
 	{
 		OldCam.pos.Orientation = LaraItem->Pose.Orientation;
 		OldCam.pos2.Orientation.x = Lara.ExtraHeadRot.x;
@@ -521,7 +522,7 @@ void RefreshFixedCamera(short camNumber)
 	if (moveSpeed == 1)
 		Camera.DisableInterpolation = true;
 
-	MoveCamera(&origin, moveSpeed);
+	MoveCamera(&origin, moveSpeed, true);
 }
 
 void ChaseCamera(ItemInfo* item)
