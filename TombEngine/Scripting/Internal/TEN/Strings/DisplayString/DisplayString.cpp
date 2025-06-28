@@ -53,7 +53,7 @@ For use in @{Strings.ShowString|ShowString} and @{Strings.HideString|HideString}
 @tparam[opt=false] bool translated If false or omitted, the input string argument will be displayed as is.
 If true, the string argument will be treated as the key of a translated string specified in strings.lua.
 @tparam[opt] Strings.DisplayStringOption flags Flags which affect visual representation of a string, such as shadow or alignment.
-@tparam[opt=Vec2(0&#44; 0)] Vec2 area Rectangular area in percent to perform word wrapping.
+@tparam[opt=Vec2(0&#44; 0)] Vec2 area Rectangular area in pixels to perform word wrapping.
 No word wrapping will occur if this parameter is default or omitted.
 @treturn DisplayString A new DisplayString object.
 */
