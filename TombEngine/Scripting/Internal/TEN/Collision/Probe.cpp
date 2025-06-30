@@ -155,7 +155,7 @@ namespace TEN::Scripting::Collision
 
 	/// Get the room number of this Probe.
 	// @function Probe:GetRoomNumber
-	// @treturn int Room number.
+	// @treturn int Room number
 	int Probe::GetRoomNumber()
 	{
 		return _pointCollision.GetRoomNumber();
