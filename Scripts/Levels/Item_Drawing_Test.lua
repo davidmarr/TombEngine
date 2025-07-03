@@ -5,7 +5,7 @@ local NO_VALUE = -1
 local HEALTH_MAX = 1000
 
 --variables
-local rotation = 0
+local rotation = 0 --rotation of Inventory Item
 local timeInMenu = 0
 local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
 
@@ -178,35 +178,35 @@ LevelFuncs.AdjustCamera = function()
 
     local selectedItem = items[selectedIndex]
 
-    local myText = DisplayString(selectedItem, 10, 10, Color.new(64,250,60))
+    local myText = DisplayString(selectedItem, percentPos(10, 10), 0.5, Color.new(64,250,60))
 	ShowString(myText,1/30)
 
     if selectedItem == "Camera" then
-        vector = TEN.DrawItem.GetCameraPosition()
+        vector = TEN.DrawItem.GetInvCameraPosition()
     elseif selectedItem == "Target" then
-        vector = TEN.DrawItem.GetTargetPosition()
+        vector = TEN.DrawItem.GetInvTargetPosition()
     elseif selectedItem == "FOV" then
         vector = Vec3(0,View.GetFOV(),0)
     end
 
     if IsKeyHeld(TEN.Input.ActionID.LEFT) then
-            vector.x = vector.x - 1
+            vector.x = vector.x - 2
     elseif IsKeyHeld(TEN.Input.ActionID.RIGHT) then
-            vector.x = vector.x + 1
+            vector.x = vector.x + 2
     elseif IsKeyHeld(TEN.Input.ActionID.FORWARD) then
-            vector.z = vector.z + 1
+            vector.z = vector.z + 2
     elseif IsKeyHeld(TEN.Input.ActionID.BACK) then
-            vector.z = vector.z - 1
+            vector.z = vector.z - 2
     elseif IsKeyHeld(TEN.Input.ActionID.STEP_LEFT) then
-            vector.y = vector.y - 1
+            vector.y = vector.y - 2
     elseif IsKeyHeld(TEN.Input.ActionID.STEP_RIGHT) then
-            vector.y = vector.y + 1
+            vector.y = vector.y + 2
     elseif IsKeyHit(TEN.Input.ActionID.R) then
 
         if selectedItem == "Camera" then
-            vector = Vec3(0,0,-1024)
+            vector = Vec3(0,-512,512)
         elseif selectedItem == "Target" then
-            vector = Vec3(0,0,0)
+            vector = Vec3(0,0,512)
         elseif selectedItem == "FOV" then
             vector = Vec3(0,80,0)
         elseif selectedItem == "Label" then
@@ -214,7 +214,7 @@ LevelFuncs.AdjustCamera = function()
         end
     end
 
-    local myText2 = DisplayString(tostring(vector), 10, 50, Color.new(64,250,60))
+    local myText2 = DisplayString(tostring(vector), percentPos(15, 10), 0.5, Color.new(64,250,60))
 	ShowString(myText2,1/30)
 
 
@@ -272,6 +272,8 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     View.SetFOV(80)
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     LevelVars.Engine.CustomInventory.InventoryClosed = true
+    TEN.DrawItem.SetInvCameraPosition(LevelVars.Engine.CustomInventory.CameraStart)
+    TEN.DrawItem.SetInvTargetPosition(LevelVars.Engine.CustomInventory.TargetStart)
     timeInMenu = 0
     rotation = 0
 
@@ -318,6 +320,8 @@ LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
     LevelVars.Engine.CustomInventory.TargetAngle = 0
     LevelVars.Engine.CustomInventory.RotationInProgress = false
     LevelVars.Engine.CustomInventory.Centre = Vec3(0,200,1024)
+    LevelVars.Engine.CustomInventory.CameraStart = Vec3(0,-2500, 200)
+    LevelVars.Engine.CustomInventory.TargetStart = Vec3(0,0, 1000)
     LevelVars.Engine.CustomInventory.Radius = -512
     LevelVars.Engine.CustomInventory.Inventory = {}
     LevelVars.Engine.CustomInventory.InventoryOpen = false
@@ -329,8 +333,8 @@ LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
 
     TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.CustomInventory.StartInventory)
 
-    TEN.DrawItem.SetInvCameraPosition(Vec3(0,-36,-1151))
-    TEN.DrawItem.SetInvTargetPosition(Vec3(0,110,0))
+    TEN.DrawItem.SetInvCameraPosition(LevelVars.Engine.CustomInventory.CameraStart)
+    TEN.DrawItem.SetInvTargetPosition(LevelVars.Engine.CustomInventory.TargetStart)
     TEN.DrawItem.SetAmbientLight(Color(255,0,0))
 
     TEN.DrawItem.SetInventoryOverride(true)
@@ -401,12 +405,12 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function()
     LevelVars.Engine.CustomInventory.InventoryOpen = false
 end
 
-LevelFuncs.Engine.CustomInventory.TranslateInventory = function(items, center, radius, rotationOffset)
+LevelFuncs.Engine.CustomInventory.TranslateInventory = function(ring, center, radius, rotationOffset)
 
-    local itemCount = #items
+    local itemCount = #ring
     
     for i = 1, itemCount do
-        local currentItem = items[i].item 
+        local currentItem = ring[i].item 
 
         local angleDeg = (360 / itemCount) * (i - 1) +  rotationOffset
        
@@ -415,21 +419,19 @@ LevelFuncs.Engine.CustomInventory.TranslateInventory = function(items, center, r
         local itemRotation  = TEN.DrawItem.GetItemRotation(currentItem)
 
         TEN.DrawItem.SetItemPosition(currentItem, position)
-        TEN.DrawItem.SetItemRotation(currentItem, Rotation(itemRotation.x, angleDeg+180, itemRotation.z))
+        TEN.DrawItem.SetItemRotation(currentItem, Rotation(itemRotation.x, angleDeg, itemRotation.z))
     end
 
 end
 
-LevelFuncs.Engine.CustomInventory.TranslateItem = function(item, offset, targetRotation, duration, direction)
-
-local oldPosition = TEN.DrawItem.GetItemPosition(item)
-local oldRotation = TEN.DrawItem.GetItemRotation(item)
-
-
-
+LevelFuncs.Engine.CustomInventory.RotateItem = function(item)
+    local itemRotation  = TEN.DrawItem.GetItemRotation(item)
+    TEN.DrawItem.SetItemRotation(item, Rotation(itemRotation.x, (rotation) % 360, itemRotation.z))
+    rotation  = rotation  + 4
 end
 
-local interpolateTypes = {
+
+local motionInputTypes = {
     LINEAR = 1,
     VEC2 = 2,
     VEC3 = 3,
@@ -437,7 +439,7 @@ local interpolateTypes = {
     COLOR = 5 
 }
 
-LevelFuncs.Engine.CustomInventory.Interpolate = function(name, dataType, oldValue, newValue, time, smooth)
+LevelFuncs.Engine.CustomInventory.Motion = function(name, dataType, oldValue, newValue, time, smooth)
 
     if LevelVars.Engine.CustomInventory.Progress[name] == nil then
         LevelVars.Engine.CustomInventory.Progress[name] = 0
@@ -452,20 +454,20 @@ LevelFuncs.Engine.CustomInventory.Interpolate = function(name, dataType, oldValu
 	local newValue3
 	local newValue4
 	
-	if (dataType == interpolateTypes.LINEAR) then
+	if (dataType == motionInputTypes.LINEAR) then
 		newValue1 = LevelFuncs.Engine.Node.Lerp(oldValue, newValue, factor)
-	elseif (dataType == interpolateTypes.VEC2) then
+	elseif (dataType == motionInputTypes.VEC2) then
 		newValue1 = LevelFuncs.Engine.Node.Lerp(oldValue.x, newValue.x, factor)
 		newValue2 = LevelFuncs.Engine.Node.Lerp(oldValue.y, newValue.y, factor)
-    elseif (dataType == interpolateTypes.VEC3) then
-		newValue1 = LevelFuncs.Engine.Node.Lerp(oldValue.x, newValue.x, factor)
-		newValue2 = LevelFuncs.Engine.Node.Lerp(oldValue.y, newValue.y, factor)
-	    newValue3 = LevelFuncs.Engine.Node.Lerp(oldValue.z, newValue.z, factor)
-    elseif (dataType == interpolateTypes.ROTATION) then
+    elseif (dataType == motionInputTypes.VEC3) then
 		newValue1 = LevelFuncs.Engine.Node.Lerp(oldValue.x, newValue.x, factor)
 		newValue2 = LevelFuncs.Engine.Node.Lerp(oldValue.y, newValue.y, factor)
 	    newValue3 = LevelFuncs.Engine.Node.Lerp(oldValue.z, newValue.z, factor)
-    elseif (dataType == interpolateTypes.COLOR) then
+    elseif (dataType == motionInputTypes.ROTATION) then
+		newValue1 = LevelFuncs.Engine.Node.Lerp(oldValue.x, newValue.x, factor)
+		newValue2 = LevelFuncs.Engine.Node.Lerp(oldValue.y, newValue.y, factor)
+	    newValue3 = LevelFuncs.Engine.Node.Lerp(oldValue.z, newValue.z, factor)
+    elseif (dataType == motionInputTypes.COLOR) then
 		newValue1 = LevelFuncs.Engine.Node.Lerp(oldValue.r, newValue.r, factor)
 		newValue2 = LevelFuncs.Engine.Node.Lerp(oldValue.g, newValue.g, factor)
 	    newValue3 = LevelFuncs.Engine.Node.Lerp(oldValue.b, newValue.b, factor)
@@ -476,9 +478,17 @@ LevelFuncs.Engine.CustomInventory.Interpolate = function(name, dataType, oldValu
 		LevelVars.Engine.CustomInventory.Progress[name] = nil
 	end
 
-    local table = {x = newValue1, y = newValue2, z = newValue3, a = newValue4}
-
-    return table
+    if (dataType == motionInputTypes.LINEAR) then
+		return newValue1
+	elseif (dataType == motionInputTypes.VEC2) then
+		return Vec2(newValue1, newValue2)
+    elseif (dataType == motionInputTypes.VEC3) then
+		return Vec3(newValue1, newValue2, newValue3)
+    elseif (dataType == motionInputTypes.ROTATION) then
+		return Rotation(newValue1, newValue2, newValue3)
+    elseif (dataType == motionInputTypes.COLOR) then
+		return Color(newValue1, newValue2, newValue3, newValue4)
+	end
 
 end
 
@@ -537,11 +547,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function()
 
     if LevelVars.Engine.CustomInventory.RingOpening == true then
 
-        local table = LevelFuncs.Engine.CustomInventory.Interpolate("RingOpening", interpolateTypes.LINEAR, 0, LevelVars.Engine.CustomInventory.Radius, 0.5, true)
-        
-        LevelFuncs.Engine.CustomInventory.TranslateInventory(inventoryTable, LevelVars.Engine.CustomInventory.Centre, table.x, LevelVars.Engine.CustomInventory.CurrentAngle)
-        
-        if table.x <= LevelVars.Engine.CustomInventory.Radius then
+        local radiusInterpolate = LevelFuncs.Engine.CustomInventory.Motion("RingOpening", motionInputTypes.LINEAR, 0, LevelVars.Engine.CustomInventory.Radius, 1, true)
+        local angleInterpolate = LevelFuncs.Engine.CustomInventory.Motion("RingOpening2", motionInputTypes.LINEAR, -360, 0, 1, true)
+        local cameraInterpolate = LevelFuncs.Engine.CustomInventory.Motion("RingOpening3", motionInputTypes.VEC3, LevelVars.Engine.CustomInventory.CameraStart, Vec3(0,-36,-1151), 1, true)
+        local targetInterpolate = LevelFuncs.Engine.CustomInventory.Motion("RingOpening4", motionInputTypes.VEC3, LevelVars.Engine.CustomInventory.TargetStart, Vec3(0,110,0), 1, true)
+        LevelFuncs.Engine.CustomInventory.TranslateInventory(inventoryTable, LevelVars.Engine.CustomInventory.Centre, radiusInterpolate, angleInterpolate)
+        TEN.DrawItem.SetInvCameraPosition(cameraInterpolate)
+        TEN.DrawItem.SetInvTargetPosition(targetInterpolate)
+        if radiusInterpolate <= LevelVars.Engine.CustomInventory.Radius then
             LevelVars.Engine.CustomInventory.RingOpening =false
             LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
         end
@@ -554,7 +567,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function()
         if LevelVars.Engine.CustomInventory.RotationInProgress then
             local speed = 10 -- degrees per frame
             local diff = LevelVars.Engine.CustomInventory.TargetAngle - LevelVars.Engine.CustomInventory.CurrentAngle
-
+            rotation  =  0 --set rotation to zero to ensure smooth rotation of item once inventory stops rotating
             -- Normalize the difference to the shortest direction
             if diff > 180 then
                 diff = diff - 360
@@ -569,15 +582,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function()
             else
                 LevelVars.Engine.CustomInventory.CurrentAngle = LevelVars.Engine.CustomInventory.CurrentAngle + math.sign(diff) * speed
             end
+
+            LevelFuncs.Engine.CustomInventory.TranslateInventory(inventoryTable, LevelVars.Engine.CustomInventory.Centre, LevelVars.Engine.CustomInventory.Radius, LevelVars.Engine.CustomInventory.CurrentAngle)
+
         end
 
-        LevelFuncs.Engine.CustomInventory.TranslateInventory(inventoryTable, LevelVars.Engine.CustomInventory.Centre, LevelVars.Engine.CustomInventory.Radius, LevelVars.Engine.CustomInventory.CurrentAngle)
-        
         if not LevelVars.Engine.CustomInventory.RotationInProgress then
             local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem].item
-            local itemRotation  = TEN.DrawItem.GetItemRotation(selectedItem)
-            TEN.DrawItem.SetItemRotation(selectedItem, Rotation(itemRotation.x, (rotation) % 360, itemRotation.z))
-            rotation  = rotation  + 4
+            LevelFuncs.Engine.CustomInventory.RotateItem(selectedItem)
             LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem)
         end
     end
@@ -689,13 +701,13 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
         if hp <= 0 or hp >= HEALTH_MAX then
             if poison == 0 then
+                TEN.Sound.PlaySound(soundMap.PLAYER_NO)
                 return
             end
         end
+
         local count = TEN.Inventory.GetItemCount(item)
         
-        
-
         if count then
             if count ~= NO_VALUE then
                 LevelFuncs.Engine.CustomInventory.ReduceItem(item, 1)

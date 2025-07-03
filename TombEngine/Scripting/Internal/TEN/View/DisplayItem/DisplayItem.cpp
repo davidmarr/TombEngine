@@ -179,6 +179,7 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetCamera, &SetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetCamera, &GetCameraPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetTarget, &SetTargetPosition);
+		tableDrawItems.set_function(ScriptReserved_DrawItemGetTarget, &GetTargetPosition);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetAmbientLight, &SetAmbientLight);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetInvOverride, &GetInventoryOverride);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetInvOverride, &SetInventoryOverride);
