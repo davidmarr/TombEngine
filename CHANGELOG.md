@@ -3,6 +3,15 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 1.9.2]
+
+### Bug fixes
+* Fixed puzzle holes losing collision after inserting puzzle items.
+* Fixed projectile weapon hits not registering in statistics and collision callbacks.
+* Fixed incorrect distance checks on a very large room coordinates which could have caused random Lara teleportations.
+* Fixed Doppler effect not applied to sounds.
+* Fixed HUD bars displaying incorrect update animation after loading savegame.
+
 ## [Version 1.9.1]
 
 ### New features
