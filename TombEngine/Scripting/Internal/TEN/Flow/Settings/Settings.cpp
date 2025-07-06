@@ -86,11 +86,11 @@ namespace TEN::Scripting
 		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
-		// Overhang climbing.
+		/// Overhang climbing.
 		// @tfield bool overhangClimb Enables overhang climbing feature. Currently does not work.
 		"overhangClimb", &AnimSettings::OverhangClimb,
 
-		// Extended slide mechanics.
+		/// Extended slide mechanics.
 		// @tfield bool slideExtended If enabled, player will be able to change slide direction with controls. Currently does not work.
 		"slideExtended", &AnimSettings::SlideExtended,
 
@@ -311,7 +311,7 @@ namespace TEN::Scripting
 		"flashColor", &WeaponSettings::FlashColor,
 
 		/// Gunflash range.
-		// @tfield Color flashRange specifies the range of the gunflash.
+		// @tfield int flashRange specifies the range of the gunflash.
 		"flashRange", &WeaponSettings::FlashRange,
 
 		/// Gunflash duration.
@@ -354,7 +354,7 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(SystemSettings, ScriptReserved_SystemSettings),
 
 		/// How should the application respond to script errors?
-		// @tfield Flow.ErrorMode errorMode Error mode to use.
+		// @tfield ErrorMode errorMode Error mode to use.
 		"errorMode", &SystemSettings::ErrorMode,
 
 		/// Use multithreading in certain calculations. <br>
