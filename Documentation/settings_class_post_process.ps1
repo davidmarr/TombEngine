@@ -61,21 +61,22 @@ function Get-FieldDocumentation {
 
     $summary = ""
     $description = ""
+    $fieldType = ""
     $commentLines = @()
 
     for ($i = $FieldIndex - 1; $i -ge 0; $i--) {
         $line = $Lines[$i].Trim()
 
         if ($line.StartsWith('///') -or $line.StartsWith('//')) {
-            if ($line -match '//\s*@tfield' -and $line -match '@tfield\s+\w+\s+\w+\s+(.+)$') {
-                $summary = $matches[1]
+            if ($line -match '//\s*@tfield\s+(\w+)\s+\w+\s+(.+)$') {
+                # Extract type and description from @tfield line
+                $fieldType = $matches[1]
+                $description = $matches[2]
             } elseif ($line.StartsWith('///')) {
-                $commentText = $line.TrimStart('/').Trim()
-
-                if ($commentText) {
-                    $commentLines = @($commentText) + $commentLines
-                }
+                # Three slashes indicate summary text
+                $summary = $line.TrimStart('/').Trim()
             } elseif ($line.StartsWith('//') -and -not $line.StartsWith('// @')) {
+                # Two slashes (non-@) indicate description
                 $descText = $line.TrimStart('/').Trim()
 
                 if ($descText) {
@@ -87,21 +88,49 @@ function Get-FieldDocumentation {
         }
     }
 
-    # Build summary and description from collected comments
-    if (-not $summary -and $commentLines.Count -gt 0) {
-        $summary = $commentLines[0]
-
-        if ($commentLines.Count -gt 1) {
-            $description = ($commentLines | Select-Object -Skip 1) -join " "
-        }
-    } elseif ($commentLines.Count -gt 0) {
+    # Build description from collected comment lines
+    if ($commentLines.Count -gt 0) {
         $description = $commentLines -join " "
+    }
+
+    # Add type annotation to summary if we have both type and summary
+    if ($fieldType -and $summary) {
+        $summary = "($fieldType) $summary"
+    } elseif ($fieldType -and $description) {
+        # If no summary but we have description, add type to description
+        $description = "($fieldType) $description"
     }
 
     return @{
         Summary = $summary
         Description = $description
     }
+}
+
+# Helper function to extract field type override from comments
+function Get-FieldTypeOverride {
+    param(
+        [string[]]$Lines,
+        [int]$FieldIndex
+    )
+
+    # Look backwards for /* @fieldtype ... */ comment
+    for ($i = $FieldIndex - 1; $i -ge 0; $i--) {
+        $line = $Lines[$i].Trim()
+
+        # Check for /* @fieldtype ... */ pattern
+        if ($line -match '/\*\s*@fieldtype\s+([^*]+)\s*\*/') {
+            $fieldType = $matches[1].Trim()
+            return $fieldType
+        }
+
+        # Stop if we encounter a non-comment line or different comment type
+        if (-not ($line.StartsWith('///') -or $line.StartsWith('//') -or $line.StartsWith('/*') -or $line -eq "")) {
+            break
+        }
+    }
+
+    return $null
 }
 
 # Helper function to extract main Flow.Settings class documentation
@@ -159,6 +188,7 @@ function Parse-SettingsFromCpp {
 
     $content = Get-Content $CppFilePath -Raw -Encoding UTF8
     $classes = @{}
+    $sectionFieldTypes = @{}  # Store field type overrides per section
     $lines = $content -split '\r?\n'
 
     # Extract main class documentation
@@ -180,6 +210,15 @@ function Parse-SettingsFromCpp {
             $currentSection = $matches[1]
             $currentSectionDescription = Get-SectionDescription -Lines $lines -StartIndex $i
             Write-Host "`tFound section: $currentSection - $currentSectionDescription"
+
+            # Look for field type override for this section
+            $fieldTypeOverride = Get-FieldTypeOverride -Lines $lines -FieldIndex $i
+
+            if ($fieldTypeOverride) {
+                $sectionFieldTypes[$currentSection] = $fieldTypeOverride
+                Write-Host "`t`tFound field type override: $fieldTypeOverride"
+            }
+
             continue
         }
 
@@ -243,6 +282,7 @@ function Parse-SettingsFromCpp {
     return @{
         Classes = $classes
         MainClassDoc = $mainClassDoc
+        SectionFieldTypes = $sectionFieldTypes
     }
 }
 
@@ -256,11 +296,13 @@ function New-XmlFieldElement {
     $fieldElement = $XmlDoc.CreateElement("field")
     $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "name" $FieldInfo.Name)) | Out-Null
 
-    if ($FieldInfo.Summary) {
+    # Only add summary if it's not empty
+    if ($FieldInfo.Summary -and $FieldInfo.Summary.Trim() -ne "") {
         $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "summary" $FieldInfo.Summary)) | Out-Null
     }
 
-    if ($FieldInfo.Description) {
+    # Only add description if it's not empty
+    if ($FieldInfo.Description -and $FieldInfo.Description.Trim() -ne "") {
         $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "description" $FieldInfo.Description)) | Out-Null
     }
 
@@ -277,8 +319,16 @@ function New-XmlClassElement {
     $classElement = $XmlDoc.CreateElement("class")
     $classElement.AppendChild((New-XmlElementWithText $XmlDoc "name" $ClassInfo.Name)) | Out-Null
     $classElement.AppendChild((New-XmlElementWithText $XmlDoc "type" $TEN_CLASS_TYPE)) | Out-Null
-    $classElement.AppendChild((New-XmlElementWithText $XmlDoc "summary" $ClassInfo.Description)) | Out-Null
-    $classElement.AppendChild((New-XmlElementWithText $XmlDoc "description" $ClassInfo.Description)) | Out-Null
+
+    # Only add summary if it's not empty
+    if ($ClassInfo.Summary -and $ClassInfo.Summary.Trim() -ne "") {
+        $classElement.AppendChild((New-XmlElementWithText $XmlDoc "summary" $ClassInfo.Summary)) | Out-Null
+    }
+
+    # Only add description if it's not empty
+    if ($ClassInfo.Description -and $ClassInfo.Description.Trim() -ne "") {
+        $classElement.AppendChild((New-XmlElementWithText $XmlDoc "description" $ClassInfo.Description)) | Out-Null
+    }
 
     # Add members container
     $membersElement = $XmlDoc.CreateElement("members")
@@ -340,13 +390,13 @@ try {
     $parseResult = Parse-SettingsFromCpp -CppFilePath $SettingsCppFile
     $settingsClasses = $parseResult.Classes
     $mainClassDoc = $parseResult.MainClassDoc
+    $sectionFieldTypes = $parseResult.SectionFieldTypes
 
     if ($settingsClasses.Count -eq 0) {
         Write-Host "ERROR: No settings classes found in Settings.cpp."
         exit 1
     }
 
-    # Use extracted documentation or fallback to default
     $mainDescription = if ($mainClassDoc.Summary) {
         if ($mainClassDoc.Description) {
             "$($mainClassDoc.Summary) $($mainClassDoc.Description)"
@@ -396,22 +446,41 @@ try {
     foreach ($className in $settingsClasses.Keys | Sort-Object) {
         $classInfo = $settingsClasses[$className]
 
+        # Check for field type override for this section
+        $fieldType = if ($sectionFieldTypes.ContainsKey($classInfo.Section)) {
+            $sectionFieldTypes[$classInfo.Section]
+        } else {
+            $className
+        }
+
         $mainClass.Fields += @{
             Name = $classInfo.Section
-            Type = $className
+            Type = $fieldType
             Summary = $classInfo.Description
             Description = $classInfo.Description
         }
 
-        Write-Host "`tAdded field: $($classInfo.Section) -> $className"
+        if ($fieldType -ne $className) {
+            Write-Host "`tAdded field: $($classInfo.Section) -> $fieldType (overridden from $className)"
+        } else {
+            Write-Host "`tAdded field: $($classInfo.Section) -> $className"
+        }
     }
 
     # Create main class element with custom field handling for type references
     $mainClassElement = $xmlDoc.CreateElement("class")
     $mainClassElement.AppendChild((New-XmlElementWithText $xmlDoc "name" $mainClass.Name)) | Out-Null
     $mainClassElement.AppendChild((New-XmlElementWithText $xmlDoc "type" $TEN_CLASS_TYPE)) | Out-Null
-    $mainClassElement.AppendChild((New-XmlElementWithText $xmlDoc "summary" $mainClass.Description)) | Out-Null
-    $mainClassElement.AppendChild((New-XmlElementWithText $xmlDoc "description" $mainClass.Description)) | Out-Null
+
+    # Only add summary if it's not empty
+    if ($mainClass.Summary -and $mainClass.Summary.Trim() -ne "") {
+        $mainClassElement.AppendChild((New-XmlElementWithText $xmlDoc "summary" $mainClass.Summary)) | Out-Null
+    }
+
+    # Only add description if it's not empty
+    if ($mainClass.Description -and $mainClass.Description.Trim() -ne "") {
+        $mainClassElement.AppendChild((New-XmlElementWithText $xmlDoc "description" $mainClass.Description)) | Out-Null
+    }
 
     # Add members with type references
     $mainMembersElement = $xmlDoc.CreateElement("members")
@@ -420,8 +489,16 @@ try {
         $fieldElement = $xmlDoc.CreateElement("field")
         $fieldElement.AppendChild((New-XmlElementWithText $xmlDoc "name" $fieldInfo.Name)) | Out-Null
         $fieldElement.AppendChild((New-XmlElementWithText $xmlDoc "type" $fieldInfo.Type)) | Out-Null
-        $fieldElement.AppendChild((New-XmlElementWithText $xmlDoc "summary" $fieldInfo.Summary)) | Out-Null
-        $fieldElement.AppendChild((New-XmlElementWithText $xmlDoc "description" $fieldInfo.Description)) | Out-Null
+
+        # Only add summary if it's not empty
+        if ($fieldInfo.Summary -and $fieldInfo.Summary.Trim() -ne "") {
+            $fieldElement.AppendChild((New-XmlElementWithText $xmlDoc "summary" $fieldInfo.Summary)) | Out-Null
+        }
+
+        # Only add description if it's not empty
+        if ($fieldInfo.Description -and $fieldInfo.Description.Trim() -ne "") {
+            $fieldElement.AppendChild((New-XmlElementWithText $xmlDoc "description" $fieldInfo.Description)) | Out-Null
+        }
 
         $mainMembersElement.AppendChild($fieldElement) | Out-Null
     }
