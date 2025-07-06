@@ -3,7 +3,7 @@
 --CONSTANTS
 local NO_VALUE = -1
 local HEALTH_MAX = 1000
-local ROTATION = 4 --rotation speed of Inventory Item
+local ROTATION_SPEED = 4 --rotation speed of Inventory Item
 local CAMERA_START = Vec3(0,-2500, 200)
 local CAMERA_END = Vec3(0,-36,-1151)
 local TARGET_START = Vec3(0,0, 1000)
@@ -11,7 +11,11 @@ local TARGET_END = Vec3(0,110,0)
 local INVENTORY_ANIM_TIME = 0.5
 local RING_CENTER = Vec3(0,200,1024)
 local RING_RADIUS = -512
+local ITEM_START = Vec3(0,200,512)
+local ITEM_END = Vec3(0,0,400)
 local PROGRESS_COMPLETE = 1
+local EXAMINE_SCALE = 1.2
+local EXAMINE_TEXT = Vec2(50, 80)
 
 --External table of all pickup data
 local PICKUP_DATA = require("Levels.InventoryConstants")
@@ -27,7 +31,8 @@ local INVENTORY_MODE =
     STATISTICS_OPEN = 6,
     STATISTICS_CLOSE = 7,
     EXAMINE_OPEN = 8,
-    EXAMINE_CLOSE = 9
+    EXAMINE_CLOSE = 9,
+    ITEM_USE = 10
 }
 
 --Structure for SoundMap
@@ -104,9 +109,11 @@ local useBinoculars = false
 
 local motionProgress = {}
 
-local examineOrient = Rotation(0,0,0)
+local examineOrient
 local examineScaler = 1.2
-local examineShowString = true
+local examineShowString = false
+local examineComplete = true
+local examineOldRotation
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -151,6 +158,63 @@ local SetRotationInventoryItems = function()
     --Compass Needle
     TEN.DrawItem.SetMeshRotation(TEN.Objects.ObjID.COMPASS_ITEM, 1, calculateCompassAngle())
 
+end
+
+-- Function to display level statistics on the screen
+local ShowLevelStats = function(gameStats)
+    -- Retrieve current level statistics and configuration
+    local levelStats = Flow.GetStatistics()
+    local level = Flow.GetCurrentLevel()
+
+    -- Define screen positions for various UI elements using percentages
+    local levelNameX, levelNameY = PercentToScreen(50, 20)   -- Position of the level name
+    local headingsX, headingsY = PercentToScreen(25, 30)     -- Position of the headings
+    local dataX, dataY = PercentToScreen(65, 30.5)           -- Position of the statistics data
+    local controlX, controlY = PercentToScreen(50, 90)       -- Position of the control instructions
+    
+    -- Set color and text scale for all UI elements
+    local textColor = Color(255, 255, 255, 255)              -- White color (RGBA)
+    local textScale = 1                                      -- Default text scale
+
+    -- Create and display text for the UI.
+ 	local headings = DisplayString("Time Taken\nSecrets\nPickups\nKills\nAmmo Used\nMedi packs used\nDistance Travelled", Vec2(headingsX, headingsY), textScale, textColor, false)
+	local levelName = DisplayString(tostring(Flow.GetString(level.nameKey)), Vec2(levelNameX, levelNameY), textScale, textColor, false)
+	local control = DisplayString("Press ACTION to continue", Vec2(controlX, controlY), textScale / 2, textColor, false)
+
+
+    -- Create and display statistics values
+    local stats = DisplayString(
+        tostring(levelStats.timeTaken):sub(1, -4) .. "\n" ..
+        tostring(Flow.GetSecretCount()) .. " / " .. tostring(level.secrets) .. "\n" ..
+        tostring(levelStats.pickups) .. "\n" ..
+        tostring(levelStats.kills) .. "\n" ..
+        tostring(levelStats.ammoUsed) .. "\n" ..
+        tostring(levelStats.healthPacksUsed) .. "\n" ..
+        string.format("%.1f", levelStats.distanceTraveled / 420) .. " m",
+        Vec2(dataX, dataY),
+        textScale,
+        textColor,
+        false  -- Disable translations
+    )
+
+    -- Create and display control instructions
+		local control = DisplayString("Press ACTION to continue", Vec2(controlX, controlY), textScale / 2, textColor, false)
+    -- Apply text effects (e.g., centering, shadow, blink)
+    levelName:SetFlags({ TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW })
+    headings:SetFlags({ TEN.Strings.DisplayStringOption.SHADOW })
+    stats:SetFlags({ TEN.Strings.DisplayStringOption.SHADOW })
+    control:SetFlags({ TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.BLINK })
+
+    -- Display all UI elements on the screen
+    ShowString(levelName, 1 / 30)
+    ShowString(headings, 1 / 30)
+    ShowString(stats, 1 / 30)
+    ShowString(control, 1 / 30)
+
+    -- Draw a background graphic for the stats screen
+	
+    	local bg = DisplaySprite(ObjID.BAR_BORDER_GRAPHICS, 1, Vec2(50, 48), 0, Vec2(60, 60), Color(20, 157, 0, 128))
+    	bg:Draw(0, View.AlignMode.CENTER, View.ScaleMode.STRETCH, Effects.BlendID.ADDITIVE)
 end
 
 local combine = function(item1, item2)
@@ -200,7 +264,7 @@ LevelFuncs.OnFreeze = function()
     --LevelFuncs.AdjustCamera()
 end
 
---required for positioning the inventory
+--required for positioning the inventory --Temporary function
 local selectedIndex = 1
 local vector
 LevelFuncs.AdjustCamera = function()
@@ -325,8 +389,12 @@ local Input = function(mode)
             elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
                 local item = LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].item
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-                LevelFuncs.Engine.CustomInventory.UseItem(item)
-                LevelFuncs.Engine.CustomInventory.ExitInventory()
+                examineComplete = true
+                inventoryMode = INVENTORY_MODE.ITEM_USE
+             elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
+                TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+                examineComplete = true
+                inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
             elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_SELECT)
                 LevelVars.Engine.CustomInventory.RingClosing = true
@@ -337,32 +405,30 @@ local Input = function(mode)
     elseif mode == INVENTORY_MODE.STATISTICS then
 
         if guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
-            mode = INVENTORY_MODE.STATISTICS_CLOSE
+            inventoryMode = INVENTORY_MODE.STATISTICS_CLOSE
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE then
          -- Static variables
-        local MULTIPLIER = 1/30
-
+        local ROTATION_MULTIPLIER = 2
+        local ZOOM_MULTIPLIER = 0.3
         -- Handle rotation input
-        if guiIsPulsed(TEN.Input.ActionID.FORWARD) then
-            examineOrient.x = examineOrient.x + 3.0 / MULTIPLIER
-        elseif guiIsPulsed(TEN.Input.ActionID.BACK) then
-            examineOrient.x = examineOrient.x - (3.0 / MULTIPLIER)
-        elseif guiIsPulsed(TEN.Input.ActionID.LEFT) then
-            examineOrient.y = examineOrient.y + (3.0 / MULTIPLIER)
-        elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            examineOrient.y = examineOrient.y - (3.0 / MULTIPLIER)
-        elseif guiIsPulsed(TEN.Input.ActionID.SPRINT) then
-            examineScaler = examineScaler + (0.03 / MULTIPLIER)
-        elseif guiIsPulsed(TEN.Input.ActionID.CROUCH) then
-            examineScaler = examineScaler - (0.03 / MULTIPLIER)
+        if IsKeyHeld(TEN.Input.ActionID.FORWARD) then
+            examineOrient.x = examineOrient.x + ROTATION_MULTIPLIER
+        elseif IsKeyHeld(TEN.Input.ActionID.BACK) then
+            examineOrient.x = examineOrient.x - ROTATION_MULTIPLIER
+        elseif IsKeyHeld(TEN.Input.ActionID.LEFT) then
+            examineOrient.y = examineOrient.y + ROTATION_MULTIPLIER
+        elseif IsKeyHeld(TEN.Input.ActionID.RIGHT) then
+            examineOrient.y = examineOrient.y - ROTATION_MULTIPLIER
+        elseif IsKeyHeld(TEN.Input.ActionID.SPRINT) then
+            examineScaler = examineScaler + (ZOOM_MULTIPLIER)
+        elseif IsKeyHeld(TEN.Input.ActionID.CROUCH) then
+            examineScaler = examineScaler - (ZOOM_MULTIPLIER)
         elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
             examineShowString = not examineShowString
         elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
-            examineOrient = Rotation(0,0,0)
-            examineScaler = 1.2
-            mode = INVENTORY_MODE.EXAMINE_CLOSE
+            inventoryMode = INVENTORY_MODE.EXAMINE_CLOSE
         end
     else
         return
@@ -441,7 +507,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
 end
 
 
-LevelFuncs.DrawCursor = function()
+LevelFuncs.DrawCursor = function() --Temporary function
 
     local pos = GetMouseDisplayPosition()
 	
@@ -576,7 +642,7 @@ end
 
 local RotateItem = function(item)
     local itemRotation  = TEN.DrawItem.GetItemRotation(item)
-    TEN.DrawItem.SetItemRotation(item, Rotation(itemRotation.x, (itemRotation.y + ROTATION) % 360, itemRotation.z))
+    TEN.DrawItem.SetItemRotation(item, Rotation(itemRotation.x, (itemRotation.y + ROTATION_SPEED) % 360, itemRotation.z))
 end
 
 local PerformMotion = function(name, dataType, oldValue, newValue, time, smooth)
@@ -629,6 +695,7 @@ end
 local AnimateInventory = function(mode)
 
     local inventoryTable = LevelVars.Engine.CustomInventory.Inventory
+    local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem]
 
     if mode == INVENTORY_MODE.RING_OPENING then
         local radiusInterpolate = PerformMotion("RingOpening1", MOTION_TYPE.LINEAR, 0, RING_RADIUS, INVENTORY_ANIM_TIME, true)
@@ -673,6 +740,141 @@ local AnimateInventory = function(mode)
             LevelVars.Engine.CustomInventory.RingClosing = false
             return true
         end
+    elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
+
+        if examineComplete then
+           examineOldRotation =  TEN.DrawItem.GetItemRotation(selectedItem.item)
+           examineOrient = selectedItem.rotation
+           examineComplete = false
+        end
+
+        local positionInterpolate = PerformMotion("Examine", MOTION_TYPE.VEC3, ITEM_START, ITEM_END, INVENTORY_ANIM_TIME, true)
+        local fadeInterpolate = PerformMotion("Examine2", MOTION_TYPE.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, EXAMINE_SCALE, INVENTORY_ANIM_TIME, true)
+        local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOldRotation, selectedItem.rotation, INVENTORY_ANIM_TIME, true)
+        FadeRing(inventoryTable, fadeInterpolate.output, true)
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+        TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
+        TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
+        TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
+
+        if positionInterpolate.progress >= PROGRESS_COMPLETE then
+            ClearMotionProgress("Examine")
+            ClearMotionProgress("Examine2")
+            ClearMotionProgress("Examine3")
+            ClearMotionProgress("Examine4")
+            return true
+        end
+    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
+        local positionInterpolate = PerformMotion("Examine", MOTION_TYPE.VEC3, ITEM_END, ITEM_START, INVENTORY_ANIM_TIME, true)
+        local fadeInterpolate = PerformMotion("Examine2", MOTION_TYPE.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, examineScaler, selectedItem.scale, INVENTORY_ANIM_TIME, true)
+        local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOrient, examineOldRotation, INVENTORY_ANIM_TIME, true)
+        FadeRing(inventoryTable, fadeInterpolate.output, true)
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+        TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
+        TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
+        TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
+
+        if positionInterpolate.progress >= PROGRESS_COMPLETE then
+            ClearMotionProgress("Examine")
+            ClearMotionProgress("Examine2")
+            ClearMotionProgress("Examine3")
+            ClearMotionProgress("Examine4")
+            return true
+        end
+    elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
+
+        if examineComplete then
+           examineOldRotation =  TEN.DrawItem.GetItemRotation(selectedItem.item)
+           examineComplete = false
+        end
+
+        local positionInterpolate = PerformMotion("Examine", MOTION_TYPE.VEC3, ITEM_START, ITEM_END, INVENTORY_ANIM_TIME, true)
+        local fadeInterpolate = PerformMotion("Examine2", MOTION_TYPE.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, EXAMINE_SCALE, INVENTORY_ANIM_TIME, true)
+        local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOldRotation, selectedItem.rotation, INVENTORY_ANIM_TIME, true)
+        FadeRing(inventoryTable, fadeInterpolate.output, true)
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+        TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
+        TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
+        TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
+
+        if positionInterpolate.progress >= PROGRESS_COMPLETE then
+            ClearMotionProgress("Examine")
+            ClearMotionProgress("Examine2")
+            ClearMotionProgress("Examine3")
+            ClearMotionProgress("Examine4")
+            return true
+        end
+    elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
+        local positionInterpolate = PerformMotion("Examine", MOTION_TYPE.VEC3, ITEM_END, ITEM_START, INVENTORY_ANIM_TIME, true)
+        local fadeInterpolate = PerformMotion("Examine2", MOTION_TYPE.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, EXAMINE_SCALE, selectedItem.scale, INVENTORY_ANIM_TIME, true)
+        local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, selectedItem.rotation, examineOldRotation, INVENTORY_ANIM_TIME, true)
+        FadeRing(inventoryTable, fadeInterpolate.output, true)
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+        TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
+        TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
+        TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
+
+        if positionInterpolate.progress >= PROGRESS_COMPLETE then
+            ClearMotionProgress("Examine")
+            ClearMotionProgress("Examine2")
+            ClearMotionProgress("Examine3")
+            ClearMotionProgress("Examine4")
+            return true
+        end
+    elseif mode == INVENTORY_MODE.ITEM_USE then
+
+        if examineComplete then
+           examineOldRotation =  TEN.DrawItem.GetItemRotation(selectedItem.item)
+           examineComplete = false
+        end
+
+        local positionInterpolate = PerformMotion("Examine", MOTION_TYPE.VEC3, ITEM_START, ITEM_END, INVENTORY_ANIM_TIME, true)
+        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, EXAMINE_SCALE, INVENTORY_ANIM_TIME, true)
+        local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOldRotation, selectedItem.rotation, INVENTORY_ANIM_TIME, true)
+        TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
+        TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
+        TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
+        if positionInterpolate.progress >= PROGRESS_COMPLETE then
+            positionInterpolate = PerformMotion("Examine5", MOTION_TYPE.VEC3, ITEM_END, ITEM_START, INVENTORY_ANIM_TIME, true)
+            scaleInterpolate = PerformMotion("Examine6", MOTION_TYPE.LINEAR, EXAMINE_SCALE, selectedItem.scale, INVENTORY_ANIM_TIME, true)
+            rotationInterpolate = PerformMotion("Examine7", MOTION_TYPE.ROTATION, selectedItem.rotation, examineOldRotation, INVENTORY_ANIM_TIME, true)
+            TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
+            TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
+            TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
+
+            if positionInterpolate.progress >= PROGRESS_COMPLETE then
+                local radiusInterpolate = PerformMotion("RingClosing", MOTION_TYPE.LINEAR, RING_RADIUS, 0, INVENTORY_ANIM_TIME, true)
+                local angleInterpolate = PerformMotion("RingClosing2", MOTION_TYPE.LINEAR, 0, -360, INVENTORY_ANIM_TIME, true)
+                local cameraInterpolate = PerformMotion("RingClosing3", MOTION_TYPE.VEC3, CAMERA_END, CAMERA_START,  INVENTORY_ANIM_TIME, true)
+                local targetInterpolate = PerformMotion("RingClosing4", MOTION_TYPE.VEC3, TARGET_END, TARGET_START, INVENTORY_ANIM_TIME, true)
+                local fadeInterpolate = PerformMotion("RingClosing5", MOTION_TYPE.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+                TranslateRing(inventoryTable, RING_CENTER, radiusInterpolate.output, angleInterpolate.output)
+                FadeRing(inventoryTable, fadeInterpolate.output, false)
+                TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
+                TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
+                TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+
+                if radiusInterpolate.progress >= PROGRESS_COMPLETE then
+                    ClearMotionProgress("Examine")
+                    ClearMotionProgress("Examine3")
+                    ClearMotionProgress("Examine4")
+                    ClearMotionProgress("Examine5")
+                    ClearMotionProgress("Examine6")
+                    ClearMotionProgress("Examine7")
+                    ClearMotionProgress("RingClosing")
+                    ClearMotionProgress("RingClosing2")
+                    ClearMotionProgress("RingClosing3")
+                    ClearMotionProgress("RingClosing4")
+                    ClearMotionProgress("RingClosing5")
+                    LevelVars.Engine.CustomInventory.RingClosing = false
+                    return true
+                end
+            end
+        end
     end
 
 end
@@ -680,6 +882,7 @@ end
 LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     
     local inventoryTable = LevelVars.Engine.CustomInventory.Inventory
+    local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem].item
 
     if mode == INVENTORY_MODE.INVENTORY then
         if LevelVars.Engine.CustomInventory.RingOpening == false and LevelVars.Engine.CustomInventory.RingClosing == false then
@@ -697,7 +900,6 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             end
 
             if not rotationInProgress then
-                local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem].item
                 RotateItem(selectedItem)
                 LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem)
             end
@@ -724,8 +926,51 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             end
 
         end
+    elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
+        
+        if AnimateInventory(mode) then
+
+            inventoryMode = INVENTORY_MODE.EXAMINE
+
+        end
     elseif mode == INVENTORY_MODE.EXAMINE then
         LevelFuncs.Engine.CustomInventory.ExamineItem(selectedItem)
+    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
+
+        if AnimateInventory(mode) then
+
+            inventoryMode = INVENTORY_MODE.INVENTORY
+
+        end
+    elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
+        
+        if AnimateInventory(mode) then
+
+            inventoryMode = INVENTORY_MODE.STATISTICS
+
+        end
+    elseif mode == INVENTORY_MODE.STATISTICS then
+        ShowLevelStats()
+    elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
+
+        if AnimateInventory(mode) then
+
+            inventoryMode = INVENTORY_MODE.INVENTORY
+
+        end
+    elseif mode == INVENTORY_MODE.ITEM_USE then
+        
+        --Hack for Stopwatch item
+        if selectedItem == TEN.Objects.ObjID.STOPWATCH_ITEM then
+            inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+            return
+        end
+
+        if AnimateInventory(mode) then
+
+            LevelFuncs.Engine.CustomInventory.UseItem(selectedItem)
+
+        end
     end
 end
 
@@ -870,6 +1115,8 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
     end
 
+    LevelFuncs.Engine.CustomInventory.ExitInventory()
+
 end
 
 LevelFuncs.Engine.CustomInventory.CombineItem = function(item1, item2)
@@ -886,15 +1133,6 @@ end
 
 LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
 
-    --local screenPos = percentPos(50, 50)
-
-    -- Get current inventory item
-    -- local inventoryRing = g_Gui:GetRing(RingTypes.Inventory)
-    -- local currentIndex = inventoryRing.CurrentObjectInList
-    -- local currentItemID = inventoryRing.CurrentObjectList[currentIndex].InventoryItem
-    -- local object = InventoryObjectTable[currentItemID]
-
-    -- Clamp scale
     if examineScaler > 1.6 then
         examineScaler = 1.6
     elseif examineScaler < 0.8 then
@@ -904,22 +1142,13 @@ LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
     -- Get the localized string key
     local objectName = Util.GetObjectIDString(item)
     local stringKey = objectName:lower() .. "_text"
-
-    print(stringKey)
     local localizedString = GetString(stringKey)
 
-    -- Draw the inventory object with scale applied
-    -- local savedScale = object.Scale1
-    -- object.Scale1 = scaler
-    -- DrawObjectIn2DSpace(g_Gui:ConvertInventoryItemToObject(currentItemID), screenPos, orient, object.Scale1)
-    -- object.Scale1 = savedScale
-
-    --TEN.DrawItem.SetItemPosition(item, screenPos)
     TEN.DrawItem.SetItemRotation(item, examineOrient)
     TEN.DrawItem.SetItemScale(item, examineScaler)
     
     if localizedString and examineShowString then
-        local entryText = TEN.Strings.DisplayString(localizedString, percentPos(50, 80), 1, COLOR_MAP.NORMAL_FONT, true, {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER})
+        local entryText = TEN.Strings.DisplayString(localizedString, percentPos(EXAMINE_TEXT.x, EXAMINE_TEXT.y), 1, COLOR_MAP.NORMAL_FONT, true, {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER})
         ShowString(entryText, 1 / 30)
     end
 
@@ -966,7 +1195,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
             ClearMotionProgress("FontFade")
         end
-    elseif inventoryMode == INVENTORY_MODE.INVENTORY then
+    else
         fadeInterpolate = {output = 255, progress = 1}
     end
 
@@ -1017,3 +1246,4 @@ LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
     return overrides
 
 end
+
