@@ -196,6 +196,7 @@ namespace TEN::Scripting
 			"skinning", &GraphicsSettings::Skinning);
 	}
 
+	/* @fieldtype HairSettings[] */
 	/// Hair
 	// @section Hair
 	// This is a table of braid object settings. <br>
@@ -267,6 +268,7 @@ namespace TEN::Scripting
 		"swimVelocity", &PhysicsSettings::SwimVelocity);
 	}
 
+	/* @fieldtype { [WeaponType]: WeaponSettings } */
 	/// Weapons
 	// @section Weapons
 	// This is a table of weapon settings, with several parameters available for every weapon.
