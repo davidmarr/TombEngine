@@ -260,7 +260,7 @@ namespace TEN::Entities::Vehicles
 			if (pos->z > old->z)
 				z = -1 - shiftZ;
 			else
-				z = BLOCK(1) + 1 - shiftZ;
+				z = (BLOCK(1) + 1) - shiftZ;
 		}
 
 		roomNumber = jeepItem->RoomNumber;
@@ -272,7 +272,7 @@ namespace TEN::Entities::Vehicles
 			if (pos->x > old->x)
 				x = -1 - shiftX;
 			else
-				x = BLOCK(1) + 1 - shiftX;
+				x = (BLOCK(1) + 1) - shiftX;
 		}
 
 		if (x && z)
@@ -504,7 +504,6 @@ namespace TEN::Entities::Vehicles
 		int hmb_old = GetVehicleHeight(jeepItem, -(JEEP_FRONT + 50), 0, true, &mb_old);
 
 		auto oldPos = jeepItem->Pose.Position;
-
 
 		if (f_old.y > hf_old)
 			f_old.y = hf_old;
