@@ -42,9 +42,10 @@ namespace TEN::Renderer::ConstantBuffers
 		float NearPlane;
 		float FarPlane;
 		//--
+		int MenuFrame;
 		int RefreshRate;
 		int NumFogBulbs;
-		Vector2 Padding2;
+		float Padding2;
 		//--
 		ShaderFogBulb FogBulbs[MAX_FOG_BULBS_DRAW];
 	};

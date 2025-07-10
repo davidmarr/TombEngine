@@ -6,6 +6,7 @@
 #include "./Blending.hlsli"
 #include "./CBStatic.hlsli"
 #include "./Shadows.hlsli"
+#include "./AnimatedTextures.hlsli"
 
 struct PixelShaderInput
 {
@@ -44,7 +45,17 @@ PixelShaderInput VS(VertexShaderInput input)
 	float4 worldPosition = (mul(float4(pos, 1.0f), World));
 
 	output.Position = mul(worldPosition, ViewProjection);
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.WorldPosition = worldPosition;
 	output.Color = float4(col, input.Color.w);
 	output.Color *= Color;

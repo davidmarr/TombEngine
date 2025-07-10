@@ -5,6 +5,7 @@
 #include "./VertexInput.hlsli"
 #include "./Blending.hlsli"
 #include "./Shadows.hlsli"
+#include "./AnimatedTextures.hlsli"
 
 #define INSTANCED_STATIC_MESH_BUCKET_SIZE 100
 
@@ -63,7 +64,17 @@ PixelShaderInput VS(VertexShaderInput input, uint InstanceID : SV_InstanceID)
 	float4 worldPosition = (mul(float4(pos, 1.0f), StaticMeshes[InstanceID].World));
 
 	output.Position = mul(worldPosition, ViewProjection);
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.WorldPosition = worldPosition;
 	output.Color = float4(col, input.Color.w);
 	output.Color *= StaticMeshes[InstanceID].Color;

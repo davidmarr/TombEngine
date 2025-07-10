@@ -59,7 +59,17 @@ PixelShaderInput VS(VertexShaderInput input)
 	float3 worldPosition = mul(float4(pos, 1.0f), world).xyz;
 
 	output.Position = mul(float4(worldPosition, 1.0f), ViewProjection);
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.Color = float4(col, input.Color.w);
 	output.Color *= Color;
 	output.PositionCopy = output.Position;

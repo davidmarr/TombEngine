@@ -2,6 +2,7 @@
 #include "./Blending.hlsli"
 #include "./VertexInput.hlsli"
 #include "./ShaderLight.hlsli"
+#include "./AnimatedTextures.hlsli"
 
 cbuffer ItemBuffer : register(b1)
 {
@@ -31,7 +32,17 @@ PixelShaderInput VS(VertexShaderInput input)
 	output.Position = mul(mul(float4(input.Position, 1.0f), World), ViewProjection);
 	output.Normal = (mul(float4(input.Normal, 0.0f), World).xyz);
 	output.Color = input.Color;
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(MenuFrame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.WorldPosition = (mul(float4(input.Position, 1.0f), World).xyz);
 	output.Sheen = input.Effects.w;
 	return output;

@@ -101,7 +101,7 @@ PixelShaderInput VSRooms(VertexShaderInput input)
 #ifdef ANIMATED
 
 	if (Type == 0)
-		output.UV = GetFrame(input.PolyIndex, input.AnimationFrameOffset);
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
 	else
 		output.UV = input.UV; // TODO: true UVRotate in future?
 #else
@@ -125,7 +125,17 @@ PixelShaderInput VSItems(VertexShaderInput input)
 
 	output.Position = mul(mul(float4(pos, 1.0f), world), ViewProjection);
 	output.PositionCopy = output.Position;
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.Normal = normalize(mul(input.Normal, (float3x3)world).xyz);
 	output.Tangent = normalize(mul(input.Tangent, (float3x3)world).xyz);
 	output.Binormal = normalize(mul(input.Binormal, (float3x3)world).xyz);
@@ -144,7 +154,17 @@ PixelShaderInput VSStatics(VertexShaderInput input)
 
 	output.Position = mul(worldPosition, ViewProjection);
 	output.PositionCopy = output.Position;
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.Normal = normalize(mul(input.Normal, (float3x3)StaticWorld).xyz);
 	output.Tangent = normalize(mul(input.Tangent, (float3x3)StaticWorld).xyz);
 	output.Binormal = normalize(mul(input.Binormal, (float3x3)StaticWorld).xyz);
@@ -163,7 +183,17 @@ PixelShaderInput VSInstancedStatics(VertexShaderInput input, uint InstanceID : S
 
 	output.Position = mul(worldPosition, ViewProjection);
 	output.PositionCopy = output.Position;
-	output.UV = input.UV;
+
+#ifdef ANIMATED
+
+	if (Type == 0)
+		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+	else
+		output.UV = input.UV; // TODO: true UVRotate in future?
+#else
+    output.UV = input.UV;
+#endif
+	
 	output.Normal = normalize(mul(input.Normal, (float3x3)StaticMeshes[InstanceID].World).xyz);
 	output.Tangent = normalize(mul(input.Tangent, (float3x3)StaticMeshes[InstanceID].World).xyz);
 	output.Binormal = normalize(mul(input.Binormal, (float3x3)StaticMeshes[InstanceID].World).xyz);

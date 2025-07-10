@@ -523,6 +523,7 @@ namespace TEN::Renderer
 		void InitializePostProcess();
 		void CreateSSAONoiseTexture();
 		void InitializeSMAA();
+		void SetupAnimatedTextures(const RendererBucket& bucket);
 
 		bool IsRoomReflected(RenderView& renderView, int roomNumber);
 

@@ -1010,7 +1010,7 @@ namespace TEN::Renderer
 					vertex.Binormal.x = poly->binormals[k].x;
 					vertex.Binormal.y = poly->binormals[k].y;
 					vertex.Binormal.z = poly->binormals[k].z;
-
+					 
 					vertex.UV.x = poly->textureCoordinates[k].x;
 					vertex.UV.y = poly->textureCoordinates[k].y;
 
@@ -1021,6 +1021,9 @@ namespace TEN::Renderer
 
 					vertex.BoneIndex  = meshPtr->boneIndices[v];
 					vertex.BoneWeight = meshPtr->boneWeights[v];
+
+					vertex.AnimationFrameOffset = poly->animatedFrame;
+					vertex.IndexInPoly = k;
 
 					vertex.OriginalIndex = v;
 

@@ -87,24 +87,35 @@ namespace TEN::Renderer::Utils
 
 	void ShaderManager::LoadCommonShaders()
 	{
-		D3D_SHADER_MACRO roomAnimated[] = { "ANIMATED", "", nullptr, nullptr };
+		D3D_SHADER_MACRO animated[] = { "ANIMATED", "", nullptr, nullptr };
 		D3D_SHADER_MACRO roomTransparent[] = { "TRANSPARENT", "", nullptr, nullptr };
 		D3D_SHADER_MACRO shadowMap[] = { "SHADOW_MAP", "", nullptr, nullptr };
 
 		Load(Shader::Rooms, "Rooms", "", ShaderType::PixelAndVertex);
-		Load(Shader::RoomsAnimated, "Rooms", "", ShaderType::Vertex, roomAnimated);
+		Load(Shader::RoomsAnimated, "Rooms", "", ShaderType::Vertex, animated);
 		Load(Shader::RoomsTransparent, "Rooms", "", ShaderType::Pixel, roomTransparent);
 
 		Load(Shader::RoomAmbient, "RoomAmbient", "", ShaderType::PixelAndVertex);
 		Load(Shader::RoomAmbientSky, "RoomAmbient", "Sky", ShaderType::Vertex);
 
 		Load(Shader::Items, "Items", "", ShaderType::PixelAndVertex);
+		Load(Shader::ItemsAnimated, "Items", "", ShaderType::Vertex, animated);
+
 		Load(Shader::Statics, "Statics", "", ShaderType::PixelAndVertex);
+		Load(Shader::StaticsAnimated, "Statics", "", ShaderType::Vertex, animated);  
+
 		Load(Shader::Sky, "Sky", "", ShaderType::PixelAndVertex);
+		Load(Shader::SkyAnimated, "Sky", "", ShaderType::Vertex, animated);
+
 		Load(Shader::Sprites, "Sprites", "", ShaderType::PixelAndVertex);
+
 		Load(Shader::Solid, "Solid", "", ShaderType::PixelAndVertex);
+
 		Load(Shader::Inventory, "Inventory", "", ShaderType::PixelAndVertex);
+		Load(Shader::InventoryAnimated, "Inventory", "", ShaderType::Vertex, animated);
+
 		Load(Shader::FullScreenQuad, "FullScreenQuad", "", ShaderType::PixelAndVertex);
+
 		Load(Shader::ShadowMap, "ShadowMap", "", ShaderType::PixelAndVertex, shadowMap);
 
 		Load(Shader::Hud, "HUD", "", ShaderType::Vertex);
@@ -113,14 +124,19 @@ namespace TEN::Renderer::Utils
 		Load(Shader::HudBarColor, "HUD", "TexturedHUDBar", ShaderType::Pixel);
 
 		Load(Shader::InstancedStatics, "InstancedStatics", "", ShaderType::PixelAndVertex);
+		Load(Shader::InstancedStaticsAnimated, "InstancedStatics", "", ShaderType::Vertex, animated);
+
 		Load(Shader::InstancedSprites, "InstancedSprites", "", ShaderType::PixelAndVertex);
 
 		Load(Shader::GBuffer, "GBuffer", "", ShaderType::Pixel);
 		Load(Shader::GBufferRooms, "GBuffer", "Rooms", ShaderType::Vertex);
-		Load(Shader::GBufferRoomsAnimated, "GBuffer", "Rooms", ShaderType::Vertex, roomAnimated);
+		Load(Shader::GBufferRoomsAnimated, "GBuffer", "Rooms", ShaderType::Vertex, animated);
 		Load(Shader::GBufferItems, "GBuffer", "Items", ShaderType::Vertex);
+		Load(Shader::GBufferItemsAnimated, "GBuffer", "Items", ShaderType::Vertex, animated);
 		Load(Shader::GBufferStatics, "GBuffer", "Statics", ShaderType::Vertex);
+		Load(Shader::GBufferStaticsAnimated, "GBuffer", "Statics", ShaderType::Vertex, animated);
 		Load(Shader::GBufferInstancedStatics, "GBuffer", "InstancedStatics", ShaderType::Vertex);
+		Load(Shader::GBufferInstancedStaticsAnimated, "GBuffer", "InstancedStatics", ShaderType::Vertex, animated);
 	}
 
 	void ShaderManager::LoadShaders(int width, int height, bool recompileAAShaders)

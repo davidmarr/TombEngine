@@ -697,7 +697,6 @@ namespace TEN::Renderer
 				if (rendererPass == RendererPass::GBuffer)
 				{
 					_shaders.Bind(Shader::GBuffer);
-					_shaders.Bind(Shader::GBufferStatics);
 				}
 				else
 				{
@@ -730,23 +729,44 @@ namespace TEN::Renderer
 
 					_cbStatic.UpdateData(_stStatic, _context.Get());
 
-					for (const auto& bucket : mesh.Buckets)
+					for (int animated = 0; animated < 2; animated++)
 					{
-						if (bucket.NumVertices == 0)
-							continue;
-
-						int passCount = (rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest) ? 2 : 1;
-						for (int p = 0; p < passCount; p++)
+						if (rendererPass != RendererPass::GBuffer)
 						{
-							if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+							if (animated == 0) _shaders.Bind(Shader::Statics); else _shaders.Bind(Shader::StaticsAnimated);
+						}
+						else
+						{
+							if (animated == 0) _shaders.Bind(Shader::GBufferStatics); else _shaders.Bind(Shader::GBufferStaticsAnimated);
+						}
+
+						for (const auto& bucket : mesh.Buckets)
+						{
+							if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
+							{
 								continue;
+							}
 
-							BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-							BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+							int passCount = (rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest) ? 2 : 1;
+							for (int p = 0; p < passCount; p++)
+							{
+								if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+									continue;
 
-							DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+								if (animated)
+								{
+									SetupAnimatedTextures(bucket);
+								}
+								else
+								{
+									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								}
 
-							_numMoveablesDrawCalls++;
+								DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+
+								_numMoveablesDrawCalls++;
+							}
 						}
 					}
 				}
@@ -834,7 +854,6 @@ namespace TEN::Renderer
 					if (rendererPass == RendererPass::GBuffer)
 					{
 						_shaders.Bind(Shader::GBuffer);
-						_shaders.Bind(Shader::GBufferInstancedStatics);
 					}
 					else
 					{
@@ -849,23 +868,42 @@ namespace TEN::Renderer
 
 					_cbInstancedStaticMeshBuffer.UpdateData(_stInstancedStaticMeshBuffer, _context.Get());
 
-					for (auto& bucket : mesh.Buckets)
+					for (int animated = 0; animated < 2; animated++)
 					{
-						if (bucket.NumVertices == 0)
-							continue;
-
-						int passCount = (rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest) ? 2 : 1;
-						for (int p = 0; p < passCount; p++)
+						if (rendererPass != RendererPass::GBuffer)
 						{
-							if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+							if (animated == 0) _shaders.Bind(Shader::InstancedStatics); else _shaders.Bind(Shader::InstancedStaticsAnimated);
+						}
+						else
+						{
+							if (animated == 0) _shaders.Bind(Shader::GBufferInstancedStatics); else _shaders.Bind(Shader::GBufferInstancedStaticsAnimated);
+						}
+
+						for (auto& bucket : mesh.Buckets)
+						{
+							if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 								continue;
 
-							BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-							BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+							int passCount = (rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest) ? 2 : 1;
+							for (int p = 0; p < passCount; p++)
+							{
+								if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+									continue;
 
-							DrawIndexedInstancedTriangles(bucket.NumIndices, batCount, bucket.StartIndex, 0);
+								if (animated)
+								{
+									SetupAnimatedTextures(bucket);
+								}
+								else
+								{
+									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								}
 
-							_numMoveablesDrawCalls++;
+								DrawIndexedInstancedTriangles(bucket.NumIndices, batCount, bucket.StartIndex, 0);
+
+								_numMoveablesDrawCalls++;
+							}
 						}
 					}
 
@@ -2572,14 +2610,9 @@ namespace TEN::Renderer
 			}
 #else
 			if (rendererPass == RendererPass::GBuffer)
-			{
 				_shaders.Bind(Shader::GBuffer);
-				_shaders.Bind(Shader::GBufferInstancedStatics);
-			}
 			else
-			{
 				_shaders.Bind(Shader::InstancedStatics);
-			}
 
 			// Bind vertex and index buffer
 			UINT stride = sizeof(Vertex);
@@ -2640,32 +2673,50 @@ namespace TEN::Renderer
 					{
 						_cbInstancedStaticMeshBuffer.UpdateData(_stInstancedStaticMeshBuffer, _context.Get());
 
-						for (const auto& bucket : refMesh->Buckets)
+						for (int animated = 0; animated < 2; animated++)
 						{
-							if (bucket.NumVertices == 0)
-								continue;
-
-							int passes = rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest ? 2 : 1;
-							for (int p = 0; p < passes; p++)
+							if (rendererPass != RendererPass::GBuffer)
 							{
-								if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
-									continue;
+								if (animated == 0) _shaders.Bind(Shader::InstancedStatics); else _shaders.Bind(Shader::InstancedStaticsAnimated);
+							}
+							else
+							{
+								if (animated == 0) _shaders.Bind(Shader::GBufferInstancedStatics); else _shaders.Bind(Shader::GBufferInstancedStaticsAnimated);
+							}
 
-								if (_staticTextures.size() <= bucket.Texture)
+							for (auto& bucket : refMesh->Buckets)
+							{
+								if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 								{
-									TENLog("Attempted to set incorrect static mesh texture atlas", LogLevel::Warning);
 									continue;
 								}
 
-								BindTexture(TextureRegister::ColorMap,
-									&std::get<0>(_staticTextures[bucket.Texture]),
-									SamplerStateRegister::AnisotropicClamp);
-								BindTexture(TextureRegister::NormalMap,
-									&std::get<1>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								int passes = rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest ? 2 : 1;
+								for (int p = 0; p < passes; p++)
+								{
+									if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+										continue;
 
-								DrawIndexedInstancedTriangles(bucket.NumIndices, instancesCount, bucket.StartIndex, 0);
+									if (animated)
+									{
+										SetupAnimatedTextures(bucket);
+									}
+									else
+									{
+										if (_staticTextures.size() <= bucket.Texture)
+										{
+											TENLog("Attempted to set incorrect static mesh texture atlas", LogLevel::Warning);
+											continue;
+										}
 
-								_numInstancedStaticsDrawCalls++;
+										BindTexture(TextureRegister::ColorMap, &std::get<0>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+										BindTexture(TextureRegister::NormalMap, &std::get<1>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+									}
+
+									DrawIndexedInstancedTriangles(bucket.NumIndices, instancesCount, bucket.StartIndex, 0);
+
+									_numInstancedStaticsDrawCalls++;
+								}
 							}
 						}
 					}
@@ -2828,7 +2879,7 @@ namespace TEN::Renderer
 			for (int i = (int)view.RoomsToDraw.size() - 1; i >= 0; i--)
 			{
 				const auto& room = *view.RoomsToDraw[i];
-				const auto& nativeRoom = g_Level.Rooms[room.RoomNumber];				
+				const auto& nativeRoom = g_Level.Rooms[room.RoomNumber];
 
 				if (rendererPass != RendererPass::GBuffer)
 				{
@@ -2855,10 +2906,7 @@ namespace TEN::Renderer
 
 					for (const auto& bucket : room.Buckets)
 					{
-						if ((animated == 1) ^ bucket.Animated)
-							continue;
-
-						if (bucket.NumVertices == 0)
+						if (((animated == 1) ^ bucket.Animated) || bucket.NumVertices == 0)
 							continue;
 
 						int passes = rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest ? 2 : 1;
@@ -2871,53 +2919,11 @@ namespace TEN::Renderer
 							// Draw geometry.
 							if (animated)
 							{
-								const auto& set  = _animatedTextureSets[bucket.Texture];
-
-								// Stream video texture, if video playback is active, otherwise show original texture.
-								if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture->Texture)
-								{
-									_stAnimated.Type = 0; // Dummy type, should be set to 0 to avoid incorrect UV mapping.
-									_stAnimated.Fps  = 1;
-									_stAnimated.NumFrames = 1;
-
-									BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
-									BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-									// Use normalized UVs, because we are showing the whole video texture on a single face.
-									_stAnimated.Textures[0].TopLeft     = set.Textures[0].NormalizedUV[0];
-									_stAnimated.Textures[0].TopRight    = set.Textures[0].NormalizedUV[1];
-									_stAnimated.Textures[0].BottomRight = set.Textures[0].NormalizedUV[2];
-									_stAnimated.Textures[0].BottomLeft  = set.Textures[0].NormalizedUV[3];
-								}
-								else
-								{
-									_stAnimated.Type = (int)set.Type;
-									_stAnimated.Fps  = set.Fps;
-									_stAnimated.NumFrames = set.NumTextures;
-
-									BindTexture(TextureRegister::ColorMap,  &std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-									BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-									for (unsigned char j = 0; j < set.NumTextures; j++)
-									{
-										if (j >= _stAnimated.Textures.size())
-										{
-											TENLog("Animated frame " + std::to_string(j) + " out of bounds. Too many frames in sequence.");
-											break;
-										}
-
-										_stAnimated.Textures[j].TopLeft     = set.Textures[j].UV[0];
-										_stAnimated.Textures[j].TopRight    = set.Textures[j].UV[1];
-										_stAnimated.Textures[j].BottomRight = set.Textures[j].UV[2];
-										_stAnimated.Textures[j].BottomLeft  = set.Textures[j].UV[3];
-									}
-								}
-
-								_cbAnimated.UpdateData(_stAnimated, _context.Get());
+								SetupAnimatedTextures(bucket);
 							}
 							else
 							{
-								BindTexture(TextureRegister::ColorMap,  &std::get<0>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								BindTexture(TextureRegister::ColorMap, &std::get<0>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 								BindTexture(TextureRegister::NormalMap, &std::get<1>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 							}
 
@@ -3148,8 +3154,6 @@ namespace TEN::Renderer
 			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
 			_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
-			_shaders.Bind(Shader::Sky);
-
 			auto pos = Vector3::Lerp(levelPtr->GetHorizonPrevPosition(layer), levelPtr->GetHorizonPosition(layer), GetInterpolationFactor());
 			auto orient = EulerAngles::Lerp(levelPtr->GetHorizonPrevOrientation(layer), levelPtr->GetHorizonOrientation(layer), GetInterpolationFactor());
 			auto rotMatrix = orient.ToRotationMatrix();
@@ -3164,23 +3168,35 @@ namespace TEN::Renderer
 			_cbStatic.UpdateData(_stStatic, _context.Get());
 
 			const auto& moveableObj = *_moveableObjects[levelPtr->GetHorizonObjectID(layer)];
-			for (const auto* mesh : moveableObj.ObjectMeshes)
-			{
-				for (const auto& bucket : mesh->Buckets)
+			for (auto* mesh : moveableObj.ObjectMeshes)
+			{ 
+				for (int animated = 0; animated < 2; animated++)
 				{
-					if (bucket.NumVertices == 0)
-						continue;
+					_shaders.Bind(Shader::Sky);
+					if (animated == 1)
+ 						_shaders.Bind(Shader::SkyAnimated);
 
-					BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+					for (auto& bucket : mesh->Buckets)
+					{
+						if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
+						{
+							continue;
+						}
 
-					// Always render horizon as alpha-blended surface.
-					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, alpha));
-					SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+						if (animated)
+							SetupAnimatedTextures(bucket);
+						else
+							BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 
-					// Draw vertices.
-					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+						// Always render horizon as alpha-blended surface.
+						SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, alpha));
+						SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
-					_numMoveablesDrawCalls++;
+						// Draw vertices.
+						DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+
+						_numMoveablesDrawCalls++;
+					}
 				}
 			}
 		}
@@ -3254,69 +3270,100 @@ namespace TEN::Renderer
 	{
 		if (rendererPass == RendererPass::CollectTransparentFaces)
 		{
-			for (auto& bucket : mesh->Buckets)
+			for (int animated = 0; animated < 2; animated++)
 			{
-				if (bucket.NumVertices == 0)
-					continue;
-
-				auto blendMode = GetBlendModeFromAlpha(bucket.BlendMode, itemToDraw->Color.w);
-
-				if (IsSortedBlendMode(blendMode))
+				for (auto& bucket : mesh->Buckets)
 				{
-					for (int p = 0; p < bucket.Polygons.size(); p++)
+					if (bucket.NumVertices == 0)
+						continue;
+
+					auto blendMode = GetBlendModeFromAlpha(bucket.BlendMode, itemToDraw->Color.w);
+
+					if (IsSortedBlendMode(blendMode))
 					{
-						auto center = Vector3::Transform(bucket.Polygons[p].Centre, itemToDraw->InterpolatedAnimTransforms[boneIndex] * itemToDraw->InterpolatedWorld);
-						int dist = Vector3::Distance(center, Camera.pos.ToVector3());
+						for (int p = 0; p < bucket.Polygons.size(); p++)
+						{
+							auto center = Vector3::Transform(bucket.Polygons[p].Centre, itemToDraw->InterpolatedAnimTransforms[boneIndex] * itemToDraw->InterpolatedWorld);
+							int dist = Vector3::Distance(center, Camera.pos.ToVector3());
 
-						auto object = RendererSortableObject{};
-						object.ObjectType = type;
-						object.Centre = center;
-						object.Distance = dist;
-						object.Skinned = skinned;
-						object.BlendMode = blendMode;
-						object.Bucket = &bucket;
-						object.Item = itemToDraw;
-						object.LightMode = mesh->LightMode;
-						object.Polygon = &bucket.Polygons[p];
+							auto object = RendererSortableObject{};
+							object.ObjectType = type;
+							object.Centre = center;
+							object.Distance = dist;
+							object.Skinned = skinned;
+							object.BlendMode = blendMode;
+							object.Bucket = &bucket;
+							object.Item = itemToDraw;
+							object.LightMode = mesh->LightMode;
+							object.Polygon = &bucket.Polygons[p];
 
-						view.TransparentObjectsToDraw.push_back(object);
+							view.TransparentObjectsToDraw.push_back(object);
+						}
 					}
 				}
 			}
 		}
 		else
 		{
-			for (auto& bucket : mesh->Buckets)
+			for (int animated = 0; animated < 2; animated++)
 			{
-				if (bucket.NumVertices == 0)
-					continue;
-
-				auto blendMode = GetBlendModeFromAlpha(bucket.BlendMode, itemToDraw->Color.w);
-				
-				if (rendererPass == RendererPass::ShadowMap)
+				if (rendererPass != RendererPass::GBuffer)
 				{
-					SetBlendMode(BlendMode::Opaque);
-					SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
-
-					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
-
-					_numShadowMapDrawCalls++;
+					if (animated == 0)
+						_shaders.Bind(Shader::Items); 
+					else
+						_shaders.Bind(Shader::ItemsAnimated);
 				}
 				else
 				{
-					int passes = rendererPass == RendererPass::Opaque && blendMode == BlendMode::AlphaTest ? 2 : 1;
+					if (animated == 0) 
+						_shaders.Bind(Shader::GBufferItems); 
+					else 
+						_shaders.Bind(Shader::GBufferItemsAnimated);
+				}
 
-					for (int p = 0; p < passes; p++)
+				for (auto& bucket : mesh->Buckets)
+				{
+					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 					{
-						if (!SetupBlendModeAndAlphaTest(blendMode, rendererPass, p))
-							continue;
+						continue;
+					}
 
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-						BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+					auto blendMode = GetBlendModeFromAlpha(bucket.BlendMode, itemToDraw->Color.w);
+
+					if (rendererPass == RendererPass::ShadowMap)
+					{
+						SetBlendMode(BlendMode::Opaque);
+						SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
 						DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
 
-						_numMoveablesDrawCalls++;
+						_numShadowMapDrawCalls++;
+					}
+					else
+					{
+						int passes = rendererPass == RendererPass::Opaque && blendMode == BlendMode::AlphaTest ? 2 : 1;
+
+						for (int p = 0; p < passes; p++)
+						{
+							if (!SetupBlendModeAndAlphaTest(blendMode, rendererPass, p))
+								continue;
+
+							// Draw geometry.
+							if (animated)
+							{
+								SetupAnimatedTextures(bucket);
+							}
+							else
+							{
+								BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+							}
+					
+							DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+
+							_numMoveablesDrawCalls++;
+						}
 					}
 				}
 			}
@@ -4012,5 +4059,52 @@ namespace TEN::Renderer
 		_gameCamera.Camera.InvViewSize = _currentGameCamera.Camera.InvViewSize;
 		_gameCamera.Camera.NearPlane = _currentGameCamera.Camera.NearPlane;
 		_gameCamera.Camera.FarPlane = _currentGameCamera.Camera.FarPlane;
+	}
+
+	void Renderer::SetupAnimatedTextures(const RendererBucket& bucket)
+	{
+		const auto& set = _animatedTextureSets[bucket.Texture];
+
+		// Stream video texture, if video playback is active, otherwise show original texture.
+		if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture->Texture)
+		{
+			_stAnimated.Type = 0; // Dummy type, should be set to 0 to avoid incorrect UV mapping.
+			_stAnimated.Fps = 1;
+			_stAnimated.NumFrames = 1;
+
+			BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
+			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+
+			// Use normalized UVs, because we are showing the whole video texture on a single face.
+			_stAnimated.Textures[0].TopLeft = set.Textures[0].NormalizedUV[0];
+			_stAnimated.Textures[0].TopRight = set.Textures[0].NormalizedUV[1];
+			_stAnimated.Textures[0].BottomRight = set.Textures[0].NormalizedUV[2];
+			_stAnimated.Textures[0].BottomLeft = set.Textures[0].NormalizedUV[3];
+		}
+		else
+		{
+			_stAnimated.Type = (int)set.Type;
+			_stAnimated.Fps = set.Fps;
+			_stAnimated.NumFrames = set.NumTextures;
+
+			BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+
+			for (unsigned char j = 0; j < set.NumTextures; j++)
+			{
+				if (j >= _stAnimated.Textures.size())
+				{
+					TENLog("Animated frame " + std::to_string(j) + " out of bounds. Too many frames in sequence.");
+					break;
+				}
+
+				_stAnimated.Textures[j].TopLeft = set.Textures[j].UV[0];
+				_stAnimated.Textures[j].TopRight = set.Textures[j].UV[1];
+				_stAnimated.Textures[j].BottomRight = set.Textures[j].UV[2];
+				_stAnimated.Textures[j].BottomLeft = set.Textures[j].UV[3];
+			}
+		}
+
+		_cbAnimated.UpdateData(_stAnimated, _context.Get());
 	}
 }
