@@ -9,7 +9,6 @@ local CAMERA_END = Vec3(0,-36,-1151)
 local TARGET_START = Vec3(0,0, 1000)
 local TARGET_END = Vec3(0,110,0)
 local INVENTORY_ANIM_TIME = 0.5
-local RING_CENTER = Vec3(0,200,1024)
 local RING_RADIUS = -512
 local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
@@ -19,6 +18,32 @@ local EXAMINE_TEXT = Vec2(50, 80)
 
 --External table of all pickup data
 local PICKUP_DATA = require("Levels.InventoryConstants")
+
+local TYPE = {
+    WEAPON = 1,
+    AMMO = 2,
+    MEDIPACK = 3,
+    TOOL = 4,
+    PUZZLE = 5,
+    WATERSKIN = 6,
+    SAVE = 7
+}
+
+local RING = {
+    MAIN = 1,
+    PUZZLE = 2,
+    COMBINE = 3,
+    AMMO = 4,
+    OPTIONS = 5
+}
+
+local RING_CENTER = {
+    [1] = Vec3(0,200,1024), --MAIN
+    [2] = Vec3(0,200,1024), -- PUZZLEto be decided
+    [3] = Vec3(0,200,1024), -- COMBINE to be decided
+    [4] = Vec3(0,200,1024), -- AMMO to be decided
+    [5]= Vec3(0,200,1024) -- OPTIONS to be decided
+}
 
 --Inventory types
 local INVENTORY_MODE = 
@@ -44,8 +69,8 @@ local SOUND_MAP =
     MENU_CHOOSE = 111,
     MENU_COMBINE = 114,
     TR4_MENU_MEDI = 116,
-    INVENTORY_OPEN = 195,
-    INVENTORY_CLOSE = 196
+    INVENTORY_OPEN = 0,
+    INVENTORY_CLOSE = 0
 }
 
 local COLOR_MAP =
@@ -70,6 +95,36 @@ local WEAPON_SET = {
     [TEN.Objects.ObjID.HARPOON_ITEM] = {slot = TEN.Objects.WeaponType.HARPOON_GUN, underwater = true, crawl = false},
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {slot = TEN.Objects.WeaponType.ROCKET_LAUNCHER, underwater = false, crawl = false},
     [TEN.Objects.ObjID.FLARE_INV_ITEM] = {slot = TEN.Objects.WeaponType.FLARE, underwater = true, crawl = true}
+}
+
+local WEAPON_AMMO_LOOKUP = {
+    [TEN.Objects.ObjID.PISTOLS_ITEM] = {TEN.Objects.ObjID.PISTOLS_AMMO_ITEM},
+    [TEN.Objects.ObjID.UZI_ITEM] = {TEN.Objects.ObjID.UZI_AMMO_ITEM},
+    [TEN.Objects.ObjID.SHOTGUN_ITEM] = {TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM, TEN.Objects.ObjID.SHOTGUN_AMMO2_ITEM},
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {REVOLVER_AMMO_ITEM},
+    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {TEN.Objects.ObjID.CROSSBOW_AMMO1_ITEM, TEN.Objects.ObjID.CROSSBOW_AMMO2_ITEM, TEN.Objects.ObjID.CROSSBOW_AMMO3_ITEM},
+    [TEN.Objects.ObjID.HK_ITEM] = {TEN.Objects.ObjID.HK_AMMO_ITEM},
+    [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = {TEN.Objects.ObjID.GRENADE_AMMO1_ITEM, TEN.Objects.ObjID.GRENADE_AMMO2_ITEM, TEN.Objects.ObjID.GRENADE_AMMO3_ITEM},
+    [TEN.Objects.ObjID.HARPOON_ITEM] = {TEN.Objects.ObjID.HARPOON_AMMO_ITEM},
+    [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM}
+}
+
+local AMMO_SET = {
+    [TEN.Objects.ObjID.PISTOLS_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.PISTOLS, weapon = TEN.Objects.ObjID.PISTOLS_ITEM}, 
+    [TEN.Objects.ObjID.UZI_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.UZI, weapon = TEN.Objects.ObjID.UZI_ITEM}, 
+    [TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.SHOTGUN_NORMAL, weapon = TEN.Objects.ObjID.SHOTGUN_ITEM},
+    [TEN.Objects.ObjID.SHOTGUN_AMMO2_ITEM] = {slot = TEN.Objects.AmmoType.SHOTGUN_WIDE, weapon = TEN.Objects.ObjID.SHOTGUN_ITEM},
+    [TEN.Objects.ObjID.REVOLVER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.REVOLVER, weapon = TEN.Objects.ObjID.REVOLVER_ITEM}, 
+    [TEN.Objects.ObjID.CROSSBOW_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.CROSSBOW_BOLT_NORMAL, weapon = TEN.Objects.ObjID.CROSSBOW_ITEM},
+    [TEN.Objects.ObjID.CROSSBOW_AMMO2_ITEM] = {slot = TEN.Objects.AmmoType.CROSSBOW_BOLT_POISON, weapon = TEN.Objects.ObjID.CROSSBOW_ITEM},
+    [TEN.Objects.ObjID.CROSSBOW_AMMO3_ITEM] = {slot = TEN.Objects.AmmoType.CROSSBOW_BOLT_EXPLOSIVE, weapon = TEN.Objects.ObjID.CROSSBOW_ITEM},
+    [TEN.Objects.ObjID.HK_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.HK, weapon = TEN.Objects.ObjID.HK_ITEM},
+    [TEN.Objects.ObjID.GRENADE_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_NORMAL, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
+    [TEN.Objects.ObjID.GRENADE_AMMO2_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_FRAG, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
+    [TEN.Objects.ObjID.GRENADE_AMMO3_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_FLASH, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
+    [TEN.Objects.ObjID.HARPOON_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.HARPOON, weapon = TEN.Objects.ObjID.HARPOON_ITEM},
+    [TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.ROCKET, weapon = TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM}
+
 }
 
 local HEALTH_SET = {
@@ -114,6 +169,8 @@ local examineScaler = 1.2
 local examineShowString = false
 local examineComplete = true
 local examineOldRotation
+
+local inventory = {}
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -279,7 +336,7 @@ LevelFuncs.AdjustCamera = function()
         "Label"
     }
 
-    if IsKeyHit(TEN.Input.ActionID.TAB) then
+    if TEN.Input.IsKeyHit(TEN.Input.ActionID.TAB) then
         selectedIndex  = (selectedIndex % #items) + 1
     end
 
@@ -296,19 +353,19 @@ LevelFuncs.AdjustCamera = function()
         vector = Vec3(0,View.GetFOV(),0)
     end
 
-    if IsKeyHeld(TEN.Input.ActionID.LEFT) then
+    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
             vector.x = vector.x - 2
-    elseif IsKeyHeld(TEN.Input.ActionID.RIGHT) then
+    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
             vector.x = vector.x + 2
-    elseif IsKeyHeld(TEN.Input.ActionID.FORWARD) then
+    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.FORWARD) then
             vector.z = vector.z + 2
-    elseif IsKeyHeld(TEN.Input.ActionID.BACK) then
+    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.BACK) then
             vector.z = vector.z - 2
-    elseif IsKeyHeld(TEN.Input.ActionID.STEP_LEFT) then
+    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.STEP_LEFT) then
             vector.y = vector.y - 2
-    elseif IsKeyHeld(TEN.Input.ActionID.STEP_RIGHT) then
+    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.STEP_RIGHT) then
             vector.y = vector.y + 2
-    elseif IsKeyHit(TEN.Input.ActionID.R) then
+    elseif TEN.Input.IsKeyHit(TEN.Input.ActionID.R) then
 
         if selectedItem == "Camera" then
             vector = Vec3(0,-512,512)
@@ -366,7 +423,7 @@ local guiIsPulsed = function(actionID)
 		return false
 	end
 
-	return IsKeyPulsed(actionID, DELAY, INITIAL_DELAY)
+	return TEN.Input.IsKeyPulsed(actionID, DELAY, INITIAL_DELAY)
 end
 
 local Input = function(mode)
@@ -413,17 +470,17 @@ local Input = function(mode)
         local ROTATION_MULTIPLIER = 2
         local ZOOM_MULTIPLIER = 0.3
         -- Handle rotation input
-        if IsKeyHeld(TEN.Input.ActionID.FORWARD) then
+        if TEN.Input.IsKeyHeld(TEN.Input.ActionID.FORWARD) then
             examineOrient.x = examineOrient.x + ROTATION_MULTIPLIER
-        elseif IsKeyHeld(TEN.Input.ActionID.BACK) then
+        elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.BACK) then
             examineOrient.x = examineOrient.x - ROTATION_MULTIPLIER
-        elseif IsKeyHeld(TEN.Input.ActionID.LEFT) then
+        elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
             examineOrient.y = examineOrient.y + ROTATION_MULTIPLIER
-        elseif IsKeyHeld(TEN.Input.ActionID.RIGHT) then
+        elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
             examineOrient.y = examineOrient.y - ROTATION_MULTIPLIER
-        elseif IsKeyHeld(TEN.Input.ActionID.SPRINT) then
+        elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.SPRINT) then
             examineScaler = examineScaler + (ZOOM_MULTIPLIER)
-        elseif IsKeyHeld(TEN.Input.ActionID.CROUCH) then
+        elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.CROUCH) then
             examineScaler = examineScaler - (ZOOM_MULTIPLIER)
         elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
             examineShowString = not examineShowString
@@ -445,16 +502,16 @@ LevelFuncs.Engine.CustomInventory.StartInventory = function()
     local playerHp = Lara:GetHP() > 0
     local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
 
-    if (IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
         LevelVars.Engine.CustomInventory.InventoryOpen = true
         inventoryDelay = 0
     end
 
     if LevelVars.Engine.CustomInventory.InventoryOpen == true then
         inventoryDelay = inventoryDelay + 1
-        SetPostProcessMode(View.PostProcessMode.MONOCHROME)
-        SetPostProcessStrength(1)
-        SetPostProcessTint(COLOR_MAP.BACKGROUND)
+        TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
+        TEN.View.SetPostProcessStrength(1)
+        TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
 
         if inventoryDelay >= 2 then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_SELECT)
@@ -492,8 +549,8 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     timeInMenu = timeInMenu + 1
 
     if LevelVars.Engine.CustomInventory.InventoryOpen then
-        View.SetFOV(80)
-        SetPostProcessMode(View.PostProcessMode.NONE)
+        TEN.View.SetFOV(80)
+        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         LevelFuncs.Engine.CustomInventory.ConstructObjectList()
     else
         LevelFuncs.Engine.CustomInventory.DrawInventoryText()
@@ -509,11 +566,11 @@ end
 
 LevelFuncs.DrawCursor = function() --Temporary function
 
-    local pos = GetMouseDisplayPosition()
+    local pos = TEN.View.GetMouseDisplayPosition()
 	
 	local myTextString = "X: " .. pos.x.." Y: "..pos.y
 	local myText = DisplayString(myTextString, 10, 10, Color.new(64,250,60))
-	ShowString(myText,1/30)
+	TEN.ShowString(myText,1/30)
 
 	local entrySprite = TEN.DisplaySprite(TEN.Objects.ObjID.SKY_GRAPHICS, 0, TEN.Vec2(pos.x,pos.y), 0, TEN.Vec2(5,5), TEN.Color(255,128,255))
     entrySprite:Draw(8, View.AlignMode.TOP_LEFT, View.ScaleMode.FIT, TEN.Effects.BlendID.OPAQUE)
@@ -542,7 +599,17 @@ LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
 
 end
 
-LevelFuncs.Engine.CustomInventory.ConstructObjectList = function()
+local function contains(tbl, value)
+    for _, v in ipairs(tbl) do
+    if v == value then
+        return true
+    end
+    end
+    return false
+end
+
+--Only uses combine and ammo as an option. Everything else dumps the whole inventory.
+LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selectedWeapon)
 
     currentAngle = 0
     targetAngle = 0
@@ -564,8 +631,10 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function()
         local flags = PICKUP_DATA.GetItemData(objectID.itemID, "FLAGS")
         local name = PICKUP_DATA.GetItemData(objectID.itemID, "DISPLAY_NAME")
         local joint = PICKUP_DATA.GetItemData(objectID.itemID, "JOINT")
-        local orientation = PICKUP_DATA.GetItemData(objectID.itemID, "SCALE")
-        
+        local orientation = PICKUP_DATA.GetItemData(objectID.itemID, "ORIENTATION")
+        local type = PICKUP_DATA.GetItemData(objectID.itemID, "TYPE")
+        local combine = PICKUP_DATA.GetItemData(objectID.itemID, "COMBINE")
+        local ringName = PICKUP_DATA.GetItemData(objectID.itemID, "RING")
         local override = gameflowOverrides[objectID.itemID] or {}
         if override then
             if override.yOffset     ~= nil then yOffset     = override.yOffset end
@@ -577,8 +646,56 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function()
             if override.orientation ~= nil then orientation = override.orientation end
         end
 
-        if count ~= 0 then
-            table.insert(inventory, { 
+        --Check if weapon is present and skip adding ammo to main inventory ring
+        if type == TYPE.AMMO then
+    
+            local weaponPresent = TEN.Inventory.GetItemCount(AMMO_SET[objectID.itemID].weapon)
+            if weaponPresent ~= 0 then
+                goto continue
+            end
+
+        end
+
+        --ammoRing is a bool to make sure to add ammo to the ring if creating an ammo ring even if the count is zero
+        local ammoRing = false
+        --shouldInsert is a bool to make sure the item gets added to the ring being created
+        local shouldInsert = false
+
+        --Check if a combine ring is being created and only proceed if the item is a combine type otherwise skip to continue
+        if ringType == RING.COMBINE then
+            if combine then
+                ringName = RING.COMBINE
+
+                --Check if lasersight is connected and if it is skip adding to the combine table
+                if type == TYPE.Weapon and GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
+                    goto continue
+                end
+                shouldInsert = true
+            else
+                --skip adding this item to table if the item is not a combine type
+                goto continue
+            end
+        elseif ringType == RING.AMMO then
+            --if Ammo is present for the weapon add it for the ammo ring being created for the weapon
+            if type == TYPE.AMMO and contains(WEAPON_AMMO_LOOKUP[selectedWeapon], objectID.itemID) then
+                ringName = RING.AMMO
+                ammoRing = true
+                shouldInsert = true
+            else
+                --skip adding this item to table if the item is not an ammo type 
+                goto continue
+            end
+
+        else
+            -- Dump all inventory, skip only if count is 0
+            shouldInsert = (count ~= 0)
+        end
+
+        print(ringName)
+        inventory[ringName] = inventory[ringName] or {}
+
+        if shouldInsert or ammoRing then
+            table.insert(inventory[ringName], { 
                 item = objectID.itemID,
                 count = count,
                 yOffset = yOffset,
@@ -589,15 +706,14 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function()
                 joint = joint,
                 orientation = orientation })
         end
+
+        TEN.DrawItem.AddItem(objectID.itemID, RING_CENTER[ringName], rotation, scale, joint)
+        TEN.DrawItem.SetItemColor(objectID.itemID, COLOR_MAP.ITEM_COLOR)
+
+        ::continue::
     end
 
     LevelVars.Engine.CustomInventory.Inventory = inventory
-
-    for i, item in ipairs(inventory) do
-        TEN.DrawItem.AddItem(item.item, RING_CENTER, item.rotation, item.scale, item.joint)
-        TEN.DrawItem.SetItemColor(item.item, COLOR_MAP.ITEM_COLOR)
-    end
-
     LevelVars.Engine.CustomInventory.InventorySlice = (360 / #inventory)
     LevelVars.Engine.CustomInventory.InventoryOpen = false
 end
@@ -960,9 +1076,15 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
-        --Hack for Stopwatch item
+        --Hack for Stopwatch and Compass item
         if selectedItem == TEN.Objects.ObjID.STOPWATCH_ITEM then
             inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+            return
+        end
+
+        if selectedItem == TEN.Objects.ObjID.COMPASS_ITEM then
+            inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+            examineComplete = true
             return
         end
 
@@ -1045,6 +1167,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
     
     --Quickly discard further processing if chosen item was reset in script.
     if (TEN.Inventory.GetUsedItem() == NO_VALUE) then
+        LevelFuncs.Engine.CustomInventory.ExitInventory()
         return
     end
 
@@ -1057,6 +1180,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         --Return if flare is already equipped
         if currentWeapon == TEN.Objects.WeaponType.FLARE then
             return
+            LevelFuncs.Engine.CustomInventory.ExitInventory()
         end
         
         Lara:SetWeaponType(WEAPON_SET[item].slot, true)
@@ -1081,6 +1205,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         if hp <= 0 or hp >= HEALTH_MAX then
             if poison == 0 then
                 TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
+                LevelFuncs.Engine.CustomInventory.ExitInventory()
                 return
             end
         end
@@ -1247,3 +1372,124 @@ LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
 
 end
 
+local PerformWaterskinCombine = function(flag)
+
+--     bool GuiController::PerformWaterskinCombine(ItemInfo* item, bool flag)
+-- 	{
+-- 		auto& player = GetLaraInfo(*item);
+
+-- 		int smallLiters = player.Inventory.SmallWaterskin - 1; // How many liters in the small one?
+-- 		int bigLiters = player.Inventory.BigWaterskin - 1;	  // How many liters in the big one?
+-- 		int smallCapacity = 3 - smallLiters;				  // How many more liters can fit in the small one?
+-- 		int bigCapacity = 5 - bigLiters;					  // How many more liters can fit in the big one?
+
+-- 		int i;
+-- 		if (flag)
+-- 		{
+-- 			// Big one isn't empty and the small one isn't full.
+-- 			if (player.Inventory.BigWaterskin != 1 && smallCapacity)
+-- 			{
+-- 				i = bigLiters;
+
+-- 				do
+-- 				{
+-- 					if (smallCapacity)
+-- 					{
+-- 						smallLiters++;
+-- 						smallCapacity--;
+-- 						bigLiters--;
+-- 					}
+
+-- 					i--;
+-- 				} while (i);
+
+-- 				player.Inventory.SmallWaterskin = smallLiters + 1;
+-- 				player.Inventory.BigWaterskin = bigLiters + 1;
+-- 				CombineObject1 = (smallLiters + 1) + (INV_OBJECT_SMALL_WATERSKIN_EMPTY - 1);
+-- 				return true;
+-- 			}
+-- 		}
+-- 		else
+-- 		{
+-- 			// Small one isn't empty and the big one isn't full.
+-- 			if (player.Inventory.SmallWaterskin != 1 && bigCapacity)
+-- 			{
+-- 				i = player.Inventory.SmallWaterskin - 1;
+
+-- 				do
+-- 				{
+-- 					if (bigCapacity)
+-- 					{
+-- 						bigLiters++;
+-- 						bigCapacity--;
+-- 						smallLiters--;
+-- 					}
+
+-- 					i--;
+-- 				} while (i);
+
+-- 				player.Inventory.SmallWaterskin = smallLiters + 1;
+-- 				player.Inventory.BigWaterskin = bigLiters + 1;
+-- 				CombineObject1 = (bigLiters + 1) + (INV_OBJECT_BIG_WATERSKIN_EMPTY - 1);
+-- 				return true;
+-- 			}
+-- 		}
+
+-- 		return false;
+-- 	}
+-- }
+    function PerformWaterskinCombine(item, flag)
+    local player = GetLaraInfo(item)
+
+        local smallLiters = player.Inventory.SmallWaterskin - 1  -- How many liters in the small one?
+        local bigLiters = player.Inventory.BigWaterskin - 1      -- How many liters in the big one?
+        local smallCapacity = 3 - smallLiters                    -- How many more liters can fit in the small one?
+        local bigCapacity = 5 - bigLiters                        -- How many more liters can fit in the big one?
+
+        local i
+
+        if flag then
+            -- Big one isn't empty and the small one isn't full.
+            if player.Inventory.BigWaterskin ~= 1 and smallCapacity > 0 then
+                i = bigLiters
+
+                while i > 0 do
+                    if smallCapacity > 0 then
+                        smallLiters = smallLiters + 1
+                        smallCapacity = smallCapacity - 1
+                        bigLiters = bigLiters - 1
+                    end
+
+                    i = i - 1
+                end
+
+                player.Inventory.SmallWaterskin = smallLiters + 1
+                player.Inventory.BigWaterskin = bigLiters + 1
+                CombineObject1 = (smallLiters + 1) + (INV_OBJECT_SMALL_WATERSKIN_EMPTY - 1)
+                return true
+            end
+        else
+            -- Small one isn't empty and the big one isn't full.
+            if player.Inventory.SmallWaterskin ~= 1 and bigCapacity > 0 then
+                i = player.Inventory.SmallWaterskin - 1
+
+                while i > 0 do
+                    if bigCapacity > 0 then
+                        bigLiters = bigLiters + 1
+                        bigCapacity = bigCapacity - 1
+                        smallLiters = smallLiters - 1
+                    end
+
+                    i = i - 1
+                end
+
+                player.Inventory.SmallWaterskin = smallLiters + 1
+                player.Inventory.BigWaterskin = bigLiters + 1
+                CombineObject1 = (bigLiters + 1) + (INV_OBJECT_BIG_WATERSKIN_EMPTY - 1)
+                return true
+            end
+        end
+
+        return false
+    end
+end
