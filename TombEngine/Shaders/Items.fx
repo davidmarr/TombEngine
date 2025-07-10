@@ -63,7 +63,7 @@ PixelShaderInput VS(VertexShaderInput input)
 #ifdef ANIMATED
 
 	if (Type == 0)
-		output.UV = GetFrame(Frame, input.PolyIndex, input.AnimationFrameOffset);
+		output.UV = GetFrame(input.PolyIndex, input.AnimationFrameOffset);
 	else
 		output.UV = input.UV; // TODO: true UVRotate in future?
 #else
