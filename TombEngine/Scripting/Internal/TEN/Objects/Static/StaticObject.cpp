@@ -38,6 +38,7 @@ namespace TEN::Scripting
 			ScriptReserved_StaticGetColor, &Static::GetColor,
 			ScriptReserved_StaticGetHP, &Static::GetHitPoints, // TODO: Deprecate.
 			ScriptReserved_StaticGetActive, &Static::GetActiveStatus, // TODO: Deprecate. Rename Lua func to GetActiveStatus.
+			ScriptReserved_StaticGetCollidable, &Static::GetCollidable,
 			ScriptReserved_StaticGetSolid, &Static::GetSolidStatus, // TODO: Deprecate. Rename Lua func to GetSolidStatus.
 
 			ScriptReserved_StaticSetName, &Static::SetName,
@@ -47,6 +48,7 @@ namespace TEN::Scripting
 			ScriptReserved_StaticSetScale, &Static::SetScale,
 			ScriptReserved_StaticSetColor, &Static::SetColor,
 			ScriptReserved_StaticSetHitPoints, &Static::SetHitPoints, // TODO: Deprecate. Rename Lua func to SetHitPoints.
+			ScriptReserved_StaticSetCollidable, &Static::SetCollidable,
 			ScriptReserved_StaticSetSolid, &Static::SetSolidStatus, // TODO: Deprecate. Rename Lua func to SetSolidStatus.
 			
 			ScriptReserved_StaticEnable, &Static::Enable,
@@ -96,7 +98,8 @@ namespace TEN::Scripting
 	// @treturn float World scale.
 	float Static::GetScale() const
 	{
-		return _static.scale;
+		// TODO: Decide what to return when Vector3 scale is also exposed.
+		return _static.pos.Scale.x;
 	}
 
 	/// Get this static's color.
@@ -117,15 +120,23 @@ namespace TEN::Scripting
 
 	/// Get this static's visibility status.
 	// @function Static:GetActive
-	// @treturn bool Status.  __true: visible__, __false: invisible__
+	// @treturn bool Status. true means visible, false otherwise.
 	bool Static::GetActiveStatus() const
 	{
 		return ((_static.flags & StaticMeshFlags::SM_VISIBLE) != 0);
 	}
 
+	/// Get this static's collision status.
+	// @function Static:GetCollidable
+	// @treturn bool Collision status. true if can be collided with, false otherwise.
+	bool Static::GetCollidable() const
+	{
+		return ((_static.flags & StaticMeshFlags::SM_COLLISION) != 0);
+	}
+
 	/// Get this static's solid collision status.
 	// @function Static:GetSolid
-	// @treturn bool Solid Status. __true: solid__, __false: soft__
+	// @treturn bool Solid Status. true if solid, false if soft.
 	bool Static::GetSolidStatus() const
 	{
 		return ((_static.flags & StaticMeshFlags::SM_SOLID) != 0);
@@ -183,7 +194,7 @@ namespace TEN::Scripting
 	// @tparam float scale New world scale.
 	void Static::SetScale(float scale)
 	{
-		_static.scale = scale;
+		_static.pos.Scale = Vector3(scale);
 		_static.Dirty = true;
 	}
 
@@ -206,7 +217,7 @@ namespace TEN::Scripting
 
 	/// Set this static's solid collision status.
 	// @function Static:SetSolid
-	// @tparam bool status New status. __true: solid__, __false: soft__
+	// @tparam bool status New status, true is solid, false is soft.
 	void Static::SetSolidStatus(bool status)
 	{
 		if (status)
@@ -216,6 +227,21 @@ namespace TEN::Scripting
 		else
 		{
 			_static.flags &= ~StaticMeshFlags::SM_SOLID;
+		}
+	}
+
+	/// Set this static's collision status.
+	// @function Static:SetCollidable
+	// @tparam bool collidable New collision status. true if can be collided with, false: no collision.
+	void Static::SetCollidable(bool collidable)
+	{
+		if (collidable)
+		{
+			_static.flags |= StaticMeshFlags::SM_COLLISION;
+		}
+		else
+		{
+			_static.flags &= ~StaticMeshFlags::SM_COLLISION;
 		}
 	}
 

@@ -27,12 +27,14 @@
 #include "Specific/configuration.h"
 #include "Specific/level.h"
 #include "Specific/trutils.h"
+#include "Specific/Video/Video.h"
 #include "Specific/winmain.h"
 
 using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Input;
 using namespace TEN::Renderer;
 using namespace TEN::Utils;
+using namespace TEN::Video;
 
 namespace TEN::Gui
 {
@@ -123,7 +125,7 @@ namespace TEN::Gui
 		STRING_ACTIONS_LOAD
 	};
 
-	bool GuiController::GuiIsPulsed(InputActionID actionID) const
+	bool GuiController::GuiIsPulsed(ActionID actionID) const
 	{
 		constexpr auto DELAY		 = 0.1f;
 		constexpr auto INITIAL_DELAY = 0.4f;
@@ -133,7 +135,7 @@ namespace TEN::Gui
 			return false;
 
 		// Pulse only directional inputs.
-		auto oppositeAction = std::optional<InputActionID>(std::nullopt);
+		auto oppositeAction = std::optional<ActionID>(std::nullopt);
 		switch (actionID)
 		{
 		case In::Forward:
@@ -616,12 +618,16 @@ namespace TEN::Gui
 			{
 				// Save the configuration.
 				auto screenResolution = g_Configuration.SupportedScreenResolutions[CurrentSettings.SelectedScreenResolution];
+
+				bool screenResolutionChanged = CurrentSettings.Configuration.ScreenWidth != screenResolution.x ||
+											   CurrentSettings.Configuration.ScreenHeight != screenResolution.y;
+
 				CurrentSettings.Configuration.ScreenWidth = screenResolution.x;
 				CurrentSettings.Configuration.ScreenHeight = screenResolution.y;
 
 				// Determine whether we should update AA shaders.
-				bool shouldRecompileAAShaders = g_Configuration.AntialiasingMode != CurrentSettings.Configuration.AntialiasingMode &&
-												CurrentSettings.Configuration.AntialiasingMode != AntialiasingMode::Low;
+				bool shouldRecompileAAShaders = CurrentSettings.Configuration.AntialiasingMode != AntialiasingMode::Low &&
+												(screenResolutionChanged || g_Configuration.AntialiasingMode != CurrentSettings.Configuration.AntialiasingMode);
 
 				g_Configuration = CurrentSettings.Configuration;
 				SaveConfiguration();
@@ -686,7 +692,7 @@ namespace TEN::Gui
 			CurrentSettings.IgnoreInput = true;
 		}
 
-		if (CurrentSettings.NewKeyWaitTimer > 0.0f)
+		if (CurrentSettings.NewKeyWaitTimer > 0)
 		{
 			ClearAllActions();
 
@@ -695,15 +701,15 @@ namespace TEN::Gui
 			bool legacy30FpsDoneDraw = false;
 			bool decreaseCounter = false;
 			
-			while (CurrentSettings.NewKeyWaitTimer > 0.0f)
+			while (CurrentSettings.NewKeyWaitTimer > 0)
 			{
 				g_Synchronizer.Sync();
 
 				while (g_Synchronizer.Synced())
 				{
-					CurrentSettings.NewKeyWaitTimer -= 1.0f;
-					if (CurrentSettings.NewKeyWaitTimer <= 0.0f)
-						CurrentSettings.NewKeyWaitTimer = 0.0f;
+					CurrentSettings.NewKeyWaitTimer--;
+					if (CurrentSettings.NewKeyWaitTimer <= 0)
+						CurrentSettings.NewKeyWaitTimer = 0;
 
 					if (!fromPauseMenu)
 					{
@@ -712,7 +718,7 @@ namespace TEN::Gui
 					else
 					{
 						g_Renderer.PrepareScene(); // Just for updating blink time.
-						UpdateInputActions(item);
+						UpdateInputActions();
 					}
 
 					if (CurrentSettings.IgnoreInput)
@@ -732,7 +738,7 @@ namespace TEN::Gui
 						if (selectedKeyID == KEY_COUNT)
 							selectedKeyID = 0;
 
-						if (selectedKeyID && !GetKeyName(selectedKeyID).empty())
+						if (selectedKeyID != OIS::KC_UNASSIGNED && !GetKeyName(selectedKeyID).empty())
 						{
 							unsigned int baseIndex = 0;
 							switch (MenuToDisplay)
@@ -753,10 +759,10 @@ namespace TEN::Gui
 								break;
 							}
 
-							g_Bindings.SetKeyBinding(InputDeviceID::Custom, InputActionID(baseIndex + SelectedOption), selectedKeyID);
+							g_Bindings.SetKeyBinding(BindingProfileID::Custom, ActionID(baseIndex + SelectedOption), selectedKeyID);
 							DefaultConflict();
 
-							CurrentSettings.NewKeyWaitTimer = 0.0f;
+							CurrentSettings.NewKeyWaitTimer = 0;
 							CurrentSettings.IgnoreInput = true;
 							return;
 						}
@@ -846,6 +852,7 @@ namespace TEN::Gui
 				if (SelectedOption == (OptionCount - 2))
 				{
 					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
+
 					ApplyDefaultBindings();
 					return;
 				}
@@ -854,9 +861,11 @@ namespace TEN::Gui
 				if (SelectedOption == (OptionCount - 1))
 				{
 					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-					CurrentSettings.Configuration.Bindings = g_Bindings.GetBindingProfile(InputDeviceID::Custom);
-					g_Configuration.Bindings = g_Bindings.GetBindingProfile(InputDeviceID::Custom);
+
+					CurrentSettings.Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Custom);
+					g_Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Custom);
 					SaveConfiguration();
+
 					MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
 					SelectedOption = 2;
 					return;
@@ -866,7 +875,9 @@ namespace TEN::Gui
 				if (SelectedOption == OptionCount)
 				{
 					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-					g_Bindings.SetBindingProfile(InputDeviceID::Custom, CurrentSettings.Configuration.Bindings);
+
+					g_Bindings.SetBindingProfile(BindingProfileID::Custom, CurrentSettings.Configuration.Bindings);
+
 					MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
 					SelectedOption = 2;
 					return;
@@ -876,6 +887,8 @@ namespace TEN::Gui
 			if (GuiIsDeselected())
 			{
 				SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
+
+				g_Bindings.SetBindingProfile(BindingProfileID::Custom, CurrentSettings.Configuration.Bindings);
 
 				MenuToDisplay = Menu::Options;
 				SelectedOption = 2;
@@ -997,9 +1010,10 @@ namespace TEN::Gui
 			}
 		}
 
+		bool isVolumeAdjusted = false;
+
 		if (IsPulsed(In::Left, 0.05f, 0.4f))
 		{
-			bool isVolumeAdjusted = false;
 			switch (SelectedOption)
 			{
 			case OtherSettingsOption::MusicVolume:
@@ -1010,7 +1024,6 @@ namespace TEN::Gui
 						CurrentSettings.Configuration.MusicVolume = 0;
 
 					SetVolumeTracks(CurrentSettings.Configuration.MusicVolume);
-					isVolumeAdjusted = true;
 				}
 
 				break;
@@ -1023,7 +1036,7 @@ namespace TEN::Gui
 						CurrentSettings.Configuration.SfxVolume = 0;
 
 					SetVolumeFX(CurrentSettings.Configuration.SfxVolume);
-					isVolumeAdjusted = true;
+					isVolumeAdjusted = IsPulsed(In::Left, 0.1f);
 				}
 
 				break;
@@ -1040,17 +1053,10 @@ namespace TEN::Gui
 
 				break;
 			}
-
-			if (isVolumeAdjusted)
-			{
-				if (IsClicked(In::Left))
-					SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
-			}
 		}
 
 		if (IsPulsed(In::Right, 0.05f, 0.4f))
 		{
-			bool isVolumeAdjusted = false;
 			switch (SelectedOption)
 			{
 			case OtherSettingsOption::MusicVolume:
@@ -1061,7 +1067,6 @@ namespace TEN::Gui
 						CurrentSettings.Configuration.MusicVolume = VOLUME_MAX;
 
 					SetVolumeTracks(CurrentSettings.Configuration.MusicVolume);
-					isVolumeAdjusted = true;
 				}
 
 				break;
@@ -1074,7 +1079,7 @@ namespace TEN::Gui
 						CurrentSettings.Configuration.SfxVolume = VOLUME_MAX;
 
 					SetVolumeFX(CurrentSettings.Configuration.SfxVolume);
-					isVolumeAdjusted = true;
+					isVolumeAdjusted = IsPulsed(In::Right, 0.1f);
 				}
 
 				break;
@@ -1091,13 +1096,10 @@ namespace TEN::Gui
 
 				break;
 			}
-
-			if (isVolumeAdjusted)
-			{
-				if (IsClicked(In::Right))
-					SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
-			}
 		}
+
+		if (isVolumeAdjusted)
+			SoundEffect(SFX_TR4_MENU_ROTATE, nullptr, SoundEnvironment::Always);
 
 		SelectedOption = GetLoopedSelectedOption(SelectedOption, OptionCount, g_Configuration.MenuOptionLoopingMode == MenuOptionLoopingMode::AllMenus);
 
@@ -1146,7 +1148,7 @@ namespace TEN::Gui
 		static const int numOptionsOptions	  = 2;
 
 		TimeInMenu++;
-		UpdateInputActions(item);
+		UpdateInputActions();
 
 		switch (MenuToDisplay)
 		{
@@ -1972,7 +1974,7 @@ namespace TEN::Gui
 		CombineRingFadeVal = 0;
 		CombineRingFadeDir = 0;
 		CombineTypeFlag = 0;
-		SeperateTypeFlag = 0;
+		SeparateTypeFlag = 0;
 		CombineObject1 = 0;
 		CombineObject2 = 0;
 		NormalRingFadeVal = 128;
@@ -2435,9 +2437,9 @@ namespace TEN::Gui
 					n++;
 				}
 
-				if (options & OPT_SEPERABLE)
+				if (options & OPT_SEPARABLE)
 				{
-					CurrentOptions[n].Type = MenuType::Seperate;
+					CurrentOptions[n].Type = MenuType::Separate;
 					CurrentOptions[n].Text = g_GameFlow->GetString(OptionStrings[3].c_str());
 					n++;
 				}
@@ -2561,8 +2563,8 @@ namespace TEN::Gui
 						CombineRingFadeDir = 1;
 						break;
 
-					case MenuType::Seperate:
-						SeperateTypeFlag = 1;
+					case MenuType::Separate:
+						SeparateTypeFlag = 1;
 						NormalRingFadeDir = 2;
 						break;
 
@@ -2801,7 +2803,7 @@ namespace TEN::Gui
 					ConstructObjectList(item);
 					SetupObjectListStartPosition(CombineObject1);
 				}
-				else if (SeperateTypeFlag)
+				else if (SeparateTypeFlag)
 				{
 					SeparateObject(item, Rings[(int)RingTypes::Inventory].CurrentObjectList[Rings[(int)RingTypes::Inventory].CurrentObjectInList].InventoryItem);
 				}
@@ -3174,6 +3176,7 @@ namespace TEN::Gui
 	bool GuiController::CallPause()
 	{
 		g_Renderer.DumpGameScene(SceneRenderMode::NoHud);
+		g_VideoPlayer.Pause();
 		PauseAllSounds(SoundPauseMode::Pause);
 		SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 
@@ -3238,6 +3241,7 @@ namespace TEN::Gui
 		}
 		else
 		{
+			g_VideoPlayer.Resume();
 			ResumeAllSounds(SoundPauseMode::Pause);
 		}
 
@@ -3255,6 +3259,7 @@ namespace TEN::Gui
 		player.Inventory.OldBusy = player.Inventory.IsBusy;
 
 		g_Renderer.DumpGameScene(SceneRenderMode::NoHud);
+		g_VideoPlayer.Pause();
 		PauseAllSounds(SoundPauseMode::Inventory);
 		SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 
@@ -3285,7 +3290,7 @@ namespace TEN::Gui
 				SaveGame::Statistics.Game.TimeTaken++;
 				SaveGame::Statistics.Level.TimeTaken++;
 
-				UpdateInputActions(item);
+				UpdateInputActions();
 
 				if (GuiIsDeselected() || IsClicked(In::Inventory))
 				{
@@ -3376,6 +3381,7 @@ namespace TEN::Gui
 
 		AlterFOV(LastFOV);
 		g_Renderer.PrepareScene();
+		g_VideoPlayer.Resume();
 		ResumeAllSounds(SoundPauseMode::Inventory);
 
 		player.Inventory.IsBusy = player.Inventory.OldBusy;

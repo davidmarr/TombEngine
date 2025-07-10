@@ -3,7 +3,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <head>
-    <title>TombEngine 1.7.2 (Developer) Lua API</title>
+    <title>TombEngine 1.9 Lua API</title>
     <link rel="stylesheet" href="../ldoc.css" type="text/css" />
 </head>
 <body>
@@ -80,12 +80,14 @@
   <li>    <a href="../4 enums/Collision.MaterialType.html">Collision.MaterialType</a></li>
   <li>    <a href="../4 enums/Effects.BlendID.html">Effects.BlendID</a></li>
   <li>    <a href="../4 enums/Effects.EffectID.html">Effects.EffectID</a></li>
-  <li>    <here>Effects.FeatherMode</here></li>
+  <li>    <a href="../4 enums/Effects.StreamerFeatherMode.html">Effects.StreamerFeatherMode</a></li>
   <li>    <a href="../4 enums/Effects.ParticleAnimationType.html">Effects.ParticleAnimationType</a></li>
   <li>    <a href="../4 enums/Flow.ErrorMode.html">Flow.ErrorMode</a></li>
   <li>    <a href="../4 enums/Flow.FreezeMode.html">Flow.FreezeMode</a></li>
   <li>    <a href="../4 enums/Flow.GameStatus.html">Flow.GameStatus</a></li>
+  <li>    <a href="../4 enums/Flow.ItemAction.html">Flow.ItemAction</a></li>
   <li>    <a href="../4 enums/Input.ActionID.html">Input.ActionID</a></li>
+  <li>    <here>Input.AxisID</here></li>
   <li>    <a href="../4 enums/Objects.AmmoType.html">Objects.AmmoType</a></li>
   <li>    <a href="../4 enums/Objects.HandStatus.html">Objects.HandStatus</a></li>
   <li>    <a href="../4 enums/Objects.WeaponType.html">Objects.WeaponType</a></li>
@@ -114,8 +116,8 @@
 
 <div id="content">
 
-<h1>Enum <code>Effects.FeatherMode</code></h1>
-<p>Constants for feather modes.</p>
+<h1>Enum <code>Input.AxisID</code></h1>
+<p>Constants for analog axis IDs.</p>
 <p>
 
 </p>
@@ -124,8 +126,8 @@
 <h2><a href="#Tables">Tables</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" ><a href="#Effects.FeatherMode">Effects.FeatherMode</a></td>
-	<td class="summary">Table of Effects.FeatherMode constants.</td>
+	<td class="name" ><a href="#Input.AxisID">Input.AxisID</a></td>
+	<td class="summary">Table of Input.AxisID constants.</td>
 	</tr>
 </table>
 
@@ -137,19 +139,18 @@
 
     <dl class="function">
     <dt>
-    <a name = "Effects.FeatherMode"></a>
-    <strong>Effects.FeatherMode</strong>
+    <a name = "Input.AxisID"></a>
+    <strong>Input.AxisID</strong>
     </dt>
     <dd>
 
-<p>Table of Effects.FeatherMode constants.
- To be used with <a href="../1 modules/Effects.html#EmitStreamer">Effects.EmitStreamer</a> function.</p>
+<p>Table of Input.AxisID constants.
+ To be used with <a href="../1 modules/Input.html#GetAnalogAxisValue">Input.GetAnalogAxisValue</a>.</p>
 
 <ul>
-    <li><code>NONE</code></li>
-    <li><code>CENTER</code></li>
-    <li><code>LEFT</code></li>
-    <li><code>RIGHT</code></li>
+    <li><code>MOVE</code> - Analog axis configured for player's movement.</li>
+    <li><code>CAMERA</code> - Analog axis configured for camera movement.</li>
+    <li><code>MOUSE</code> - Raw mouse input analog axis.</li>
 </ul>
 
 

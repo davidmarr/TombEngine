@@ -39,10 +39,11 @@ struct Level : public ScriptInterfaceLevel
 	TEN::Scripting::LensFlare LensFlare = {};
 	TEN::Scripting::Starfield Starfield = {};
 
-	WeatherType Weather			= WeatherType::None;
-	float		WeatherStrength = 1.0f;
-	bool		Storm			= false;
-	bool		Rumble			= false;
+	WeatherType Weather				= WeatherType::None;
+	float		WeatherStrength		= 1.0f;
+	bool		WeatherClustering	= true;
+	bool		Storm				= false;
+	bool		Rumble				= false;
 
 	LaraType Type = LaraType::Normal;
 	int LevelSecrets = 0;
@@ -61,12 +62,12 @@ struct Level : public ScriptInterfaceLevel
 	RGBAColor8Byte GetSkyLayerColor(int index) const override;
 	LaraType GetLaraType() const override;
 	void SetWeatherStrength(float val);
-	void SetLevelFarView(short val);
 	static void Register(sol::table& parent);
 	WeatherType GetWeatherType() const override;
-	short GetFogMinDistance() const override;
-	short GetFogMaxDistance() const override;
-	short GetFarView() const override;
+	bool GetWeatherClustering() const override;
+	float GetFogMinDistance() const override;
+	float GetFogMaxDistance() const override;
+	float GetFarView() const override;
 	void SetSecrets(int secrets);
 	int GetSecrets() const override;
 	std::string GetAmbientTrack() const override;
@@ -93,8 +94,6 @@ struct Level : public ScriptInterfaceLevel
 	Color GetLensFlareColor() const override;
 
 	// Starfield getters
-	bool  GetStarfieldStarsEnabled() const override;
-	bool  GetStarfieldMeteorsEnabled() const override;
 	int	  GetStarfieldStarCount() const override;
 	int	  GetStarfieldMeteorCount() const override;
 	int	  GetStarfieldMeteorSpawnDensity() const override;
