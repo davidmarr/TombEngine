@@ -6,6 +6,14 @@ namespace TEN::Renderer::Structures
 {
 	using namespace DirectX::SimpleMath;
 
+	enum class UVRotateDirection
+	{
+		TopToBottom,
+		RightToLeft,
+		BottomToTop,
+		LeftToRight
+	};
+
 	enum class AnimatedTextureType
 	{
 		Frames,
@@ -18,6 +26,7 @@ namespace TEN::Renderer::Structures
 		AnimatedTextureType Type = AnimatedTextureType::Frames;
 		int NumTextures = 0;
 		int Fps = 0;
+		UVRotateDirection UVRotateDirection;
 		std::vector<RendererAnimatedTexture> Textures;
 	};
 }

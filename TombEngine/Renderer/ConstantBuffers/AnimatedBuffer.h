@@ -24,5 +24,6 @@ namespace TEN::Renderer::ConstantBuffers
 		uint32_t Fps;
 		uint32_t Type;
 		uint32_t Padding;
+		Vector2 UVRotateDirection;
 	};
 }

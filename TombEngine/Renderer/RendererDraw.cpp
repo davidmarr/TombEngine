@@ -2493,7 +2493,7 @@ namespace TEN::Renderer
 		// No mesh or bucket, abort
 		if (!moveableObj.ObjectMeshes.size() || !moveableObj.ObjectMeshes[0]->Buckets.size())
 			return;
-
+		 
 		// Get first three vertices of a waterfall object, meaning the very first triangle
 		const auto& v1 = _moveablesVertices[moveableObj.ObjectMeshes[0]->Buckets[0].StartVertex + 0];
 		const auto& v2 = _moveablesVertices[moveableObj.ObjectMeshes[0]->Buckets[0].StartVertex + 1];
@@ -2504,11 +2504,12 @@ namespace TEN::Renderer
 		auto maxY = std::max(std::max(v1.UV.y, v2.UV.y), v3.UV.y);
 		auto minX = std::min(std::min(v1.UV.x, v2.UV.x), v3.UV.x);
 		auto maxX = std::max(std::max(v1.UV.x, v2.UV.x), v3.UV.x);
-
+		  
 		// Setup animated buffer
 		_stAnimated.Fps = fps;
 		_stAnimated.NumFrames = 1;
 		_stAnimated.Type = 1; // UVRotate
+		_stAnimated.UVRotateDirection = Vector2(0.0f, 1.0f);
 
 		// We need only top/bottom Y coordinate for UVRotate, but we pass whole
 		// rectangle anyway, in case later we may want to implement different UVRotate modes.
@@ -4148,6 +4149,36 @@ namespace TEN::Renderer
 			_stAnimated.Textures[0].TopRight = set.Textures[0].NormalizedUV[1];
 			_stAnimated.Textures[0].BottomRight = set.Textures[0].NormalizedUV[2];
 			_stAnimated.Textures[0].BottomLeft = set.Textures[0].NormalizedUV[3];
+		} 
+		else if (set.Type == AnimatedTextureType::UVRotate)
+		{
+			_stAnimated.Type = (int)set.Type;
+			_stAnimated.Fps = set.Fps;
+			_stAnimated.NumFrames = 1;
+			
+			_stAnimated.Textures[0].TopLeft = set.Textures[0].UV[0];
+			_stAnimated.Textures[0].TopRight = set.Textures[0].UV[1];
+			_stAnimated.Textures[0].BottomRight = set.Textures[0].UV[2];
+			_stAnimated.Textures[0].BottomLeft = set.Textures[0].UV[3];
+
+			switch (set.UVRotateDirection)
+			{
+			case UVRotateDirection::TopToBottom:
+				_stAnimated.UVRotateDirection = Vector2(0.0f, 1.0f);
+				break;
+			case UVRotateDirection::BottomToTop:
+				_stAnimated.UVRotateDirection = Vector2(0.0f, -1.0f);
+				break;
+			case UVRotateDirection::LeftToRight:
+				_stAnimated.UVRotateDirection = Vector2(1.0f, 0.0f);
+				break;
+			case UVRotateDirection::RightToLeft:  
+				_stAnimated.UVRotateDirection = Vector2(-1.0f, 0.0f);
+				break;
+			}
+
+			BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicWrap);
+			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicWrap);
 		}
 		else
 		{

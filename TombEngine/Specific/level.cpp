@@ -1126,7 +1126,7 @@ void LoadAnimatedTextures()
 		sequence.Atlas = ReadInt32();
 		sequence.Fps   = ReadUInt8();
 		sequence.Type  = ReadUInt8();
-		ReadUInt16(); // Unused.
+		sequence.UVRotate = ReadUInt16();
 		sequence.NumFrames = ReadCount();
 
 		for (int j = 0; j < sequence.NumFrames; j++)

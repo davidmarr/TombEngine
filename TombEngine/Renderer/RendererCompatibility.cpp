@@ -69,12 +69,13 @@ namespace TEN::Renderer
 		}
 
 		std::transform(g_Level.AnimatedTexturesSequences.begin(), g_Level.AnimatedTexturesSequences.end(), std::back_inserter(_animatedTextureSets), [](ANIMATED_TEXTURES_SEQUENCE& sequence)
-		{
+		{  
 			RendererAnimatedTextureSet set{};
 
 			set.NumTextures = sequence.NumFrames;
 			set.Type = (AnimatedTextureType)sequence.Type;
 			set.Fps = sequence.Fps;
+			set.UVRotateDirection = (UVRotateDirection)sequence.UVRotate;
 
 			std::transform(sequence.Frames.begin(), sequence.Frames.end(), std::back_inserter(set.Textures), [](ANIMATED_TEXTURES_FRAME& frm)
 			{
