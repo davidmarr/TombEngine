@@ -877,12 +877,7 @@ namespace TEN::Renderer
 			const auto& mesh = *moveableObject->ObjectMeshes[i];
 
 			for (int animated = 0; animated < 2; animated++)
-			{
-				if (animated == 0) 
-					_shaders.Bind(Shader::Inventory);
-				else 
-					_shaders.Bind(Shader::InventoryAnimated);
-				
+			{				
 				for (const auto& bucket : mesh.Buckets)
 				{
 					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
@@ -898,6 +893,9 @@ namespace TEN::Renderer
 					}
 					else
 					{
+						TextureAreNotAnimated();
+
+
 						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 						BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 					}

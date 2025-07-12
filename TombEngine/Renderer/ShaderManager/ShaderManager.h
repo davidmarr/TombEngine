@@ -12,23 +12,17 @@ namespace TEN::Renderer::Utils
 
 		None,
 		Rooms,
-		RoomsAnimated,
 		RoomsTransparent,
 		RoomAmbient,
 		RoomAmbientSky,
 		Items,
-		ItemsAnimated,
 		Statics,
-		StaticsAnimated,
 		InstancedStatics,
-		InstancedStaticsAnimated,
 		Sprites,
 		InstancedSprites,
 		Sky,
-		SkyAnimated,
 		Solid,
 		Inventory,
-		InventoryAnimated,
 		FullScreenQuad,
 		ShadowMap,
 
@@ -43,13 +37,9 @@ namespace TEN::Renderer::Utils
 
 		GBuffer,
 		GBufferRooms,
-		GBufferRoomsAnimated,
 		GBufferItems,
-		GBufferItemsAnimated,
 		GBufferStatics,
-		GBufferStaticsAnimated,
 		GBufferInstancedStatics,
-		GBufferInstancedStaticsAnimated,
 
 		// SMAA
 

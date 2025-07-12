@@ -524,7 +524,7 @@ namespace TEN::Renderer
 		void CreateSSAONoiseTexture();
 		void InitializeSMAA();
 		void SetupAnimatedTextures(const RendererBucket& bucket);
-
+		
 		bool IsRoomReflected(RenderView& renderView, int roomNumber);
 
 		inline bool IgnoreReflectionPassForRoom(int roomNumber)
@@ -604,6 +604,12 @@ namespace TEN::Renderer
 		inline RendererObject& GetStaticRendererObject(short objectNumber)
 		{
 			return _staticObjects[Statics.GetIndex(objectNumber)].value();
+		}
+
+		inline void TextureAreNotAnimated()
+		{
+			_stAnimated.Animated = 0;
+			_cbAnimated.UpdateData(_stAnimated, _context.Get());
 		}
 
 	public:
