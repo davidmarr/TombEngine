@@ -40,7 +40,7 @@ PixelShaderInput VS(VertexShaderInput input)
 
 float4 PS(PixelShaderInput input) : SV_TARGET
 {
-    if (Type == 1)
+    if (Animated && Type == 1)
         input.UV = CalculateUVRotate(input.UV, 0);
 	
     float4 output = Texture.Sample(Sampler, input.UV);

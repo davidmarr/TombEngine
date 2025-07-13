@@ -166,7 +166,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 {
 	PixelShaderOutput output;
 	
-    if (Type == 1)
+    if (Animated && Type == 1)
         input.UV = CalculateUVRotate(input.UV, 0);
 
 	float4 color = Texture.Sample(Sampler, input.UV);
