@@ -702,6 +702,7 @@ namespace TEN::Renderer
 		void SetGraphicsSettingsChanged();
 
 		RendererDebugPage GetDebugPage() const;
+		std::vector<RendererSprite>& GetSprites();
 	};
 
 	extern Renderer g_Renderer;

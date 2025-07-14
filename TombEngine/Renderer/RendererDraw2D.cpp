@@ -725,4 +725,9 @@ namespace TEN::Renderer
 				return (spriteToDraw0.Priority < spriteToDraw1.Priority);
 			});
 	}
+
+	std::vector<RendererSprite>& Renderer::GetSprites()
+	{
+		return _sprites;
+	}
 }

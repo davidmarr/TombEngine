@@ -41,6 +41,7 @@ namespace TEN::Scripting::DisplaySprite
 		float		   GetRotation() const;
 		Vec2		   GetScale() const;
 		ScriptColor	   GetColor() const;
+		sol::table GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt, sol::this_state state) const;
 
 		// Setters
 		void SetObjectID(GAME_OBJECT_ID objectID);

@@ -41,6 +41,7 @@ namespace TEN::Scripting::DisplaySprite
 		ScriptReserved_DisplayStringGetRotation, &ScriptDisplaySprite::GetRotation,
 		ScriptReserved_DisplayStringGetScale, &ScriptDisplaySprite::GetScale,
 		ScriptReserved_DisplayStringGetColor, &ScriptDisplaySprite::GetColor,
+		ScriptReserved_DisplayStringGetAnchors, & ScriptDisplaySprite::GetAnchors,
 		ScriptReserved_DisplayStringSetObjectID, &ScriptDisplaySprite::SetObjectID,
 		ScriptReserved_DisplayStringSetSpriteID, &ScriptDisplaySprite::SetSpriteID,
 		ScriptReserved_DisplayStringSetPosition, &ScriptDisplaySprite::SetPosition,
@@ -143,6 +144,192 @@ namespace TEN::Scripting::DisplaySprite
 	ScriptColor ScriptDisplaySprite::GetColor() const
 	{
 		return _color;
+	}
+
+	/// Get the anchors of the display sprite.
+	// Anchors are the vertices of the display sprite, which can be used to position other objects relative to it.
+	// @function DisplaySprite:GetAnchors
+	// @tparam[opt=DisplaySpriteAlignMode.Center] View.AlignMode alignMode Alignment mode.
+	// @tparam[opt=DisplaySpriteScaleMode.Fit] View.ScaleMode scaleMode Scaling mode.
+	// @treturn table A table containing the vertices of the display sprite, which can be used to position other objects relative to it.<br>
+	// The table will contain the following keys:<br>
+	// - `TOP_LEFT`<br>
+	// - `CENTER_TOP`<br>
+	// - `TOP_RIGHT`<br>
+	// - `CENTER_LEFT`<br>
+	// - `CENTER`<br>
+	// - `CENTER_RIGHT`<br>
+	// - `BOTTOM_RIGHT`<br>
+	// - `CENTER_BOTTOM`<br>
+	// - `BOTTOM_LEFT`<br>
+	sol::table ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt, sol::this_state state) const
+	{
+		// Object is not a sprite sequence; return early.
+		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
+		{
+			TENLog("Attempted to draw display sprite from non-sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
+			return;
+		}
+
+		// Sprite missing or sequence not found; return early.
+		const auto& object = Objects[_objectID];
+		if (!object.loaded || _spriteID >= abs(object.nmeshes))
+		{
+			TENLog(
+				"Attempted to draw missing sprite " + std::to_string(_spriteID) +
+				" from sprite sequence object " + std::to_string(_objectID) +
+				" as display sprite.",
+				LogLevel::Warning);
+			return;
+		}
+
+		constexpr auto DEFAULT_ALIGN_MODE = DisplaySpriteAlignMode::Center;
+		constexpr auto DEFAULT_SCALE_MODE = DisplaySpriteScaleMode::Fit;
+		constexpr auto SCALE_CONVERSION = 0.01f;
+		constexpr auto DISPLAY_ASPECT = DISPLAY_SPACE_RES.x / DISPLAY_SPACE_RES.y;
+		constexpr auto VERTEX_COUNT = 4;
+
+		// Screen and sprite data
+		auto screenRes = Vector2(g_Configuration.ScreenWidth, g_Configuration.ScreenHeight);
+		const float screenAspect = screenRes.x / screenRes.y;
+		const float aspectCorrectionBase = screenAspect / DISPLAY_ASPECT;
+		const float aspectCorrectionBaseInv = 1.0f / aspectCorrectionBase;
+
+		const auto& sprite = g_Renderer.GetSprites()[object.meshIndex + _spriteID];
+		const float spriteAspect = static_cast<float>(sprite.Width) / sprite.Height;
+
+		// Scaled values
+		const Vector2 convertedScale = _scale * SCALE_CONVERSION;
+		const Vector2 convertedPos = _position * (DISPLAY_SPACE_RES / 100.0f);
+		const short convertedRot = ANGLE(_rotation);
+
+		// Calculate halfSize and aspect correction
+		Vector2 halfSize = Vector2::Zero;
+		Vector2 aspectCorrection = Vector2::One;
+		const auto scaleMode = scaleModeOpt.value_or(DEFAULT_SCALE_MODE);
+
+		switch (scaleMode)
+		{
+		case DisplaySpriteScaleMode::Fit:
+		case DisplaySpriteScaleMode::Fill:
+		{
+			const bool scaleByHeight = (scaleMode == DisplaySpriteScaleMode::Fit) ? (screenAspect >= spriteAspect)
+				: (screenAspect < spriteAspect);
+			if (scaleByHeight)
+			{
+				halfSize = Vector2(DISPLAY_SPACE_RES.y * convertedScale.y) / 2.0f;
+				halfSize.x *= (spriteAspect >= 1.0f) ? spriteAspect : (1.0f / spriteAspect);
+				aspectCorrection.x = aspectCorrectionBaseInv;
+			}
+			else
+			{
+				halfSize = Vector2(DISPLAY_SPACE_RES.x * convertedScale.x) / 2.0f;
+				halfSize.y *= (spriteAspect >= 1.0f) ? (1.0f / spriteAspect) : spriteAspect;
+				aspectCorrection.y = aspectCorrectionBase;
+			}
+			break;
+		}
+		case DisplaySpriteScaleMode::Stretch:
+		default:
+		{
+			if (screenAspect >= 1.0f)
+			{
+				halfSize = Vector2(DISPLAY_SPACE_RES.x * convertedScale.x) / 2.0f;
+				halfSize.y *= 1.0f / screenAspect;
+				aspectCorrection.y = aspectCorrectionBase;
+			}
+			else
+			{
+				halfSize = Vector2(DISPLAY_SPACE_RES.y * convertedScale.y) / 2.0f;
+				halfSize.x *= 1.0f / screenAspect;
+				aspectCorrection.x = aspectCorrectionBaseInv;
+			}
+			break;
+		}
+		}
+
+		// Offset based on alignment
+		Vector2 offset = Vector2::Zero;
+		const auto alignMode = alignModeOpt.value_or(DEFAULT_ALIGN_MODE);
+
+		switch (alignMode)
+		{
+		case DisplaySpriteAlignMode::CenterTop:     offset = { 0.0f,  halfSize.y }; break;
+		case DisplaySpriteAlignMode::CenterBottom:  offset = { 0.0f, -halfSize.y }; break;
+		case DisplaySpriteAlignMode::CenterLeft:    offset = { halfSize.x, 0.0f }; break;
+		case DisplaySpriteAlignMode::CenterRight:   offset = { -halfSize.x, 0.0f }; break;
+		case DisplaySpriteAlignMode::TopLeft:       offset = { halfSize.x,  halfSize.y }; break;
+		case DisplaySpriteAlignMode::TopRight:      offset = { -halfSize.x,  halfSize.y }; break;
+		case DisplaySpriteAlignMode::BottomLeft:    offset = { halfSize.x, -halfSize.y }; break;
+		case DisplaySpriteAlignMode::BottomRight:   offset = { -halfSize.x, -halfSize.y }; break;
+		default: break; // Center
+		}
+
+		// Apply rotation to offset
+		const Matrix rotMatrix = Matrix::CreateRotationZ(TO_RAD(convertedRot));
+		offset = Vector2::Transform(offset, rotMatrix) * aspectCorrection;
+
+		const Vector2 size = halfSize * 2.0f;
+		const Vector2 position = convertedPos + offset;
+
+		// Vertices centered around origin
+		std::array<Vector2, VERTEX_COUNT> vertices = {
+			Vector2(size.x,  size.y) / 2.0f, // top-left
+			Vector2(-size.x,  size.y) / 2.0f, // top-right
+			Vector2(-size.x, -size.y) / 2.0f, // bottom-right
+			Vector2(size.x, -size.y) / 2.0f  // bottom-left
+		};
+
+		// Apply rotation + aspect + offset
+		const Matrix rot180 = Matrix::CreateRotationZ(TO_RAD(convertedRot + ANGLE(180.0f)));
+
+		for (auto& vertex : vertices)
+		{
+			vertex = Vector2::Transform(vertex, rot180);
+			vertex *= aspectCorrection;
+			vertex += position;
+		}
+
+		// Scale to screen resolution
+		const Vector2 screenScale = screenRes / DISPLAY_SPACE_RES;
+		for (auto& vertex : vertices)
+		{
+			vertex.x *= screenScale.x;
+			vertex.y *= screenScale.y;
+		}
+
+		// Calculate anchors
+		const Vector2 CENTER = (vertices[0] + vertices[2]) / 2.0f;
+		const Vector2 CENTER_TOP = (vertices[0] + vertices[1]) / 2.0f;
+		const Vector2 CENTER_LEFT = (vertices[0] + vertices[3]) / 2.0f;
+		const Vector2 CENTER_RIGHT = (vertices[1] + vertices[2]) / 2.0f;
+		const Vector2 CENTER_BOTTOM = (vertices[2] + vertices[3]) / 2.0f;
+
+		// Create anchors array
+		std::array<Vec2, 9> anchors = {
+			Vec2(vertices[0].x / screenRes.x * 100.0f, vertices[0].y / screenRes.y * 100.0f),       // TOP_LEFT
+			Vec2(CENTER_TOP.x / screenRes.x * 100.0f, CENTER_TOP.y / screenRes.y * 100.0f),        // CENTER_TOP
+			Vec2(vertices[1].x / screenRes.x * 100.0f, vertices[1].y / screenRes.y * 100.0f),       // TOP_RIGHT
+			Vec2(CENTER_LEFT.x / screenRes.x * 100.0f, CENTER_LEFT.y / screenRes.y * 100.0f),    // CENTER_LEFT
+			Vec2(CENTER.x / screenRes.x * 100.0f, CENTER.y / screenRes.y * 100.0f),              // CENTER
+			Vec2(CENTER_RIGHT.x / screenRes.x * 100.0f, CENTER_RIGHT.y / screenRes.y * 100.0f),  // CENTER_RIGHT
+			Vec2(vertices[2].x / screenRes.x * 100.0f, vertices[2].y / screenRes.y * 100.0f),       // BOTTOM_RIGHT
+			Vec2(CENTER_BOTTOM.x / screenRes.x * 100.0f, CENTER_BOTTOM.y / screenRes.y * 100.0f), // CENTER_BOTTOM
+			Vec2(vertices[3].x / screenRes.x * 100.0f, vertices[3].y / screenRes.y * 100.0f)        // BOTTOM_LEFT
+		};
+
+		auto anchorTable = sol::state_view(state).create_table();
+		anchorTable["TOP_LEFT"] = anchors[0];
+		anchorTable["CENTER_TOP"] = anchors[1];
+		anchorTable["TOP_RIGHT"] = anchors[2];
+		anchorTable["CENTER_LEFT"] = anchors[3];
+		anchorTable["CENTER"] = anchors[4];
+		anchorTable["CENTER_RIGHT"] = anchors[5];
+		anchorTable["BOTTOM_RIGHT"] = anchors[6];
+		anchorTable["CENTER_BOTTOM"] = anchors[7];
+		anchorTable["BOTTOM_LEFT"] = anchors[8];
+
+		return anchorTable;
 	}
 
 	/// Set the sprite sequence object ID used by the display sprite.

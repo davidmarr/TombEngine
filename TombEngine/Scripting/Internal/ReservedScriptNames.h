@@ -52,6 +52,7 @@ static constexpr char ScriptReserved_DisplayStringGetPosition[]		= "GetPosition"
 static constexpr char ScriptReserved_DisplayStringGetRotation[]		= "GetRotation";
 static constexpr char ScriptReserved_DisplayStringGetScale[]		= "GetScale";
 static constexpr char ScriptReserved_DisplayStringGetColor[]		= "GetColor";
+static constexpr char ScriptReserved_DisplayStringGetAnchors[]		= "GetAnchors";
 static constexpr char ScriptReserved_DisplayStringSetObjectID[]		= "SetObjectID";
 static constexpr char ScriptReserved_DisplayStringSetSpriteID[]		= "SetSpriteID";
 static constexpr char ScriptReserved_DisplayStringSetPosition[]		= "SetPosition";
