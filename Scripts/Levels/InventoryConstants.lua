@@ -44,12 +44,12 @@ SAVE = 7
 }
 
 local RING = {
-
-	MAIN = 1,
-	PUZZLE = 2,
-	COMBINE = 3,
-	AMMO = 4,
-	OPTIONS = 5
+	PUZZLE = 1,
+	MAIN = 2,
+	OPTIONS = 3,
+	COMBINE = 4,
+	AMMO = 5,
+	
 	
 }
 

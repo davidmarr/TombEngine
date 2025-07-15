@@ -14,7 +14,7 @@ local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
 local PROGRESS_COMPLETE = 1
 local EXAMINE_SCALE = 1.2
-local EXAMINE_TEXT = Vec2(50, 80)
+local EXAMINE_TEXT_POS = Vec2(50, 80)
 
 --External table of all pickup data
 local PICKUP_DATA = require("Levels.InventoryConstants")
@@ -30,19 +30,19 @@ local TYPE = {
 }
 
 local RING = {
-    MAIN = 1,
-    PUZZLE = 2,
-    COMBINE = 3,
-    AMMO = 4,
-    OPTIONS = 5
+	PUZZLE = 1,
+    MAIN = 2,
+	OPTIONS = 3,
+	COMBINE = 4,
+	AMMO = 5,
 }
 
 local RING_CENTER = {
-    [1] = Vec3(0,200,1024), --MAIN
-    [2] = Vec3(0,200,1024), -- PUZZLEto be decided
-    [3] = Vec3(0,200,1024), -- COMBINE to be decided
-    [4] = Vec3(0,200,1024), -- AMMO to be decided
-    [5]= Vec3(0,200,1024) -- OPTIONS to be decided
+    [RING.PUZZLE] = Vec3(0,-1000,1024),
+    [RING.MAIN] = Vec3(0,200,1024),
+    [RING.OPTIONS] = Vec3(0,1000,1024),
+    [RING.COMBINE] = Vec3(0,200,1024),
+    [RING.AMMO] = Vec3(0,200,1024)
 }
 
 --Inventory types
@@ -57,7 +57,10 @@ local INVENTORY_MODE =
     STATISTICS_CLOSE = 7,
     EXAMINE_OPEN = 8,
     EXAMINE_CLOSE = 9,
-    ITEM_USE = 10
+    ITEM_USE = 10,
+    ITEM_SELECT = 11,
+    ITEM_DESELECT = 12,
+    ITEM_SELECTED = 13
 }
 
 --Structure for SoundMap
@@ -140,26 +143,7 @@ local MOTION_TYPE = {
     COLOR = 5 
 }
 
-local ammoSet = {
-    [TEN.Objects.ObjID.PISTOLS_ITEM] = true,
-    [TEN.Objects.ObjID.UZI_ITEM] = true,
-    [TEN.Objects.ObjID.SHOTGUN_ITEM] = true,
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = true,
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = true,
-    [TEN.Objects.ObjID.HK_ITEM] = true,
-    [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = true,
-    [TEN.Objects.ObjID.HARPOON_ITEM] = true,
-    [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = true
-}
-
 --variables
-local timeInMenu = 0
-local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
-local inventoryMode = INVENTORY_MODE.RING_OPENING
-local currentAngle = 0
-local targetAngle = 0
-local rotationInProgress = false
-
 local useBinoculars = false
 
 local motionProgress = {}
@@ -170,7 +154,15 @@ local examineShowString = false
 local examineComplete = true
 local examineOldRotation
 
-local inventory = {}
+--Structure for inventory
+local inventory = {ring = {}, slice = {}, selectedItem = {}}
+local selectedRing = RING.MAIN
+local timeInMenu = 0
+local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
+local inventoryMode = INVENTORY_MODE.RING_OPENING
+local currentAngle = 0
+local targetAngle = 0
+local rotationInProgress = false
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -220,7 +212,7 @@ end
 -- Function to display level statistics on the screen
 local ShowLevelStats = function(gameStats)
     -- Retrieve current level statistics and configuration
-    local levelStats = Flow.GetStatistics()
+    local levelStats = Flow.GetStatistics(gameStats)
     local level = Flow.GetCurrentLevel()
 
     -- Define screen positions for various UI elements using percentages
@@ -230,11 +222,10 @@ local ShowLevelStats = function(gameStats)
     local controlX, controlY = PercentToScreen(50, 90)       -- Position of the control instructions
     
     -- Set color and text scale for all UI elements
-    local textColor = Color(255, 255, 255, 255)              -- White color (RGBA)
     local textScale = 1                                      -- Default text scale
 
     -- Create and display text for the UI.
- 	local headings = DisplayString("Time Taken\nSecrets\nPickups\nKills\nAmmo Used\nMedi packs used\nDistance Travelled", Vec2(headingsX, headingsY), textScale, textColor, false)
+ 	local headings = DisplayString("Time Taken\nSecrets\nPickups\nKills\nAmmo Used\nMedi packs used\nDistance Travelled", Vec2(headingsX, headingsY), textScale, COLOR_MAP.HEADER_FONT, false)
 	local levelName = DisplayString(tostring(Flow.GetString(level.nameKey)), Vec2(levelNameX, levelNameY), textScale, textColor, false)
 	local control = DisplayString("Press ACTION to continue", Vec2(controlX, controlY), textScale / 2, textColor, false)
 
@@ -250,12 +241,10 @@ local ShowLevelStats = function(gameStats)
         string.format("%.1f", levelStats.distanceTraveled / 420) .. " m",
         Vec2(dataX, dataY),
         textScale,
-        textColor,
+        COLOR_MAP.NORMAL_FONT,
         false  -- Disable translations
     )
 
-    -- Create and display control instructions
-		local control = DisplayString("Press ACTION to continue", Vec2(controlX, controlY), textScale / 2, textColor, false)
     -- Apply text effects (e.g., centering, shadow, blink)
     levelName:SetFlags({ TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW })
     headings:SetFlags({ TEN.Strings.DisplayStringOption.SHADOW })
@@ -426,29 +415,57 @@ local guiIsPulsed = function(actionID)
 	return TEN.Input.IsKeyPulsed(actionID, DELAY, INITIAL_DELAY)
 end
 
+local GetSelectedItem = function(ring)
+
+    return inventory.ring[ring][inventory.selectedItem[ring]]
+
+end
+
 local Input = function(mode)
 
     if mode == INVENTORY_MODE.INVENTORY then
 
-        local inventoryTable = LevelVars.Engine.CustomInventory.Inventory
+        local inventoryTable = inventory.ring[selectedRing]
 
         if not rotationInProgress then
             if guiIsPulsed(TEN.Input.ActionID.LEFT) then
-                LevelVars.Engine.CustomInventory.SelectedItem = ((LevelVars.Engine.CustomInventory.SelectedItem - 2) % #inventoryTable) + 1
-                targetAngle = currentAngle + LevelVars.Engine.CustomInventory.InventorySlice
+                inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
+                targetAngle = currentAngle - inventory.slice[selectedRing]
                 rotationInProgress = true
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
-                LevelVars.Engine.CustomInventory.SelectedItem = (LevelVars.Engine.CustomInventory.SelectedItem % #inventoryTable) + 1
-                targetAngle = currentAngle - LevelVars.Engine.CustomInventory.InventorySlice
+                inventory.selectedItem[selectedRing] = ((inventory.selectedItem[selectedRing] - 2) % #inventoryTable) + 1
+                targetAngle = currentAngle + inventory.slice[selectedRing]
                 rotationInProgress = true
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+            elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
+                local previousRing = selectedRing
+                selectedRing = math.max(RING.PUZZLE, selectedRing - 1)
+
+                if selectedRing ~= previousRing then
+                    rotationInProgress = true
+                    TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+                end
+            elseif guiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
+                local previousRing = selectedRing
+                selectedRing = math.min(RING.OPTIONS, selectedRing + 1)
+
+                if selectedRing ~= previousRing then
+                    rotationInProgress = true
+                    TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+                end
             elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
-                local item = LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].item
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
                 examineComplete = true
-                inventoryMode = INVENTORY_MODE.ITEM_USE
-             elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
+
+                local combine = GetSelectedItem(selectedRing).combine
+
+                if combine then
+                    inventoryMode = INVENTORY_MODE.ITEM_SELECT
+                else
+                    inventoryMode = INVENTORY_MODE.ITEM_USE  
+                end
+            elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
                 examineComplete = true
                 inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
@@ -465,6 +482,47 @@ local Input = function(mode)
             inventoryMode = INVENTORY_MODE.STATISTICS_CLOSE
         end
 
+    elseif mode == INVENTORY_MODE.ITEM_SELECTED then
+        if guiIsPulsed(TEN.Input.ActionID.LEFT) then
+            LevelVars.Engine.CustomInventory.SelectedItem = ((LevelVars.Engine.CustomInventory.SelectedItem - 2) % #inventoryTable) + 1
+            targetAngle = currentAngle + LevelVars.Engine.CustomInventory.InventorySlice
+            rotationInProgress = true
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+        elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
+            LevelVars.Engine.CustomInventory.SelectedItem = (LevelVars.Engine.CustomInventory.SelectedItem % #inventoryTable) + 1
+            targetAngle = currentAngle - LevelVars.Engine.CustomInventory.InventorySlice
+            rotationInProgress = true
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+        elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
+            local previousRing = selectedRing
+            selectedRing = math.max(RING.PUZZLE, selectedRing - 1)
+
+            if selectedRing ~= previousRing then
+                rotationInProgress = true
+                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+            end
+        elseif guiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
+            local previousRing = selectedRing
+            selectedRing = math.min(RING.OPTIONS, selectedRing + 1)
+
+            if selectedRing ~= previousRing then
+                rotationInProgress = true
+                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+            end
+        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            examineComplete = true
+            if combine then
+                inventoryMode = INVENTORY_MODE.ITEM_SELECT
+                print("combine")
+            else
+                inventoryMode = INVENTORY_MODE.ITEM_USE  
+            end
+        elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_SELECT)
+            inventoryMode = INVENTORY_MODE.ITEM_DESELECT
+            return
+        end
     elseif mode == INVENTORY_MODE.EXAMINE then
          -- Static variables
         local ROTATION_MULTIPLIER = 2
@@ -551,7 +609,12 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetFOV(80)
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
+        currentAngle = 0
+        targetAngle = 0
+        LevelVars.Engine.CustomInventory.SelectedItem = 1
+        LevelVars.Engine.CustomInventory.RingOpening = true
         LevelFuncs.Engine.CustomInventory.ConstructObjectList()
+        LevelVars.Engine.CustomInventory.InventoryOpen = false
     else
         LevelFuncs.Engine.CustomInventory.DrawInventoryText()
         Input(inventoryMode)
@@ -611,15 +674,10 @@ end
 --Only uses combine and ammo as an option. Everything else dumps the whole inventory.
 LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selectedWeapon)
 
-    currentAngle = 0
-    targetAngle = 0
-    LevelVars.Engine.CustomInventory.SelectedItem = 1
-    LevelVars.Engine.CustomInventory.RingOpening = true
-
     local items  = PICKUP_DATA.constants
     local gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
-    
-    local inventory = {}
+
+    inventory = {ring = {}, slice = {}, selectedItem = {}}
 
     for _, itemID in ipairs(items) do
 
@@ -691,11 +749,10 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
             shouldInsert = (count ~= 0)
         end
 
-        print(ringName)
-        inventory[ringName] = inventory[ringName] or {}
+        inventory.ring[ringName] = inventory.ring[ringName] or {}
 
         if shouldInsert or ammoRing then
-            table.insert(inventory[ringName], { 
+            table.insert(inventory.ring[ringName], { 
                 item = objectID.itemID,
                 count = count,
                 yOffset = yOffset,
@@ -713,12 +770,20 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         ::continue::
     end
 
-    LevelVars.Engine.CustomInventory.Inventory = inventory
-    LevelVars.Engine.CustomInventory.InventorySlice = (360 / #inventory)
-    LevelVars.Engine.CustomInventory.InventoryOpen = false
+    --Calculate the slice angle and save it
+    for ringName, ringItems in pairs(inventory.ring) do
+        local count = #ringItems
+        inventory.selectedItem[ringName] = 1
+        inventory.slice[ringName] = (count > 0) and (360 / count) or 0
+    end
+
 end
 
 local TranslateRing = function(ring, center, radius, rotationOffset)
+
+    if not ring then
+        return
+    end
 
     local itemCount = #ring
     
@@ -739,8 +804,12 @@ end
 
 local FadeRing = function(ring, fadeValue, omitSelectedItem)
     
+    if not ring then
+        return
+    end
+
     local itemCount = #ring
-    local selectedItem = omitSelectedItem and LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].item
+    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).item
 
     for i = 1, itemCount do
         local currentItem = ring[i].item 
@@ -810,8 +879,8 @@ end
 
 local AnimateInventory = function(mode)
 
-    local inventoryTable = LevelVars.Engine.CustomInventory.Inventory
-    local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem]
+    local inventoryTable = inventory.ring[selectedRing]
+    local selectedItem = GetSelectedItem(selectedRing)
 
     if mode == INVENTORY_MODE.RING_OPENING then
         local radiusInterpolate = PerformMotion("RingOpening1", MOTION_TYPE.LINEAR, 0, RING_RADIUS, INVENTORY_ANIM_TIME, true)
@@ -819,8 +888,10 @@ local AnimateInventory = function(mode)
         local cameraInterpolate = PerformMotion("RingOpening3", MOTION_TYPE.VEC3, CAMERA_START, CAMERA_END, INVENTORY_ANIM_TIME, true)
         local targetInterpolate = PerformMotion("RingOpening4", MOTION_TYPE.VEC3, TARGET_START, TARGET_END, INVENTORY_ANIM_TIME, true)
         local fadeInterpolate = PerformMotion("RingOpening5", MOTION_TYPE.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
-        TranslateRing(inventoryTable, RING_CENTER, radiusInterpolate.output, angleInterpolate.output)
+        
+        TranslateRing(inventoryTable, RING_CENTER[selectedRing], radiusInterpolate.output, angleInterpolate.output)
         FadeRing(inventoryTable, fadeInterpolate.output, false)
+
         TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
         TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
@@ -841,7 +912,7 @@ local AnimateInventory = function(mode)
         local cameraInterpolate = PerformMotion("RingClosing3", MOTION_TYPE.VEC3, CAMERA_END, CAMERA_START,  INVENTORY_ANIM_TIME, true)
         local targetInterpolate = PerformMotion("RingClosing4", MOTION_TYPE.VEC3, TARGET_END, TARGET_START, INVENTORY_ANIM_TIME, true)
         local fadeInterpolate = PerformMotion("RingClosing5", MOTION_TYPE.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
-        TranslateRing(inventoryTable, RING_CENTER, radiusInterpolate.output, angleInterpolate.output)
+        TranslateRing(inventoryTable, RING_CENTER[selectedRing], radiusInterpolate.output, angleInterpolate.output)
         FadeRing(inventoryTable, fadeInterpolate.output, false)
         TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
         TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
@@ -968,7 +1039,7 @@ local AnimateInventory = function(mode)
                 local cameraInterpolate = PerformMotion("RingClosing3", MOTION_TYPE.VEC3, CAMERA_END, CAMERA_START,  INVENTORY_ANIM_TIME, true)
                 local targetInterpolate = PerformMotion("RingClosing4", MOTION_TYPE.VEC3, TARGET_END, TARGET_START, INVENTORY_ANIM_TIME, true)
                 local fadeInterpolate = PerformMotion("RingClosing5", MOTION_TYPE.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
-                TranslateRing(inventoryTable, RING_CENTER, radiusInterpolate.output, angleInterpolate.output)
+                TranslateRing(inventoryTable, RING_CENTER[selectedRing], radiusInterpolate.output, angleInterpolate.output)
                 FadeRing(inventoryTable, fadeInterpolate.output, false)
                 TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
                 TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
@@ -997,8 +1068,8 @@ end
 
 LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     
-    local inventoryTable = LevelVars.Engine.CustomInventory.Inventory
-    local selectedItem = inventoryTable[LevelVars.Engine.CustomInventory.SelectedItem].item
+    local inventoryTable = inventory.ring[selectedRing]
+    local selectedItem = GetSelectedItem(selectedRing).item
 
     if mode == INVENTORY_MODE.INVENTORY then
         if LevelVars.Engine.CustomInventory.RingOpening == false and LevelVars.Engine.CustomInventory.RingClosing == false then
@@ -1006,7 +1077,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             if rotationInProgress then
                 local angleInterpolate = PerformMotion("RingRotating", MOTION_TYPE.LINEAR, currentAngle, targetAngle, INVENTORY_ANIM_TIME/4, true)
                 
-                TranslateRing(inventoryTable, RING_CENTER, RING_RADIUS, angleInterpolate.output)
+                TranslateRing(inventoryTable, RING_CENTER[selectedRing], RING_RADIUS, angleInterpolate.output)
                 
                 if angleInterpolate.progress >= PROGRESS_COMPLETE then
                     ClearMotionProgress("RingRotating")
@@ -1096,18 +1167,6 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     end
 end
 
-LevelFuncs.Engine.CustomInventory.GetSelectedItem = function()
-    
-    return LevelVars.Engine.CustomInventory.SelectedItem
-
-end
-
-LevelFuncs.Engine.CustomInventory.ReduceItem = function(item, count)
-
-    TEN.Inventory.TakeItem(item, count)
-
-end
-
 LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
     local levelStatistics = Flow.GetStatistics()
@@ -1190,7 +1249,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         end
 
         if item == TEN.Objects.ObjID.FLARE_INV_ITEM then
-            LevelFuncs.Engine.CustomInventory.ReduceItem(item, 1)
+            TEN.Inventory.TakeItem(item, 1)
         end
         
     end
@@ -1214,7 +1273,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         
         if count then
             if count ~= NO_VALUE then
-                LevelFuncs.Engine.CustomInventory.ReduceItem(item, 1)
+                TEN.Inventory.TakeItem(item, 1)
             end
 
             Lara:SetPoison(0)
@@ -1273,7 +1332,7 @@ LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
     TEN.DrawItem.SetItemScale(item, examineScaler)
     
     if localizedString and examineShowString then
-        local entryText = TEN.Strings.DisplayString(localizedString, percentPos(EXAMINE_TEXT.x, EXAMINE_TEXT.y), 1, COLOR_MAP.NORMAL_FONT, true, {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER})
+        local entryText = TEN.Strings.DisplayString(localizedString, percentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y), 1, COLOR_MAP.NORMAL_FONT, true, {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER})
         ShowString(entryText, 1 / 30)
     end
 
@@ -1282,8 +1341,8 @@ end
 LevelFuncs.Engine.CustomInventory.DrawItemLabel = function(item)
 
     local entryPosInPixel = percentPos(50, 86) --Item label
-    local label = GetString(LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].name)
-    local count = LevelVars.Engine.CustomInventory.Inventory[LevelVars.Engine.CustomInventory.SelectedItem].count
+    local label = GetString(GetSelectedItem(selectedRing).name)
+    local count = GetSelectedItem(selectedRing).count
     local result
 
     if count == -1 then
@@ -1304,7 +1363,8 @@ LevelFuncs.Engine.CustomInventory.DrawAmmoLabel = function(item)
 
     if WEAPON_SET[item] then
         
-    end 
+    end
+
 end
 
 LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
