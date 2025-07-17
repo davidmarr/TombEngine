@@ -1,6 +1,6 @@
 --RING INVENTORY BY TRAINWRECK
 
-local debug = true
+local debug = false
 
 --CONSTANTS
 local NO_VALUE = -1
@@ -16,6 +16,7 @@ local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
 local RING_POSITION_OFFSET = 1000
 local PROGRESS_COMPLETE = 1
+local ITEM_SELECT_SCALE = 1.2
 local EXAMINE_SCALE = 1.2
 local EXAMINE_TEXT_POS = Vec2(50, 80)
 
@@ -87,7 +88,7 @@ local COLOR_MAP =
     BLACK = Color(0,0,0,255),
     BACKGROUND = Color(128,128,128,255),
     INVENTORY_AMBIENT = Color(255,0,0),
-    ITEM_COLOR = Color(64,64,64,255)
+    ITEM_COLOR = Color(64,64,64,0)
 }
 
 --Structure for weapon data. TEN Weapon type constant, underwater equip allowed, equip while crawling allowed
@@ -156,8 +157,6 @@ local MOTION_TYPE = {
 --variables
 local useBinoculars = false
 
-local soundPlayed = false
-
 local motionProgress = {}
 
 local examineOrient
@@ -181,21 +180,6 @@ local rotationInProgress = false
 LevelFuncs.Engine.CustomInventory = {}
 
 --functions
-
-local SoundReset = function()
-
-    soundPlayed = false
-
-end
-
-local SoundPlay = function(sound)
-
-    if not soundPlayed then
-        TEN.Sound.PlaySound(sound)
-        soundPlayed = true
-    end
-    
-end
 
 local percentPos = function(x, y)
     return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
@@ -529,7 +513,7 @@ local Input = function(mode)
                 examineComplete = true
                 inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
             elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_SELECT)
+                TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
                 LevelVars.Engine.CustomInventory.RingClosing = true
                 inventoryMode = INVENTORY_MODE.RING_CLOSING
                 return
@@ -616,7 +600,6 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     TEN.DrawItem.SetOpenInventory(NO_VALUE)
     motionProgress = {}
     View.SetFOV(80)
-    SoundReset()
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     LevelVars.Engine.CustomInventory.InventoryClosed = true
     inventoryMode = INVENTORY_MODE.RING_OPENING
@@ -636,6 +619,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         currentAngle = 0
         targetAngle = 0
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
         LevelVars.Engine.CustomInventory.SelectedItem = 1
         LevelVars.Engine.CustomInventory.RingOpening = true
         LevelFuncs.Engine.CustomInventory.ConstructObjectList()
@@ -940,9 +924,15 @@ local AnimateInventory = function(mode)
 
         TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
         TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
-        SoundPlay(SOUND_MAP.INVENTORY_OPEN)
 
         if radiusInterpolate.progress >= PROGRESS_COMPLETE then
+
+            for _, table in pairs(inventory.ring) do
+                
+                FadeRing(table, 255, false)
+
+            end
+
             ClearMotionProgress("RingOpening1")
             ClearMotionProgress("RingOpening2")
             ClearMotionProgress("RingOpening3")
@@ -958,11 +948,17 @@ local AnimateInventory = function(mode)
         local cameraInterpolate = PerformMotion("RingClosing3", MOTION_TYPE.VEC3, CAMERA_END, CAMERA_START,  INVENTORY_ANIM_TIME, true)
         local targetInterpolate = PerformMotion("RingClosing4", MOTION_TYPE.VEC3, TARGET_END, TARGET_START, INVENTORY_ANIM_TIME, true)
         local fadeInterpolate = PerformMotion("RingClosing5", MOTION_TYPE.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
-        TranslateRing(inventoryTable, RING_CENTER[selectedRing], radiusInterpolate.output, angleInterpolate.output)
+        TranslateRing(inventoryTable, inventory.ringPosition[selectedRing], radiusInterpolate.output, angleInterpolate.output)
         FadeRing(inventoryTable, fadeInterpolate.output, false)
+
+        for index, _ in pairs(inventory.ring) do
+            if index ~= selectedRing then
+                FadeRing(inventory.ring[index], 0, false)
+            end
+        end
+
         TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
         TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
-        SoundPlay(SOUND_MAP.INVENTORY_CLOSE)
 
         if radiusInterpolate.progress >= PROGRESS_COMPLETE then
             ClearMotionProgress("RingClosing")
@@ -1104,14 +1100,20 @@ local AnimateInventory = function(mode)
         end
 
         local positionInterpolate = PerformMotion("Examine", MOTION_TYPE.VEC3, ITEM_START, ITEM_END, INVENTORY_ANIM_TIME, true)
-        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, EXAMINE_SCALE, INVENTORY_ANIM_TIME, true)
+        local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, ITEM_SELECT_SCALE, INVENTORY_ANIM_TIME, true)
         local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOldRotation, selectedItem.rotation, INVENTORY_ANIM_TIME, true)
         TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
         TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
         TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
         if positionInterpolate.progress >= PROGRESS_COMPLETE then
+
+            for index, _ in pairs(inventory.ring) do
+                if index ~= selectedRing then
+                    FadeRing(inventory.ring[index], 0, false)
+                end
+            end
             positionInterpolate = PerformMotion("Examine5", MOTION_TYPE.VEC3, ITEM_END, ITEM_START, INVENTORY_ANIM_TIME, true)
-            scaleInterpolate = PerformMotion("Examine6", MOTION_TYPE.LINEAR, EXAMINE_SCALE, selectedItem.scale, INVENTORY_ANIM_TIME, true)
+            scaleInterpolate = PerformMotion("Examine6", MOTION_TYPE.LINEAR, ITEM_SELECT_SCALE, selectedItem.scale, INVENTORY_ANIM_TIME, true)
             rotationInterpolate = PerformMotion("Examine7", MOTION_TYPE.ROTATION, selectedItem.rotation, examineOldRotation, INVENTORY_ANIM_TIME, true)
             TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
             TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
