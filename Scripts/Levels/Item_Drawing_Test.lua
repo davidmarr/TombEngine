@@ -1,5 +1,7 @@
 --RING INVENTORY BY TRAINWRECK
 
+local debug = true
+
 --CONSTANTS
 local NO_VALUE = -1
 local HEALTH_MAX = 1000
@@ -12,6 +14,7 @@ local INVENTORY_ANIM_TIME = 0.5
 local RING_RADIUS = -512
 local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
+local RING_POSITION_OFFSET = 1000
 local PROGRESS_COMPLETE = 1
 local EXAMINE_SCALE = 1.2
 local EXAMINE_TEXT_POS = Vec2(50, 80)
@@ -38,9 +41,9 @@ local RING = {
 }
 
 local RING_CENTER = {
-    [RING.PUZZLE] = Vec3(0,-1000,1024),
+    [RING.PUZZLE] = Vec3(0,-800,1024),
     [RING.MAIN] = Vec3(0,200,1024),
-    [RING.OPTIONS] = Vec3(0,1000,1024),
+    [RING.OPTIONS] = Vec3(0,1200,1024),
     [RING.COMBINE] = Vec3(0,200,1024),
     [RING.AMMO] = Vec3(0,200,1024)
 }
@@ -60,7 +63,8 @@ local INVENTORY_MODE =
     ITEM_USE = 10,
     ITEM_SELECT = 11,
     ITEM_DESELECT = 12,
-    ITEM_SELECTED = 13
+    ITEM_SELECTED = 13,
+    RING_CHANGE = 14
 }
 
 --Structure for SoundMap
@@ -72,8 +76,8 @@ local SOUND_MAP =
     MENU_CHOOSE = 111,
     MENU_COMBINE = 114,
     TR4_MENU_MEDI = 116,
-    INVENTORY_OPEN = 0,
-    INVENTORY_CLOSE = 0
+    INVENTORY_OPEN = 109,
+    INVENTORY_CLOSE = 109
 }
 
 local COLOR_MAP =
@@ -83,7 +87,7 @@ local COLOR_MAP =
     BLACK = Color(0,0,0,255),
     BACKGROUND = Color(128,128,128,255),
     INVENTORY_AMBIENT = Color(255,0,0),
-    ITEM_COLOR = Color(64,64,64,0)
+    ITEM_COLOR = Color(64,64,64,255)
 }
 
 --Structure for weapon data. TEN Weapon type constant, underwater equip allowed, equip while crawling allowed
@@ -98,6 +102,12 @@ local WEAPON_SET = {
     [TEN.Objects.ObjID.HARPOON_ITEM] = {slot = TEN.Objects.WeaponType.HARPOON_GUN, underwater = true, crawl = false},
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {slot = TEN.Objects.WeaponType.ROCKET_LAUNCHER, underwater = false, crawl = false},
     [TEN.Objects.ObjID.FLARE_INV_ITEM] = {slot = TEN.Objects.WeaponType.FLARE, underwater = true, crawl = true}
+}
+
+local WEAPON_LASERSIGHT_MESHBITS = {
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {ON = 0x0B, OFF = 0x01},
+    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {ON = 0x03, OFF = 0x01},
+    [TEN.Objects.ObjID.HK_ITEM] = {ON = 0, OFF = 0x01}
 }
 
 local WEAPON_AMMO_LOOKUP = {
@@ -146,6 +156,8 @@ local MOTION_TYPE = {
 --variables
 local useBinoculars = false
 
+local soundPlayed = false
+
 local motionProgress = {}
 
 local examineOrient
@@ -155,18 +167,36 @@ local examineComplete = true
 local examineOldRotation
 
 --Structure for inventory
-local inventory = {ring = {}, slice = {}, selectedItem = {}}
+local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
 local selectedRing = RING.MAIN
 local timeInMenu = 0
 local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
 local inventoryMode = INVENTORY_MODE.RING_OPENING
 local currentAngle = 0
 local targetAngle = 0
+local direction = 1
 local rotationInProgress = false
+
 
 LevelFuncs.Engine.CustomInventory = {}
 
 --functions
+
+local SoundReset = function()
+
+    soundPlayed = false
+
+end
+
+local SoundPlay = function(sound)
+
+    if not soundPlayed then
+        TEN.Sound.PlaySound(sound)
+        soundPlayed = true
+    end
+    
+end
+
 local percentPos = function(x, y)
     return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
 end
@@ -421,6 +451,32 @@ local GetSelectedItem = function(ring)
 
 end
 
+local ClearInventory = function(ringName, clearDrawItems)
+    
+    if ringName then
+        if clearDrawItems and inventory.ring[ringName] then
+            for _, itemData in ipairs(inventory.ring[ringName]) do
+                TEN.DrawItem.RemoveItem(itemData.item)
+            end
+        end
+
+        -- Clear only the specific ring
+        inventory.ring[ringName] = {}
+        inventory.slice[ringName] = nil
+        inventory.selectedItem[ringName] = nil
+        inventory.ringPosition[ringName] = nil
+
+    else
+        -- Clear entire inventory
+        inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
+
+        if clearDrawItems then
+            TEN.DrawItem.ClearAllItems()
+        end
+    end
+
+end
+
 local Input = function(mode)
 
     if mode == INVENTORY_MODE.INVENTORY then
@@ -432,6 +488,7 @@ local Input = function(mode)
                 inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
                 targetAngle = currentAngle - inventory.slice[selectedRing]
                 rotationInProgress = true
+
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
                 inventory.selectedItem[selectedRing] = ((inventory.selectedItem[selectedRing] - 2) % #inventoryTable) + 1
@@ -440,17 +497,19 @@ local Input = function(mode)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
                 local previousRing = selectedRing
-                selectedRing = math.max(RING.PUZZLE, selectedRing - 1)
-
+                selectedRing = math.max(RING.PUZZLE, selectedRing - 1) 
                 if selectedRing ~= previousRing then
+                    inventoryMode = INVENTORY_MODE.RING_CHANGE
+                    direction = 1
                     rotationInProgress = true
                     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
                 end
             elseif guiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
                 local previousRing = selectedRing
                 selectedRing = math.min(RING.OPTIONS, selectedRing + 1)
-
                 if selectedRing ~= previousRing then
+                    direction = -1
+                    inventoryMode = INVENTORY_MODE.RING_CHANGE
                     rotationInProgress = true
                     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
                 end
@@ -479,50 +538,12 @@ local Input = function(mode)
     elseif mode == INVENTORY_MODE.STATISTICS then
 
         if guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.STATISTICS_CLOSE
         end
 
     elseif mode == INVENTORY_MODE.ITEM_SELECTED then
-        if guiIsPulsed(TEN.Input.ActionID.LEFT) then
-            LevelVars.Engine.CustomInventory.SelectedItem = ((LevelVars.Engine.CustomInventory.SelectedItem - 2) % #inventoryTable) + 1
-            targetAngle = currentAngle + LevelVars.Engine.CustomInventory.InventorySlice
-            rotationInProgress = true
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-        elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            LevelVars.Engine.CustomInventory.SelectedItem = (LevelVars.Engine.CustomInventory.SelectedItem % #inventoryTable) + 1
-            targetAngle = currentAngle - LevelVars.Engine.CustomInventory.InventorySlice
-            rotationInProgress = true
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-        elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
-            local previousRing = selectedRing
-            selectedRing = math.max(RING.PUZZLE, selectedRing - 1)
-
-            if selectedRing ~= previousRing then
-                rotationInProgress = true
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-            end
-        elseif guiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
-            local previousRing = selectedRing
-            selectedRing = math.min(RING.OPTIONS, selectedRing + 1)
-
-            if selectedRing ~= previousRing then
-                rotationInProgress = true
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-            end
-        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-            examineComplete = true
-            if combine then
-                inventoryMode = INVENTORY_MODE.ITEM_SELECT
-                print("combine")
-            else
-                inventoryMode = INVENTORY_MODE.ITEM_USE  
-            end
-        elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_SELECT)
-            inventoryMode = INVENTORY_MODE.ITEM_DESELECT
-            return
-        end
+        
     elseif mode == INVENTORY_MODE.EXAMINE then
          -- Static variables
         local ROTATION_MULTIPLIER = 2
@@ -542,7 +563,9 @@ local Input = function(mode)
             examineScaler = examineScaler - (ZOOM_MULTIPLIER)
         elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
             examineShowString = not examineShowString
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
         elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.EXAMINE_CLOSE
         end
     else
@@ -589,13 +612,15 @@ end
 LevelFuncs.Engine.CustomInventory.ExitInventory = function()
 
     LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
-    TEN.DrawItem.ClearAllItems()
+    ClearInventory(nil, true)
     TEN.DrawItem.SetOpenInventory(NO_VALUE)
     motionProgress = {}
     View.SetFOV(80)
+    SoundReset()
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     LevelVars.Engine.CustomInventory.InventoryClosed = true
     inventoryMode = INVENTORY_MODE.RING_OPENING
+    selectedRing = RING.MAIN
     TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
     TEN.DrawItem.SetInvTargetPosition(TARGET_START)
     timeInMenu = 0
@@ -677,7 +702,11 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
     local items  = PICKUP_DATA.constants
     local gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
 
-    inventory = {ring = {}, slice = {}, selectedItem = {}}
+    if ringType == RING.AMMO or ringType == RING.COMBINE then
+        ClearInventory(ringType)
+    else
+        ClearInventory()
+    end
 
     for _, itemID in ipairs(items) do
 
@@ -712,6 +741,15 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
                 goto continue
             end
 
+        end
+
+        --Check if laseright is connected and adjust the meshbits
+        if type == TYPE.Weapon then
+            if GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
+                joint = WEAPON_LASERSIGHT_MESHBITS[objectID.itemID].ON
+            else
+                joint = WEAPON_LASERSIGHT_MESHBITS[objectID.itemID].OFF
+            end
         end
 
         --ammoRing is a bool to make sure to add ammo to the ring if creating an ammo ring even if the count is zero
@@ -750,6 +788,12 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
 
         inventory.ring[ringName] = inventory.ring[ringName] or {}
+        
+        if debug then
+            print("Item: "..Util.GetObjectIDString(objectID.itemID))
+            print("shouldInsert: ".. tostring(shouldInsert))
+            print("ammoRing: " .. tostring(ammoRing))
+        end
 
         if shouldInsert or ammoRing then
             table.insert(inventory.ring[ringName], { 
@@ -762,19 +806,21 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
                 name = name,
                 joint = joint,
                 orientation = orientation })
-        end
 
-        TEN.DrawItem.AddItem(objectID.itemID, RING_CENTER[ringName], rotation, scale, joint)
-        TEN.DrawItem.SetItemColor(objectID.itemID, COLOR_MAP.ITEM_COLOR)
+            TEN.DrawItem.AddItem(objectID.itemID, RING_CENTER[ringName], rotation, scale, joint)
+            TEN.DrawItem.SetItemColor(objectID.itemID, COLOR_MAP.ITEM_COLOR)
+
+        end
 
         ::continue::
     end
 
     --Calculate the slice angle and save it
-    for ringName, ringItems in pairs(inventory.ring) do
+    for index, ringItems in pairs(inventory.ring) do
         local count = #ringItems
-        inventory.selectedItem[ringName] = 1
-        inventory.slice[ringName] = (count > 0) and (360 / count) or 0
+        inventory.selectedItem[index] = 1
+        inventory.slice[index] = (count > 0) and (360 / count) or 0
+        inventory.ringPosition[index] = RING_CENTER[index]
     end
 
 end
@@ -872,7 +918,7 @@ local PerformMotion = function(name, dataType, oldValue, newValue, time, smooth)
 end
 
 local ClearMotionProgress = function(name)
-    if (motionProgress[name] >= 1) then
+    if motionProgress[name] and (motionProgress[name] >= 1) then
         motionProgress[name] = nil
     end
 end
@@ -894,7 +940,7 @@ local AnimateInventory = function(mode)
 
         TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
         TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
+        SoundPlay(SOUND_MAP.INVENTORY_OPEN)
 
         if radiusInterpolate.progress >= PROGRESS_COMPLETE then
             ClearMotionProgress("RingOpening1")
@@ -916,7 +962,7 @@ local AnimateInventory = function(mode)
         FadeRing(inventoryTable, fadeInterpolate.output, false)
         TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
         TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+        SoundPlay(SOUND_MAP.INVENTORY_CLOSE)
 
         if radiusInterpolate.progress >= PROGRESS_COMPLETE then
             ClearMotionProgress("RingClosing")
@@ -927,6 +973,48 @@ local AnimateInventory = function(mode)
             LevelVars.Engine.CustomInventory.RingClosing = false
             return true
         end
+    elseif mode == INVENTORY_MODE.RING_CHANGE then
+        
+        local allMotionComplete = true
+
+        for index, _ in pairs(inventory.ring) do
+
+            local oldPosition = inventory.ringPosition[index]
+            local newPosition = Vec3(oldPosition.x, oldPosition.y + direction * RING_POSITION_OFFSET, oldPosition.z) 
+
+            local angleInterpolate = PerformMotion("RingOpening2"..index, MOTION_TYPE.LINEAR, -360, 0, INVENTORY_ANIM_TIME, true)
+            local positionInterpolate = PerformMotion("RingOpening4"..index, MOTION_TYPE.VEC3, oldPosition, newPosition, INVENTORY_ANIM_TIME, true)
+            
+            TranslateRing(inventory.ring[index], positionInterpolate.output, RING_RADIUS, angleInterpolate.output)
+
+            if debug then print("Ring Number:", index) end
+            if debug then print("Ring Position:", positionInterpolate.output) end
+            if debug then print("Old Position:", oldPosition) end
+            if debug then print("New Position:", newPosition) end
+
+            if debug then
+                for _, item in pairs(inventory.ring[index]) do
+                    
+                    local color = TEN.DrawItem.GetItemColor(item.item)
+                    print(color.a)
+
+                end
+            end
+
+            if angleInterpolate.progress >= PROGRESS_COMPLETE then
+                inventory.ringPosition[index] = newPosition
+                ClearMotionProgress("RingOpening2"..index)
+                ClearMotionProgress("RingOpening4"..index)
+            else
+                allMotionComplete = false
+            end
+        end
+        
+        if allMotionComplete then
+            rotationInProgress = false
+            return true
+        end
+        
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
 
         if examineComplete then
@@ -940,7 +1028,6 @@ local AnimateInventory = function(mode)
         local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, EXAMINE_SCALE, INVENTORY_ANIM_TIME, true)
         local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOldRotation, selectedItem.rotation, INVENTORY_ANIM_TIME, true)
         FadeRing(inventoryTable, fadeInterpolate.output, true)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
         TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
         TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
         TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
@@ -958,7 +1045,6 @@ local AnimateInventory = function(mode)
         local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, examineScaler, selectedItem.scale, INVENTORY_ANIM_TIME, true)
         local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOrient, examineOldRotation, INVENTORY_ANIM_TIME, true)
         FadeRing(inventoryTable, fadeInterpolate.output, true)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
         TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
         TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
         TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
@@ -982,7 +1068,6 @@ local AnimateInventory = function(mode)
         local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, selectedItem.scale, EXAMINE_SCALE, INVENTORY_ANIM_TIME, true)
         local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, examineOldRotation, selectedItem.rotation, INVENTORY_ANIM_TIME, true)
         FadeRing(inventoryTable, fadeInterpolate.output, true)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
         TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
         TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
         TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
@@ -1000,7 +1085,6 @@ local AnimateInventory = function(mode)
         local scaleInterpolate = PerformMotion("Examine3", MOTION_TYPE.LINEAR, EXAMINE_SCALE, selectedItem.scale, INVENTORY_ANIM_TIME, true)
         local rotationInterpolate = PerformMotion("Examine4", MOTION_TYPE.ROTATION, selectedItem.rotation, examineOldRotation, INVENTORY_ANIM_TIME, true)
         FadeRing(inventoryTable, fadeInterpolate.output, true)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
         TEN.DrawItem.SetItemPosition(selectedItem.item, positionInterpolate.output)
         TEN.DrawItem.SetItemScale(selectedItem.item, scaleInterpolate.output)
         TEN.DrawItem.SetItemRotation(selectedItem.item, rotationInterpolate.output)
@@ -1043,7 +1127,6 @@ local AnimateInventory = function(mode)
                 FadeRing(inventoryTable, fadeInterpolate.output, false)
                 TEN.DrawItem.SetInvCameraPosition(cameraInterpolate.output)
                 TEN.DrawItem.SetInvTargetPosition(targetInterpolate.output)
-                TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
 
                 if radiusInterpolate.progress >= PROGRESS_COMPLETE then
                     ClearMotionProgress("Examine")
@@ -1077,7 +1160,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             if rotationInProgress then
                 local angleInterpolate = PerformMotion("RingRotating", MOTION_TYPE.LINEAR, currentAngle, targetAngle, INVENTORY_ANIM_TIME/4, true)
                 
-                TranslateRing(inventoryTable, RING_CENTER[selectedRing], RING_RADIUS, angleInterpolate.output)
+                TranslateRing(inventoryTable, inventory.ringPosition[selectedRing], RING_RADIUS, angleInterpolate.output)
                 
                 if angleInterpolate.progress >= PROGRESS_COMPLETE then
                     ClearMotionProgress("RingRotating")
@@ -1097,7 +1180,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             if AnimateInventory(mode) then
 
                 inventoryMode = INVENTORY_MODE.INVENTORY
-
+                
             end
 
         end
@@ -1112,6 +1195,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
             end
 
+        end
+    elseif mode == INVENTORY_MODE.RING_CHANGE then
+
+        if AnimateInventory(mode) then
+
+            inventoryMode = INVENTORY_MODE.INVENTORY
+            currentAngle = 0
+            targetAngle = 0
         end
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
         
