@@ -164,6 +164,7 @@ namespace TEN::Scripting::DisplaySprite
 	// - `BOTTOM_LEFT`<br>
 	sol::table ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt, sol::this_state state) const
 	{
+		// Create a table to hold the anchor points.
 		auto anchorTable = sol::state_view(state).create_table();
 		anchorTable["TOP_LEFT"] = Vec2(0.0f, 0.0f),
 		anchorTable["CENTER_TOP"] = Vec2(0.0f, 0.0f),
@@ -175,14 +176,14 @@ namespace TEN::Scripting::DisplaySprite
 		anchorTable["CENTER_BOTTOM"] = Vec2(0.0f, 0.0f),
 		anchorTable["BOTTOM_LEFT"] = Vec2(0.0f, 0.0f);
 
-		// Object is not a sprite sequence; return early.
+		// Object is not a sprite sequence; return anchors with value (0,0).
 		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
 		{
 			TENLog("Attempted to draw display sprite from non-sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
 			return anchorTable;
 		}
 
-		// Sprite missing or sequence not found; return early.
+		// Sprite missing or sequence not found; return anchors with value (0,0).
 		const auto& object = Objects[_objectID];
 		if (!object.loaded || _spriteID >= abs(object.nmeshes))
 		{
@@ -194,11 +195,13 @@ namespace TEN::Scripting::DisplaySprite
 			return anchorTable;
 		}
 
+		// Start calculation of the 4 vertices of the sprite with graphic resolution 800x600
+
+		// Constants
 		constexpr auto DEFAULT_ALIGN_MODE = DisplaySpriteAlignMode::Center;
 		constexpr auto DEFAULT_SCALE_MODE = DisplaySpriteScaleMode::Fit;
 		constexpr auto SCALE_CONVERSION = 0.01f;
 		constexpr auto DISPLAY_ASPECT = DISPLAY_SPACE_RES.x / DISPLAY_SPACE_RES.y;
-		constexpr auto VERTEX_COUNT = 4;
 
 		// Screen and sprite data
 		auto screenRes = Vector2(g_Configuration.ScreenWidth, g_Configuration.ScreenHeight);
@@ -284,7 +287,7 @@ namespace TEN::Scripting::DisplaySprite
 		const Vector2 position = convertedPos + offset;
 
 		// Vertices centered around origin
-		std::array<Vector2, VERTEX_COUNT> vertices = {
+		std::array<Vector2, 4> vertices = {
 			Vector2(size.x,  size.y) / 2.0f, // top-left
 			Vector2(-size.x,  size.y) / 2.0f, // top-right
 			Vector2(-size.x, -size.y) / 2.0f, // bottom-right
@@ -300,6 +303,7 @@ namespace TEN::Scripting::DisplaySprite
 			vertex *= aspectCorrection;
 			vertex += position;
 		}
+		//End calculation of the 4 vertices of the sprite
 
 		// Scale to screen resolution
 		const Vector2 screenScale = screenRes / DISPLAY_SPACE_RES;
@@ -316,7 +320,7 @@ namespace TEN::Scripting::DisplaySprite
 		const Vector2 CENTER_RIGHT = (vertices[1] + vertices[2]) / 2.0f;
 		const Vector2 CENTER_BOTTOM = (vertices[2] + vertices[3]) / 2.0f;
 
-		// Create anchors array
+		// Fill the anchor table with the calculated vertices, rounded to 2 decimal places.
 		anchorTable["TOP_LEFT"] = Vec2(std::round((vertices[0].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[0].y / screenRes.y) * 10000.0f) / 100.0f);
 		anchorTable["CENTER_TOP"] = Vec2(std::round((CENTER_TOP.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_TOP.y / screenRes.y) * 10000.0f) / 100.0f);
 		anchorTable["TOP_RIGHT"] = Vec2(std::round((vertices[1].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[1].y / screenRes.y) * 10000.0f) / 100.0f);
