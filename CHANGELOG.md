@@ -14,6 +14,9 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed Doppler effect not applied to sounds.
 * Fixed HUD bars displaying incorrect update animation after loading savegame.
 
+### Lua API changes
+* Fixed `Moveable:SetOnCollidedWithObject` not working for invisible or inactive objects.
+
 ## [Version 1.9.1]
 
 ### New features
