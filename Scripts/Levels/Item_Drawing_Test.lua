@@ -21,21 +21,23 @@ local EXAMINE_DEFAULT_SCALE = 1.2
 local EXAMINE_MIN_SCALE = 0.8
 local EXAMINE_MAX_SCALE = 1.6
 local EXAMINE_TEXT_POS = Vec2(50, 80)
+local ALPHA_MAX = 255
+local ALPHA_MIN = 0
 
 --External table of all pickup data
 local PICKUP_DATA = require("Levels.InventoryConstants")
 
-ITEM = {
-    ObjectID = 1,
-    Count = 2,
-    YOffset = 3,
-    Scale = 4,
-    Rotation = 5,
-    Flags = 6,
-    Name = 7,
-    MeshBits = 8,
-    Orientation = 9
-}
+-- ITEM = {
+--     ObjectID = 1,
+--     Count = 2,
+--     YOffset = 3,
+--     Scale = 4,
+--     Rotation = 5,
+--     Flags = 6,
+--     Name = 7,
+--     MeshBits = 8,
+--     Orientation = 9
+-- }
 
 local TYPE = {
     WEAPON = 1,
@@ -79,7 +81,8 @@ local INVENTORY_MODE =
     ITEM_SELECT = 11,
     ITEM_DESELECT = 12,
     ITEM_SELECTED = 13,
-    RING_CHANGE = 14
+    RING_CHANGE = 14,
+    RING_ROTATE = 15
 }
 
 --Structure for SoundMap
@@ -119,10 +122,10 @@ local WEAPON_SET = {
     [TEN.Objects.ObjID.FLARE_INV_ITEM] = {slot = TEN.Objects.WeaponType.FLARE, underwater = true, crawl = true}
 }
 
-local WEAPON_LASERSIGHT_MESHBITS = {
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {ON = 0x0B, OFF = 0x01},
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {ON = 0x03, OFF = 0x01},
-    [TEN.Objects.ObjID.HK_ITEM] = {ON = 0, OFF = 0x01}
+local WEAPON_LASERSIGHT_DATA = {
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {ON = {MESH = 0x0B, NAME = "revolver"}, OFF = {MESH = 0x01, NAME = "revolver_lasersight"}},
+    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {ON = {MESH = 0x03, NAME = "crossbow"}, OFF = {MESH = 0x01, NAME = "crossbow_lasersight"}},
+    [TEN.Objects.ObjID.HK_ITEM] = {ON = {MESH = 0, NAME = "hk"}, OFF = {MESH = 0x01, NAME = "hk_lasersight"}}
 }
 
 local WEAPON_AMMO_LOOKUP = {
@@ -173,11 +176,15 @@ local useBinoculars = false
 
 local motionProgress = {}
 
-local examineOrient = Rotation(0, 0, 0)
-local examineOldOrient = Rotation(0, 0, 0)
+local itemStoreRotations = false
+local itemRotation = Rotation(0, 0, 0)
+local itemRotationOld = Rotation(0, 0, 0)
+
 local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
-local examineStoreRotations = false
+
+local combineItem1 = nil
+local combineItem2 = nil
 
 --Structure for inventory
 local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
@@ -186,11 +193,9 @@ local selectedRing = RING.MAIN
 local timeInMenu = 0
 local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
 local inventoryMode = INVENTORY_MODE.RING_OPENING
-local currentAngle = 0
-local targetAngle = 0
+local currentRingAngle = 0
+local targetRingAngle = 0
 local direction = 1
-local rotationInProgress = false
-
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -453,8 +458,11 @@ end
 local ClearInventory = function(ringName, clearDrawItems)
     
     if ringName then
-        if clearDrawItems and inventory.ring[ringName] then
-            for _, itemData in ipairs(inventory.ring[ringName]) do
+
+        local ring = inventory.ring[ringName]
+
+        if clearDrawItems and ring then
+            for _, itemData in ipairs(ring) do
                 TEN.DrawItem.RemoveItem(itemData.item)
             end
         end
@@ -466,12 +474,14 @@ local ClearInventory = function(ringName, clearDrawItems)
         inventory.ringPosition[ringName] = nil
 
     else
-        -- Clear entire inventory
-        inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
 
         if clearDrawItems then
             TEN.DrawItem.ClearAllItems()
         end
+
+        -- Clear entire inventory
+        inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
+
     end
 
 end
@@ -482,57 +492,52 @@ local Input = function(mode)
 
         local inventoryTable = inventory.ring[selectedRing]
 
-        if not rotationInProgress then
-            if guiIsPulsed(TEN.Input.ActionID.LEFT) then
-                inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
-                targetAngle = currentAngle - inventory.slice[selectedRing]
-                rotationInProgress = true
-
+        if guiIsPulsed(TEN.Input.ActionID.LEFT) then
+            inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
+            targetRingAngle = currentRingAngle - inventory.slice[selectedRing]
+            inventoryMode = INVENTORY_MODE.RING_ROTATE
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+        elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
+            inventory.selectedItem[selectedRing] = ((inventory.selectedItem[selectedRing] - 2) % #inventoryTable) + 1
+            targetRingAngle = currentRingAngle + inventory.slice[selectedRing]
+            inventoryMode = INVENTORY_MODE.RING_ROTATE
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+        elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
+            local previousRing = selectedRing
+            selectedRing = math.max(RING.PUZZLE, selectedRing - 1) 
+            if selectedRing ~= previousRing then
+                inventoryMode = INVENTORY_MODE.RING_CHANGE
+                direction = 1
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-            elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
-                inventory.selectedItem[selectedRing] = ((inventory.selectedItem[selectedRing] - 2) % #inventoryTable) + 1
-                targetAngle = currentAngle + inventory.slice[selectedRing]
-                rotationInProgress = true
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-            elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
-                local previousRing = selectedRing
-                selectedRing = math.max(RING.PUZZLE, selectedRing - 1) 
-                if selectedRing ~= previousRing then
-                    inventoryMode = INVENTORY_MODE.RING_CHANGE
-                    direction = 1
-                    rotationInProgress = true
-                    TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-                end
-            elseif guiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
-                local previousRing = selectedRing
-                selectedRing = math.min(RING.OPTIONS, selectedRing + 1)
-                if selectedRing ~= previousRing then
-                    direction = -1
-                    inventoryMode = INVENTORY_MODE.RING_CHANGE
-                    rotationInProgress = true
-                    TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-                end
-            elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-                examineStoreRotations = true
-
-                local combine = GetSelectedItem(selectedRing).combine
-
-                if combine then
-                    inventoryMode = INVENTORY_MODE.ITEM_SELECT
-                else
-                    inventoryMode = INVENTORY_MODE.ITEM_USE  
-                end
-            elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-                examineStoreRotations = true
-                inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-            elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
-                TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
-                LevelVars.Engine.CustomInventory.RingClosing = true
-                inventoryMode = INVENTORY_MODE.RING_CLOSING
-                return
             end
+        elseif guiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
+            local previousRing = selectedRing
+            selectedRing = math.min(RING.OPTIONS, selectedRing + 1)
+            if selectedRing ~= previousRing then
+                direction = -1
+                inventoryMode = INVENTORY_MODE.RING_CHANGE
+                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+            end
+        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            itemStoreRotations = true
+
+            local combine = GetSelectedItem(selectedRing).combine
+
+            if combine then
+                inventoryMode = INVENTORY_MODE.ITEM_SELECT
+            else
+                inventoryMode = INVENTORY_MODE.ITEM_USE  
+            end
+        elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            itemStoreRotations = true
+            inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+        elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
+            TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+            LevelVars.Engine.CustomInventory.RingClosing = true
+            inventoryMode = INVENTORY_MODE.RING_CLOSING
+            return
         end
     elseif mode == INVENTORY_MODE.STATISTICS then
 
@@ -549,13 +554,13 @@ local Input = function(mode)
         local ZOOM_MULTIPLIER = 0.3
         -- Handle rotation input
         if TEN.Input.IsKeyHeld(TEN.Input.ActionID.FORWARD) then
-            examineOrient.x = examineOrient.x + ROTATION_MULTIPLIER
+            itemRotation.x = itemRotation.x + ROTATION_MULTIPLIER
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.BACK) then
-            examineOrient.x = examineOrient.x - ROTATION_MULTIPLIER
+            itemRotation.x = itemRotation.x - ROTATION_MULTIPLIER
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
-            examineOrient.y = examineOrient.y + ROTATION_MULTIPLIER
+            itemRotation.y = itemRotation.y + ROTATION_MULTIPLIER
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
-            examineOrient.y = examineOrient.y - ROTATION_MULTIPLIER
+            itemRotation.y = itemRotation.y - ROTATION_MULTIPLIER
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.SPRINT) then
             examineScaler = examineScaler + (ZOOM_MULTIPLIER)
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.CROUCH) then
@@ -588,7 +593,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
     local gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
 
     if ringType == RING.AMMO or ringType == RING.COMBINE then
-        ClearInventory(ringType)
+        ClearInventory(ringType, true)
     else
         ClearInventory()
     end
@@ -628,12 +633,14 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
         end
 
-        --Check if laseright is connected and adjust the meshbits
+        --Check if laseright is connected and adjust the meshbits and name
         if type == TYPE.Weapon then
             if GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
-                joint = WEAPON_LASERSIGHT_MESHBITS[objectID.itemID].ON
+                joint = WEAPON_LASERSIGHT_DATA[objectID.itemID].ON.MESH
+                name = WEAPON_LASERSIGHT_DATA[objectID.itemID].ON.NAME
             else
-                joint = WEAPON_LASERSIGHT_MESHBITS[objectID.itemID].OFF
+                joint = WEAPON_LASERSIGHT_DATA[objectID.itemID].OFF.MESH
+                name = WEAPON_LASERSIGHT_DATA[objectID.itemID].OFF.NAME
             end
         end
 
@@ -710,148 +717,15 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
 end
 
-local FindItemInInventory = function(targetID)
-    for ringIndex, ring in pairs(inventory.ring) do
-        for itemIndex, itemEntry in ipairs(ring) do
-            if itemEntry.item == targetID then
-                return ringIndex, itemIndex
-            end
-        end
-    end
-    return nil, nil -- not found
-end
-
-local OpenAtItem = function(item)
-
-    if item > 0 then
-        local ringIndex, itemIndex = FindItemInInventory(item)
-
-    end
-
-end
-
-LevelFuncs.Engine.CustomInventory.StartInventory = function()
-
-    if useBinoculars then
-        TEN.View.UseBinoculars()
-        useBinoculars = false
-    end
-
-    local playerHp = Lara:GetHP() > 0
-    local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
-
-    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
-        LevelVars.Engine.CustomInventory.InventoryOpen = true
-        inventoryOpenItem = TEN.DrawItem.GetOpenInventory()
-        inventoryDelay = 0
-    end
-
-    if LevelVars.Engine.CustomInventory.InventoryOpen == true then
-        inventoryDelay = inventoryDelay + 1
-        TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
-        TEN.View.SetPostProcessStrength(1)
-        TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
-
-        if inventoryDelay >= 2 then
-            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
-            Flow.SetFreezeMode(Flow.FreezeMode.SPECTATOR) -- SHOULD RUN IN FULL MODE
-        end
-    end
-
+local SetRingVisibility = function(ringName, visible)
     
-    if LevelVars.Engine.CustomInventory.InventoryClosed then
-        LevelVars.Engine.CustomInventory.InventoryClosed = false
-        TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
-    end
+    local ring = inventory.ring[ringName]
 
-end
-
-LevelFuncs.Engine.CustomInventory.ExitInventory = function()
-
-    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
-    ClearInventory(nil, true)
-    TEN.DrawItem.SetOpenInventory(NO_VALUE)
-    motionProgress = {}
-    View.SetFOV(80)
-    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
-    LevelVars.Engine.CustomInventory.InventoryClosed = true
-    inventoryMode = INVENTORY_MODE.RING_OPENING
-    selectedRing = RING.MAIN
-    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
-    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
-    timeInMenu = 0
-
-end
-
-LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
-
-    timeInMenu = timeInMenu + 1
-
-    if LevelVars.Engine.CustomInventory.InventoryOpen then
-        TEN.View.SetFOV(80)
-        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
-        currentAngle = 0
-        targetAngle = 0
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
-        LevelVars.Engine.CustomInventory.SelectedItem = 1
-        LevelVars.Engine.CustomInventory.RingOpening = true
-        LevelFuncs.Engine.CustomInventory.ConstructObjectList()
-        LevelVars.Engine.CustomInventory.InventoryOpen = false
-        OpenAtItem(inventoryOpenItem)
-    else
-        LevelFuncs.Engine.CustomInventory.DrawInventoryText()
-        Input(inventoryMode)
-        LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
-
-        --Set rotation of InventoryItems
-        SetRotationInventoryItems()
-
-    end
-end
-
-
-LevelFuncs.DrawCursor = function() --Temporary function
-
-    local pos = TEN.View.GetMouseDisplayPosition()
-	
-	local myTextString = "X: " .. pos.x.." Y: "..pos.y
-	local myText = DisplayString(myTextString, 10, 10, Color.new(64,250,60))
-	TEN.ShowString(myText,1/30)
-
-	local entrySprite = TEN.DisplaySprite(TEN.Objects.ObjID.SKY_GRAPHICS, 0, TEN.Vec2(pos.x,pos.y), 0, TEN.Vec2(5,5), TEN.Color(255,128,255))
-    entrySprite:Draw(8, View.AlignMode.TOP_LEFT, View.ScaleMode.FIT, TEN.Effects.BlendID.OPAQUE)
-
-end
-
-
-LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
-
-    LevelVars.Engine.CustomInventory = {}
-    LevelVars.Engine.CustomInventory.SelectedItem = 1 -- index of currently selected item
-    LevelVars.Engine.CustomInventory.Inventory = {ring={}}
-    LevelVars.Engine.CustomInventory.InventoryOpen = false
-    LevelVars.Engine.CustomInventory.RingOpening = true
-    LevelVars.Engine.CustomInventory.RingClosing = false
-    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
-    LevelVars.Engine.CustomInventory.InventoryClosed = false
-
-    TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.CustomInventory.StartInventory)
-
-    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
-    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
-    TEN.DrawItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
-
-    TEN.DrawItem.SetInventoryOverride(true)
-
-end
-
-local SetRingVisibility = function(ring, visible)
     if not ring then
         return
     end
 
     local itemCount = #ring
-    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).item
 
     for i = 1, itemCount do
         local currentItem = ring[i].item
@@ -917,7 +791,7 @@ local FadeRings = function(visible, omitSelectedRing)
         
         if not (omitSelectedRing and index == selectedRing) then
             FadeRing(index, fadeValue, false)
-            SetRingVisibility(inventory.ring[index], visible)
+            SetRingVisibility(index, visible)
         end
     end
 
@@ -927,6 +801,162 @@ local RotateItem = function(item)
     local itemRotation  = TEN.DrawItem.GetItemRotation(item)
     TEN.DrawItem.SetItemRotation(item, Rotation(itemRotation.x, (itemRotation.y + ROTATION_SPEED) % 360, itemRotation.z))
 end
+
+local FindItemInInventory = function(targetID)
+    for ringIndex, ring in pairs(inventory.ring) do
+        for itemIndex, itemEntry in ipairs(ring) do
+            if itemEntry.item == targetID then
+                return ringIndex, itemIndex
+            end
+        end
+    end
+    return nil, nil -- not found
+end
+
+local OpenInventoryAtItem = function(itemID)
+
+    if itemID == NO_VALUE then
+		return
+	end
+
+    local ringIndex, itemIndex = FindItemInInventory(itemID)
+
+    if not (ringIndex and itemIndex) then
+		return
+	end
+
+    selectedRing = ringIndex
+    inventory.selectedItem[ringIndex] = itemIndex
+    local slice = inventory.slice[ringIndex]
+	local angle = -slice * (itemIndex - 1) --this has to be a negative angle cause reasons.
+    currentRingAngle = angle
+    targetRingAngle = angle
+
+    -- Position the selected ring at RING.MAIN
+	local ringPosition = RING_CENTER[RING.MAIN]
+
+	for index in pairs(inventory.ring) do
+		local offset = (index - selectedRing) * RING_POSITION_OFFSET
+		inventory.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
+        TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
+	end
+
+end
+
+LevelFuncs.Engine.CustomInventory.StartInventory = function()
+
+    if useBinoculars then
+        TEN.View.UseBinoculars()
+        useBinoculars = false
+    end
+
+    local playerHp = Lara:GetHP() > 0
+    local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
+
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
+        LevelVars.Engine.CustomInventory.InventoryOpen = true
+        inventoryOpenItem = TEN.DrawItem.GetOpenInventory()
+        inventoryDelay = 0
+    end
+
+    if LevelVars.Engine.CustomInventory.InventoryOpen == true then
+        inventoryDelay = inventoryDelay + 1
+        TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
+        TEN.View.SetPostProcessStrength(1)
+        TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
+
+        if inventoryDelay >= 2 then
+            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
+            Flow.SetFreezeMode(Flow.FreezeMode.SPECTATOR) -- SHOULD RUN IN FULL MODE
+        end
+    end
+
+    
+    if LevelVars.Engine.CustomInventory.InventoryClosed then
+        LevelVars.Engine.CustomInventory.InventoryClosed = false
+        TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
+    end
+
+end
+
+LevelFuncs.Engine.CustomInventory.ExitInventory = function()
+
+    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
+    ClearInventory(nil, true)
+    TEN.DrawItem.SetOpenInventory(NO_VALUE)
+    motionProgress = {}
+    View.SetFOV(80)
+    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
+    LevelVars.Engine.CustomInventory.InventoryClosed = true
+    inventoryMode = INVENTORY_MODE.RING_OPENING
+    selectedRing = RING.MAIN
+    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
+    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
+    timeInMenu = 0
+
+end
+
+LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
+
+    timeInMenu = timeInMenu + 1
+
+    if LevelVars.Engine.CustomInventory.InventoryOpen then
+        TEN.View.SetFOV(80)
+        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
+        currentRingAngle = 0
+        targetRingAngle = 0
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
+        LevelVars.Engine.CustomInventory.RingOpening = true
+        LevelFuncs.Engine.CustomInventory.ConstructObjectList()
+        LevelVars.Engine.CustomInventory.InventoryOpen = false
+        OpenInventoryAtItem(inventoryOpenItem)
+    else
+        LevelFuncs.Engine.CustomInventory.DrawInventoryText()
+        Input(inventoryMode)
+        LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
+
+        --Set rotation of InventoryItems like compass and stopwatch
+        SetRotationInventoryItems()
+
+    end
+end
+
+
+LevelFuncs.DrawCursor = function() --Temporary function
+
+    local pos = TEN.View.GetMouseDisplayPosition()
+	
+	local myTextString = "X: " .. pos.x.." Y: "..pos.y
+	local myText = DisplayString(myTextString, 10, 10, Color.new(64,250,60))
+	TEN.ShowString(myText,1/30)
+
+	local entrySprite = TEN.DisplaySprite(TEN.Objects.ObjID.SKY_GRAPHICS, 0, TEN.Vec2(pos.x,pos.y), 0, TEN.Vec2(5,5), TEN.Color(255,128,255))
+    entrySprite:Draw(8, View.AlignMode.TOP_LEFT, View.ScaleMode.FIT, TEN.Effects.BlendID.OPAQUE)
+
+end
+
+
+LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
+
+    LevelVars.Engine.CustomInventory = {}
+    LevelVars.Engine.CustomInventory.SelectedItem = 1 -- index of currently selected item
+    LevelVars.Engine.CustomInventory.Inventory = {ring={}}
+    LevelVars.Engine.CustomInventory.InventoryOpen = false
+    LevelVars.Engine.CustomInventory.RingOpening = true
+    LevelVars.Engine.CustomInventory.RingClosing = false
+    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
+    LevelVars.Engine.CustomInventory.InventoryClosed = false
+
+    TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.CustomInventory.StartInventory)
+
+    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
+    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
+    TEN.DrawItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
+
+    TEN.DrawItem.SetInventoryOverride(true)
+
+end
+
 
 
 
@@ -1012,7 +1042,7 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         end
     end
 
-    local center = interpolated.ringCenter and interpolated.ringCenter.output or RING_CENTER[ringName]
+    local center = interpolated.ringCenter and interpolated.ringCenter.output or inventory.ringPosition[ringName]
     local radius = interpolated.ringRadius and interpolated.ringRadius.output or RING_RADIUS
     local angle = interpolated.ringAngle and interpolated.ringAngle.output or 0
 
@@ -1064,7 +1094,7 @@ local AnimateInventory = function(mode)
 
     local ringAnimation = {
         { key = "ringRadius", type = MOTION_TYPE.LINEAR, start = 0, finish = RING_RADIUS },
-        { key = "ringAngle", type = MOTION_TYPE.LINEAR, start = -360, finish = 0 },
+        { key = "ringAngle", type = MOTION_TYPE.LINEAR, start = -360, finish = currentRingAngle },
         { key = "camera", type = MOTION_TYPE.VEC3, start = CAMERA_START, finish = CAMERA_END },
         { key = "target", type = MOTION_TYPE.VEC3, start = TARGET_START, finish = TARGET_END },
         { key = "ringCenter", type = MOTION_TYPE.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
@@ -1074,14 +1104,14 @@ local AnimateInventory = function(mode)
     local examineAnimation = {
         { key = "itemPosition", type = MOTION_TYPE.VEC3, start = ITEM_START, finish = ITEM_END },
         { key = "itemScale", type = MOTION_TYPE.LINEAR, start = selectedItem.scale, finish = examineScaler },
-        { key = "itemRotation", type = MOTION_TYPE.ROTATION, start = examineOldOrient, finish = examineOrient },
-        { key = "ringFade", type = MOTION_TYPE.LINEAR, start = 255, finish = 0},
+        { key = "itemRotation", type = MOTION_TYPE.ROTATION, start = itemRotationOld, finish = itemRotation },
+        { key = "ringFade", type = MOTION_TYPE.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN},
         }
     
     local useAnimation = {
         { key = "itemPosition", type = MOTION_TYPE.VEC3, start = ITEM_START, finish = ITEM_END },
         { key = "itemScale", type = MOTION_TYPE.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
-        { key = "itemRotation", type = MOTION_TYPE.ROTATION, start = examineOldOrient, finish = examineOrient },
+        { key = "itemRotation", type = MOTION_TYPE.ROTATION, start = itemRotationOld, finish = itemRotation },
         }
 
     if mode == INVENTORY_MODE.RING_OPENING then
@@ -1129,9 +1159,19 @@ local AnimateInventory = function(mode)
         end
         
         if allMotionComplete then
-            rotationInProgress = false
             return true
         end
+    
+    elseif mode == INVENTORY_MODE.RING_ROTATE then
+
+        local motionSet = {
+            { key = "ringAngle", type = MOTION_TYPE.LINEAR, start = currentRingAngle, finish = targetRingAngle},
+            }
+
+            if PerformBatchMotion("RingRotate", motionSet, INVENTORY_ANIM_TIME/4, true, selectedRing) then
+                currentRingAngle = targetRingAngle
+                return true
+            end
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
 
@@ -1177,10 +1217,10 @@ end
 
 local SaveItemRotations = function(selectedItem)
    
-    if examineStoreRotations then
-        examineOldOrient =  TEN.DrawItem.GetItemRotation(selectedItem.item)
-        examineOrient = selectedItem.rotation
-        examineStoreRotations = false
+    if itemStoreRotations then
+        itemRotationOld =  TEN.DrawItem.GetItemRotation(selectedItem.item)
+        itemRotation = selectedItem.rotation
+        itemStoreRotations = false
     end
     
 end
@@ -1191,26 +1231,12 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     local selectedItem = GetSelectedItem(selectedRing)
 
     if mode == INVENTORY_MODE.INVENTORY then
-        if LevelVars.Engine.CustomInventory.RingOpening == false and LevelVars.Engine.CustomInventory.RingClosing == false then
+        
+        RotateItem(selectedItem.item)
+        LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.item)
 
-            if rotationInProgress then
-                local angleInterpolate = PerformMotion("RingRotating", MOTION_TYPE.LINEAR, currentAngle, targetAngle, INVENTORY_ANIM_TIME/4, true)
-                
-                TranslateRing(selectedRing, inventory.ringPosition[selectedRing], RING_RADIUS, angleInterpolate.output)
-                
-                if angleInterpolate.progress >= PROGRESS_COMPLETE then
-                    ClearMotionProgress("RingRotating")
-                    currentAngle = targetAngle
-                    rotationInProgress = false
-                end
-            end
-
-            if not rotationInProgress then
-                RotateItem(selectedItem.item)
-                LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.item)
-            end
-        end
     elseif mode == INVENTORY_MODE.RING_OPENING then
+        
         if LevelVars.Engine.CustomInventory.RingOpening == true then
 
             if AnimateInventory(mode) then
@@ -1232,17 +1258,29 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             end
 
         end
+
+    elseif mode == INVENTORY_MODE.RING_ROTATE then
+
+        if AnimateInventory(mode) then
+            currentRingAngle = targetRingAngle
+            inventoryMode = INVENTORY_MODE.INVENTORY
+        end
+
     elseif mode == INVENTORY_MODE.RING_CHANGE then
 
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
-            currentAngle = 0
-            targetAngle = 0
-
+            
+            --reset to first item in ring
             for index, _ in ipairs(inventory.selectedItem) do
                 inventory.selectedItem[index] = 1
             end
+
+            currentRingAngle = 0
+            targetRingAngle = 0
+
         end
+
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
         
         SaveItemRotations(selectedItem)
@@ -1252,8 +1290,11 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             inventoryMode = INVENTORY_MODE.EXAMINE
 
         end
+
     elseif mode == INVENTORY_MODE.EXAMINE then
+
         LevelFuncs.Engine.CustomInventory.ExamineItem(selectedItem.item)
+
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
 
         if AnimateInventory(mode) then
@@ -1261,6 +1302,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             examineScaler = EXAMINE_DEFAULT_SCALE
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
+
     elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
         
         SaveItemRotations(selectedItem)
@@ -1268,13 +1310,17 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.STATISTICS
         end
+
     elseif mode == INVENTORY_MODE.STATISTICS then
+        
         ShowLevelStats()
+
     elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
 
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
+        
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
         SaveItemRotations(selectedItem)
@@ -1455,7 +1501,7 @@ LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
     local stringKey = objectName:lower() .. "_text"
     local localizedString = IsStringPresent(stringKey) and GetString(stringKey) or nil
 
-    TEN.DrawItem.SetItemRotation(item, examineOrient)
+    TEN.DrawItem.SetItemRotation(item, itemRotation)
     TEN.DrawItem.SetItemScale(item, examineScaler)
     
     if localizedString and examineShowString then
