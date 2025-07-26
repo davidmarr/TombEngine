@@ -83,12 +83,12 @@ $header = @"
 $mapHeader = "static const std::unordered_map<std::string, GAME_OBJECT_ID> GAME_OBJECT_IDS {"
 $mapBody = ($enumValues | ForEach-Object {
     $enumName = $_
-    $description = "Generic constant"
+    $description = "Object ID"
     
     if ($enumName -in $pickupConstants) {
-        $description = "Pickup constant"
+        $description = "Pickup Object ID"
     } elseif ($enumName -in $spriteConstants) {
-        $description = "Sprite constant"
+        $description = "Sprite Object ID"
     }
     
     "`t/// $description.`r`n`t// @mem $_`r`n`t" + '{ "' + "$_" + '", ID_' + "$_" + ' }'
