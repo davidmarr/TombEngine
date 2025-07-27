@@ -20,6 +20,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
+* Fixed `Input.ActionID.MOUSE_SCROLL_UP` and `Input.ActionID.MOUSE_SCROLL_DOWN` polling mouse movement instead of scrolling.
 
 ## [Version 1.9.1]
 
