@@ -86,11 +86,11 @@ namespace TEN::Scripting
 		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
-		// Overhang climbing.
+		/// Overhang climbing.
 		// @tfield bool overhangClimb Enables overhang climbing feature. Currently does not work.
 		"overhangClimb", &AnimSettings::OverhangClimb,
 
-		// Extended slide mechanics.
+		/// Extended slide mechanics.
 		// @tfield bool slideExtended If enabled, player will be able to change slide direction with controls. Currently does not work.
 		"slideExtended", &AnimSettings::SlideExtended,
 
@@ -210,7 +210,7 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(HairSettings, ScriptReserved_HairSettings),
 
 		/// Root mesh to which hair object will attach to.
-		// @tfield int mesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
+		// @tfield int rootMesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
 		"rootMesh", &HairSettings::RootMesh,
 
 		/// Relative braid offset to a headmesh. Not used with skinned hair mesh.
@@ -313,7 +313,7 @@ namespace TEN::Scripting
 		"flashColor", &WeaponSettings::FlashColor,
 
 		/// Gunflash range.
-		// @tfield Color flashRange specifies the range of the gunflash.
+		// @tfield int flashRange specifies the range of the gunflash.
 		"flashRange", &WeaponSettings::FlashRange,
 
 		/// Gunflash duration.
