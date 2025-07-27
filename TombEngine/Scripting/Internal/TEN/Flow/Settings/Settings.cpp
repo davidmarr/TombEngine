@@ -354,7 +354,7 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(SystemSettings, ScriptReserved_SystemSettings),
 
 		/// How should the application respond to script errors?
-		// @tfield ErrorMode errorMode Error mode to use.
+		// @tfield Flow.ErrorMode errorMode Error mode to use.
 		"errorMode", &SystemSettings::ErrorMode,
 
 		/// Use multithreading in certain calculations. <br>
