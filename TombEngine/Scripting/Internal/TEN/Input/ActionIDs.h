@@ -440,18 +440,6 @@ namespace TEN::Scripting::Input
 
 		/// Mouse scroll down.
 		// @mem MOUSE_SCROLL_DOWN
-		{ "MOUSE_SCROLL_DOWN", In::MouseScrollDown },
-
-		// COMPATIBILITY
-		{ "1", In::Num1 },
-		{ "2", In::Num2 },
-		{ "3", In::Num3 },
-		{ "4", In::Num4 },
-		{ "5", In::Num5 },
-		{ "6", In::Num6 },
-		{ "7", In::Num7 },
-		{ "8", In::Num8 },
-		{ "9", In::Num9 },
-		{ "0", In::Num0 }
+		{ "MOUSE_SCROLL_DOWN", In::MouseScrollDown }
 	};
 }
