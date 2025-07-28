@@ -187,11 +187,7 @@ namespace TEN::Scripting::DisplaySprite
 		const auto& object = Objects[_objectID];
 		if (!object.loaded || _spriteID >= abs(object.nmeshes))
 		{
-			TENLog(
-				"Attempted to draw missing sprite " + std::to_string(_spriteID) +
-				" from sprite sequence object " + std::to_string(_objectID) +
-				" as display sprite.",
-				LogLevel::Warning);
+			TENLog("Attempted to draw missing sprite " + std::to_string(_spriteID) + " from sprite sequence object " + std::to_string(_objectID) + " as display sprite.", LogLevel::Warning);
 			return anchorTable;
 		}
 
@@ -227,8 +223,7 @@ namespace TEN::Scripting::DisplaySprite
 		case DisplaySpriteScaleMode::Fit:
 		case DisplaySpriteScaleMode::Fill:
 		{
-			const bool scaleByHeight = (scaleMode == DisplaySpriteScaleMode::Fit) ? (screenAspect >= spriteAspect)
-				: (screenAspect < spriteAspect);
+			const bool scaleByHeight = (scaleMode == DisplaySpriteScaleMode::Fit) ? (screenAspect >= spriteAspect) : (screenAspect < spriteAspect);
 			if (scaleByHeight)
 			{
 				halfSize = Vector2(DISPLAY_SPACE_RES.y * convertedScale.y) / 2.0f;
