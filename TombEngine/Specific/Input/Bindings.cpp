@@ -247,6 +247,15 @@ namespace TEN::Input
 		return _conflicts.at(actionID);
 	}
 
+	std::string BindingManager::GetBindingKeyName(ActionID actionID)
+	{
+		int defaultKeyID = GetBoundKeyID(BindingProfileID::Default, (ActionID)(actionID));
+		int userKeyID = GetBoundKeyID(BindingProfileID::Custom, (ActionID)(actionID));
+		int boundKey = userKeyID ? userKeyID : defaultKeyID;
+
+		return GetKeyName(boundKey);
+	}
+
 	void BindingManager::Initialize()
 	{
 		// Initialize bindings.

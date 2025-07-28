@@ -154,6 +154,16 @@ namespace TEN::Scripting::Input
 		Rumble(strength, time.value_or(0.3f), RumbleMode::Both);
 	}
 
+	//Internal Function
+	static std::string GetActionBinding(int actionID)
+	{
+		if (!IsValidAction(actionID))
+			return false;
+
+		return g_Bindings.GetBindingKeyName((ActionID)actionID);
+	}
+
+	//Internal Function
 	static int GetActionTimeActive(int actionID)
 	{
 		if (!IsValidAction(actionID))
@@ -178,6 +188,7 @@ namespace TEN::Scripting::Input
 		table.set_function(ScriptReserved_InputClearKey, &ClearKey);
 		table.set_function(ScriptReserved_InputClearAllKeys, &ClearAllKeys);
 		table.set_function(ScriptReserved_InputVibrate, &Vibrate);
+		table.set_function(ScriptReserved_GetActionBinding, &GetActionBinding);
 		table.set_function(ScriptReserved_GetActionTimeActive, &GetActionTimeActive);
 
 		// COMPATIBILITY
