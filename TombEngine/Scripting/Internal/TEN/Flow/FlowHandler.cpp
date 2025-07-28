@@ -223,6 +223,13 @@ Check if a savegame exists.
 	tableFlow.set_function(ScriptReserved_DoesSaveGameExist, &FlowHandler::DoesSaveGameExist, this);
 
 /***
+Get the header of all savegames
+@function GetSaveHeaders
+@treturn table A table in the format
+*/
+	tableFlow.set_function(ScriptReserved_GetSaveHeaders, &FlowHandler::GetSaveHeaders, this);
+
+/***
 Returns the player's current per-game secret count.
 @function GetSecretCount
 @treturn int Current game secret count.
@@ -652,6 +659,31 @@ void FlowHandler::AddSecret(int levelSecretIndex)
 	SaveGame::Statistics.SecretBits |= 1 << levelSecretIndex;
 	SaveGame::Statistics.Level.Secrets++;
 	SaveGame::Statistics.Game.Secrets++;
+}
+
+sol::table FlowHandler::GetSaveHeaders(sol::this_state state)
+{	
+	sol::state_view lua(state);
+	auto headersTable = lua.create_table();
+
+	for (int i = 0; i < SAVEGAME_MAX; ++i)
+	{	
+		const SaveGameHeader& h = SaveGame::Infos[i];
+
+		sol::table headerTable = lua.create_table();
+		headerTable["LevelName"] = h.LevelName;
+		headerTable["Hours"] = h.Hours;
+		headerTable["Minutes"] = h.Minutes;
+		headerTable["Seconds"] = h.Seconds;
+		headerTable["Level"] = h.Level;
+		headerTable["Timer"] = h.Timer;
+		headerTable["Count"] = h.Count;
+		headerTable["Present"] = h.Present;
+
+		headersTable[i + 1] = headerTable;
+	}
+
+	return headersTable;
 }
 
 bool FlowHandler::IsFlyCheatEnabled() const
