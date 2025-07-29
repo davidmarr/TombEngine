@@ -14,10 +14,12 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect distance checks on a very large room coordinates which could have caused random Lara teleportations.
 * Fixed firearms bullet range limited to targeting range.
 * Fixed pistols not allowing to spam fire in untargeted mode.
-* Fixed crashes and visual issues with exploding body part effects.
+* Fixed random crashes and visual issues with exploding body part effects.
+* Fixed random crashes when spawning or killing enemies.
 * Fixed shatterable static meshes not producing shatter sound when hit by projectile weapons.
-* Fixed Doppler effect not applied to sounds.
 * Fixed HUD bars displaying incorrect update animation after loading savegame.
+* Fixed slowdowns and freezes when too many sounds are playing.
+* Fixed Doppler effect not applied to sounds.
 
 ### Lua API changes
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
