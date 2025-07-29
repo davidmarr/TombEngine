@@ -10,28 +10,16 @@ namespace TEN::Scripting
 
 	static const std::unordered_map<std::string, LaraType> PLAYER_TYPES
 	{
-		/// Normal Lara.
+		/// Normal Lara with a single braid.
 		// @mem Normal
 		{ "Normal", LaraType::Normal },
 
-		/// Young Lara.
+		/// Young Lara with two ponytails. This setting does not affect ability to use flares and weapons, which can be removed from inventory via scripting.
 		// @mem Young
 		{ "Young", LaraType::Young },
 
-		/// Bunhead Lara.
-		// @mem Bunhead
-		{ "Bunhead", LaraType::Bunhead },
-
-		/// Catsuit Lara.
-		// @mem Catsuit
-		{ "Catsuit", LaraType::Catsuit },
-
-		/// Divesuit Lara.
+		/// Divesuit Lara. As seen in the underwater levels of TR5.
 		// @mem Divesuit
-		{ "Divesuit", LaraType::Divesuit },
-
-		/// Invisible Lara.
-		// @mem Invisible
-		{ "Invisible", LaraType::Invisible }
+		{ "Divesuit", LaraType::Divesuit }
 	};
 }

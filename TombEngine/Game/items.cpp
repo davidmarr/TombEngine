@@ -206,7 +206,7 @@ std::vector<BoundingSphere> ItemInfo::GetSpheres() const
 
 ItemInfo* ItemHandler::Get() const
 {
-	if (g_Level.Items.empty())
+	if (g_Level.Items.empty() || _index == NO_VALUE)
 		return nullptr;
 
 	if (_index < 0 || _index >= g_Level.Items.size())
