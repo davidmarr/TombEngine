@@ -538,6 +538,7 @@ constexpr char ScriptReserved_DrawItemGetScale[]	= "GetItemScale";
 constexpr char ScriptReserved_DrawItemGetColor[]	= "GetItemColor";
 constexpr char ScriptReserved_DrawItemGetVisibility[]	= "GetItemVisibility";
 constexpr char ScriptReserved_DrawItemClearAll[]	= "ClearAllItems";
+constexpr char ScriptReserved_DrawItemIfItemExists[] = "IfItemExists";
 constexpr char ScriptReserved_DrawItemGetMeshRotation[] = "GetMeshRotation";
 constexpr char ScriptReserved_DrawItemSetMeshRotation[] = "SetMeshRotation";
 constexpr char ScriptReserved_DrawItemGetCamera[]	= "GetInvCameraPosition";

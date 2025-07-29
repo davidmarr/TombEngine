@@ -166,6 +166,18 @@ namespace TEN::Hud
 		}
 	}
 
+	bool DrawItemsController::IfItemExists(GAME_OBJECT_ID objectID)
+	{
+		for (auto& item : _displayItems)
+		{
+			if (item.ObjectID == objectID)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	Vector3 DrawItemsController::GetItemPosition(GAME_OBJECT_ID objectID)
 	{
 		if (auto* item = SelectItemByID(objectID))

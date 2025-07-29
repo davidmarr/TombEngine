@@ -157,9 +157,6 @@ namespace TEN::Scripting::Input
 	//Internal Function
 	static std::string GetActionBinding(int actionID)
 	{
-		if (!IsValidAction(actionID))
-			return false;
-
 		return g_Bindings.GetBindingKeyName((ActionID)actionID);
 	}
 

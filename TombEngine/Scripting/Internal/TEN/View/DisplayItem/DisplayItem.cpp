@@ -68,6 +68,11 @@ namespace TEN::Scripting::DisplayItem
 		g_DrawItems.SetItemMeshRotation(objectID, mesh, angles.ToEulerAngles(), convertedBool);
 	}
 
+	static bool IfItemExists(GAME_OBJECT_ID objectID)
+	{
+		return g_DrawItems.IfItemExists(objectID);
+	}
+
 	static Vec3 GetItemPosition(GAME_OBJECT_ID objectID)
 	{
 		auto position = g_DrawItems.GetItemPosition(objectID);
@@ -174,6 +179,7 @@ namespace TEN::Scripting::DisplayItem
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetColor, &GetItemColor);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetVisibility, &GetItemVisibility);
 		tableDrawItems.set_function(ScriptReserved_DrawItemClearAll, &ClearItems);
+		tableDrawItems.set_function(ScriptReserved_DrawItemIfItemExists, &IfItemExists);
 		tableDrawItems.set_function(ScriptReserved_DrawItemGetMeshRotation, &GetMeshRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetMeshRotation, &SetMeshRotation);
 		tableDrawItems.set_function(ScriptReserved_DrawItemSetCamera, &SetCameraPosition);

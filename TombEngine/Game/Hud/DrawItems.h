@@ -116,6 +116,7 @@ namespace TEN::Hud
 		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 		void SetItemVisibility(GAME_OBJECT_ID objectID, bool visible);
 
+		bool IfItemExists(GAME_OBJECT_ID objectID);
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);
 		float GetItemScale(GAME_OBJECT_ID objectID);
