@@ -31,16 +31,6 @@ int  FlipMap[MAX_FLIPMAP];
 
 std::vector<short> OutsideRoomTable[OUTSIDE_SIZE][OUTSIDE_SIZE];
 
-BoundingOrientedBox MESH_INFO::GetObb() const
-{
-	return GetBoundsAccurate(*this, false).ToBoundingOrientedBox(pos);
-}
-
-BoundingOrientedBox MESH_INFO::GetVisibilityObb() const
-{
-	return GetBoundsAccurate(*this, true).ToBoundingOrientedBox(pos);
-}
-
 std::vector<int> RoomObjectHandler::GetIds() const
 {
 	return _tree.GetBoundedObjectIds();
@@ -768,22 +758,6 @@ namespace TEN::Collision::Room
 
 		return &room->Sectors[sectorID];
 	}
-}
-
-GameBoundingBox& GetBoundsAccurate(const MESH_INFO& mesh, bool getVisibilityBox)
-{
-	static auto bounds = GameBoundingBox();
-
-	if (getVisibilityBox)
-	{
-		bounds = Statics[mesh.staticNumber].visibilityBox * mesh.pos.Scale;
-	}
-	else
-	{
-		bounds = Statics[mesh.staticNumber].collisionBox * mesh.pos.Scale;
-	}
-
-	return bounds;
 }
 
 bool IsPointInRoom(const Vector3i& pos, int roomNumber)
