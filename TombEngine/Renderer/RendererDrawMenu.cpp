@@ -836,6 +836,7 @@ namespace TEN::Renderer
 		hudCamera.CamDirectionWS = -Vector4::UnitZ;
 		hudCamera.ViewProjection = viewMatrix * projMatrix;
 		hudCamera.Frame = GlobalCounter;
+		hudCamera.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
 		_cbCameraMatrices.UpdateData(hudCamera, _context.Get());
 		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 

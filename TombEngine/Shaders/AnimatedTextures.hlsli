@@ -34,7 +34,7 @@ float2 CalculateUVRotate(float2 uv, unsigned int frame)
 
         float2 localUV = (uv - minUV) / uvSize;
 
-        float relPos = (Frame % FPS) / (float) FPS;
+        float relPos = (InterpolatedFrame % FPS) / (float) FPS;
         float2 scrollOffset = -UVRotateDirection * relPos;
 
         localUV = frac(localUV + scrollOffset);
