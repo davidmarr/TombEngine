@@ -1871,14 +1871,26 @@ void DoObjectCollision(ItemInfo* item, CollisionInfo* coll)
 					}
 					else
 					{
-						DoDamage(&linkItem, INT_MAX);
-						DoLotsOfBlood(
-							linkItem.Pose.Position.x,
-							item->Pose.Position.y - CLICK(1),
-							linkItem.Pose.Position.z,
-							item->Animation.Velocity.z,
-							item->Pose.Orientation.y,
-							linkItem.RoomNumber, 3);
+						switch (object.damageType)
+						{
+						case DamageMode::None:
+							// Undead enemies push the vehicle.
+							ItemPushItem(&linkItem, item, coll, false, 0);
+							break;
+
+						case DamageMode::Any:
+							// Normal enemies are killed by the vehicle.
+							DoDamage(&linkItem, INT_MAX);
+							DoLotsOfBlood(linkItem.Pose.Position.x, item->Pose.Position.y - CLICK(1), linkItem.Pose.Position.z,
+								item->Animation.Velocity.z, item->Pose.Orientation.y, linkItem.RoomNumber, 3);
+							break;
+
+						case DamageMode::Explosion:
+							// Enemies which can be only exploded shatter to pieces.
+							SoundEffect(SFX_TR4_LARA_THUD, &linkItem.Pose);
+							CreatureDie(itemNumber, true, BODY_DO_EXPLOSION | BODY_NO_FLAME | BODY_NO_SHATTER_EFFECT);
+							break;
+						}
 					}
 				}
 				else if (coll->Setup.EnableObjectPush)
