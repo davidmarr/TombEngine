@@ -5,6 +5,7 @@ local CustomInventory = {}
 local PICKUP_DATA = require("Engine.CustomInventory.InventoryConstants")
 local Settings = require("Engine.CustomInventory.Settings")
 local Interpolate = require("Engine.InterpolateModule")
+local Menu = require("Engine.CustomMenu")
 
 local debug = false
 
@@ -214,10 +215,6 @@ local colorCombine = function(color, transparency)
     return Color(color.r, color.g, color.b, transparency)
 end
 
-local HasItemAction = function(packedFlags, flag)
-    return (packedFlags & flag) ~= 0
-end
-
 local percentPos = function(x, y)
     return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
 end
@@ -244,6 +241,14 @@ local calculateStopWatchRotation = function()
 
     return angles
 
+end
+
+local hasItemAction = function(packedFlags, flag)
+    return (packedFlags & flag) ~= 0
+end
+
+local isSingleFlagSet = function(flags)
+    return flags ~= 0 and (flags & (flags - 1)) == 0
 end
 
 local SetRotationInventoryItems = function()
@@ -310,11 +315,11 @@ local ShowLevelStats = function(gameStats)
 
     -- Draw a background graphic for the stats screen
 	
-    	local bg = DisplaySprite(ObjID.BAR_BORDER_GRAPHICS, 1, Vec2(50, 48), 0, Vec2(60, 60), Color(20, 157, 0, 128))
-    	bg:Draw(0, View.AlignMode.CENTER, View.ScaleMode.STRETCH, Effects.BlendID.ADDITIVE)
+    -- local bg = DisplaySprite(ObjID.BAR_BORDER_GRAPHICS, 1, Vec2(50, 48), 0, Vec2(60, 60), Color(20, 157, 0, 128))
+    -- bg:Draw(0, View.AlignMode.CENTER, View.ScaleMode.STRETCH, Effects.BlendID.ADDITIVE)
 end
 
-local combineItems = function(item1, item2)
+local CombineItems = function(item1, item2)
 	
     for _, combo in ipairs(PICKUP_DATA.combineTable) do
 		
@@ -417,7 +422,7 @@ local ClearInventory = function(ringName, clearDrawItems)
 
 end
 
-local DoLeftKey = function()
+local doLeftKey = function()
     local inventoryTable = inventory.ring[selectedRing]
     inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
     targetRingAngle = currentRingAngle - inventory.slice[selectedRing]
@@ -426,7 +431,7 @@ local DoLeftKey = function()
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
 end
 
-local DoRightKey = function()
+local doRightKey = function()
     local inventoryTable = inventory.ring[selectedRing]
     inventory.selectedItem[selectedRing] = ((inventory.selectedItem[selectedRing] - 2) % #inventoryTable) + 1
     targetRingAngle = currentRingAngle + inventory.slice[selectedRing]
@@ -440,9 +445,9 @@ local Input = function(mode)
     if mode == INVENTORY_MODE.INVENTORY then
 
         if guiIsPulsed(TEN.Input.ActionID.LEFT) then
-            DoLeftKey()
+            doLeftKey()
         elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            DoRightKey()
+            doRightKey()
         elseif guiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then --disable up and down keys for combine and ammo rings
             previousRing = selectedRing
             selectedRing = math.max(RING.PUZZLE, selectedRing - 1) 
@@ -464,17 +469,25 @@ local Input = function(mode)
             
             itemStoreRotations = true
 
-            local combine = GetSelectedItem(selectedRing).combine
-
-            if combine == true then  
-                inventoryMode = INVENTORY_MODE.COMBINE_SETUP
+            local menuActions = GetSelectedItem(selectedRing).menuActions
+            --if the item has single action, proceed with direct action for items like medipack and flares.
+            if isSingleFlagSet(menuActions) then  
+                if hasItemAction(menuActions, ItemAction.USE) or hasItemAction(menuActions, ItemAction.EQUIP) then
+                    inventoryMode = INVENTORY_MODE.ITEM_USE
+                elseif hasItemAction(menuActions, ItemAction.EXAMINE) then
+                    inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+                elseif hasItemAction(menuActions, ItemAction.COMBINE) then
+                    inventoryMode = INVENTORY_MODE.COMBINE_SETUP
+                elseif hasItemAction(menuActions, ItemAction.STATISTICS) then
+                    inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+                end
             else
-                inventoryMode = INVENTORY_MODE.ITEM_USE  
+                inventoryMode = INVENTORY_MODE.ITEM_SELECT  
             end
-        elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-            itemStoreRotations = true
-            inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+        -- elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
+        --     TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+        --     itemStoreRotations = true
+        --     inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
         elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
             TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
             LevelVars.Engine.CustomInventory.RingClosing = true
@@ -924,7 +937,7 @@ end
 local ClearBatchMotionProgress = function(prefix, motionTable)
     for _, motion in ipairs(motionTable) do
         local id = prefix .. motion.key
-        Interpolate.ClearMotionProgress(id)
+        Interpolate.ClearProgress(id)
     end
 end
 
@@ -941,10 +954,11 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         if motion.start ~= motion.finish then
             local startVal = reverse and motion.finish or motion.start
             local endVal = reverse and motion.start or motion.finish
-            interp = Interpolate.PerformMotion(id, motion.type, startVal, endVal, time, true)
+            interp = Interpolate.Perform(id, motion.type, startVal, endVal, time, true)
         end
 
         interpolated[motion.key] = interp
+        
         if interp.progress < PROGRESS_COMPLETE then
             allComplete = false
         end
@@ -1287,7 +1301,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
             combineItem2 = GetSelectedItem(RING.COMBINE).item
 
-            if combineItems(combineItem1, combineItem2) then
+            if CombineItems(combineItem1, combineItem2) then
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_COMBINE)
                 inventoryMode = INVENTORY_MODE.COMBINE_SUCCESS
             else
@@ -1319,15 +1333,15 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         SaveItemRotations(selectedItem)
 
         --Hack for Stopwatch and Compass item
-        if selectedItem.item == TEN.Objects.ObjID.STOPWATCH_ITEM then
-            inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
-            return
-        end
+        -- if selectedItem.item == TEN.Objects.ObjID.STOPWATCH_ITEM then
+        --     inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+        --     return
+        -- end
 
-        if selectedItem.item == TEN.Objects.ObjID.COMPASS_ITEM then
-            inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-            return
-        end
+        -- if selectedItem.item == TEN.Objects.ObjID.COMPASS_ITEM then
+        --     inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+        --     return
+        -- end
 
         if AnimateInventory(mode) then
             
@@ -1525,14 +1539,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
     
     local fadeInterpolate
     if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearMotionProgress("FontFade")
+            Interpolate.ClearProgress("FontFade")
         end
     elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearMotionProgress("FontFade")
+            Interpolate.ClearProgress("FontFade")
         end
     else
         fadeInterpolate = {output = 255, progress = 1}
@@ -1710,14 +1724,14 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     local fadeInterpolate = nil
     if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearMotionProgress("FontFade")
+            Interpolate.ClearProgress("FontFade")
         end
     elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearMotionProgress("FontFade")
+            Interpolate.ClearProgress("FontFade")
         end
     else
         fadeInterpolate = {output = 255, progress = 1}
@@ -1727,7 +1741,7 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     for _, entry in pairs(ItemActionFlags) do
         
-        if HasItemAction(GetSelectedItem(selectedRing).menuActions, entry.bit) then
+        if hasItemAction(GetSelectedItem(selectedRing).menuActions, entry.bit) then
             table.insert(stringTable, GetString(entry.string))
         end
     end
