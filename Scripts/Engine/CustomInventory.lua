@@ -1,9 +1,10 @@
 --RING INVENTORY BY TRAINWRECK
 
+local CustomInventory = {}
+
 local PICKUP_DATA = require("Engine.CustomInventory.InventoryConstants")
-local Motion = require("Engine.CustomInventory.MotionModule")
 local Settings = require("Engine.CustomInventory.Settings")
-local Ring = require("Engine.CustomInventory.RingFunctions")
+local Interpolate = require("Engine.InterpolateModule")
 
 local debug = false
 
@@ -28,8 +29,6 @@ local EXAMINE_MAX_SCALE = 1.6
 local EXAMINE_TEXT_POS = Vec2(50, 80)
 local ALPHA_MAX = 255
 local ALPHA_MIN = 0
-
-
 
 -- ITEM = {
 --     ObjectID = 1,
@@ -211,7 +210,11 @@ LevelFuncs.Engine.CustomInventory = {}
 
 --functions
 
-local  HasItemAction = function(packedFlags, flag)
+local colorCombine = function(color, transparency)
+    return Color(color.r, color.g, color.b, transparency)
+end
+
+local HasItemAction = function(packedFlags, flag)
     return (packedFlags & flag) ~= 0
 end
 
@@ -340,92 +343,6 @@ local combineItems = function(item1, item2)
 
 	-- No valid combination found
 	return false
-end
-
-LevelFuncs.OnStart = function()
-
-    local stats = Flow.GetStatistics()
-    stats.timeTaken = Time({9,40,36}) 
-    Flow.SetStatistics(stats)
-
-    LevelFuncs.Engine.CustomInventory.IntializeInventory()
-
-end
-
-LevelFuncs.OnFreeze = function()
-
-    --LevelFuncs.DrawCursor()
-    --LevelFuncs.AdjustCamera()
-end
-
---required for positioning the inventory --Temporary function
-local selectedIndex = 1
-local vector
-LevelFuncs.AdjustCamera = function()
-
-    local entrySprite2 = TEN.DisplaySprite(TEN.Objects.ObjID.DIARY_ENTRY_SPRITES, 0, TEN.Vec2(50, 50), 0, TEN.Vec2(100,100), COLOR_MAP.NORMAL_FONT)
-    entrySprite2:Draw(1, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.OPAQUE)
-
-    local items = {
-        "Camera",
-        "Target",
-        "FOV",
-        "Label"
-    }
-
-    if TEN.Input.IsKeyHit(TEN.Input.ActionID.TAB) then
-        selectedIndex  = (selectedIndex % #items) + 1
-    end
-
-    local selectedItem = items[selectedIndex]
-
-    local myText = DisplayString(selectedItem, percentPos(10, 10), 0.5, Color.new(64,250,60))
-	ShowString(myText,1/30)
-
-    if selectedItem == "Camera" then
-        vector = TEN.DrawItem.GetInvCameraPosition()
-    elseif selectedItem == "Target" then
-        vector = TEN.DrawItem.GetInvTargetPosition()
-    elseif selectedItem == "FOV" then
-        vector = Vec3(0,View.GetFOV(),0)
-    end
-
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
-            vector.x = vector.x - 2
-    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
-            vector.x = vector.x + 2
-    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.FORWARD) then
-            vector.z = vector.z + 2
-    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.BACK) then
-            vector.z = vector.z - 2
-    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.STEP_LEFT) then
-            vector.y = vector.y - 2
-    elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.STEP_RIGHT) then
-            vector.y = vector.y + 2
-    elseif TEN.Input.IsKeyHit(TEN.Input.ActionID.R) then
-
-        if selectedItem == "Camera" then
-            vector = Vec3(0,-512,512)
-        elseif selectedItem == "Target" then
-            vector = Vec3(0,0,512)
-        elseif selectedItem == "FOV" then
-            vector = Vec3(0,80,0)
-        elseif selectedItem == "Label" then
-            vector = Vec3(50,0.5,90)
-        end
-    end
-
-    local myText2 = DisplayString(tostring(vector), percentPos(15, 10), 0.5, Color.new(64,250,60))
-	ShowString(myText2,1/30)
-
-
-    if selectedItem == "Camera" then
-        TEN.DrawItem.SetInvCameraPosition(vector)
-    elseif selectedItem == "Target" then
-        TEN.DrawItem.SetInvTargetPosition(vector)
-    elseif selectedItem == "FOV" then
-        View.SetFOV(vector.y)
-    end
 end
 
 local guiIsPulsed = function(actionID)
@@ -766,6 +683,86 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
 end
 
+local SetRingVisibility = function(ringName, visible)
+    
+    local ring = inventory.ring[ringName]
+
+    if not ring then
+        return
+    end
+
+    local itemCount = #ring
+
+    for i = 1, itemCount do
+        local currentItem = ring[i].item
+        TEN.DrawItem.SetItemVisibility(currentItem, visible)
+    end
+end
+
+local TranslateRing = function(ringName, center, radius, rotationOffset)
+
+    local ring = inventory.ring[ringName]
+
+    if not ring then
+        return
+    end
+
+    local itemCount = #ring
+    
+    for i = 1, itemCount do
+        local currentItem = ring[i].item 
+
+        local angleDeg = (360 / itemCount) * (i - 1) +  rotationOffset
+       
+        local position = center:Translate(Rotation(0,angleDeg,0),radius)
+
+        local itemRotation  = TEN.DrawItem.GetItemRotation(currentItem)
+
+        TEN.DrawItem.SetItemPosition(currentItem, position)
+        TEN.DrawItem.SetItemRotation(currentItem, Rotation(itemRotation.x, angleDeg, itemRotation.z))
+    end
+
+end
+
+local FadeRing = function(ringName, fadeValue, omitSelectedItem)
+    
+    local ring = inventory.ring[ringName]
+
+    if not ring then
+        return
+    end
+
+    local itemCount = #ring
+    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).item
+
+    for i = 1, itemCount do
+        local currentItem = ring[i].item 
+
+        if omitSelectedItem and selectedItem == currentItem then
+            goto continue
+        end
+
+        local itemColor = TEN.DrawItem.GetItemColor(currentItem)
+        TEN.DrawItem.SetItemColor(currentItem, colorCombine(itemColor, fadeValue))
+
+        ::continue::
+    end
+end
+
+local FadeRings = function(visible, omitSelectedRing)
+    
+    local fadeValue = visible and 255 or 0
+
+    for index in pairs(inventory.ring) do
+        
+        if not (omitSelectedRing and index == selectedRing) then
+            FadeRing(index, fadeValue, false)
+            SetRingVisibility(index, visible)
+        end
+    end
+
+end
+
 local RotateItem = function(item)
     local itemRotation  = TEN.DrawItem.GetItemRotation(item)
     TEN.DrawItem.SetItemRotation(item, Rotation(itemRotation.x, (itemRotation.y + ROTATION_SPEED) % 360, itemRotation.z))
@@ -807,7 +804,7 @@ local OpenInventoryAtItem = function(itemID)
 	for index in pairs(inventory.ring) do
 		local offset = (index - selectedRing) * RING_POSITION_OFFSET
 		inventory.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
-        Ring.TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
+        TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
 	end
 
 end
@@ -823,6 +820,7 @@ local SetupSecondaryRing = function(ringName)
     inventory.ringPosition[ringName] = RING_CENTER[RING.MAIN]
 
 end
+
 
 LevelFuncs.Engine.CustomInventory.StartInventory = function()
 
@@ -865,7 +863,7 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
     ClearInventory(nil, true)
     TEN.DrawItem.SetOpenInventory(NO_VALUE)
-    Motion.ClearAllProgress()
+    Interpolate.ClearAllProgress()
     View.SetFOV(80)
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     LevelVars.Engine.CustomInventory.InventoryClosed = true
@@ -876,8 +874,6 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     timeInMenu = 0
 
 end
-
-
 
 LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
 
@@ -905,22 +901,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     end
 end
 
-
-LevelFuncs.DrawCursor = function() --Temporary function
-
-    local pos = TEN.View.GetMouseDisplayPosition()
-	
-	local myTextString = "X: " .. pos.x.." Y: "..pos.y
-	local myText = DisplayString(myTextString, 10, 10, Color.new(64,250,60))
-	TEN.ShowString(myText,1/30)
-
-	local entrySprite = TEN.DisplaySprite(TEN.Objects.ObjID.SKY_GRAPHICS, 0, TEN.Vec2(pos.x,pos.y), 0, TEN.Vec2(5,5), TEN.Color(255,128,255))
-    entrySprite:Draw(8, View.AlignMode.TOP_LEFT, View.ScaleMode.FIT, TEN.Effects.BlendID.OPAQUE)
-
-end
-
-
-LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
+function CustomInventory.Intialize()
 
     LevelVars.Engine.CustomInventory = {}
     LevelVars.Engine.CustomInventory.InventoryOpen = false
@@ -939,56 +920,112 @@ LevelFuncs.Engine.CustomInventory.IntializeInventory = function()
 
 end
 
+-- Clear progress for a batch
+local ClearBatchMotionProgress = function(prefix, motionTable)
+    for _, motion in ipairs(motionTable) do
+        local id = prefix .. motion.key
+        Interpolate.ClearMotionProgress(id)
+    end
+end
+
+-- Perform a batch of motions and apply their effects
+local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ringName, item, reverse)
+    local interpolated = {}
+    local allComplete = true
+    local omitSelectedItem = item and true or false
+
+    for _, motion in ipairs(motionTable) do
+        local id = prefix .. motion.key
+        local interp = {output = motion.start, progress = PROGRESS_COMPLETE}
+
+        if motion.start ~= motion.finish then
+            local startVal = reverse and motion.finish or motion.start
+            local endVal = reverse and motion.start or motion.finish
+            interp = Interpolate.PerformMotion(id, motion.type, startVal, endVal, time, true)
+        end
+
+        interpolated[motion.key] = interp
+        if interp.progress < PROGRESS_COMPLETE then
+            allComplete = false
+        end
+    end
+
+    if interpolated.ringCenter or interpolated.ringRadius or interpolated.ringAngle then
+        local center = interpolated.ringCenter and interpolated.ringCenter.output or inventory.ringPosition[ringName]
+        local radius = interpolated.ringRadius and interpolated.ringRadius.output or RING_RADIUS
+        local angle = interpolated.ringAngle and interpolated.ringAngle.output or 0
+        TranslateRing(ringName, center, radius, angle)
+    end
+
+    if interpolated.ringFade then
+        FadeRing(ringName, interpolated.ringFade.output, omitSelectedItem)
+    end
+
+    if interpolated.camera then TEN.DrawItem.SetInvCameraPosition(interpolated.camera.output) end
+    if interpolated.target then TEN.DrawItem.SetInvTargetPosition(interpolated.target.output) end
+    if interpolated.itemColor then TEN.DrawItem.SetItemColor(item, interpolated.itemColor.output) end
+    if interpolated.itemPosition then TEN.DrawItem.SetItemPosition(item, interpolated.itemPosition.output) end
+    if interpolated.itemScale then TEN.DrawItem.SetItemScale(item, interpolated.itemScale.output) end
+    if interpolated.itemRotation then TEN.DrawItem.SetItemRotation(item, interpolated.itemRotation.output) end
+
+    if allComplete then
+        if clearProgress then
+            ClearBatchMotionProgress(prefix, motionTable)
+        end
+        return true
+    end
+end
+
 local AnimateInventory = function(mode)
 
     local selectedItem = GetSelectedItem(selectedRing)
 
     local ringAnimation = {
-        { key = "ringRadius", type = Motion.Type.LINEAR, start = 0, finish = RING_RADIUS },
-        { key = "ringAngle", type = Motion.Type.LINEAR, start = -360, finish = currentRingAngle },
-        { key = "camera", type = Motion.Type.VEC3, start = CAMERA_START, finish = CAMERA_END },
-        { key = "target", type = Motion.Type.VEC3, start = TARGET_START, finish = TARGET_END },
-        { key = "ringCenter", type = Motion.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
-        { key = "ringFade", type = Motion.Type.LINEAR, start = 0, finish = 255 },
+        { key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = RING_RADIUS },
+        { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
+        { key = "camera", type = Interpolate.Type.VEC3, start = CAMERA_START, finish = CAMERA_END },
+        { key = "target", type = Interpolate.Type.VEC3, start = TARGET_START, finish = TARGET_END },
+        { key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
         }
 
     local examineAnimation = {
-        { key = "itemPosition", type = Motion.Type.VEC3, start = ITEM_START, finish = ITEM_END },
-        { key = "itemScale", type = Motion.Type.LINEAR, start = selectedItem.scale, finish = examineScaler },
-        { key = "itemRotation", type = Motion.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
-        { key = "ringFade", type = Motion.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN},
+        { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
+        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = examineScaler },
+        { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN},
         }
     
     local useAnimation = {
-        { key = "itemPosition", type = Motion.Type.VEC3, start = ITEM_START, finish = ITEM_END },
-        { key = "itemScale", type = Motion.Type.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
-        { key = "itemRotation", type = Motion.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
+        { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
+        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
+        { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
         }
     
     local combineRingAnimation = {
-        { key = "ringRadius", type = Motion.Type.LINEAR, start = 0, finish = RING_RADIUS },
-        { key = "ringAngle", type = Motion.Type.LINEAR, start = -360, finish = currentRingAngle },
-        { key = "ringCenter", type = Motion.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
-        { key = "ringFade", type = Motion.Type.LINEAR, start = 0, finish = 255 },
+        { key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = RING_RADIUS },
+        { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
+        { key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
         }
 
     local combineAnimation = {
-        { key = "itemPosition", type = Motion.Type.VEC3, start = ITEM_START, finish = ITEM_END },
-        { key = "itemScale", type = Motion.Type.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
-        { key = "itemRotation", type = Motion.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
-        { key = "ringFade", type = Motion.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN}
+        { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
+        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
+        { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN}
         }
 
     local combineClose = {
-        { key = "ringFade", type = Motion.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN}
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN}
         }
 
     if mode == INVENTORY_MODE.RING_OPENING then
 
-        if Motion.PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+        if PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
 
             --set alpha for all rings. This is required to make items in other items visible.
-            Ring.FadeRings(true, true)
+            FadeRings(true, true)
 
             LevelVars.Engine.CustomInventory.RingOpening = false
             LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
@@ -998,9 +1035,9 @@ local AnimateInventory = function(mode)
     elseif mode == INVENTORY_MODE.RING_CLOSING then
 
         --Hide other rings to ensure the closing animation looks clean.
-        Ring.FadeRings(false, true)
+        FadeRings(false, true)
 
-        if Motion.PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+        if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
 
             LevelVars.Engine.CustomInventory.RingClosing = false
             return true
@@ -1015,11 +1052,11 @@ local AnimateInventory = function(mode)
             local oldPosition = inventory.ringPosition[index]
             local newPosition = Vec3(oldPosition.x, oldPosition.y + direction * RING_POSITION_OFFSET, oldPosition.z) 
             local motionSet = {
-            { key = "ringAngle", type = Motion.Type.LINEAR, start = -360, finish = 0},
-            { key = "ringCenter", type = Motion.Type.VEC3, start = oldPosition, finish = newPosition},
+            { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = 0},
+            { key = "ringCenter", type = Interpolate.Type.VEC3, start = oldPosition, finish = newPosition},
             }
 
-            if Motion.PerformBatchMotion("RingChange"..index, motionSet, INVENTORY_ANIM_TIME, true, index) then
+            if PerformBatchMotion("RingChange"..index, motionSet, INVENTORY_ANIM_TIME, true, index) then
                 inventory.ringPosition[index] = newPosition
             else
                 allMotionComplete = false
@@ -1034,51 +1071,51 @@ local AnimateInventory = function(mode)
     elseif mode == INVENTORY_MODE.RING_ROTATE then
 
         local motionSet = {
-            { key = "ringAngle", type = Motion.Type.LINEAR, start = currentRingAngle, finish = targetRingAngle},
+            { key = "ringAngle", type = Interpolate.Type.LINEAR, start = currentRingAngle, finish = targetRingAngle},
             }
 
-            if Motion.PerformBatchMotion("RingRotate", motionSet, INVENTORY_ANIM_TIME/4, true, selectedRing) then
+            if PerformBatchMotion("RingRotate", motionSet, INVENTORY_ANIM_TIME/4, true, selectedRing) then
                 currentRingAngle = targetRingAngle
                 return true
             end
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
 
-        if Motion.PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
 
-        if Motion.PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
+        if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
 
-        if Motion.PerformBatchMotion("StatisticsOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("StatisticsOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
 
-        if Motion.PerformBatchMotion("StatisticsClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
+        if PerformBatchMotion("StatisticsClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.COMBINE_SETUP then
 
-        if Motion.PerformBatchMotion("CombineSetup", combineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("CombineSetup", combineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
 
-        if Motion.PerformBatchMotion("CombineRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+        if PerformBatchMotion("CombineRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
-        if Motion.PerformBatchMotion("CombineSuccess", combineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("CombineSuccess", combineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
@@ -1087,7 +1124,7 @@ local AnimateInventory = function(mode)
 
         for index in pairs(inventory.ring) do
 
-            if not Motion.PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
                 allMotionComplete = false 
             end
 
@@ -1099,12 +1136,12 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
 
-        if Motion.PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item) then
-            if Motion.PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item, true) then
-                Ring.FadeRings(false, true)
-                if Motion.PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
-                    Motion.ClearBatchMotionProgress("ItemSelect", useAnimation)
-                    Motion.ClearBatchMotionProgress("ItemDeselect", useAnimation)
+        if PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item) then
+            if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item, true) then
+                FadeRings(false, true)
+                if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+                    ClearBatchMotionProgress("ItemSelect", useAnimation)
+                    ClearBatchMotionProgress("ItemDeselect", useAnimation)
                     LevelVars.Engine.CustomInventory.RingClosing = false
                     return true
                 end
@@ -1488,14 +1525,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
     
     local fadeInterpolate
     if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        fadeInterpolate = Motion.PerformMotion("FontFade", Motion.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Motion.ClearMotionProgress("FontFade")
+            Interpolate.ClearMotionProgress("FontFade")
         end
     elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-        fadeInterpolate = Motion.PerformMotion("FontFade", Motion.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Motion.ClearMotionProgress("FontFade")
+            Interpolate.ClearMotionProgress("FontFade")
         end
     else
         fadeInterpolate = {output = 255, progress = 1}
@@ -1513,7 +1550,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
     local string = GetString(entry[1])
     local position = entry[2]
     local scale = entry[3]
-    local color = Color(entry[4].r, entry[4].g, entry[4].b, fadeInterpolate.output)
+    local color = colorCombine(entry[4], fadeInterpolate.output)
 
     local entryPosInPixel = percentPos(position.x, position.y)
 
@@ -1673,14 +1710,14 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     local fadeInterpolate = nil
     if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        fadeInterpolate = Motion.PerformMotion("FontFade", Motion.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Motion.ClearMotionProgress("FontFade")
+            Interpolate.ClearMotionProgress("FontFade")
         end
     elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-        fadeInterpolate = Motion.PerformMotion("FontFade", Motion.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.PerformMotion("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Motion.ClearMotionProgress("FontFade")
+            Interpolate.ClearMotionProgress("FontFade")
         end
     else
         fadeInterpolate = {output = 255, progress = 1}
@@ -1697,7 +1734,7 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     local finalString = table.concat(stringTable, " ")
     local scale = 0.5
-    local color = Color(COLOR_MAP.NORMAL_FONT.r, COLOR_MAP.NORMAL_FONT.g, COLOR_MAP.NORMAL_FONT.b, fadeInterpolate.output)
+    local color = colorCombine(COLOR_MAP.NORMAL_FONT, fadeInterpolate.output)
 
     local entryPosInPixel = percentPos(5, 95)
 
@@ -1705,3 +1742,5 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
     ShowString(entryText, 1 / 30)
 
 end
+
+return CustomInventory
