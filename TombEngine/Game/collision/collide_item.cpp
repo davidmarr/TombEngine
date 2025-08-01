@@ -1838,6 +1838,12 @@ void DoObjectCollision(ItemInfo* item, CollisionInfo* coll)
 
 			if (isPlayer)
 			{
+				// Ignore all non-intelligent objects, if player is on a vehicle. This way we avoid
+				// any collision routine calls for any interactable objects, as in original, but fix
+				// the issue with enemies not hurting Lara on a vehicle via hand combat.
+				if (GetLaraInfo(*item).Context.Vehicle != NO_VALUE && !object.intelligent)
+					continue;
+
 				// Objects' own collision routines were almost universally written only for
 				// managing collisions with Lara and nothing else. Until all of these routines
 				// are refactored (which won't happen anytime soon), we need this differentiation.
