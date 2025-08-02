@@ -9,6 +9,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed inability to perform backjumps or grabs after climbing onto a triangular slope.
 * Fixed ROLLINGBALL not stopped by full walls.
 * Fixed several JEEP and MOTORBIKE vehicle collision bugs.
+* Fixed undead enemies not killed in a proper way by vehicles.
 * Fixed smoke emitters crashing the game if placed underwater with OCB 0.
 * Fixed puzzle holes losing collision after inserting puzzle items.
 * Fixed projectile weapon hits not registering in statistics and collision callbacks.
