@@ -23,8 +23,7 @@ local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
 local RING_POSITION_OFFSET = 1000
 local PROGRESS_COMPLETE = 1
-local ITEM_SELECT_SCALE = 1
-local EXAMINE_DEFAULT_SCALE = 1.2
+local EXAMINE_DEFAULT_SCALE = 1
 local EXAMINE_MIN_SCALE = 0.8
 local EXAMINE_MAX_SCALE = 1.6
 local EXAMINE_TEXT_POS = Vec2(50, 80)
@@ -94,7 +93,10 @@ local INVENTORY_MODE =
     COMBINE_SUCCESS = 20,
     AMMO_SELECT_SETUP = 21,
     AMMO_SELECT = 22,
-    AMMO_SELECT_CLOSE = 23
+    AMMO_SELECT_CLOSE = 23,
+    SAVE_SETUP = 24,
+    SAVE_MENU = 25,
+    SAVE_CLOSE = 26
 }
 
 local SOUND_MAP = Settings.SOUND_MAP
@@ -115,13 +117,10 @@ local WEAPON_SET = {
 }
 
 local WEAPON_LASERSIGHT_DATA = {
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {ON = {MESHBITS = 0x0B, NAME = "revolver"}, 
-                                        OFF = {MESHBITS = 0x01, NAME = "revolver_lasersight"}},
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {ON = {MESHBITS = 0x03, NAME = "crossbow"},
-                                        OFF = {MESHBITS = 0x01, NAME = "crossbow_lasersight"}},
-    [TEN.Objects.ObjID.HK_ITEM] = {ON = {MESHBITS = 0, NAME = "hk"},
-                                        OFF = {MESHBITS = 0x01, NAME = "hk_lasersight"}}
-}
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {MESHBITS = 0x0B, NAME = "revolver_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_REVOLVER},                            
+    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {MESHBITS = 0x03, NAME = "crossbow_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_CROSSBOW},                          
+    [TEN.Objects.ObjID.HK_ITEM]       = {MESHBITS = 0, NAME = "hk_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_HK},
+    }
 
 local WEAPON_AMMO_LOOKUP = {
     [TEN.Objects.ObjID.PISTOLS_ITEM] = {TEN.Objects.ObjID.PISTOLS_AMMO_ITEM},
@@ -159,24 +158,23 @@ local HEALTH_SET = {
 }
 
 local ItemActionFlags = {
-    -- NOTUSED                 = {bit = 1 << 0, string = "load_game"},
-    EQUIP                   = {bit = ItemAction.EQUIP, string = "equip", action = "Action"},
-    USE                     = {bit = ItemAction.USE, string = "use", action = "Action"},
-    COMBINE                 = {bit = ItemAction.COMBINE, string = "combine", action = "Action"},
-    SEPARATE                = {bit = ItemAction.SEPARATE, string = "separate"},
-    EXAMINE                 = {bit = ItemAction.EXAMINE, string = "examine"},
-    CHOOSE_AMMO_SHOTGUN     = {bit = ItemAction.CHOOSE_AMMO_SHOTGUN, string = "choose_ammo"},
-    CHOOSE_AMMO_CROSSBOW    = {bit = ItemAction.CHOOSE_AMMO_CROSSBOW, string = "choose_ammo"},
-    CHOOSE_AMMO_GRENADEGUN  = {bit = ItemAction.CHOOSE_AMMO_GRENADEGUN, string = "choose_ammo"},
-    CHOOSE_AMMO_UZI         = {bit = ItemAction.CHOOSE_AMMO_UZI, string = "choose_ammo"},
-    CHOOSE_AMMO_PISTOLS     = {bit = ItemAction.CHOOSE_AMMO_PISTOLS, string = "choose_ammo"},
-    CHOOSE_AMMO_REVOLVER    = {bit = ItemAction.CHOOSE_AMMO_REVOLVER, string = "choose_ammo"},
-    LOAD                    = {bit = ItemAction.LOAD, string = "load_game"},
-    SAVE                    = {bit = ItemAction.SAVE, string = "save_game"},
-    CHOOSE_AMMO_HK          = {bit = ItemAction.CHOOSE_AMMO_HK, string = "choose_ammo"},
-    STATISTICS              = {bit = ItemAction.STATISTICS , string = "statistics"},
-    CHOOSE_AMMO_HARPOON     = {bit = ItemAction.CHOOSE_AMMO_HARPOON, string = "choose_ammo"},
-    CHOOSE_AMMO_ROCKET      = {bit = ItemAction.CHOOSE_AMMO_ROCKET, string = "choose_ammo"},
+    {bit = ItemAction.EQUIP, string = "equip", action = "Action"},
+    {bit = ItemAction.USE, string = "use", action = "Action"},
+    {bit = ItemAction.EXAMINE, string = "examine"},
+    {bit = ItemAction.CHOOSE_AMMO_SHOTGUN, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_CROSSBOW, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_GRENADEGUN, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_UZI, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_PISTOLS, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_REVOLVER, string = "choose_ammo"},
+    {bit = ItemAction.LOAD, string = "load_game"},
+    {bit = ItemAction.SAVE, string = "save_game"},
+    {bit = ItemAction.CHOOSE_AMMO_HK, string = "choose_ammo"},
+    {bit = ItemAction.STATISTICS , string = "statistics"},
+    {bit = ItemAction.CHOOSE_AMMO_HARPOON, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_ROCKET, string = "choose_ammo"},
+    {bit = ItemAction.COMBINE, string = "combine", action = "Action"},
+    {bit = ItemAction.SEPARATE, string = "separate"},
 }
 
 --variables
@@ -206,6 +204,9 @@ local previousMode = nil
 local currentRingAngle = 0
 local targetRingAngle = 0
 local direction = 1
+
+local saveList = false
+local saveSelected = false
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -319,6 +320,14 @@ local ShowLevelStats = function(gameStats)
     -- bg:Draw(0, View.AlignMode.CENTER, View.ScaleMode.STRETCH, Effects.BlendID.ADDITIVE)
 end
 
+local GetInventoryItem = function(itemID)
+	local ringIndex, itemIndex = FindItemInInventory(itemID)
+	if not ringIndex or not itemIndex then
+		return nil
+	end
+	return inventory.ring[ringIndex][itemIndex]
+end
+
 local CombineItems = function(item1, item2)
 	
     for _, combo in ipairs(PICKUP_DATA.combineTable) do
@@ -335,12 +344,22 @@ local CombineItems = function(item1, item2)
                 return false
             end
 
+            -- If the combined result is a weapon that supports lasersight, enable it
+            if WEAPON_LASERSIGHT_DATA[result]
+                and WEAPON_SET[result]
+                and WEAPON_SET[result].slot then
+                Lara:SetLaserSight(WEAPON_SET[result].slot, true)
+            end
+
             -- Remove the original items
             TEN.Inventory.TakeItem(item1, 1)
             TEN.Inventory.TakeItem(item2, 1)
 
             -- Add the new combined item
             TEN.Inventory.GiveItem(result, 1)
+
+
+
             combineResult = result
 			return true
 		end
@@ -348,6 +367,86 @@ local CombineItems = function(item1, item2)
 
 	-- No valid combination found
 	return false
+end
+
+local CreateSaveMenu = function(save)
+
+    local headers = Flow:GetSaveHeaders()
+    saveSelected = false
+
+    local items = {}
+
+    for i = 1, #headers do
+        local h = headers[i]
+        local itemText
+
+        if h and h.Present then
+            itemText = string.format("%02d - %s - %02d:%02d:%02d", 
+                h.Count, h.LevelName, h.Hours, h.Minutes, h.Seconds)
+        else
+            itemText = "Empty Slot"
+        end
+
+        table.insert(items, { itemName = itemText })
+
+    end
+
+    if save then
+        Menu.Create("SaveMenu", "save_game", items, "Engine.CustomInventory.DoSave", nil, Menu.Type.ITEMS_ONLY)
+    else
+        Menu.Create("SaveMenu", "load_game", items, "Engine.CustomInventory.DoLoad", nil, Menu.Type.ITEMS_ONLY)
+    end
+
+    local saveMenu = Menu.Get("SaveMenu")
+    saveMenu:SetTransparency(0)
+    saveMenu:SetItemsPosition(Vec2(50, 12))
+    saveMenu:SetTitlePosition(Vec2(50, 4))
+    saveMenu:SetVisibility(true)
+    saveMenu:SetLineSpacing(5.3)
+    saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+    saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
+
+end
+
+LevelFuncs.Engine.CustomInventory.DoSave = function()
+
+    local slot = Menu.Get("SaveMenu"):getCurrentItemIndex() -1
+    Flow.SaveGame(slot)
+    inventoryMode = INVENTORY_MODE.SAVE_CLOSE
+    saveSelected = true
+    Interpolate.Clear("SaveMenu")
+end
+
+LevelFuncs.Engine.CustomInventory.DoLoad = function()
+
+    local slot = Menu.Get("SaveMenu"):getCurrentItemIndex() - 1
+
+    if Flow.DoesSaveGameExist(slot) then
+        Flow.LoadGame(slot)
+        inventoryMode = INVENTORY_MODE.SAVE_CLOSE
+        saveSelected = true
+        Interpolate.Clear("SaveMenu")
+    else
+        PlaySound(SOUND_MAP.PLAYER_NO)
+    end
+
+end
+
+local RunSaveMenu = function()
+
+    local saveMenu = Menu.Get("SaveMenu")
+    local interp = Interpolate.Calculate("SaveMenu", Interpolate.Type.LINEAR, 0, 1, INVENTORY_ANIM_TIME, true)
+    saveMenu:SetTransparency(interp.output)
+    saveMenu:Draw()
+
+end
+
+local CreateItemMenu = function(item)
+
+local menu = {}
+
+
+
 end
 
 local guiIsPulsed = function(actionID)
@@ -464,7 +563,7 @@ local Input = function(mode)
                 inventoryMode = INVENTORY_MODE.RING_CHANGE
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
-        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
+        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) or guiIsPulsed(TEN.Input.ActionID.SELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             
             itemStoreRotations = true
@@ -480,6 +579,8 @@ local Input = function(mode)
                     inventoryMode = INVENTORY_MODE.COMBINE_SETUP
                 elseif hasItemAction(menuActions, ItemAction.STATISTICS) then
                     inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+                elseif hasItemAction(menuActions, ItemAction.SAVE) or hasItemAction(menuActions, ItemAction.LOAD) then
+                    inventoryMode = INVENTORY_MODE.SAVE_SETUP
                 end
             else
                 inventoryMode = INVENTORY_MODE.ITEM_SELECT  
@@ -488,17 +589,16 @@ local Input = function(mode)
         --     TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
         --     itemStoreRotations = true
         --     inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-        elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
+        elseif (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
             TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
-            LevelVars.Engine.CustomInventory.RingClosing = true
             inventoryMode = INVENTORY_MODE.RING_CLOSING
         end
     elseif mode == INVENTORY_MODE.COMBINE then
 
         if guiIsPulsed(TEN.Input.ActionID.LEFT) then
-            DoLeftKey()
+            doLeftKey()
         elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            DoRightKey()
+            doRightKey()
         elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             itemStoreRotations = true
@@ -513,9 +613,15 @@ local Input = function(mode)
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.STATISTICS_CLOSE
         end
+    elseif mode == INVENTORY_MODE.SAVE_MENU then
 
+        if guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            inventoryMode = INVENTORY_MODE.SAVE_CLOSE
+        end
     elseif mode == INVENTORY_MODE.ITEM_SELECTED then
-        
+
+
     elseif mode == INVENTORY_MODE.EXAMINE then
          -- Static variables
         local ROTATION_MULTIPLIER = 2
@@ -602,13 +708,11 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
 
         --Check if laseright is connected and adjust the meshbits and name
-        if type == TYPE.Weapon then
-            if GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
-                meshBits = WEAPON_LASERSIGHT_DATA[objectID.itemID].ON.MESHBITS
-                name = WEAPON_LASERSIGHT_DATA[objectID.itemID].ON.NAME
-            else
-                meshBits = WEAPON_LASERSIGHT_DATA[objectID.itemID].OFF.MESHBITS
-                name = WEAPON_LASERSIGHT_DATA[objectID.itemID].OFF.NAME
+        if type == TYPE.WEAPON then
+            if Lara:GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
+                meshBits = WEAPON_LASERSIGHT_DATA[objectID.itemID].MESHBITS
+                name = WEAPON_LASERSIGHT_DATA[objectID.itemID].NAME
+                menuActions = WEAPON_LASERSIGHT_DATA[objectID.itemID].FLAGS
             end
         end
 
@@ -628,7 +732,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
                 end
 
                 --Check if lasersight is connected and if it is skip adding to the combine table
-                if type == TYPE.Weapon and GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
+                if type == TYPE.WEAPON and Lara:GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
                     goto continue
                 end
 
@@ -876,7 +980,7 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
     ClearInventory(nil, true)
     TEN.DrawItem.SetOpenInventory(NO_VALUE)
-    Interpolate.ClearAllProgress()
+    Interpolate.ClearAll()
     View.SetFOV(80)
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     LevelVars.Engine.CustomInventory.InventoryClosed = true
@@ -898,7 +1002,6 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         currentRingAngle = 0
         targetRingAngle = 0
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
-        LevelVars.Engine.CustomInventory.RingOpening = true
         LevelFuncs.Engine.CustomInventory.ConstructObjectList()
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         OpenInventoryAtItem(inventoryOpenItem)
@@ -918,8 +1021,6 @@ function CustomInventory.Intialize()
 
     LevelVars.Engine.CustomInventory = {}
     LevelVars.Engine.CustomInventory.InventoryOpen = false
-    LevelVars.Engine.CustomInventory.RingOpening = true
-    LevelVars.Engine.CustomInventory.RingClosing = false
     LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
     LevelVars.Engine.CustomInventory.InventoryClosed = false
 
@@ -937,7 +1038,7 @@ end
 local ClearBatchMotionProgress = function(prefix, motionTable)
     for _, motion in ipairs(motionTable) do
         local id = prefix .. motion.key
-        Interpolate.ClearProgress(id)
+        Interpolate.Clear(id)
     end
 end
 
@@ -954,7 +1055,7 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         if motion.start ~= motion.finish then
             local startVal = reverse and motion.finish or motion.start
             local endVal = reverse and motion.start or motion.finish
-            interp = Interpolate.Perform(id, motion.type, startVal, endVal, time, true)
+            interp = Interpolate.Calculate(id, motion.type, startVal, endVal, time, true)
         end
 
         interpolated[motion.key] = interp
@@ -1012,7 +1113,7 @@ local AnimateInventory = function(mode)
     
     local useAnimation = {
         { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
-        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
+        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = EXAMINE_DEFAULT_SCALE },
         { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
         }
     
@@ -1021,13 +1122,6 @@ local AnimateInventory = function(mode)
         { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
         { key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
         { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
-        }
-
-    local combineAnimation = {
-        { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
-        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = ITEM_SELECT_SCALE },
-        { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
-        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN}
         }
 
     local combineClose = {
@@ -1040,8 +1134,6 @@ local AnimateInventory = function(mode)
 
             --set alpha for all rings. This is required to make items in other items visible.
             FadeRings(true, true)
-
-            LevelVars.Engine.CustomInventory.RingOpening = false
             LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
             return true
         end
@@ -1052,8 +1144,6 @@ local AnimateInventory = function(mode)
         FadeRings(false, true)
 
         if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
-
-            LevelVars.Engine.CustomInventory.RingClosing = false
             return true
         end
 
@@ -1093,33 +1183,21 @@ local AnimateInventory = function(mode)
                 return true
             end
         
-    elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
+    elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP then
 
         if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
 
-    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
+    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or mode == INVENTORY_MODE.STATISTICS_CLOSE or mode == INVENTORY_MODE.SAVE_CLOSE then
 
         if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
             return true
         end
 
-    elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
-
-        if PerformBatchMotion("StatisticsOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
-            return true
-        end
-
-    elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
-
-        if PerformBatchMotion("StatisticsClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
-            return true
-        end
-
     elseif mode == INVENTORY_MODE.COMBINE_SETUP then
 
-        if PerformBatchMotion("CombineSetup", combineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("CombineSetup", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
@@ -1129,7 +1207,7 @@ local AnimateInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
-        if PerformBatchMotion("CombineSuccess", combineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("CombineSuccess", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
@@ -1156,7 +1234,6 @@ local AnimateInventory = function(mode)
                 if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
                     ClearBatchMotionProgress("ItemSelect", useAnimation)
                     ClearBatchMotionProgress("ItemDeselect", useAnimation)
-                    LevelVars.Engine.CustomInventory.RingClosing = false
                     return true
                 end
             end
@@ -1187,25 +1264,17 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.RING_OPENING then
         
-        if LevelVars.Engine.CustomInventory.RingOpening == true then
+        if AnimateInventory(mode) then
 
-            if AnimateInventory(mode) then
-
-                inventoryMode = INVENTORY_MODE.INVENTORY
-                
-            end
-
+            inventoryMode = INVENTORY_MODE.INVENTORY
+            
         end
 
     elseif mode == INVENTORY_MODE.RING_CLOSING then
 
-        if LevelVars.Engine.CustomInventory.RingClosing == true then
+        if AnimateInventory(mode) then
 
-            if AnimateInventory(mode) then
-    
-                LevelFuncs.Engine.CustomInventory.ExitInventory()
-
-            end
+            LevelFuncs.Engine.CustomInventory.ExitInventory()
 
         end
 
@@ -1275,6 +1344,29 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
+        end
+        elseif mode == INVENTORY_MODE.SAVE_SETUP then
+        
+        SaveItemRotations(selectedItem)
+
+        if AnimateInventory(mode) then
+            CreateSaveMenu()
+            inventoryMode = INVENTORY_MODE.SAVE_MENU
+        end
+
+    elseif mode == INVENTORY_MODE.SAVE_MENU then
+        
+        RunSaveMenu()
+
+    elseif mode == INVENTORY_MODE.SAVE_CLOSE then
+
+        if AnimateInventory(mode) then
+            if saveSelected then
+                saveSelected = false
+                inventoryMode = INVENTORY_MODE.RING_CLOSING
+            else
+                inventoryMode = INVENTORY_MODE.INVENTORY
+            end
         end
     elseif mode == INVENTORY_MODE.COMBINE_SETUP then
         
@@ -1539,14 +1631,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
     
     local fadeInterpolate
     if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Calculate("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearProgress("FontFade")
+            Interpolate.Clear("FontFade")
         end
     elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Calculate("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearProgress("FontFade")
+            Interpolate.Clear("FontFade")
         end
     else
         fadeInterpolate = {output = 255, progress = 1}
@@ -1724,14 +1816,14 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     local fadeInterpolate = nil
     if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Calculate("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearProgress("FontFade")
+            Interpolate.Clear("FontFade")
         end
     elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-        fadeInterpolate = Interpolate.Perform("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
+        fadeInterpolate = Interpolate.Calculate("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
         if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-            Interpolate.ClearProgress("FontFade")
+            Interpolate.Clear("FontFade")
         end
     else
         fadeInterpolate = {output = 255, progress = 1}
@@ -1739,7 +1831,7 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     local stringTable = {}
 
-    for _, entry in pairs(ItemActionFlags) do
+    for _, entry in ipairs(ItemActionFlags) do
         
         if hasItemAction(GetSelectedItem(selectedRing).menuActions, entry.bit) then
             table.insert(stringTable, GetString(entry.string))

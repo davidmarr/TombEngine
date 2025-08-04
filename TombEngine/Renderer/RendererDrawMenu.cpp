@@ -1249,10 +1249,10 @@ namespace TEN::Renderer
 		// Draw display sprites sorted by priority.
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
-		DrawAllStrings();
 		g_DrawItems.Draw();
 		DrawDisplaySprites(_gameCamera, true);
-
+		DrawAllStrings();
+		
 		ClearScene();
 
 		_context->ClearState();

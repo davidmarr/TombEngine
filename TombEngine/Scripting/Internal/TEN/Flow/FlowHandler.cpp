@@ -672,17 +672,17 @@ sol::table FlowHandler::GetSaveHeaders(sol::this_state state)
 
 	for (int i = 0; i < SAVEGAME_MAX; ++i)
 	{	
-		const SaveGameHeader& h = SaveGame::Infos[i];
+		const SaveGameHeader& header = SaveGame::Infos[i];
 
 		sol::table headerTable = lua.create_table();
-		headerTable["LevelName"] = h.LevelName;
-		headerTable["Hours"] = h.Hours;
-		headerTable["Minutes"] = h.Minutes;
-		headerTable["Seconds"] = h.Seconds;
-		headerTable["Level"] = h.Level;
-		headerTable["Timer"] = h.Timer;
-		headerTable["Count"] = h.Count;
-		headerTable["Present"] = h.Present;
+		headerTable["LevelName"] = header.LevelName;
+		headerTable["Hours"] = header.Hours;
+		headerTable["Minutes"] = header.Minutes;
+		headerTable["Seconds"] = header.Seconds;
+		headerTable["Level"] = header.Level;
+		headerTable["Timer"] = header.Timer;
+		headerTable["Count"] = header.Count;
+		headerTable["Present"] = header.Present;
 
 		headersTable[i + 1] = headerTable;
 	}

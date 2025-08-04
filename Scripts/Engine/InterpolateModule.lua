@@ -3,7 +3,7 @@ local Interpolate = {}
 -- Internal motion progress tracker
 local motionProgress = {}
 
--- Expose motion type enum
+-- Type of interpolation to perform
 Interpolate.Type = {
     LINEAR   = 1,
     VEC2     = 2,
@@ -12,8 +12,9 @@ Interpolate.Type = {
     COLOR    = 5
 }
 
--- Perform single motion
-function Interpolate.Perform(name, dataType, oldValue, newValue, time, smooth)
+-- Perform single interpolation
+function Interpolate.Calculate(name, dataType, oldValue, newValue, time, smooth)
+    
     if motionProgress[name] == nil then
         motionProgress[name] = 0
     end
@@ -57,14 +58,14 @@ function Interpolate.Perform(name, dataType, oldValue, newValue, time, smooth)
 end
 
 -- Clear motion progress by name
-function Interpolate.ClearProgress(name)
+function Interpolate.Clear(name)
     if motionProgress[name] and motionProgress[name] >= 1 then
         motionProgress[name] = nil
     end
 end
 
 -- Clear progress for all
-function Interpolate.ClearAllProgress()
+function Interpolate.ClearAll()
     motionProgress = {}
 end
 
