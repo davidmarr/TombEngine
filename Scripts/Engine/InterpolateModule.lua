@@ -13,7 +13,7 @@ Interpolate.Type = {
 }
 
 -- Perform single motion
-function Interpolate.PerformMotion(name, dataType, oldValue, newValue, time, smooth)
+function Interpolate.Perform(name, dataType, oldValue, newValue, time, smooth)
     if motionProgress[name] == nil then
         motionProgress[name] = 0
     end
@@ -57,7 +57,7 @@ function Interpolate.PerformMotion(name, dataType, oldValue, newValue, time, smo
 end
 
 -- Clear motion progress by name
-function Interpolate.ClearMotionProgress(name)
+function Interpolate.ClearProgress(name)
     if motionProgress[name] and motionProgress[name] >= 1 then
         motionProgress[name] = nil
     end

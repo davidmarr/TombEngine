@@ -666,6 +666,8 @@ void FlowHandler::AddSecret(int levelSecretIndex)
 sol::table FlowHandler::GetSaveHeaders(sol::this_state state)
 {	
 	sol::state_view lua(state);
+
+	SaveGame::LoadHeaders();
 	auto headersTable = lua.create_table();
 
 	for (int i = 0; i < SAVEGAME_MAX; ++i)
