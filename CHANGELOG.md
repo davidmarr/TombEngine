@@ -15,6 +15,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed projectile weapon hits not registering in statistics and collision callbacks.
 * Fixed incorrect distance checks on very large room coordinates which could have caused random Lara teleportations.
 * Fixed firearms bullet range limited to targeting range.
+* Fixed significantly worse firearm accuracy compared to the original engines.
 * Fixed pistols not allowing to spam fire in untargeted mode.
 * Fixed random crashes and visual issues with exploding body part effects.
 * Fixed random crashes when spawning or killing enemies.
