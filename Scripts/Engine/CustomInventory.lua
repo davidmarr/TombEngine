@@ -371,61 +371,119 @@ end
 
 local CreateSaveMenu = function(save)
 
+    print(save)
+    local textPosition = {
+        Vec2(10, 12),
+        Vec2(20, 12),
+        Vec2(75, 12)
+    }
+
+    local saveTitleText = {
+        nil,
+        "save_game", 
+        nil
+    }
+
+    local loadTitleText = {
+        nil,
+        "load_game", 
+        nil
+    }
+
+    local saveFunctions = {
+        nil,
+        "Engine.CustomInventory.DoSave", 
+        nil
+    }
+
+    local loadFunctions = {
+        nil,
+        "Engine.CustomInventory.DoLoad", 
+        nil
+    }
+
+    local itemFlags = {Strings.DisplayStringOption.SHADOW}
+
+    local selectedFlags = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW}
+
     local headers = Flow:GetSaveHeaders()
     saveSelected = false
 
-    local items = {}
+    local items = {
+        [1] = {},
+        [2] = {},
+        [3] = {}
+    }
 
     for i = 1, #headers do
         local h = headers[i]
-        local itemText
+        local itemText1
+        local itemText2
+        local itemText3
 
         if h and h.Present then
-            itemText = string.format("%02d - %s - %02d:%02d:%02d", 
-                h.Count, h.LevelName, h.Hours, h.Minutes, h.Seconds)
+            itemText1 = string.format("%02d", h.Count)
+            itemText2 = string.format("%s", h.LevelName)
+            itemText3 = string.format("%02d:%02d:%02d", h.Hours, h.Minutes, h.Seconds)
         else
-            itemText = "Empty Slot"
+            itemText1 = ""
+            itemText2 = "Empty Slot"
+            itemText3 = ""
         end
 
-        table.insert(items, { itemName = itemText })
+        table.insert(items[1], { itemName = itemText1 })
+        table.insert(items[2], { itemName = itemText2 })
+        table.insert(items[3], { itemName = itemText3 })
 
     end
 
     if save then
-        Menu.Create("SaveMenu", "save_game", items, "Engine.CustomInventory.DoSave", nil, Menu.Type.ITEMS_ONLY)
+        for index in ipairs(items) do
+            Menu.Create("SaveMenu"..index, saveTitleText[index], items[index], saveFunctions[index], nil, Menu.Type.ITEMS_ONLY)
+        end 
     else
-        Menu.Create("SaveMenu", "load_game", items, "Engine.CustomInventory.DoLoad", nil, Menu.Type.ITEMS_ONLY)
+        for index in ipairs(items) do
+            Menu.Create("SaveMenu"..index, loadTitleText[index], items[index], loadFunctions[index], nil, Menu.Type.ITEMS_ONLY)
+        end 
     end
 
-    local saveMenu = Menu.Get("SaveMenu")
-    saveMenu:SetTransparency(0)
-    saveMenu:SetItemsPosition(Vec2(50, 12))
-    saveMenu:SetTitlePosition(Vec2(50, 4))
-    saveMenu:SetVisibility(true)
-    saveMenu:SetLineSpacing(5.3)
-    saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
+    for index = 1, 3 do
+        local saveMenu = Menu.Get("SaveMenu"..index)
+        saveMenu:SetItemsPosition(textPosition[index])
+        saveMenu:SetTitlePosition(Vec2(50, 4))
+        saveMenu:SetVisibility(true)
+        saveMenu:SetLineSpacing(5.3)
+        saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags)
+        saveMenu:SetSelectedItemFlags(selectedFlags)
+        saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
+    end 
 
 end
 
 LevelFuncs.Engine.CustomInventory.DoSave = function()
 
-    local slot = Menu.Get("SaveMenu"):getCurrentItemIndex() -1
+    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex() -1
     Flow.SaveGame(slot)
     inventoryMode = INVENTORY_MODE.SAVE_CLOSE
     saveSelected = true
-    Interpolate.Clear("SaveMenu")
+
+    for index = 1, 3 do
+        Interpolate.Clear("SaveMenu"..index)
+    end 
+
 end
 
 LevelFuncs.Engine.CustomInventory.DoLoad = function()
 
-    local slot = Menu.Get("SaveMenu"):getCurrentItemIndex() - 1
+    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex() - 1
 
     if Flow.DoesSaveGameExist(slot) then
         Flow.LoadGame(slot)
         inventoryMode = INVENTORY_MODE.SAVE_CLOSE
         saveSelected = true
-        Interpolate.Clear("SaveMenu")
+        for index = 1, 3 do
+            Interpolate.Clear("SaveMenu"..index)
+        end 
     else
         PlaySound(SOUND_MAP.PLAYER_NO)
     end
@@ -434,10 +492,10 @@ end
 
 local RunSaveMenu = function()
 
-    local saveMenu = Menu.Get("SaveMenu")
-    local interp = Interpolate.Calculate("SaveMenu", Interpolate.Type.LINEAR, 0, 1, INVENTORY_ANIM_TIME, true)
-    saveMenu:SetTransparency(interp.output)
-    saveMenu:Draw()
+    for index = 1, 3 do
+        local saveMenu = Menu.Get("SaveMenu"..index)
+        saveMenu:Draw()
+    end 
 
 end
 
@@ -521,6 +579,26 @@ local ClearInventory = function(ringName, clearDrawItems)
 
 end
 
+local ParseMenuAction = function(menuActions)
+
+    if hasItemAction(menuActions, ItemAction.USE) or hasItemAction(menuActions, ItemAction.EQUIP) then
+        inventoryMode = INVENTORY_MODE.ITEM_USE
+    elseif hasItemAction(menuActions, ItemAction.EXAMINE) then
+        inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+    elseif hasItemAction(menuActions, ItemAction.COMBINE) then
+        inventoryMode = INVENTORY_MODE.COMBINE_SETUP
+    elseif hasItemAction(menuActions, ItemAction.STATISTICS) then
+        inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+    elseif hasItemAction(menuActions, ItemAction.SAVE) then
+        saveList = true
+        inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    elseif hasItemAction(menuActions, ItemAction.LOAD) then
+        saveList = false
+        inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    end
+
+end
+
 local doLeftKey = function()
     local inventoryTable = inventory.ring[selectedRing]
     inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
@@ -571,17 +649,7 @@ local Input = function(mode)
             local menuActions = GetSelectedItem(selectedRing).menuActions
             --if the item has single action, proceed with direct action for items like medipack and flares.
             if isSingleFlagSet(menuActions) then  
-                if hasItemAction(menuActions, ItemAction.USE) or hasItemAction(menuActions, ItemAction.EQUIP) then
-                    inventoryMode = INVENTORY_MODE.ITEM_USE
-                elseif hasItemAction(menuActions, ItemAction.EXAMINE) then
-                    inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-                elseif hasItemAction(menuActions, ItemAction.COMBINE) then
-                    inventoryMode = INVENTORY_MODE.COMBINE_SETUP
-                elseif hasItemAction(menuActions, ItemAction.STATISTICS) then
-                    inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
-                elseif hasItemAction(menuActions, ItemAction.SAVE) or hasItemAction(menuActions, ItemAction.LOAD) then
-                    inventoryMode = INVENTORY_MODE.SAVE_SETUP
-                end
+                ParseMenuAction(menuActions)
             else
                 inventoryMode = INVENTORY_MODE.ITEM_SELECT  
             end
@@ -1006,7 +1074,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         OpenInventoryAtItem(inventoryOpenItem)
     else
-        LevelFuncs.Engine.CustomInventory.DrawInventoryText()
+        --LevelFuncs.Engine.CustomInventory.DrawInventoryText()
         Input(inventoryMode)
         LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
@@ -1350,7 +1418,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         SaveItemRotations(selectedItem)
 
         if AnimateInventory(mode) then
-            CreateSaveMenu()
+            CreateSaveMenu(saveList)
             inventoryMode = INVENTORY_MODE.SAVE_MENU
         end
 
