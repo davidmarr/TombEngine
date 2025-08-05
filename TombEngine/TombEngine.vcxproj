@@ -927,6 +927,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Specific\IO\ChunkReader.h" />
     <ClInclude Include="Specific\IO\ChunkWriter.h" />
     <ClInclude Include="Specific\IO\LEB128.h" />
+    <ClInclude Include="Specific\IO\lz4.h" />
     <ClInclude Include="Specific\IO\Streams.h" />
     <ClInclude Include="Specific\Input\Input.h" />
     <ClInclude Include="Specific\Input\InputAction.h" />
@@ -1367,6 +1368,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Specific\Input\Keys.cpp" />
     <ClCompile Include="Specific\IO\ChunkId.cpp" />
     <ClCompile Include="Specific\IO\ChunkReader.cpp" />
+    <ClCompile Include="Specific\IO\lz4.cpp" />
     <ClCompile Include="Specific\IO\Streams.cpp" />
     <ClCompile Include="Specific\level.cpp" />
     <ClCompile Include="Specific\Parallel.cpp" />
