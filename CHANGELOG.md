@@ -5,6 +5,9 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.9.2]
 
+## New features
+* Added final shot before death for TROOPS and SAS slots, if Lara is in sight.
+
 ### Bug fixes
 * Fixed inability to perform backjumps or grabs after climbing onto a triangular slope.
 * Fixed ROLLINGBALL not stopped by full walls.
