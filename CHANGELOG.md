@@ -22,6 +22,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed HUD bars displaying incorrect update animation after loading savegame.
 * Fixed slowdowns and freezes when too many sounds are playing.
 * Fixed Doppler effect not applied to sounds.
+* Fixed incorrect cropping for video textures.
 
 ### Lua API changes
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
