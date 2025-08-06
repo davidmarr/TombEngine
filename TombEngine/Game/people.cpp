@@ -206,11 +206,7 @@ void PerformFinalAttack(ItemInfo& item, const CreatureBiteInfo& bite, int headBo
 		if (frameNumber == frameBase + interval * i)
 		{
 			// Decrease shot count.
-			item.ItemFlags[FINAL_SHOT_FLAG_INDEX]--; 
-
-			// No more shots left.
-			if (item.ItemFlags[FINAL_SHOT_FLAG_INDEX] <= 0)
-				return;
+			item.ItemFlags[FINAL_SHOT_FLAG_INDEX]--;
 
 			doShot = true;
 			break;
