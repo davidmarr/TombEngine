@@ -15,8 +15,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed undead enemies not killed in a proper way by vehicles.
 * Fixed smoke emitters crashing the game if placed underwater with OCB 0.
 * Fixed puzzle holes losing collision after inserting puzzle items.
-* Fixed projectile weapon hits not registering in statistics and collision callbacks.
 * Fixed incorrect distance checks on very large room coordinates which could have caused random Lara teleportations.
+* Fixed projectile weapon hits not registering in statistics and collision callbacks.
 * Fixed firearms bullet range limited to targeting range.
 * Fixed significantly worse firearm accuracy compared to the original engines.
 * Fixed pistols not allowing to spam fire in untargeted mode.
@@ -27,6 +27,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed slowdowns and freezes when too many sounds are playing.
 * Fixed Doppler effect not applied to sounds.
 * Fixed incorrect cropping for video textures.
+* Fixed overbright ambient light not applied correctly to moveables.
 
 ### Lua API changes
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
