@@ -75,6 +75,7 @@ namespace TEN::Renderer
 			set.NumTextures = sequence.NumFrames;
 			set.Type = (AnimatedTextureType)sequence.Type;
 			set.Fps = sequence.Fps;
+			set.UVRotateSpeed = sequence.UVRotateSpeed;
 			set.UVRotateDirection = (UVRotateDirection)sequence.UVRotate;
 
 			std::transform(sequence.Frames.begin(), sequence.Frames.end(), std::back_inserter(set.Textures), [](ANIMATED_TEXTURES_FRAME& frm)

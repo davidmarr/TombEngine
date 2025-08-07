@@ -14,38 +14,32 @@ cbuffer AnimatedBuffer : register(b6)
 	unsigned int Type;
     unsigned int Animated;
     float2 UVRotateDirection;
+    float UVRotateSpeed;
 }
 
 float2 CalculateUVRotate(float2 uv, unsigned int frame)
 {
-	if (FPS == 0)
-	{
-		return uv;
-	}
-	else
-	{
-		const float epsilon = 0.001f;
+    if (UVRotateSpeed <= 0.0f)
+        return uv;
 
-        AnimatedFrameUV f = AnimFrames[frame];
+    const float epsilon = 0.001f;
 
-        float2 minUV = min(min(f.TopLeft, f.TopRight), min(f.BottomLeft, f.BottomRight));
-        float2 maxUV = max(max(f.TopLeft, f.TopRight), max(f.BottomLeft, f.BottomRight));
-        float2 uvSize = maxUV - minUV;
+    AnimatedFrameUV f = AnimFrames[frame];
 
-        float2 localUV = (uv - minUV) / uvSize;
+    float2 minUV = min(min(f.TopLeft, f.TopRight), min(f.BottomLeft, f.BottomRight));
+    float2 maxUV = max(max(f.TopLeft, f.TopRight), max(f.BottomLeft, f.BottomRight));
+    float2 uvSize = maxUV - minUV;
 
-        float relPos = (InterpolatedFrame % FPS) / (float) FPS;
-        float2 scrollOffset = -UVRotateDirection * relPos;
+    float2 localUV = (uv - minUV) / uvSize;
+	
+    float relPos = InterpolatedFrame * UVRotateSpeed / 30.0f;
+	
+    float2 scrolledUV = uv + (-UVRotateDirection * relPos * uvSize);
+	
+    scrolledUV = frac(scrolledUV);
+    scrolledUV = clamp(scrolledUV, epsilon, 1.0f - epsilon);
 
-        localUV = frac(localUV + scrollOffset);
-
-        localUV = clamp(localUV, epsilon, 1.0f - epsilon);
-
-        float2 scrolledUV = minUV + localUV * uvSize;
-
-        return scrolledUV;
-		
-	}
+    return scrolledUV;
 }
 
 float2 GetFrame(unsigned int index, unsigned int offset)

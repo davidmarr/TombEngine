@@ -2431,7 +2431,7 @@ namespace TEN::Renderer
 				case ID_WATERFALL6:
 				case ID_WATERFALLSS1:
 				case ID_WATERFALLSS2:
-					DrawWaterfalls(itemToDraw, view, 10, rendererPass);
+					DrawWaterfalls(itemToDraw, view, 0.5f, rendererPass);
 					continue;
 
 				default:
@@ -2454,7 +2454,7 @@ namespace TEN::Renderer
 		}
 	}
 
-	void Renderer::DrawWaterfalls(RendererItem* item, RenderView& view, int fps, RendererPass rendererPass)
+	void Renderer::DrawWaterfalls(RendererItem* item, RenderView& view, float speed, RendererPass rendererPass)
 	{
 		// Extremely hacky function to get first rendered face of a waterfall object mesh, calculate
 		// its texture height and scroll all the textures according to that height.
@@ -2477,10 +2477,11 @@ namespace TEN::Renderer
 		auto maxX = std::max(std::max(v1.UV.x, v2.UV.x), v3.UV.x);
 		  
 		// Setup animated buffer
-		_stAnimated.Fps = fps;
+		_stAnimated.Fps = 60;
 		_stAnimated.NumFrames = 1;
 		_stAnimated.Type = 1; // UVRotate
 		_stAnimated.UVRotateDirection = Vector2(0.0f, 1.0f);
+		_stAnimated.UvRotateSpeed = speed;
 
 		// We need only top/bottom Y coordinate for UVRotate, but we pass whole
 		// rectangle anyway, in case later we may want to implement different UVRotate modes.
@@ -4100,7 +4101,7 @@ namespace TEN::Renderer
 
 			// Use normalized UVs, because we are showing the whole video texture on a single face.
 			_stAnimated.Textures[0].TopLeft = set.Textures[0].NormalizedUV[0];
-			_stAnimated.Textures[0].TopRight = set.Textures[0].NormalizedUV[1];
+			_stAnimated.Textures[0].TopRight = set.Textures[0].NormalizedUV[1]; 
 			_stAnimated.Textures[0].BottomRight = set.Textures[0].NormalizedUV[2];
 			_stAnimated.Textures[0].BottomLeft = set.Textures[0].NormalizedUV[3];
 		} 
@@ -4108,13 +4109,14 @@ namespace TEN::Renderer
 		{
 			_stAnimated.Type = (int)set.Type;
 			_stAnimated.Fps = set.Fps;
-			_stAnimated.NumFrames = 1;
-			
+			_stAnimated.UvRotateSpeed = set.UVRotateSpeed; 
+			_stAnimated.NumFrames = 1; 
+			  
 			_stAnimated.Textures[0].TopLeft = set.Textures[0].UV[0];
 			_stAnimated.Textures[0].TopRight = set.Textures[0].UV[1];
 			_stAnimated.Textures[0].BottomRight = set.Textures[0].UV[2];
 			_stAnimated.Textures[0].BottomLeft = set.Textures[0].UV[3];
-			_stAnimated.Animated = 1;
+			_stAnimated.Animated = 1;  
 
 			switch (set.UVRotateDirection)
 			{

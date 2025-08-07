@@ -50,6 +50,7 @@ struct ANIMATED_TEXTURES_SEQUENCE
 	int Fps;
 	int NumFrames;
 	int UVRotate;
+	float UVRotateSpeed;
 	std::vector<ANIMATED_TEXTURES_FRAME> Frames;
 };
 

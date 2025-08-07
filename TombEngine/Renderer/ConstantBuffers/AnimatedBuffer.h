@@ -25,5 +25,6 @@ namespace TEN::Renderer::ConstantBuffers
 		uint32_t Type;
 		uint32_t Animated;
 		Vector2 UVRotateDirection;
+		float UvRotateSpeed;
 	};
 }
