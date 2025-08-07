@@ -308,7 +308,7 @@ namespace TEN::Hud
 		_inventoryOverride = value;
 
 	}
-
+	//rename to item
 	int DrawItemsController::GetInventoryOpenStatus() const
 	{
 		return _openInventory;

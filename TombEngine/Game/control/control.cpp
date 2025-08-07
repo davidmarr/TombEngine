@@ -813,13 +813,13 @@ GameStatus HandleMenuCalls(bool isTitle)
 	bool doInventory = (IsClicked(In::Inventory) || g_Gui.GetEnterInventory() != NO_VALUE) && playerAlive;
 
 	// Handle inventory.
-	if (doSave && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasSave && g_Gui.GetInventoryMode() != InventoryMode::Save)
+	if (doSave && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasSave && g_Gui.GetInventoryMode() != InventoryMode::Save && !g_DrawItems.GetInventoryOverride())
 	{
 		SaveGame::LoadHeaders();
 		g_Gui.SetInventoryMode(InventoryMode::Save);
 		g_Gui.CallInventory(LaraItem, false);
 	}
-	else if (doLoad && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasLoad && g_Gui.GetInventoryMode() != InventoryMode::Load)
+	else if (doLoad && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasLoad && g_Gui.GetInventoryMode() != InventoryMode::Load && !g_DrawItems.GetInventoryOverride())
 	{
 		SaveGame::LoadHeaders();
 		g_Gui.SetInventoryMode(InventoryMode::Load);

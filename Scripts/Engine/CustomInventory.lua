@@ -371,40 +371,55 @@ end
 
 local CreateSaveMenu = function(save)
 
-    print(save)
     local textPosition = {
         Vec2(10, 12),
         Vec2(20, 12),
-        Vec2(75, 12)
+        Vec2(75, 12),
+        Vec2(50, 12),
     }
 
     local saveTitleText = {
         nil,
         "save_game", 
+        nil,
         nil
     }
 
     local loadTitleText = {
         nil,
         "load_game", 
+        nil,
         nil
     }
 
     local saveFunctions = {
         nil,
         "Engine.CustomInventory.DoSave", 
+        nil,
         nil
     }
 
     local loadFunctions = {
         nil,
         "Engine.CustomInventory.DoLoad", 
+        nil,
         nil
     }
 
-    local itemFlags = {Strings.DisplayStringOption.SHADOW}
+    local soundMap = {
+    [1] = { select = nil, choose = nil },
+    [2] = { select = SOUND_MAP.MENU_SELECT, choose = SOUND_MAP.MENU_CHOOSE },
+    [3] = { select = nil, choose = nil },
+    [4] = { select = nil, choose = nil}
+    }
 
-    local selectedFlags = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW}
+    local itemFlag = {Strings.DisplayStringOption.SHADOW}
+    local selectedFlag = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW}
+
+
+    local itemFlags = {itemFlag, itemFlag, itemFlag, {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}}
+
+    local selectedFlags = {selectedFlag, selectedFlag,  selectedFlag, {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}}
 
     local headers = Flow:GetSaveHeaders()
     saveSelected = false
@@ -412,7 +427,8 @@ local CreateSaveMenu = function(save)
     local items = {
         [1] = {},
         [2] = {},
-        [3] = {}
+        [3] = {},
+        [4] = {}
     }
 
     for i = 1, #headers do
@@ -420,21 +436,24 @@ local CreateSaveMenu = function(save)
         local itemText1
         local itemText2
         local itemText3
+        local itemText4
 
         if h and h.Present then
             itemText1 = string.format("%02d", h.Count)
             itemText2 = string.format("%s", h.LevelName)
             itemText3 = string.format("%02d:%02d:%02d", h.Hours, h.Minutes, h.Seconds)
+            itemText4 = ""
         else
             itemText1 = ""
-            itemText2 = "Empty Slot"
+            itemText2 = ""
             itemText3 = ""
+            itemText4 = "empty"
         end
 
         table.insert(items[1], { itemName = itemText1 })
         table.insert(items[2], { itemName = itemText2 })
         table.insert(items[3], { itemName = itemText3 })
-
+        table.insert(items[4], { itemName = itemText4 })
     end
 
     if save then
@@ -447,15 +466,22 @@ local CreateSaveMenu = function(save)
         end 
     end
 
-    for index = 1, 3 do
+    for index = 1, 4 do
+
         local saveMenu = Menu.Get("SaveMenu"..index)
+        
+        local translate = false
+        if index == 4 then  translate = true end
+        
         saveMenu:SetItemsPosition(textPosition[index])
         saveMenu:SetTitlePosition(Vec2(50, 4))
         saveMenu:SetVisibility(true)
         saveMenu:SetLineSpacing(5.3)
-        saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags)
-        saveMenu:SetSelectedItemFlags(selectedFlags)
+        saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags[index])
+        saveMenu:SetSelectedItemFlags(selectedFlags[index])
         saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
+        saveMenu:SetItemsTranslate(translate)
+        saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
     end 
 
 end
@@ -467,7 +493,7 @@ LevelFuncs.Engine.CustomInventory.DoSave = function()
     inventoryMode = INVENTORY_MODE.SAVE_CLOSE
     saveSelected = true
 
-    for index = 1, 3 do
+    for index = 1, 4 do
         Interpolate.Clear("SaveMenu"..index)
     end 
 
@@ -481,18 +507,18 @@ LevelFuncs.Engine.CustomInventory.DoLoad = function()
         Flow.LoadGame(slot)
         inventoryMode = INVENTORY_MODE.SAVE_CLOSE
         saveSelected = true
-        for index = 1, 3 do
+        for index = 1, 4 do
             Interpolate.Clear("SaveMenu"..index)
         end 
     else
-        PlaySound(SOUND_MAP.PLAYER_NO)
+        TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
     end
 
 end
 
 local RunSaveMenu = function()
 
-    for index = 1, 3 do
+    for index = 1, 4 do
         local saveMenu = Menu.Get("SaveMenu"..index)
         saveMenu:Draw()
     end 
@@ -992,6 +1018,13 @@ local OpenInventoryAtItem = function(itemID)
         TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
 	end
 
+    if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
+        if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM then
+            saveList = true
+        end
+        inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    end
+
 end
 
 local SetupSecondaryRing = function(ringName)
@@ -1020,6 +1053,18 @@ LevelFuncs.Engine.CustomInventory.StartInventory = function()
     if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
         LevelVars.Engine.CustomInventory.InventoryOpen = true
         inventoryOpenItem = TEN.DrawItem.GetOpenInventory()
+        inventoryDelay = 0
+    end
+
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.SAVE) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and playerHp and isNotUsingBinoculars  then
+        LevelVars.Engine.CustomInventory.InventoryOpen = true
+        inventoryOpenItem = TEN.Objects.ObjID.PC_SAVE_INV_ITEM
+        inventoryDelay = 0
+    end
+
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.LOAD) or TEN.DrawItem.GetOpenInventory() ~= NO_VALUE) and not LevelVars.Engine.CustomInventory.InventoryOpen and isNotUsingBinoculars  then
+        LevelVars.Engine.CustomInventory.InventoryOpen = true
+        inventoryOpenItem = TEN.Objects.ObjID.PC_LOAD_INV_ITEM
         inventoryDelay = 0
     end
 
