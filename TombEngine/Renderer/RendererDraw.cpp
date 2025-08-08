@@ -4120,17 +4120,29 @@ namespace TEN::Renderer
 
 			switch (set.UVRotateDirection)
 			{
-			case UVRotateDirection::TopToBottom:
+			case UVRotateDirection::T_B:
 				_stAnimated.UVRotateDirection = Vector2(0.0f, 1.0f);
 				break;
-			case UVRotateDirection::BottomToTop:
+			case UVRotateDirection::B_T:
 				_stAnimated.UVRotateDirection = Vector2(0.0f, -1.0f);
 				break;
-			case UVRotateDirection::LeftToRight:
+			case UVRotateDirection::L_R:
 				_stAnimated.UVRotateDirection = Vector2(1.0f, 0.0f);
 				break;
-			case UVRotateDirection::RightToLeft:  
+			case UVRotateDirection::R_L:  
 				_stAnimated.UVRotateDirection = Vector2(-1.0f, 0.0f);
+				break;
+			case UVRotateDirection::TL_BR:
+				_stAnimated.UVRotateDirection = Vector2(1.0f, 1.0f);
+				break;
+			case UVRotateDirection::TR_BL:
+				_stAnimated.UVRotateDirection = Vector2(-1.0f, 1.0f);
+				break;
+			case UVRotateDirection::BR_TL:
+				_stAnimated.UVRotateDirection = Vector2(-1.0f, -1.0f);
+				break;
+			case UVRotateDirection::BL_TR:
+				_stAnimated.UVRotateDirection = Vector2(1.0f, -1.0f);
 				break;
 			}
 

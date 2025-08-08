@@ -8,10 +8,14 @@ namespace TEN::Renderer::Structures
 
 	enum class UVRotateDirection
 	{
-		TopToBottom,
-		RightToLeft,
-		BottomToTop,
-		LeftToRight
+		T_B,
+		R_L,
+		B_T,
+		L_R,
+		TL_BR,
+		TR_BL,
+		BR_TL,
+		BL_TR
 	};
 
 	enum class AnimatedTextureType
