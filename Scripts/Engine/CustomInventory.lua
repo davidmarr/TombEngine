@@ -24,7 +24,7 @@ local ITEM_END = Vec3(0,0,400)
 local RING_POSITION_OFFSET = 1000
 local PROGRESS_COMPLETE = 1
 local EXAMINE_DEFAULT_SCALE = 1
-local EXAMINE_MIN_SCALE = 0.8
+local EXAMINE_MIN_SCALE = 0.3
 local EXAMINE_MAX_SCALE = 1.6
 local EXAMINE_TEXT_POS = Vec2(50, 80)
 local ALPHA_MAX = 255
@@ -195,6 +195,7 @@ local performCombine = false
 --Structure for inventory
 local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
 local inventoryOpenItem = nil
+local inventoryStart = true
 local selectedRing = RING.MAIN
 local previousRing = nil
 local timeInMenu = 0
@@ -320,6 +321,17 @@ local ShowLevelStats = function(gameStats)
     -- bg:Draw(0, View.AlignMode.CENTER, View.ScaleMode.STRETCH, Effects.BlendID.ADDITIVE)
 end
 
+local FindItemInInventory = function(targetID)
+    for ringIndex, ring in pairs(inventory.ring) do
+        for itemIndex, itemEntry in ipairs(ring) do
+            if itemEntry.item == targetID then
+                return ringIndex, itemIndex
+            end
+        end
+    end
+    return nil, nil -- not found
+end
+
 local GetInventoryItem = function(itemID)
 	local ringIndex, itemIndex = FindItemInInventory(itemID)
 	if not ringIndex or not itemIndex then
@@ -422,7 +434,6 @@ local CreateSaveMenu = function(save)
     local selectedFlags = {selectedFlag, selectedFlag,  selectedFlag, {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}}
 
     local headers = Flow:GetSaveHeaders()
-    saveSelected = false
 
     local items = {
         [1] = {},
@@ -525,13 +536,42 @@ local RunSaveMenu = function()
 
 end
 
-local CreateItemMenu = function(item)
-
-local menu = {}
-
+LevelFuncs.Engine.CustomInventory.DoItemAction = function()
 
 
 end
+
+local CreateItemMenu = function(item)
+
+    local menuActions = {}
+    local itemMenuActions = GetInventoryItem(item).menuActions
+
+    for _, entry in ipairs(ItemActionFlags) do
+        if hasItemAction(itemMenuActions, entry.bit) then
+            table.insert(menuActions, {
+                itemName = GetString(entry.string),
+                options = nil,
+                currentOption = 1
+            })
+        end
+    end
+
+    local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.CustomInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
+
+    itemMenu:SetItemsPosition(Vec2(50, 35))
+    itemMenu:SetVisibility(true)
+    itemMenu:SetLineSpacing(5.3)
+    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+
+end
+
+local ShowItemMenu = function()
+
+    local itemMenu = Menu.Get("menuActions")
+    itemMenu:Draw()
+
+end
+
 
 local guiIsPulsed = function(actionID)
 
@@ -679,10 +719,6 @@ local Input = function(mode)
             else
                 inventoryMode = INVENTORY_MODE.ITEM_SELECT  
             end
-        -- elseif guiIsPulsed(TEN.Input.ActionID.DRAW) then
-        --     TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-        --     itemStoreRotations = true
-        --     inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
         elseif (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
             TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
             inventoryMode = INVENTORY_MODE.RING_CLOSING
@@ -703,18 +739,21 @@ local Input = function(mode)
         end
     elseif mode == INVENTORY_MODE.STATISTICS then
 
-        if guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+        if (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.STATISTICS_CLOSE
         end
     elseif mode == INVENTORY_MODE.SAVE_MENU then
 
-        if guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+        if (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.SAVE_CLOSE
         end
     elseif mode == INVENTORY_MODE.ITEM_SELECTED then
-
+        if (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            inventoryMode = INVENTORY_MODE.ITEM_DESELECT
+        end
 
     elseif mode == INVENTORY_MODE.EXAMINE then
          -- Static variables
@@ -979,16 +1018,6 @@ local RotateItem = function(item)
     TEN.DrawItem.SetItemRotation(item, Rotation(itemRotation.x, (itemRotation.y + ROTATION_SPEED) % 360, itemRotation.z))
 end
 
-local FindItemInInventory = function(targetID)
-    for ringIndex, ring in pairs(inventory.ring) do
-        for itemIndex, itemEntry in ipairs(ring) do
-            if itemEntry.item == targetID then
-                return ringIndex, itemIndex
-            end
-        end
-    end
-    return nil, nil -- not found
-end
 
 local OpenInventoryAtItem = function(itemID)
 
@@ -1018,11 +1047,12 @@ local OpenInventoryAtItem = function(itemID)
         TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
 	end
 
+    --Hack for save menu loading
     if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
         if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM then
-            saveList = true
+            saveList = true  
         end
-        inventoryMode = INVENTORY_MODE.SAVE_SETUP
+        saveSelected = true
     end
 
 end
@@ -1039,8 +1069,63 @@ local SetupSecondaryRing = function(ringName)
 
 end
 
+LevelFuncs.Engine.CustomInventory.ExitInventory = function()
 
-LevelFuncs.Engine.CustomInventory.StartInventory = function()
+    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
+    ClearInventory(nil, true)
+    TEN.DrawItem.SetOpenInventory(NO_VALUE)
+    Interpolate.ClearAll()
+    View.SetFOV(80)
+    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
+    LevelVars.Engine.CustomInventory.InventoryClosed = true
+    inventoryMode = INVENTORY_MODE.RING_OPENING
+    selectedRing = RING.MAIN
+    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
+    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
+    timeInMenu = 0
+    saveList = false
+
+end
+
+LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
+
+    timeInMenu = timeInMenu + 1
+
+    if LevelVars.Engine.CustomInventory.InventoryOpen then
+        TEN.View.SetFOV(80)
+        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
+        currentRingAngle = 0
+        targetRingAngle = 0
+        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
+        LevelFuncs.Engine.CustomInventory.ConstructObjectList()
+        LevelVars.Engine.CustomInventory.InventoryOpen = false
+        OpenInventoryAtItem(inventoryOpenItem)
+    else
+        --LevelFuncs.Engine.CustomInventory.DrawInventoryText()
+        Input(inventoryMode)
+        LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
+        LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
+
+        --Set rotation of InventoryItems like compass and stopwatch
+        SetRotationInventoryItems()
+
+    end
+end
+
+function CustomInventory.Run()
+    
+    if inventoryStart then
+        inventoryStart = false
+        LevelVars.Engine.CustomInventory = {}
+        LevelVars.Engine.CustomInventory.InventoryOpen = false
+        LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
+        LevelVars.Engine.CustomInventory.InventoryClosed = false
+        TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
+        TEN.DrawItem.SetInvTargetPosition(TARGET_START)
+        TEN.DrawItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
+
+        TEN.DrawItem.SetInventoryOverride(true)
+    end
 
     if useBinoculars then
         TEN.View.UseBinoculars()
@@ -1082,69 +1167,9 @@ LevelFuncs.Engine.CustomInventory.StartInventory = function()
 
     
     if LevelVars.Engine.CustomInventory.InventoryClosed then
-        LevelVars.Engine.CustomInventory.InventoryClosed = false
         TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
+        LevelVars.Engine.CustomInventory.InventoryClosed = false
     end
-
-end
-
-LevelFuncs.Engine.CustomInventory.ExitInventory = function()
-
-    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
-    ClearInventory(nil, true)
-    TEN.DrawItem.SetOpenInventory(NO_VALUE)
-    Interpolate.ClearAll()
-    View.SetFOV(80)
-    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
-    LevelVars.Engine.CustomInventory.InventoryClosed = true
-    inventoryMode = INVENTORY_MODE.RING_OPENING
-    selectedRing = RING.MAIN
-    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
-    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
-    timeInMenu = 0
-
-end
-
-LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
-
-    timeInMenu = timeInMenu + 1
-
-    if LevelVars.Engine.CustomInventory.InventoryOpen then
-        TEN.View.SetFOV(80)
-        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
-        currentRingAngle = 0
-        targetRingAngle = 0
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
-        LevelFuncs.Engine.CustomInventory.ConstructObjectList()
-        LevelVars.Engine.CustomInventory.InventoryOpen = false
-        OpenInventoryAtItem(inventoryOpenItem)
-    else
-        --LevelFuncs.Engine.CustomInventory.DrawInventoryText()
-        Input(inventoryMode)
-        LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
-        LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
-
-        --Set rotation of InventoryItems like compass and stopwatch
-        SetRotationInventoryItems()
-
-    end
-end
-
-function CustomInventory.Intialize()
-
-    LevelVars.Engine.CustomInventory = {}
-    LevelVars.Engine.CustomInventory.InventoryOpen = false
-    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
-    LevelVars.Engine.CustomInventory.InventoryClosed = false
-
-    TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.CustomInventory.StartInventory)
-
-    TEN.DrawItem.SetInvCameraPosition(CAMERA_START)
-    TEN.DrawItem.SetInvTargetPosition(TARGET_START)
-    TEN.DrawItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
-
-    TEN.DrawItem.SetInventoryOverride(true)
-
 end
 
 -- Clear progress for a batch
@@ -1217,17 +1242,17 @@ local AnimateInventory = function(mode)
         { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
         }
 
-    local examineAnimation = {
+    local useAnimation = {
         { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
         { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = examineScaler },
         { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
-        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN},
         }
-    
-    local useAnimation = {
-        { key = "itemPosition", type = Interpolate.Type.VEC3, start = ITEM_START, finish = ITEM_END },
-        { key = "itemScale", type = Interpolate.Type.LINEAR, start = selectedItem.scale, finish = EXAMINE_DEFAULT_SCALE },
-        { key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation },
+
+    local examineAnimation = {
+        useAnimation[1],
+        useAnimation[2],
+        useAnimation[3],
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN},
         }
     
     local combineRingAnimation = {
@@ -1296,23 +1321,18 @@ local AnimateInventory = function(mode)
                 return true
             end
         
-    elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP then
-
+    elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT then
+    
         if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
 
-    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or mode == INVENTORY_MODE.STATISTICS_CLOSE or mode == INVENTORY_MODE.SAVE_CLOSE then
+    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or mode == INVENTORY_MODE.STATISTICS_CLOSE or mode == INVENTORY_MODE.SAVE_CLOSE or mode == INVENTORY_MODE.ITEM_DESELECT then
 
         if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
             return true
         end
 
-    elseif mode == INVENTORY_MODE.COMBINE_SETUP then
-
-        if PerformBatchMotion("CombineSetup", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
-            return true
-        end
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
 
         if PerformBatchMotion("CombineRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
@@ -1379,7 +1399,11 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         
         if AnimateInventory(mode) then
 
-            inventoryMode = INVENTORY_MODE.INVENTORY
+            if saveSelected then
+                inventoryMode = INVENTORY_MODE.SAVE_SETUP
+            else
+                inventoryMode = INVENTORY_MODE.INVENTORY
+            end
             
         end
 
@@ -1421,6 +1445,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
         
+        examineScaler = selectedItem.scale
         SaveItemRotations(selectedItem)
         
         if AnimateInventory(mode) then
@@ -1434,15 +1459,35 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         LevelFuncs.Engine.CustomInventory.ExamineItem(selectedItem.item)
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
-
+        
         if AnimateInventory(mode) then
             examineShowString = false
             examineScaler = EXAMINE_DEFAULT_SCALE
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
-
-    elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
+    elseif mode == INVENTORY_MODE.ITEM_SELECT then
         
+        examineScaler = selectedItem.scale
+        SaveItemRotations(selectedItem)
+        combineItem1 = selectedItem.item
+
+        if AnimateInventory(mode) then
+            CreateItemMenu(selectedItem.item)
+            inventoryMode = INVENTORY_MODE.ITEM_SELECTED
+
+        end
+
+    elseif mode == INVENTORY_MODE.ITEM_SELECTED then
+
+        ShowItemMenu()
+
+    elseif mode == INVENTORY_MODE.ITEM_DESELECT then
+        
+        if AnimateInventory(mode) then
+            inventoryMode = INVENTORY_MODE.INVENTORY
+        end
+    elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
+        examineScaler = selectedItem.scale
         SaveItemRotations(selectedItem)
 
         if AnimateInventory(mode) then
@@ -1458,8 +1503,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
-        elseif mode == INVENTORY_MODE.SAVE_SETUP then
-        
+    elseif mode == INVENTORY_MODE.SAVE_SETUP then
+        examineScaler = selectedItem.scale
         SaveItemRotations(selectedItem)
 
         if AnimateInventory(mode) then
@@ -1482,7 +1527,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             end
         end
     elseif mode == INVENTORY_MODE.COMBINE_SETUP then
-        
+        examineScaler = selectedItem.scale
         SaveItemRotations(selectedItem)
 
         if AnimateInventory(mode) then
@@ -1535,18 +1580,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
+        examineScaler = selectedItem.scale
         SaveItemRotations(selectedItem)
-
-        --Hack for Stopwatch and Compass item
-        -- if selectedItem.item == TEN.Objects.ObjID.STOPWATCH_ITEM then
-        --     inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
-        --     return
-        -- end
-
-        -- if selectedItem.item == TEN.Objects.ObjID.COMPASS_ITEM then
-        --     inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-        --     return
-        -- end
 
         if AnimateInventory(mode) then
             

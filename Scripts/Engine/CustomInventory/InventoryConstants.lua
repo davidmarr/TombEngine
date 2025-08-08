@@ -99,7 +99,7 @@ local pickupConstants = {
 	{ TEN.Objects.ObjID.BURNING_TORCH_ITEM, 14, 0.5, Rotation(90.0, 0, 0), ItemAction.USE, "torch", NO_JOINT_BITS, INV_ROT_Y, TYPE.TOOL, false, RING.PUZZLE},
 	{ TEN.Objects.ObjID.CROWBAR_ITEM, 4, 0.5, Rotation(90.0, 0, 0), ItemAction.USE, "crowbar", NO_JOINT_BITS, INV_ROT_Y, TYPE.TOOL, false, RING.PUZZLE},
 	{ TEN.Objects.ObjID.DIARY_ITEM, 0, 0.3, Rotation(0, 180.0, 0), ItemAction.USE, "diary", NO_JOINT_BITS, INV_ROT_Y, TYPE.TOOL, false, RING.PUZZLE},
-	{ TEN.Objects.ObjID.COMPASS_ITEM, -14, 0.5, Rotation(90.0, 180.0, 0), ItemAction.EXAMINE, "load_game", NO_JOINT_BITS, INV_ROT_Y, TYPE.TOOL, false, RING.PUZZLE},
+	{ TEN.Objects.ObjID.COMPASS_ITEM, -14, 0.5, Rotation(90.0, 0, 0), ItemAction.EXAMINE, "load_game", NO_JOINT_BITS, INV_ROT_Y, TYPE.TOOL, false, RING.PUZZLE},
 	{ TEN.Objects.ObjID.CLOCKWORK_BEETLE, 14, 0.5, Rotation(0, 0, 0), ItemAction.USE, "mechanical_scarab", NO_JOINT_BITS, INV_ROT_Y, TYPE.PUZZLE, false, RING.PUZZLE},
 	{ TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO1, 18, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, "mechanical_scarab_1", NO_JOINT_BITS, INV_ROT_Y, TYPE.PUZZLE, true, RING.PUZZLE},
 	{ TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO2, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, "mechanical_scarab_2", NO_JOINT_BITS, INV_ROT_Y, TYPE.PUZZLE, true, RING.PUZZLE},
