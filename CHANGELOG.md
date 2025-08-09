@@ -20,6 +20,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed firearms bullet range limited to targeting range.
 * Fixed significantly worse firearm accuracy compared to the original engines.
 * Fixed pistols not allowing to spam fire in untargeted mode.
+* Fixed two-handed weapon targeting when locked on enemy.
 * Fixed random crashes and visual issues with exploding body part effects.
 * Fixed random crashes when spawning or killing enemies.
 * Fixed shatterable static meshes not producing shatter sound when hit by projectile weapons.
