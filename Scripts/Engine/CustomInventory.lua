@@ -536,8 +536,35 @@ local RunSaveMenu = function()
 
 end
 
+local ParseMenuAction = function(menuActions)
+
+    if hasItemAction(menuActions, ItemAction.USE) or hasItemAction(menuActions, ItemAction.EQUIP) then
+        inventoryMode = INVENTORY_MODE.ITEM_USE
+    elseif hasItemAction(menuActions, ItemAction.EXAMINE) then
+        inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
+    elseif hasItemAction(menuActions, ItemAction.COMBINE) then
+        inventoryMode = INVENTORY_MODE.COMBINE_SETUP
+    elseif hasItemAction(menuActions, ItemAction.STATISTICS) then
+        inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
+    elseif hasItemAction(menuActions, ItemAction.SAVE) then
+        saveList = true
+        inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    elseif hasItemAction(menuActions, ItemAction.LOAD) then
+        saveList = false
+        inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    end
+
+end
+
 LevelFuncs.Engine.CustomInventory.DoItemAction = function()
 
+    local menu = LevelVars.Engine.Menus["menuActions"]
+    if not menu then return end
+
+    local selectedItem = menu.items[menu.currentItem]
+    if selectedItem and selectedItem.actionBit then
+        ParseMenuAction(selectedItem.actionBit)
+    end
 
 end
 
@@ -549,7 +576,8 @@ local CreateItemMenu = function(item)
     for _, entry in ipairs(ItemActionFlags) do
         if hasItemAction(itemMenuActions, entry.bit) then
             table.insert(menuActions, {
-                itemName = GetString(entry.string),
+                itemName = entry.string,
+                actionBit = entry.bit,
                 options = nil,
                 currentOption = 1
             })
@@ -562,7 +590,7 @@ local CreateItemMenu = function(item)
     itemMenu:SetVisibility(true)
     itemMenu:SetLineSpacing(5.3)
     itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-
+    itemMenu:SetItemsTranslate(true)
 end
 
 local ShowItemMenu = function()
@@ -641,26 +669,6 @@ local ClearInventory = function(ringName, clearDrawItems)
         -- Clear entire inventory
         inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
 
-    end
-
-end
-
-local ParseMenuAction = function(menuActions)
-
-    if hasItemAction(menuActions, ItemAction.USE) or hasItemAction(menuActions, ItemAction.EQUIP) then
-        inventoryMode = INVENTORY_MODE.ITEM_USE
-    elseif hasItemAction(menuActions, ItemAction.EXAMINE) then
-        inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-    elseif hasItemAction(menuActions, ItemAction.COMBINE) then
-        inventoryMode = INVENTORY_MODE.COMBINE_SETUP
-    elseif hasItemAction(menuActions, ItemAction.STATISTICS) then
-        inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
-    elseif hasItemAction(menuActions, ItemAction.SAVE) then
-        saveList = true
-        inventoryMode = INVENTORY_MODE.SAVE_SETUP
-    elseif hasItemAction(menuActions, ItemAction.LOAD) then
-        saveList = false
-        inventoryMode = INVENTORY_MODE.SAVE_SETUP
     end
 
 end
@@ -1254,7 +1262,7 @@ local AnimateInventory = function(mode)
         useAnimation[3],
         { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN},
         }
-    
+
     local combineRingAnimation = {
         { key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = RING_RADIUS },
         { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
@@ -1322,7 +1330,7 @@ local AnimateInventory = function(mode)
             end
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT then
-    
+        print("Running Animation: "..mode)
         if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
@@ -1376,11 +1384,12 @@ local AnimateInventory = function(mode)
 
 end
 
-local SaveItemRotations = function(selectedItem)
+local SaveItemData = function(selectedItem)
    
     if itemStoreRotations then
         itemRotationOld =  TEN.DrawItem.GetItemRotation(selectedItem.item)
         itemRotation = selectedItem.rotation
+        examineScaler = selectedItem.scale
         itemStoreRotations = false
     end
     
@@ -1445,10 +1454,9 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN then
         
-        examineScaler = selectedItem.scale
-        SaveItemRotations(selectedItem)
+        SaveItemData(selectedItem)
         
-        if AnimateInventory(mode) then
+        if combineItem1 or AnimateInventory(mode) then
 
             inventoryMode = INVENTORY_MODE.EXAMINE
 
@@ -1467,11 +1475,10 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.ITEM_SELECT then
         
-        examineScaler = selectedItem.scale
-        SaveItemRotations(selectedItem)
-        combineItem1 = selectedItem.item
+        SaveItemData(selectedItem)
 
         if AnimateInventory(mode) then
+            combineItem1 = selectedItem.item
             CreateItemMenu(selectedItem.item)
             inventoryMode = INVENTORY_MODE.ITEM_SELECTED
 
@@ -1484,13 +1491,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.ITEM_DESELECT then
         
         if AnimateInventory(mode) then
+            combineItem1 = nil
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
     elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
-        examineScaler = selectedItem.scale
-        SaveItemRotations(selectedItem)
+        
+        SaveItemData(selectedItem)
 
-        if AnimateInventory(mode) then
+        if combineItem1 or  AnimateInventory(mode)then
             inventoryMode = INVENTORY_MODE.STATISTICS
         end
 
@@ -1504,10 +1512,10 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
     elseif mode == INVENTORY_MODE.SAVE_SETUP then
-        examineScaler = selectedItem.scale
-        SaveItemRotations(selectedItem)
 
-        if AnimateInventory(mode) then
+        SaveItemData(selectedItem)
+
+        if combineItem1 or  AnimateInventory(mode) then
             CreateSaveMenu(saveList)
             inventoryMode = INVENTORY_MODE.SAVE_MENU
         end
@@ -1527,10 +1535,9 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             end
         end
     elseif mode == INVENTORY_MODE.COMBINE_SETUP then
-        examineScaler = selectedItem.scale
-        SaveItemRotations(selectedItem)
 
-        if AnimateInventory(mode) then
+        SaveItemData(selectedItem)
+        if  combineItem1 or AnimateInventory(mode) then
             SetupSecondaryRing(RING.COMBINE)
             inventoryMode = INVENTORY_MODE.COMBINE_RING_OPENING
         end
@@ -1580,8 +1587,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
-        examineScaler = selectedItem.scale
-        SaveItemRotations(selectedItem)
+        
+        SaveItemData(selectedItem)
 
         if AnimateInventory(mode) then
             
