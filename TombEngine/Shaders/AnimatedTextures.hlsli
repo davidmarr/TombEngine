@@ -13,7 +13,7 @@ cbuffer AnimatedBuffer : register(b6)
 	unsigned int FPS;
 	unsigned int Type;
     unsigned int Animated;
-    float2 UVRotateDirection;
+    float UVRotateDirection;
     float UVRotateSpeed;
 }
 
@@ -34,7 +34,10 @@ float2 CalculateUVRotate(float2 uv, unsigned int frame)
 	
     float relPos = InterpolatedFrame * UVRotateSpeed / 30.0f;
 	
-    float2 scrolledUV = uv + (-UVRotateDirection * relPos * uvSize);
+    float theta = radians(UVRotateDirection + 90.0f);
+    float2 dir = float2(cos(theta), sin(theta));
+	
+    float2 scrolledUV = uv + (-dir * relPos * uvSize);
 	
     scrolledUV = frac(scrolledUV);
     scrolledUV = clamp(scrolledUV, epsilon, 1.0f - epsilon);

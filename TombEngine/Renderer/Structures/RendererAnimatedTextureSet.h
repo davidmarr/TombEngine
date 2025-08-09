@@ -31,7 +31,7 @@ namespace TEN::Renderer::Structures
 		int NumTextures = 0;
 		int Fps = 0;
 		float UVRotateSpeed = 0.0f;
-		UVRotateDirection UVRotateDirection;
+		float UVRotateDirection = 0.0f;
 		std::vector<RendererAnimatedTexture> Textures;
 	};
 }

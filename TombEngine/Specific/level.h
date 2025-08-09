@@ -49,7 +49,7 @@ struct ANIMATED_TEXTURES_SEQUENCE
 	int Atlas;
 	int Fps;
 	int NumFrames;
-	int UVRotate;
+	float UVRotateDirection;
 	float UVRotateSpeed;
 	std::vector<ANIMATED_TEXTURES_FRAME> Frames;
 };

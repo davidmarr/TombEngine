@@ -2480,7 +2480,7 @@ namespace TEN::Renderer
 		_stAnimated.Fps = 60;
 		_stAnimated.NumFrames = 1;
 		_stAnimated.Type = 1; // UVRotate
-		_stAnimated.UVRotateDirection = Vector2(0.0f, 1.0f);
+		_stAnimated.UVRotateDirection = 0.0f; // Top - Down
 		_stAnimated.UvRotateSpeed = speed;
 
 		// We need only top/bottom Y coordinate for UVRotate, but we pass whole
@@ -4109,6 +4109,7 @@ namespace TEN::Renderer
 		{
 			_stAnimated.Type = (int)set.Type;
 			_stAnimated.Fps = set.Fps;
+			_stAnimated.UVRotateDirection = set.UVRotateDirection;
 			_stAnimated.UvRotateSpeed = set.UVRotateSpeed; 
 			_stAnimated.NumFrames = 1; 
 			  
@@ -4117,34 +4118,6 @@ namespace TEN::Renderer
 			_stAnimated.Textures[0].BottomRight = set.Textures[0].UV[2];
 			_stAnimated.Textures[0].BottomLeft = set.Textures[0].UV[3];
 			_stAnimated.Animated = 1;  
-
-			switch (set.UVRotateDirection)
-			{
-			case UVRotateDirection::T_B:
-				_stAnimated.UVRotateDirection = Vector2(0.0f, 1.0f);
-				break;
-			case UVRotateDirection::B_T:
-				_stAnimated.UVRotateDirection = Vector2(0.0f, -1.0f);
-				break;
-			case UVRotateDirection::L_R:
-				_stAnimated.UVRotateDirection = Vector2(1.0f, 0.0f);
-				break;
-			case UVRotateDirection::R_L:  
-				_stAnimated.UVRotateDirection = Vector2(-1.0f, 0.0f);
-				break;
-			case UVRotateDirection::TL_BR:
-				_stAnimated.UVRotateDirection = Vector2(1.0f, 1.0f);
-				break;
-			case UVRotateDirection::TR_BL:
-				_stAnimated.UVRotateDirection = Vector2(-1.0f, 1.0f);
-				break;
-			case UVRotateDirection::BR_TL:
-				_stAnimated.UVRotateDirection = Vector2(-1.0f, -1.0f);
-				break;
-			case UVRotateDirection::BL_TR:
-				_stAnimated.UVRotateDirection = Vector2(1.0f, -1.0f);
-				break;
-			}
 
 			BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicWrap);
 			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicWrap);
