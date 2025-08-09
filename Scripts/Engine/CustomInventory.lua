@@ -381,6 +381,33 @@ local CombineItems = function(item1, item2)
 	return false
 end
 
+local CreateCombineMenu = function()
+
+end
+
+local ShowCombineMenu = function()
+
+    local combineMenu = Menu.Get("combineMenu")
+    combineMenu:Draw()
+
+end
+
+local CreateAmmoMenu = function()
+
+
+end
+
+local ShowAmmoMenu = function()
+
+    local ammoMenu = Menu.Get("ammoMenu")
+    ammoMenu:Draw()
+
+end
+
+LevelFuncs.Engine.CustomInventory.AmmoSelect = function()
+
+end
+
 local CreateSaveMenu = function(save)
 
     local textPosition = {
@@ -571,7 +598,8 @@ end
 local CreateItemMenu = function(item)
 
     local menuActions = {}
-    local itemMenuActions = GetInventoryItem(item).menuActions
+    local itemData = GetInventoryItem(item)
+    local itemMenuActions = itemData.menuActions
 
     for _, entry in ipairs(ItemActionFlags) do
         if hasItemAction(itemMenuActions, entry.bit) then
@@ -584,7 +612,7 @@ local CreateItemMenu = function(item)
         end
     end
 
-    local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.CustomInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
+    local itemMenu = Menu.Create("menuActions", itemData.name, menuActions, "Engine.CustomInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
 
     itemMenu:SetItemsPosition(Vec2(50, 35))
     itemMenu:SetVisibility(true)
@@ -1369,11 +1397,11 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
 
-        if PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item) then
+        if combineItem1 or PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item) then
             if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item, true) then
                 FadeRings(false, true)
                 if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
-                    ClearBatchMotionProgress("ItemSelect", useAnimation)
+                    if not combineItem1 then ClearBatchMotionProgress("ItemSelect", useAnimation) end
                     ClearBatchMotionProgress("ItemDeselect", useAnimation)
                     return true
                 end
@@ -1468,11 +1496,12 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
         
-        if AnimateInventory(mode) then
+        if combineItem1 or AnimateInventory(mode) then
+            inventoryMode = combineItem1 and INVENTORY_MODE.ITEM_SELECTED or INVENTORY_MODE.INVENTORY
             examineShowString = false
             examineScaler = EXAMINE_DEFAULT_SCALE
-            inventoryMode = INVENTORY_MODE.INVENTORY
         end
+
     elseif mode == INVENTORY_MODE.ITEM_SELECT then
         
         SaveItemData(selectedItem)
@@ -1508,9 +1537,10 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
 
-        if AnimateInventory(mode) then
-            inventoryMode = INVENTORY_MODE.INVENTORY
+        if combineItem1 or AnimateInventory(mode) then
+            inventoryMode = combineItem1 and INVENTORY_MODE.ITEM_SELECTED or INVENTORY_MODE.INVENTORY
         end
+
     elseif mode == INVENTORY_MODE.SAVE_SETUP then
 
         SaveItemData(selectedItem)
@@ -1526,7 +1556,9 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.SAVE_CLOSE then
 
-        if AnimateInventory(mode) then
+        if combineItem1 then
+            inventoryMode = INVENTORY_MODE.ITEM_SELECTED
+        elseif AnimateInventory(mode) then
             if saveSelected then
                 saveSelected = false
                 inventoryMode = INVENTORY_MODE.RING_CLOSING
@@ -1595,6 +1627,19 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             LevelFuncs.Engine.CustomInventory.UseItem(selectedItem.item)
 
         end
+    elseif mode == INVENTORY_MODE.AMMO_SELECT_SETUP then
+
+
+    elseif mode == INVENTORY_MODE.AMMO_SELECT then
+        
+
+
+    elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
+        
+        if AnimateInventory(mode) then
+            inventoryMode = INVENTORY_MODE.ITEM_SELECTED
+        end
+
     end
 end
 

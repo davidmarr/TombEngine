@@ -55,7 +55,7 @@ local RING = {
 
 local pickupConstants = {
 	-- Weapons
-	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_PISTOLS, "pistols", NO_JOINT_BITS, INV_ROT_Y, TYPE.WEAPON, false, RING.MAIN },
+	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_PISTOLS |ItemAction.EXAMINE | ItemAction.STATISTICS | ItemAction.SAVE | ItemAction.LOAD, "pistols", NO_JOINT_BITS, INV_ROT_Y, TYPE.WEAPON, false, RING.MAIN },
 	{ TEN.Objects.ObjID.UZI_ITEM, -4, 0.5, Rotation(135.0, -90.0, 90.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_UZI, "uzis" , NO_JOINT_BITS, INV_ROT_Y, TYPE.WEAPON, false, RING.MAIN },
 	{ TEN.Objects.ObjID.SHOTGUN_ITEM, -6, 0.8, Rotation(270.0, -20.0, 45), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_SHOTGUN, "shotgun", 0x01, INV_ROT_Y, TYPE.WEAPON, false, RING.MAIN },
 	{ TEN.Objects.ObjID.REVOLVER_ITEM, 0, 0.5, Rotation(60.0, -90.0, 85.0), ItemAction.EQUIP | ItemAction.COMBINE | ItemAction.CHOOSE_AMMO_REVOLVER, "revolver" , 0x01, INV_ROT_Y, TYPE.WEAPON, true, RING.MAIN },
