@@ -6,7 +6,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 1.9.2]
 
 ## New features
-* Added FIRE_PENDULUM (ID 458) object from TR3. 
+* Added FIRE_PENDULUM (ID 458) object from TR3.
+* Added TURNING_WALL_BLADE (ID 456) and TURNING_CEILING_BLADE (ID 457) objects from TR3.
 * Added final shot before death for TROOPS and SAS slots, if Lara is in sight.
 
 ### Bug fixes
@@ -44,6 +45,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added ability to open doors with draw weapon key in dozy mode.
 * Added headlight for UPV.
 * Use spotlight with shadow casting for motorbike headlight.
+* Added turning wall blade: SLOT ID: 456, turning ceiling blade: SLOT ID: 457.
 
 ### Bug fixes
 * Fixed WATERFALL_EMITTER performance and occasional game freezes, and make it work with OCB 0.

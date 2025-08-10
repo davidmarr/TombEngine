@@ -42,6 +42,7 @@
 #include "Objects/TR3/Trap/ElectricCleaner.h"
 #include "Objects/TR3/Trap/train.h"
 #include "Objects/TR3/Trap/WallMountedBlade.h"
+#include "Objects/TR3/Trap/TurningBlade.h"
 #include "Objects/TR3/Trap/FirePendulum.h"
 
 // Vehicles
@@ -528,6 +529,22 @@ static void StartTrap(ObjectInfo* obj)
 		obj->collision = GenericSphereBoxCollision;
 	}
 
+	obj = &Objects[ID_TURNING_WALL_BLADE];
+	if (obj->loaded)
+	{
+		obj->control = ControlTurningBlade;
+		obj->collision = CollideTurningBlade;
+		obj->SetHitEffect(true);
+	}
+
+	obj = &Objects[ID_TURNING_CEILING_BLADE];
+	if (obj->loaded)
+	{
+		obj->control = ControlTurningBlade;
+		obj->collision = CollideTurningBlade;
+		obj->SetHitEffect(true);
+	}
+	
 	obj = &Objects[ID_FIRE_PENDULUM];
 	if (obj->loaded)
 	{
