@@ -210,6 +210,8 @@ void ObjectsHandler::TestCollidingObjects()
 
 void ObjectsHandler::AssignPlayer()
 {
+	/// A global Lara object. Can be used to quickly access player data, without getting Lara moveable by name.
+	// @tfield Objects.LaraObject Lara A global Lara object.
 	_table_objects.set(ScriptReserved_Lara, LaraObject(LaraItem->Index, true));
 }
 
