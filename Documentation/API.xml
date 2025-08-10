@@ -348,6 +348,43 @@
 		</function>
 		<function>
 			<module>Effects</module>
+			<name>EmitFogBulb</name>
+			<summary>Emit dynamic fogbulb that lasts for a single frame.</summary>
+			<description>If you want a fogbulb that sticks around, you must call this each frame.</description>
+			<parameters>
+				<parameter>
+					<name>pos</name>
+					<type>Vec3</type>
+					<description>position of the fogbulb</description>
+				</parameter>
+				<parameter>
+					<name>radius</name>
+					<type>int</type>
+					<optional>true</optional>
+					<description>measured in &quot;clicks&quot; or 256 world units (default 20)</description>
+				</parameter>
+				<parameter>
+					<name>density</name>
+					<type>int</type>
+					<optional>true</optional>
+					<description>from 0 to 255 (default 255)</description>
+				</parameter>
+				<parameter>
+					<name>color</name>
+					<type>Color</type>
+					<optional>true</optional>
+					<description>(default Color(255, 255, 255))</description>
+				</parameter>
+				<parameter>
+					<name>name</name>
+					<type>string</type>
+					<optional>true</optional>
+					<description>if provided, engine will interpolate this light for high framerate mode (be careful not to use same name for different fogbulbs)</description>
+				</parameter>
+			</parameters>
+		</function>
+		<function>
+			<module>Effects</module>
 			<name>EmitBlood</name>
 			<summary>Emit blood.</summary>
 			<parameters>
@@ -7710,6 +7747,7 @@ No word wrapping will occur if this parameter is default or omitted.</descriptio
 				</field>
 				<method>
 					<name>Color</name>
+					<summary>Create a Color object.</summary>
 					<parameters>
 						<parameter>
 							<name>R</name>
@@ -7725,6 +7763,13 @@ No word wrapping will occur if this parameter is default or omitted.</descriptio
 							<name>B</name>
 							<type>int</type>
 							<description>Blue component.</description>
+						</parameter>
+						<parameter>
+							<name>A</name>
+							<type>int</type>
+							<optional>true</optional>
+							<defaultValue>255</defaultValue>
+							<description>Alpha (transparency) component.</description>
 						</parameter>
 					</parameters>
 					<returns>
@@ -7825,6 +7870,7 @@ No word wrapping will occur if this parameter is default or omitted.</descriptio
 				<method>
 					<name>Direction</name>
 					<summary>Get the normalized direction vector of this Rotation.</summary>
+					<description>Can be used to get an offset from a rotation by multiplying needed distance value with this vector.</description>
 					<returns>
 						<return>
 							<type>Vec3</type>
@@ -11247,6 +11293,18 @@ No word wrapping will occur if this parameter is default or omitted.</descriptio
 				</value>
 				<value>
 					<name>MOVING_LASER</name>
+					<summary>Object ID.</summary>
+				</value>
+				<value>
+					<name>TURNING_WALL_BLADE</name>
+					<summary>Object ID.</summary>
+				</value>
+				<value>
+					<name>TURNING_CEILING_BLADE</name>
+					<summary>Object ID.</summary>
+				</value>
+				<value>
+					<name>FIRE_PENDULUM</name>
 					<summary>Object ID.</summary>
 				</value>
 				<value>
