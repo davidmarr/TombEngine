@@ -59,6 +59,12 @@ namespace TEN::Hud
 
 	void DrawItemsController::Update()
 	{
+		std::sort(_displayItems.begin(), _displayItems.end(),
+			[](const DisplayItem& a, const DisplayItem& b)
+			{
+				return (a.Position.z > b.Position.z);
+			});
+
 		for (auto& item : _displayItems)
 		{
 			item.StoreInterpolationData();
