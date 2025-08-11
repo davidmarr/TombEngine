@@ -92,11 +92,12 @@ local INVENTORY_MODE =
     COMBINE_RING_OPENING = 19,
     COMBINE_SUCCESS = 20,
     AMMO_SELECT_SETUP = 21,
-    AMMO_SELECT = 22,
-    AMMO_SELECT_CLOSE = 23,
-    SAVE_SETUP = 24,
-    SAVE_MENU = 25,
-    SAVE_CLOSE = 26
+    AMMO_SELECT_OPEN = 22,
+    AMMO_SELECT = 23,
+    AMMO_SELECT_CLOSE = 24,
+    SAVE_SETUP = 25,
+    SAVE_MENU = 26,
+    SAVE_CLOSE = 27
 }
 
 local SOUND_MAP = Settings.SOUND_MAP
@@ -177,6 +178,18 @@ local ItemActionFlags = {
     {bit = ItemAction.SEPARATE, string = "separate"},
 }
 
+local CHOOSE_AMMO_FLAGS = {
+    ItemAction.CHOOSE_AMMO_SHOTGUN,
+    ItemAction.CHOOSE_AMMO_CROSSBOW,
+    ItemAction.CHOOSE_AMMO_GRENADEGUN,
+    ItemAction.CHOOSE_AMMO_UZI,
+    ItemAction.CHOOSE_AMMO_PISTOLS,
+    ItemAction.CHOOSE_AMMO_REVOLVER,
+    ItemAction.CHOOSE_AMMO_HK,
+    ItemAction.CHOOSE_AMMO_HARPOON,
+    ItemAction.CHOOSE_AMMO_ROCKET
+}
+
 --variables
 local useBinoculars = false
 
@@ -203,11 +216,14 @@ local inventoryDelay = 0 --count of actual frames before inventory is opened. Us
 local inventoryMode = INVENTORY_MODE.RING_OPENING
 local previousMode = nil
 local currentRingAngle = 0
+local previousRingAngle = 0
 local targetRingAngle = 0
 local direction = 1
 
 local saveList = false
 local saveSelected = false
+
+local selectedAmmo = nil
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -248,6 +264,17 @@ end
 local hasItemAction = function(packedFlags, flag)
     return (packedFlags & flag) ~= 0
 end
+
+
+local function hasChooseAmmo(menuActions)
+    for _, flag in ipairs(CHOOSE_AMMO_FLAGS) do
+        if hasItemAction(menuActions, flag) then
+            return true
+        end
+    end
+    return false
+end
+
 
 local isSingleFlagSet = function(flags)
     return flags ~= 0 and (flags & (flags - 1)) == 0
@@ -381,32 +408,50 @@ local CombineItems = function(item1, item2)
 	return false
 end
 
-local CreateCombineMenu = function()
+local CreateRingMenu = function(ringName)
+    
+    local ringItems = {}
+    local ring = inventory.ring[ringName]
+
+    if ring then
+        for _, itemData in ipairs(ring) do
+
+            local text = "< " .. GetString(itemData.name) .. " >"
+
+            table.insert(ringItems, text)
+        end
+    end
+
+    local ringTable = {
+        {
+            itemName = "Blank",
+            options = ringItems,
+            currentOption = 1
+        }
+    }
+
+    local text = "combine_with"
+
+    if ringName == RING.AMMO then text = "choose_ammo" end
+
+    local combineMenu = Menu.Create("ringMenu", text, ringTable, nil, nil, Menu.Type.OPTIONS_ONLY)
+
+    combineMenu:SetOptionsPosition(Vec2(50, 35))
+    combineMenu:SetVisibility(true)
+    combineMenu:SetLineSpacing(5.3)
+    combineMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+    combineMenu:EnableInputs(false)
+    combineMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 
 end
 
-local ShowCombineMenu = function()
+local ShowRingMenu = function()
 
-    local combineMenu = Menu.Get("combineMenu")
-    combineMenu:Draw()
-
-end
-
-local CreateAmmoMenu = function()
-
+    local ringMenu = Menu.Get("ringMenu")
+    ringMenu:Draw()
 
 end
 
-local ShowAmmoMenu = function()
-
-    local ammoMenu = Menu.Get("ammoMenu")
-    ammoMenu:Draw()
-
-end
-
-LevelFuncs.Engine.CustomInventory.AmmoSelect = function()
-
-end
 
 local CreateSaveMenu = function(save)
 
@@ -579,6 +624,8 @@ local ParseMenuAction = function(menuActions)
     elseif hasItemAction(menuActions, ItemAction.LOAD) then
         saveList = false
         inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    elseif hasChooseAmmo(menuActions) then
+        inventoryMode = INVENTORY_MODE.AMMO_SELECT_SETUP
     end
 
 end
@@ -619,6 +666,7 @@ local CreateItemMenu = function(item)
     itemMenu:SetLineSpacing(5.3)
     itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
     itemMenu:SetItemsTranslate(true)
+    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 end
 
 local ShowItemMenu = function()
@@ -701,6 +749,17 @@ local ClearInventory = function(ringName, clearDrawItems)
 
 end
 
+local changeOptionsforMenu = function()
+
+    if selectedRing == RING.AMMO or selectedRing == RING.COMBINE then
+        
+        local ringMenu = Menu.Get("ringMenu")
+        ringMenu:setOptionIndexForItem(1, inventory.selectedItem[selectedRing])
+        
+    end
+
+end
+
 local doLeftKey = function()
     local inventoryTable = inventory.ring[selectedRing]
     inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
@@ -708,6 +767,8 @@ local doLeftKey = function()
     previousMode = inventoryMode
     inventoryMode = INVENTORY_MODE.RING_ROTATE
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+
+    changeOptionsforMenu()
 end
 
 local doRightKey = function()
@@ -717,6 +778,8 @@ local doRightKey = function()
     previousMode = inventoryMode
     inventoryMode = INVENTORY_MODE.RING_ROTATE
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE) 
+
+    changeOptionsforMenu()
 end
 
 local Input = function(mode)
@@ -765,11 +828,11 @@ local Input = function(mode)
             doLeftKey()
         elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
             doRightKey()
-        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) then
+        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) or guiIsPulsed(TEN.Input.ActionID.SELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             itemStoreRotations = true
             performCombine = true
-        elseif guiIsPulsed(TEN.Input.ActionID.INVENTORY) then
+        elseif (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
             TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
             inventoryMode = INVENTORY_MODE.COMBINE_CLOSE
         end
@@ -790,7 +853,20 @@ local Input = function(mode)
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.ITEM_DESELECT
         end
+    elseif mode == INVENTORY_MODE.AMMO_SELECT then
 
+        if guiIsPulsed(TEN.Input.ActionID.LEFT) then
+            doLeftKey()
+        elseif guiIsPulsed(TEN.Input.ActionID.RIGHT) then
+            doRightKey()
+        elseif guiIsPulsed(TEN.Input.ActionID.ACTION) or guiIsPulsed(TEN.Input.ActionID.SELECT) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            itemStoreRotations = true
+            performCombine = true
+        elseif (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
+            TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+            inventoryMode = INVENTORY_MODE.AMMO_SELECT_CLOSE
+        end
     elseif mode == INVENTORY_MODE.EXAMINE then
          -- Static variables
         local ROTATION_MULTIPLIER = 2
@@ -867,7 +943,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
 
         --Check if weapon is present and skip adding ammo to main inventory ring
-        if type == TYPE.AMMO then
+        if type == TYPE.AMMO and ringType ~= RING.AMMO then
     
             local weaponPresent = TEN.Inventory.GetItemCount(AMMO_SET[objectID.itemID].weapon)
             if weaponPresent ~= 0 then
@@ -914,10 +990,14 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
             end
         elseif ringType == RING.AMMO then
             --if Ammo is present for the weapon add it for the ammo ring being created for the weapon
-            if type == TYPE.AMMO and contains(WEAPON_AMMO_LOOKUP[selectedWeapon], objectID.itemID) then
+   
+            if type == TYPE.AMMO and WEAPON_AMMO_LOOKUP[selectedWeapon] and contains(WEAPON_AMMO_LOOKUP[selectedWeapon], objectID.itemID) then
                 ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
+                
+                --ADD function for checking ammo type by weapon then save it in selectedAmmo
+
             else
                 --skip adding this item to table if the item is not an ammo type 
                 goto continue
@@ -960,11 +1040,19 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
     end
 
     --Calculate the slice angle and save it
-    for index, ringItems in pairs(inventory.ring) do
+    if ringType then
+        local ringItems = inventory.ring[ringType] or {}
         local count = #ringItems
-        inventory.selectedItem[index] = 1
-        inventory.slice[index] = (count > 0) and (360 / count) or 0
-        inventory.ringPosition[index] = RING_CENTER[index]
+        inventory.selectedItem[ringType] = 1
+        inventory.slice[ringType] = (count > 0) and (360 / count) or 0
+        inventory.ringPosition[ringType] = RING_CENTER[ringType]
+    else
+        for index, ringItems in pairs(inventory.ring) do
+            local count = #ringItems
+            inventory.selectedItem[index] = 1
+            inventory.slice[index] = (count > 0) and (360 / count) or 0
+            inventory.ringPosition[index] = RING_CENTER[index]
+        end
     end
 
 end
@@ -1093,14 +1181,15 @@ local OpenInventoryAtItem = function(itemID)
 
 end
 
-local SetupSecondaryRing = function(ringName)
+local SetupSecondaryRing = function(ringName, item)
     --used for combine and ammo rings
     previousRing = selectedRing
-    combineItem1 = GetSelectedItem(selectedRing).item
+    combineItem1 = item or GetSelectedItem(selectedRing).item
     targetRingAngle = 0
     currentRingAngle = 0
     LevelFuncs.Engine.CustomInventory.ConstructObjectList(ringName, combineItem1)
     selectedRing = ringName
+    CreateRingMenu(ringName)
     inventory.ringPosition[ringName] = RING_CENTER[RING.MAIN]
 
 end
@@ -1358,7 +1447,7 @@ local AnimateInventory = function(mode)
             end
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT then
-        print("Running Animation: "..mode)
+        
         if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
             return true
         end
@@ -1407,7 +1496,16 @@ local AnimateInventory = function(mode)
                 end
             end
         end
-        
+    elseif mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
+
+        if PerformBatchMotion("AmmoRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+            return true
+        end
+    elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
+
+        if PerformBatchMotion("AmmoRingClosing", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+            return true
+        end
     end
 
 end
@@ -1507,6 +1605,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         SaveItemData(selectedItem)
 
         if AnimateInventory(mode) then
+            previousRingAngle = currentRingAngle
             combineItem1 = selectedItem.item
             CreateItemMenu(selectedItem.item)
             inventoryMode = INVENTORY_MODE.ITEM_SELECTED
@@ -1521,6 +1620,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         
         if AnimateInventory(mode) then
             combineItem1 = nil
+            currentRingAngle = previousRingAngle
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
     elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
@@ -1586,6 +1686,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         RotateItem(selectedItem.item)
         LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.item)
 
+        ShowRingMenu()
+
         if performCombine then
 
             combineItem2 = GetSelectedItem(RING.COMBINE).item
@@ -1628,15 +1730,34 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
         end
     elseif mode == INVENTORY_MODE.AMMO_SELECT_SETUP then
+        
+        
+        SetupSecondaryRing(RING.AMMO, combineItem1)
+        inventoryMode = INVENTORY_MODE.AMMO_SELECT_OPEN
+        
+    elseif mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
 
+        SaveItemData(selectedItem)
+        if AnimateInventory(mode) then
+            inventoryMode = INVENTORY_MODE.AMMO_SELECT
+        end
 
     elseif mode == INVENTORY_MODE.AMMO_SELECT then
         
+        RotateItem(selectedItem.item)
+        ShowRingMenu()
 
+        if performCombine then
+            local ammo = AMMO_SET[selectedItem.item]
+            Lara:SetAmmoType(ammo.slot)
+            inventoryMode = INVENTORY_MODE.AMMO_SELECT_CLOSE
+        end
 
     elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
         
         if AnimateInventory(mode) then
+            performCombine = false
+            selectedRing = previousRing
             inventoryMode = INVENTORY_MODE.ITEM_SELECTED
         end
 
