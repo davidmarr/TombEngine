@@ -31,6 +31,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed slowdowns and freezes when too many sounds are playing.
 * Fixed Doppler effect not applied to sounds.
 * Fixed incorrect cropping for video textures.
+* Fixed snapping while transitioning between two gliding fixed cameras.
 * Fixed overbright ambient light not applied correctly to moveables.
 
 ### Lua API changes
