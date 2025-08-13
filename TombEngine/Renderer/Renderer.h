@@ -606,7 +606,7 @@ namespace TEN::Renderer
 			return _staticObjects[Statics.GetIndex(objectNumber)].value();
 		}
 
-		inline void TextureAreNotAnimated()
+		inline void TexturesAreNotAnimated()
 		{
 			_stAnimated.Animated = 0;
 			_cbAnimated.UpdateData(_stAnimated, _context.Get());

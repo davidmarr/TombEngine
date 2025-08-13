@@ -634,7 +634,7 @@ namespace TEN::Renderer
 									}
 									else
 									{
-										TextureAreNotAnimated();
+										TexturesAreNotAnimated();
 
 										BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 										BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -761,7 +761,7 @@ namespace TEN::Renderer
 								}
 								else
 								{
-									TextureAreNotAnimated();
+									TexturesAreNotAnimated();
 
 									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -892,7 +892,7 @@ namespace TEN::Renderer
 								}
 								else
 								{
-									TextureAreNotAnimated();
+									TexturesAreNotAnimated();
 
 									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -1032,7 +1032,7 @@ namespace TEN::Renderer
 								}
 								else
 								{
-									TextureAreNotAnimated();
+									TexturesAreNotAnimated();
 
 									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -1170,7 +1170,7 @@ namespace TEN::Renderer
 								}
 								else
 								{
-									TextureAreNotAnimated();
+									TexturesAreNotAnimated();
 
 									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -2724,7 +2724,7 @@ namespace TEN::Renderer
 									}
 									else
 									{
-										TextureAreNotAnimated();
+										TexturesAreNotAnimated();
 
 										if (_staticTextures.size() <= bucket.Texture)
 										{
@@ -2938,7 +2938,7 @@ namespace TEN::Renderer
 							}
 							else
 							{
-								TextureAreNotAnimated();
+								TexturesAreNotAnimated();
 
 								BindTexture(TextureRegister::ColorMap, &std::get<0>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 								BindTexture(TextureRegister::NormalMap, &std::get<1>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -3204,7 +3204,7 @@ namespace TEN::Renderer
 						}
 						else
 						{
-							TextureAreNotAnimated();
+							TexturesAreNotAnimated();
 
 							BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 						}
@@ -3362,7 +3362,7 @@ namespace TEN::Renderer
 							}
 							else
 							{
-								TextureAreNotAnimated();
+								TexturesAreNotAnimated();
 
 								BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 								BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -3718,7 +3718,7 @@ namespace TEN::Renderer
 		}
 		else
 		{
-			TextureAreNotAnimated();
+			TexturesAreNotAnimated();
 
 			BindTexture(TextureRegister::ColorMap, &std::get<0>(_roomTextures[objectInfo->Bucket->Texture]),
 				SamplerStateRegister::AnisotropicClamp);
@@ -3787,7 +3787,7 @@ namespace TEN::Renderer
 		}
 		else
 		{
-			TextureAreNotAnimated();
+			TexturesAreNotAnimated();
 
 			BindTexture(
 				TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[objectInfo->Bucket->Texture]),
@@ -3837,7 +3837,7 @@ namespace TEN::Renderer
 		}
 		else
 		{
-			TextureAreNotAnimated();
+			TexturesAreNotAnimated();
 
 			BindTexture(TextureRegister::ColorMap, &std::get<0>(_staticTextures[objectInfo->Bucket->Texture]),
 				SamplerStateRegister::AnisotropicClamp);
@@ -3885,7 +3885,7 @@ namespace TEN::Renderer
 		}
 		else
 		{
-			TextureAreNotAnimated();
+			TexturesAreNotAnimated();
 
 			BindTexture(TextureRegister::ColorMap, &std::get<0>(_staticTextures[objectInfo->Bucket->Texture]),
 				SamplerStateRegister::AnisotropicClamp);
@@ -3965,7 +3965,7 @@ namespace TEN::Renderer
 		}
 		else
 		{
-			TextureAreNotAnimated();
+			TexturesAreNotAnimated();
 
 			BindTexture(
 				TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[objectInfo->Bucket->Texture]),

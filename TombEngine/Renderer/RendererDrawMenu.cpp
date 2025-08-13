@@ -894,7 +894,7 @@ namespace TEN::Renderer
 					}
 					else
 					{
-						TextureAreNotAnimated();
+						TexturesAreNotAnimated();
 
 
 						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
