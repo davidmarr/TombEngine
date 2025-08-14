@@ -295,6 +295,41 @@ void CALLBACK HandleWmCommand(unsigned short wParam)
 	}
 }
 
+LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
+{
+	DWORD code = exceptionInfo->ExceptionRecord->ExceptionCode;
+	const char* codeName = "Unknown exception";
+
+	// Map exception code to string (inline, no subfunction)
+	switch (code)
+	{
+		case EXCEPTION_ACCESS_VIOLATION:         codeName = "Access violation"; break;
+		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    codeName = "Array out of bounds"; break;
+		case EXCEPTION_BREAKPOINT:               codeName = "Breakpoint encountered"; break;
+		case EXCEPTION_DATATYPE_MISALIGNMENT:    codeName = "Data type misalignment"; break;
+		case EXCEPTION_FLT_DIVIDE_BY_ZERO:       codeName = "Floating-point division by zero"; break;
+		case EXCEPTION_FLT_OVERFLOW:             codeName = "Floating-point overflow"; break;
+		case EXCEPTION_ILLEGAL_INSTRUCTION:      codeName = "Illegal instruction"; break;
+		case EXCEPTION_IN_PAGE_ERROR:            codeName = "Exception in page error"; break;
+		case EXCEPTION_INT_DIVIDE_BY_ZERO:       codeName = "Integer division by zero"; break;
+		case EXCEPTION_INT_OVERFLOW:             codeName = "Integer overflow"; break;
+		case EXCEPTION_INVALID_DISPOSITION:      codeName = "Invalid disposition"; break;
+		case EXCEPTION_NONCONTINUABLE_EXCEPTION: codeName = "Non-continuable exception"; break;
+		case EXCEPTION_PRIV_INSTRUCTION:         codeName = "Private instruction exception"; break;
+		case EXCEPTION_SINGLE_STEP:              codeName = "Single-step exception"; break;
+		case EXCEPTION_STACK_OVERFLOW:           codeName = "Stack overflow"; break;
+	}
+
+	auto errorString = std::string(codeName) + " (0x" + std::to_string(code) + ")";
+	std::ostringstream oss;
+	oss << errorString << ", address: 0x" << exceptionInfo->ExceptionRecord->ExceptionAddress << ".";
+	TENLog("Unhandled exception: " + oss.str(), LogLevel::Error);
+	MessageBoxA(nullptr, ("A fatal error occurred: " + errorString + ".\nPlease report this error together with a log file to the TEN dev team.").c_str(),
+				"Fatal error", MB_ICONERROR);
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 LRESULT CALLBACK WinAppProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static bool receivedWmClose = false;
@@ -447,6 +482,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	// Initialize logging.
 	InitTENLog(gameDir);
+	SetUnhandledExceptionFilter(HandleException);
 
 	auto windowName = std::string("Starting TombEngine");
 
