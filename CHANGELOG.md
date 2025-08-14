@@ -9,6 +9,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added FIRE_PENDULUM (ID 458) object from TR3.
 * Added TURNING_WALL_BLADE (ID 456) and TURNING_CEILING_BLADE (ID 457) objects from TR3.
 * Added final shot before death for TROOPS and SAS slots, if Lara is in sight.
+* Added logging to a separate file for every game launch.
 
 ### Bug fixes
 * Fixed inability to perform backjumps or grabs after climbing onto a triangular slope.
