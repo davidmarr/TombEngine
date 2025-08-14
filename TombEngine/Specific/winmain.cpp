@@ -2,6 +2,7 @@
 #include "Specific/winmain.h"
 
 #include <CommCtrl.h>
+#include <DbgHelp.h>
 #include <process.h>
 #include <iostream>
 #include <codecvt>
@@ -320,11 +321,29 @@ LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
 		case EXCEPTION_STACK_OVERFLOW:           codeName = "Stack overflow"; break;
 	}
 
-	auto errorString = std::string(codeName) + " (0x" + std::to_string(code) + ")";
+	// Resolve symbol name from address
+	HANDLE process = GetCurrentProcess();
+	SymInitialize(process, NULL, TRUE);
+
+	DWORD64 address = (DWORD64)exceptionInfo->ExceptionRecord->ExceptionAddress;
+	char symbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+	PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+	symbol->MaxNameLen = MAX_SYM_NAME;
+
 	std::ostringstream oss;
-	oss << errorString << ", address: 0x" << exceptionInfo->ExceptionRecord->ExceptionAddress << ".";
-	TENLog("Unhandled exception: " + oss.str(), LogLevel::Error);
-	MessageBoxA(nullptr, ("A fatal error occurred: " + errorString + ".\nPlease report this error together with a log file to the TEN dev team.").c_str(),
+	if (SymFromAddr(process, address, 0, symbol))
+	{
+		oss << "address: " << symbol->Name;
+	}
+	else
+	{
+		oss << "address: 0x" << std::hex << address;
+	}
+
+	TENLog("Unhandled exception: " + std::string(codeName) + ", " + oss.str() + ".", LogLevel::Error);
+	MessageBoxA(nullptr, ("A fatal error occurred: " + std::string(codeName) + " at " + oss.str() +
+				".\nPlease report this error together with a log file to the TEN dev team.").c_str(),
 				"Fatal error", MB_ICONERROR);
 
 	return EXCEPTION_EXECUTE_HANDLER;
