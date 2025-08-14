@@ -334,18 +334,14 @@ LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
 	std::ostringstream oss;
 	if (SymFromAddr(process, address, 0, symbol))
 	{
-		oss << "address: " << symbol->Name;
+		oss << "address " << symbol->Name << " (0x" << std::hex << address << ")";
 	}
 	else
 	{
-		oss << "address: 0x" << std::hex << address;
+		oss << "address 0x" << std::hex << address;
 	}
 
-	TENLog("Unhandled exception: " + std::string(codeName) + ", " + oss.str() + ".", LogLevel::Error);
-	MessageBoxA(nullptr, ("A fatal error occurred: " + std::string(codeName) + " at " + oss.str() +
-				".\nPlease report this error together with a log file to the TEN dev team.").c_str(),
-				"Fatal error", MB_ICONERROR);
-
+	TENLog("Unhandled exception: " + std::string(codeName) + " at " + oss.str() + ".", LogLevel::Error);
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
