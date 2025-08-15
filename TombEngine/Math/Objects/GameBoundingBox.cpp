@@ -69,8 +69,8 @@
 	void GameBoundingBox::Rotate(const EulerAngles& rot)
 	{
 		// Original min/max.
-		Vector3 min(X1, Y1, Z1);
-		Vector3 max(X2, Y2, Z2);
+		auto min = Vector3(X1, Y1, Z1);
+		auto max = Vector3(X2, Y2, Z2);
 
 		// All 8 corners of the box.
 		Vector3 corners[8] =
@@ -89,19 +89,19 @@
 		auto rotMatrix = rot.ToRotationMatrix();
 
 		// Rotate and track new min/max.
-		Vector3 newMin(FLT_MAX, FLT_MAX, FLT_MAX);
-		Vector3 newMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		auto newMin = Vector3( FLT_MAX,  FLT_MAX,  FLT_MAX);
+		auto newMax = Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
 		for (auto& c : corners)
 		{
-			auto rc = Vector3::Transform(c, rotMatrix);
-			newMin.x = std::min(newMin.x, rc.x);
-			newMin.y = std::min(newMin.y, rc.y);
-			newMin.z = std::min(newMin.z, rc.z);
+			auto rotCorner = Vector3::Transform(c, rotMatrix);
+			newMin.x = std::min(newMin.x, rotCorner.x);
+			newMin.y = std::min(newMin.y, rotCorner.y);
+			newMin.z = std::min(newMin.z, rotCorner.z);
 
-			newMax.x = std::max(newMax.x, rc.x);
-			newMax.y = std::max(newMax.y, rc.y);
-			newMax.z = std::max(newMax.z, rc.z);
+			newMax.x = std::max(newMax.x, rotCorner.x);
+			newMax.y = std::max(newMax.y, rotCorner.y);
+			newMax.z = std::max(newMax.z, rotCorner.z);
 		}
 
 		// Assign integer-rounded bounds.
