@@ -68,21 +68,49 @@
 
 	void GameBoundingBox::Rotate(const EulerAngles& rot)
 	{
-		// Get box min and max values.
-		auto boxMax = Vector3(X2, Y2, Z2);
-		auto boxMin = Vector3(X1, Y1, Z1);
+		// Original min/max.
+		Vector3 min(X1, Y1, Z1);
+		Vector3 max(X2, Y2, Z2);
 
-		// Rotate min and max values.
+		// All 8 corners of the box.
+		Vector3 corners[8] =
+		{
+			{min.x, min.y, min.z},
+			{max.x, min.y, min.z},
+			{min.x, max.y, min.z},
+			{max.x, max.y, min.z},
+			{min.x, min.y, max.z},
+			{max.x, min.y, max.z},
+			{min.x, max.y, max.z},
+			{max.x, max.y, max.z}
+		};
+
+		// Rotation matrix.
 		auto rotMatrix = rot.ToRotationMatrix();
-		boxMax = Vector3::Transform(boxMax, rotMatrix);
-		boxMin = Vector3::Transform(boxMin, rotMatrix);
 
-		X1 = (int)round(boxMin.x);
-		X2 = (int)round(boxMax.x);
-		Y1 = (int)round(boxMin.y);
-		Y2 = (int)round(boxMax.y);
-		Z1 = (int)round(boxMin.z);
-		Z2 = (int)round(boxMax.z);
+		// Rotate and track new min/max.
+		Vector3 newMin(FLT_MAX, FLT_MAX, FLT_MAX);
+		Vector3 newMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+		for (auto& c : corners)
+		{
+			auto rc = Vector3::Transform(c, rotMatrix);
+			newMin.x = std::min(newMin.x, rc.x);
+			newMin.y = std::min(newMin.y, rc.y);
+			newMin.z = std::min(newMin.z, rc.z);
+
+			newMax.x = std::max(newMax.x, rc.x);
+			newMax.y = std::max(newMax.y, rc.y);
+			newMax.z = std::max(newMax.z, rc.z);
+		}
+
+		// Assign integer-rounded bounds.
+		X1 = (int)std::floor(newMin.x);
+		Y1 = (int)std::floor(newMin.y);
+		Z1 = (int)std::floor(newMin.z);
+		X2 = (int)std::ceil(newMax.x);
+		Y2 = (int)std::ceil(newMax.y);
+		Z2 = (int)std::ceil(newMax.z);
 	}
 
 	BoundingSphere GameBoundingBox::ToLocalBoundingSphere() const
