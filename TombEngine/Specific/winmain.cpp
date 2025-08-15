@@ -357,6 +357,9 @@ LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
 
 	auto errorMessage = "Unhandled exception: " + std::string(codeName) + " at " + oss.str() + ".";
 
+	// Set application to debug mode to prevent losing focus in fullscreen mode.
+	DebugMode = true;
+
 	// Log the exception and show error message.
 	TENLog(errorMessage, LogLevel::Error);
 	ShowExternalMessageBox(errorMessage);
