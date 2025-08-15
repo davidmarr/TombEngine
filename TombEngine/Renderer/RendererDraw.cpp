@@ -2806,36 +2806,25 @@ namespace TEN::Renderer
 				int index = i;
 				RendererRoom* room = view.RoomsToDraw[index];
 
-				for (int animated = 0; animated < 2; animated++)
+				for (int j = 0; j < room->Buckets.size(); j++)
 				{
-					for (int j = 0; j < room->Buckets.size(); j++)
+					auto& bucket = room->Buckets[j];
+
+					if (IsSortedBlendMode(bucket.BlendMode))
 					{
-						auto& bucket = room->Buckets[j];
-
-						if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
+						for (int p = 0; p < bucket.Polygons.size(); p++)
 						{
-							continue;
-						}
+							RendererSortableObject object;
 
-						if (rendererPass == RendererPass::CollectTransparentFaces)
-						{
-							if (IsSortedBlendMode(bucket.BlendMode))
-							{
-								for (int p = 0; p < bucket.Polygons.size(); p++)
-								{
-									RendererSortableObject object;
+							object.ObjectType = RendererObjectType::Room;
+							object.Centre = bucket.Centre;
+							object.Distance = Vector3::Distance(view.Camera.WorldPosition, bucket.Polygons[p].Centre);
+							object.BlendMode = bucket.BlendMode;
+							object.Bucket = &bucket;
+							object.Room = room;
+							object.Polygon = &bucket.Polygons[p];
 
-									object.ObjectType = RendererObjectType::Room;
-									object.Centre = bucket.Centre;
-									object.Distance = Vector3::Distance(view.Camera.WorldPosition, bucket.Polygons[p].Centre);
-									object.BlendMode = bucket.BlendMode;
-									object.Bucket = &bucket;
-									object.Room = room;
-									object.Polygon = &bucket.Polygons[p];
-
-									view.TransparentObjectsToDraw.push_back(object);
-								}
-							}
+							view.TransparentObjectsToDraw.push_back(object);
 						}
 					}
 				}
@@ -3291,35 +3280,32 @@ namespace TEN::Renderer
 	{
 		if (rendererPass == RendererPass::CollectTransparentFaces)
 		{
-			for (int animated = 0; animated < 2; animated++)
+			for (auto& bucket : mesh->Buckets)
 			{
-				for (auto& bucket : mesh->Buckets)
+				if (bucket.NumVertices == 0)
+					continue;
+
+				auto blendMode = GetBlendModeFromAlpha(bucket.BlendMode, itemToDraw->Color.w);
+
+				if (IsSortedBlendMode(blendMode))
 				{
-					if (bucket.NumVertices == 0)
-						continue;
-
-					auto blendMode = GetBlendModeFromAlpha(bucket.BlendMode, itemToDraw->Color.w);
-
-					if (IsSortedBlendMode(blendMode))
+					for (int p = 0; p < bucket.Polygons.size(); p++)
 					{
-						for (int p = 0; p < bucket.Polygons.size(); p++)
-						{
-							auto center = Vector3::Transform(bucket.Polygons[p].Centre, itemToDraw->InterpolatedAnimTransforms[boneIndex] * itemToDraw->InterpolatedWorld);
-							int dist = Vector3::Distance(center, Camera.pos.ToVector3());
+						auto center = Vector3::Transform(bucket.Polygons[p].Centre, itemToDraw->InterpolatedAnimTransforms[boneIndex] * itemToDraw->InterpolatedWorld);
+						int dist = Vector3::Distance(center, Camera.pos.ToVector3());
 
-							auto object = RendererSortableObject{};
-							object.ObjectType = type;
-							object.Centre = center;
-							object.Distance = dist;
-							object.Skinned = skinned;
-							object.BlendMode = blendMode;
-							object.Bucket = &bucket;
-							object.Item = itemToDraw;
-							object.LightMode = mesh->LightMode;
-							object.Polygon = &bucket.Polygons[p];
+						auto object = RendererSortableObject{};
+						object.ObjectType = type;
+						object.Centre = center;
+						object.Distance = dist;
+						object.Skinned = skinned;
+						object.BlendMode = blendMode;
+						object.Bucket = &bucket;
+						object.Item = itemToDraw;
+						object.LightMode = mesh->LightMode;
+						object.Polygon = &bucket.Polygons[p];
 
-							view.TransparentObjectsToDraw.push_back(object);
-						}
+						view.TransparentObjectsToDraw.push_back(object);
 					}
 				}
 			}

@@ -6,18 +6,6 @@ namespace TEN::Renderer::Structures
 {
 	using namespace DirectX::SimpleMath;
 
-	enum class UVRotateDirection
-	{
-		T_B,
-		R_L,
-		B_T,
-		L_R,
-		TL_BR,
-		TR_BL,
-		BR_TL,
-		BL_TR
-	};
-
 	enum class AnimatedTextureType
 	{
 		Frames,

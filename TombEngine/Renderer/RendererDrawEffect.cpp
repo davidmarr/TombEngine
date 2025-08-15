@@ -1557,7 +1557,7 @@ namespace TEN::Renderer
 			_primitiveBatch->Begin();
 
 			bool lastAnimated = false;
-			int lastTexture = -1;
+			int lastTexture = NO_VALUE;
 			bool firstDebris = true;
 
 			for (auto& deb : DebrisFragments)
