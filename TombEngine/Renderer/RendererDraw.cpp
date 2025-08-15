@@ -2477,7 +2477,7 @@ namespace TEN::Renderer
 		auto maxX = std::max(std::max(v1.UV.x, v2.UV.x), v3.UV.x);
 		  
 		// Setup animated buffer
-		_stAnimated.Fps = 60;
+		_stAnimated.Fps = FPS * 2;
 		_stAnimated.NumFrames = 1;
 		_stAnimated.Type = 1; // UVRotate
 		_stAnimated.UVRotateDirection = 0.0f; // Top - Down
