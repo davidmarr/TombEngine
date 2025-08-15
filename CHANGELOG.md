@@ -19,6 +19,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed undead enemies not killed in a proper way by vehicles.
 * Fixed smoke emitters crashing the game if placed underwater with OCB 0.
 * Fixed puzzle holes losing collision after inserting puzzle items.
+* Fixed occasional Lara rotation when grabbing pushable objects.
 * Fixed incorrect distance checks on very large room coordinates which could have caused random Lara teleportations.
 * Fixed projectile weapon hits not registering in statistics and collision callbacks.
 * Fixed firearms bullet range limited to targeting range.
