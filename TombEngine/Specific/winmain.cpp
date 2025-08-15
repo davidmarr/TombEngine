@@ -2,6 +2,7 @@
 #include "Specific/winmain.h"
 
 #include <CommCtrl.h>
+#include <DbgHelp.h>
 #include <process.h>
 #include <iostream>
 #include <codecvt>
@@ -295,6 +296,55 @@ void CALLBACK HandleWmCommand(unsigned short wParam)
 	}
 }
 
+LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
+{
+	DWORD code = exceptionInfo->ExceptionRecord->ExceptionCode;
+	const char* codeName = "Unknown exception";
+
+	// Map exception code to string (inline, no subfunction)
+	switch (code)
+	{
+		case EXCEPTION_ACCESS_VIOLATION:         codeName = "Access violation"; break;
+		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    codeName = "Array out of bounds"; break;
+		case EXCEPTION_BREAKPOINT:               codeName = "Breakpoint encountered"; break;
+		case EXCEPTION_DATATYPE_MISALIGNMENT:    codeName = "Data type misalignment"; break;
+		case EXCEPTION_FLT_DIVIDE_BY_ZERO:       codeName = "Floating-point division by zero"; break;
+		case EXCEPTION_FLT_OVERFLOW:             codeName = "Floating-point overflow"; break;
+		case EXCEPTION_ILLEGAL_INSTRUCTION:      codeName = "Illegal instruction"; break;
+		case EXCEPTION_IN_PAGE_ERROR:            codeName = "Exception in page error"; break;
+		case EXCEPTION_INT_DIVIDE_BY_ZERO:       codeName = "Integer division by zero"; break;
+		case EXCEPTION_INT_OVERFLOW:             codeName = "Integer overflow"; break;
+		case EXCEPTION_INVALID_DISPOSITION:      codeName = "Invalid disposition"; break;
+		case EXCEPTION_NONCONTINUABLE_EXCEPTION: codeName = "Non-continuable exception"; break;
+		case EXCEPTION_PRIV_INSTRUCTION:         codeName = "Private instruction exception"; break;
+		case EXCEPTION_SINGLE_STEP:              codeName = "Single-step exception"; break;
+		case EXCEPTION_STACK_OVERFLOW:           codeName = "Stack overflow"; break;
+	}
+
+	// Resolve symbol name from address
+	HANDLE process = GetCurrentProcess();
+	SymInitialize(process, NULL, TRUE);
+
+	DWORD64 address = (DWORD64)exceptionInfo->ExceptionRecord->ExceptionAddress;
+	char symbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+	PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+	symbol->MaxNameLen = MAX_SYM_NAME;
+
+	std::ostringstream oss;
+	if (SymFromAddr(process, address, 0, symbol))
+	{
+		oss << "address " << symbol->Name << " (0x" << std::hex << address << ")";
+	}
+	else
+	{
+		oss << "address 0x" << std::hex << address;
+	}
+
+	TENLog("Unhandled exception: " + std::string(codeName) + " at " + oss.str() + ".", LogLevel::Error);
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 LRESULT CALLBACK WinAppProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static bool receivedWmClose = false;
@@ -447,6 +497,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	// Initialize logging.
 	InitTENLog(gameDir);
+	SetUnhandledExceptionFilter(HandleException);
 
 	auto windowName = std::string("Starting TombEngine");
 
