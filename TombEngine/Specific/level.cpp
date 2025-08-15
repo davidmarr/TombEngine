@@ -2,7 +2,7 @@
 #include "Specific/level.h"
 
 #include <process.h>
-#include "Specific/IO/lz4.h"
+#include <lz4.h>
 
 #include "Game/animation.h"
 #include "Game/animation.h"
