@@ -3164,7 +3164,7 @@ namespace TEN::Renderer
 			if (!levelPtr->GetHorizonEnabled(layer) || levelPtr->GetHorizonTransparency(layer) <= EPSILON)
 				continue;
 
-			if (!Objects[levelPtr->GetHorizonObjectID(layer)].loaded)
+			if (!_moveableObjects[levelPtr->GetHorizonObjectID(layer)].has_value())
 				continue;
 
 			SetDepthState(DepthState::None);
