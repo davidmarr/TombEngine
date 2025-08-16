@@ -209,6 +209,7 @@ local performCombine = false
 local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
 local inventoryOpenItem = nil
 local inventoryStart = true
+local gameflowOverrides = nil
 local selectedRing = RING.MAIN
 local previousRing = nil
 local timeInMenu = 0
@@ -351,7 +352,7 @@ end
 local FindItemInInventory = function(targetID)
     for ringIndex, ring in pairs(inventory.ring) do
         for itemIndex, itemEntry in ipairs(ring) do
-            if itemEntry.item == targetID then
+            if itemEntry.objectID == targetID then
                 return ringIndex, itemIndex
             end
         end
@@ -365,6 +366,46 @@ local GetInventoryItem = function(itemID)
 		return nil
 	end
 	return inventory.ring[ringIndex][itemIndex]
+end
+
+local BuildInventoryItem = function(data)
+
+    data.count = TEN.Inventory.GetItemCount(data.objectID)
+
+    local override = gameflowOverrides[data.itemID] or {}
+
+    if override.yOffset     ~= nil then data.yOffset     = override.yOffset end
+    if override.scale       ~= nil then data.scale       = override.scale end
+    if override.rotation    ~= nil then data.rotation    = override.rotation end
+    if override.menuActions ~= nil then data.menuActions = override.menuActions end
+    if override.name        ~= nil then data.name        = override.name end
+    if override.meshBits    ~= nil then data.meshBits    = override.meshBits end
+    if override.orientation ~= nil then data.orientation = override.orientation end
+    if override.type        ~= nil then data.type        = override.type end
+    if override.combine     ~= nil then data.combine     = override.combine end
+
+    return data
+end
+
+local ReplaceInventoryItem = function(oldItemID, newItemID)
+
+    local item = GetInventoryItem(oldItemID)
+    gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
+
+    local itemData = PICKUP_DATA.ConvertRowData(PICKUP_DATA.GetRow(newItemID))
+    local data = BuildInventoryItem(itemData)
+    
+    -- Store current transform before replacement
+    local oldPos    = TEN.DrawItem.GetItemPosition(oldItemID)
+    local oldColor  = TEN.DrawItem.GetItemColor(oldItemID)
+
+    -- Apply updated transform while preserving old position, rotation, etc.
+    TEN.DrawItem.AddItem(newItemID, oldPos, data.rotation, data.scale, data.meshBits)
+    TEN.DrawItem.SetItemColor(newItemID, oldColor)
+
+    -- Update inventory entry fields
+    item = data
+
 end
 
 local CombineItems = function(item1, item2)
@@ -726,7 +767,7 @@ local ClearInventory = function(ringName, clearDrawItems)
 
         if clearDrawItems and ring then
             for _, itemData in ipairs(ring) do
-                TEN.DrawItem.RemoveItem(itemData.item)
+                TEN.DrawItem.RemoveItem(itemData.objectID)
             end
         end
 
@@ -909,7 +950,7 @@ end
 LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selectedWeapon)
 
     local items  = PICKUP_DATA.constants
-    local gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
+    gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
 
     if ringType == RING.AMMO or ringType == RING.COMBINE then
         ClearInventory(ringType, true)
@@ -917,35 +958,16 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         ClearInventory()
     end
 
-    for _, itemID in ipairs(items) do
+    for _, itemRow in ipairs(items) do
 
-        local objectID = PICKUP_DATA.GetInventoryData(itemID)
-        local count = TEN.Inventory.GetItemCount(objectID.itemID)
-        local yOffset = PICKUP_DATA.GetItemData(objectID.itemID, "YOFFSET")
-        local scale = PICKUP_DATA.GetItemData(objectID.itemID, "SCALE")
-        local rotation = PICKUP_DATA.GetItemData(objectID.itemID, "ROTATION")
-        local menuActions = PICKUP_DATA.GetItemData(objectID.itemID, "MENUACTIONS")
-        local name = PICKUP_DATA.GetItemData(objectID.itemID, "DISPLAY_NAME")
-        local meshBits = PICKUP_DATA.GetItemData(objectID.itemID, "MESHBITS")
-        local orientation = PICKUP_DATA.GetItemData(objectID.itemID, "ORIENTATION")
-        local type = PICKUP_DATA.GetItemData(objectID.itemID, "TYPE")
-        local combine = PICKUP_DATA.GetItemData(objectID.itemID, "COMBINE")
-        local ringName = PICKUP_DATA.GetItemData(objectID.itemID, "RING")
-        local override = gameflowOverrides[objectID.itemID] or {}
-        if override then
-            if override.yOffset     ~= nil then yOffset     = override.yOffset end
-            if override.scale       ~= nil then scale       = override.scale end
-            if override.rotation    ~= nil then rotation    = override.rotation end
-            if override.menuActions ~= nil then menuActions = override.menuActions end
-            if override.name        ~= nil then name        = override.name end
-            if override.meshBits    ~= nil then meshBits    = override.meshBits end
-            if override.orientation ~= nil then orientation = override.orientation end
-        end
+        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
+
+        local data = BuildInventoryItem(itemData)
 
         --Check if weapon is present and skip adding ammo to main inventory ring
-        if type == TYPE.AMMO and ringType ~= RING.AMMO then
+        if data.type == TYPE.AMMO and data.ringType ~= RING.AMMO then
     
-            local weaponPresent = TEN.Inventory.GetItemCount(AMMO_SET[objectID.itemID].weapon)
+            local weaponPresent = TEN.Inventory.GetItemCount(AMMO_SET[data.objectID].weapon)
             if weaponPresent ~= 0 then
                 goto continue
             end
@@ -953,11 +975,11 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
 
         --Check if laseright is connected and adjust the meshbits and name
-        if type == TYPE.WEAPON then
-            if Lara:GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
-                meshBits = WEAPON_LASERSIGHT_DATA[objectID.itemID].MESHBITS
-                name = WEAPON_LASERSIGHT_DATA[objectID.itemID].NAME
-                menuActions = WEAPON_LASERSIGHT_DATA[objectID.itemID].FLAGS
+        if data.type == TYPE.WEAPON then
+            if Lara:GetLaserSight(WEAPON_SET[data.objectID].slot) then
+                data.meshBits = WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
+                data.name = WEAPON_LASERSIGHT_DATA[data.objectID].NAME
+                data.menuActions = WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
             end
         end
 
@@ -968,21 +990,21 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
         --Check if a combine ring is being created and only proceed if the item is a combine type otherwise skip to continue
         if ringType == RING.COMBINE then
-            if combine == true then
-                ringName = RING.COMBINE
+            if data.combine == true then
+                data.ringName = RING.COMBINE
 
                 --skip adding the selected item
-                if combineItem1 == objectID.itemID then
+                if combineItem1 == data.objectID then
                     goto continue
                 end
 
                 --Check if lasersight is connected and if it is skip adding to the combine table
-                if type == TYPE.WEAPON and Lara:GetLaserSight(WEAPON_SET[objectID.itemID].slot) then
+                if data.type == TYPE.WEAPON and Lara:GetLaserSight(WEAPON_SET[data.objectID].slot) then
                     goto continue
                 end
 
                 --should only insert the item if count is not zero
-                shouldInsert = (count ~= 0)
+                shouldInsert = (data.count ~= 0)
 
             else
                 --skip adding this item to table if the item is not a combine type
@@ -991,8 +1013,8 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         elseif ringType == RING.AMMO then
             --if Ammo is present for the weapon add it for the ammo ring being created for the weapon
    
-            if type == TYPE.AMMO and WEAPON_AMMO_LOOKUP[selectedWeapon] and contains(WEAPON_AMMO_LOOKUP[selectedWeapon], objectID.itemID) then
-                ringName = RING.AMMO
+            if data.type == TYPE.AMMO and WEAPON_AMMO_LOOKUP[selectedWeapon] and contains(WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
+                data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
                 
@@ -1005,34 +1027,23 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
         else
             -- Dump all inventory, skip only if count is 0
-            shouldInsert = (count ~= 0)
+            shouldInsert = (data.count ~= 0)
         end
 
-        inventory.ring[ringName] = inventory.ring[ringName] or {}
+        inventory.ring[data.ringName] = inventory.ring[data.ringName] or {}
         
         if debug then
-            print("Item: "..Util.GetObjectIDString(objectID.itemID))
+            print("Item: "..Util.GetObjectIDString(data.objectID))
             print("shouldInsert: ".. tostring(shouldInsert))
             print("ammoRing: " .. tostring(ammoRing))
             print("Actions:"..tostring(menuActions))
         end
 
         if shouldInsert or ammoRing then
-            table.insert(inventory.ring[ringName], { 
-                item = objectID.itemID,
-                count = count,
-                yOffset = yOffset,
-                scale = scale,
-                rotation = rotation,
-                menuActions = menuActions,
-                name = name,
-                meshBits = meshBits,
-                orientation = orientation,
-                type = type,
-                combine = combine })
+            table.insert(inventory.ring[data.ringName], data)
 
-            TEN.DrawItem.AddItem(objectID.itemID, RING_CENTER[ringName], rotation, scale, meshBits)
-            TEN.DrawItem.SetItemColor(objectID.itemID, COLOR_MAP.ITEM_COLOR)
+            TEN.DrawItem.AddItem(data.objectID, RING_CENTER[data.ringName], data.rotation, data.scale, data.meshBits)
+            TEN.DrawItem.SetItemColor(data.objectID, COLOR_MAP.ITEM_COLOR)
 
         end
 
@@ -1068,7 +1079,7 @@ local SetRingVisibility = function(ringName, visible)
     local itemCount = #ring
 
     for i = 1, itemCount do
-        local currentItem = ring[i].item
+        local currentItem = ring[i].objectID
         TEN.DrawItem.SetItemVisibility(currentItem, visible)
     end
 end
@@ -1084,7 +1095,7 @@ local TranslateRing = function(ringName, center, radius, rotationOffset)
     local itemCount = #ring
     
     for i = 1, itemCount do
-        local currentItem = ring[i].item 
+        local currentItem = ring[i].objectID 
 
         local angleDeg = (360 / itemCount) * (i - 1) +  rotationOffset
        
@@ -1107,10 +1118,10 @@ local FadeRing = function(ringName, fadeValue, omitSelectedItem)
     end
 
     local itemCount = #ring
-    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).item
+    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).objectID
 
     for i = 1, itemCount do
-        local currentItem = ring[i].item 
+        local currentItem = ring[i].objectID 
 
         if omitSelectedItem and selectedItem == currentItem then
             goto continue
@@ -1184,7 +1195,7 @@ end
 local SetupSecondaryRing = function(ringName, item)
     --used for combine and ammo rings
     previousRing = selectedRing
-    combineItem1 = item or GetSelectedItem(selectedRing).item
+    combineItem1 = item or GetSelectedItem(selectedRing).objectID
     targetRingAngle = 0
     currentRingAngle = 0
     LevelFuncs.Engine.CustomInventory.ConstructObjectList(ringName, combineItem1)
@@ -1448,13 +1459,13 @@ local AnimateInventory = function(mode)
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT then
         
-        if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or mode == INVENTORY_MODE.STATISTICS_CLOSE or mode == INVENTORY_MODE.SAVE_CLOSE or mode == INVENTORY_MODE.ITEM_DESELECT then
 
-        if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item, true) then
+        if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID, true) then
             return true
         end
 
@@ -1465,7 +1476,7 @@ local AnimateInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
-        if PerformBatchMotion("CombineSuccess", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.item) then
+        if PerformBatchMotion("CombineSuccess", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
@@ -1486,8 +1497,8 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
 
-        if combineItem1 or PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item) then
-            if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.item, true) then
+        if combineItem1 or PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.objectID) then
+            if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.objectID, true) then
                 FadeRings(false, true)
                 if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
                     if not combineItem1 then ClearBatchMotionProgress("ItemSelect", useAnimation) end
@@ -1513,7 +1524,7 @@ end
 local SaveItemData = function(selectedItem)
    
     if itemStoreRotations then
-        itemRotationOld =  TEN.DrawItem.GetItemRotation(selectedItem.item)
+        itemRotationOld =  TEN.DrawItem.GetItemRotation(selectedItem.objectID)
         itemRotation = selectedItem.rotation
         examineScaler = selectedItem.scale
         itemStoreRotations = false
@@ -1527,8 +1538,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     if mode == INVENTORY_MODE.INVENTORY then
         
-        RotateItem(selectedItem.item)
-        LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.item)
+        RotateItem(selectedItem.objectID)
+        LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.objectID)
 
     elseif mode == INVENTORY_MODE.RING_OPENING then
         
@@ -1590,7 +1601,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.EXAMINE then
 
-        LevelFuncs.Engine.CustomInventory.ExamineItem(selectedItem.item)
+        LevelFuncs.Engine.CustomInventory.ExamineItem(selectedItem.objectID)
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE then
         
@@ -1606,8 +1617,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
         if AnimateInventory(mode) then
             previousRingAngle = currentRingAngle
-            combineItem1 = selectedItem.item
-            CreateItemMenu(selectedItem.item)
+            combineItem1 = selectedItem.objectID
+            CreateItemMenu(selectedItem.objectID)
             inventoryMode = INVENTORY_MODE.ITEM_SELECTED
 
         end
@@ -1683,14 +1694,14 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
 
     elseif mode == INVENTORY_MODE.COMBINE then
-        RotateItem(selectedItem.item)
-        LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.item)
+        RotateItem(selectedItem.objectID)
+        LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.objectID)
 
         ShowRingMenu()
 
         if performCombine then
 
-            combineItem2 = GetSelectedItem(RING.COMBINE).item
+            combineItem2 = GetSelectedItem(RING.COMBINE).objectID
 
             if CombineItems(combineItem1, combineItem2) then
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_COMBINE)
@@ -1703,6 +1714,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
         if AnimateInventory(mode) then
+            ReplaceInventoryItem(combineItem1, combineResult)
             inventoryMode = INVENTORY_MODE.COMBINE_CLOSE
         end
 
@@ -1726,7 +1738,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
         if AnimateInventory(mode) then
             
-            LevelFuncs.Engine.CustomInventory.UseItem(selectedItem.item)
+            LevelFuncs.Engine.CustomInventory.UseItem(selectedItem.objectID)
 
         end
     elseif mode == INVENTORY_MODE.AMMO_SELECT_SETUP then
@@ -1744,11 +1756,11 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.AMMO_SELECT then
         
-        RotateItem(selectedItem.item)
+        RotateItem(selectedItem.objectID)
         ShowRingMenu()
 
         if performCombine then
-            local ammo = AMMO_SET[selectedItem.item]
+            local ammo = AMMO_SET[selectedItem.objectID]
             Lara:SetAmmoType(ammo.slot)
             inventoryMode = INVENTORY_MODE.AMMO_SELECT_CLOSE
         end

@@ -3,7 +3,7 @@ local STRING_LOAD_GAME = "load_game"
 local INV_ROT_Y = 1
 
 local COL = {
-    ITEM_ID = 1,
+    OBJECT_ID = 1,
     YOFFSET = 2,
     SCALE = 3,
     ROTATION = 4,
@@ -15,22 +15,6 @@ local COL = {
 	COMBINE = 10,
 	RING = 11
 }
-
-local function GetInventoryData(row)
-    return {
-        itemID = row[COL.ITEM_ID],
-        yOffset = row[COL.YOFFSET],
-        scale = row[COL.SCALE],
-        rotation = row[COL.ROTATION],
-        menuActions = row[COL.MENUACTIONS],
-        name = row[COL.DISPLAY_NAME],
-        meshBits = row[COL.MESHBITS],
-        orientation = row[COL.ORIENTATION],
-		type = row[COL.TYPE],
-		combine = row[COL.COMBINE],
-		ring = row[COL.RING],
-    }
-end
 
 local TYPE = {
 
@@ -300,22 +284,6 @@ local pickupConstants = {
 	{ TEN.Objects.ObjID.EXAMINE8_COMBO2, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y, TYPE.PUZZLE, true, RING.PUZZLE},
 }
 
-local function lookupValue(lookupValue, returnColName)
-    local lookupCol = COL.ITEM_ID
-    local returnCol = COL[returnColName]
-    if not returnCol then
-        error("Invalid column name")
-    end
-
-    for _, row in ipairs(pickupConstants) do
-        if row[lookupCol] == lookupValue then
-            return row[returnCol]
-        end
-    end
-	print("Not Found")
-    return nil -- Not found
-end
-
 local combineTable =
 {
 	{ TEN.Objects.ObjID.REVOLVER_ITEM, TEN.Objects.ObjID.LASERSIGHT_ITEM, TEN.Objects.ObjID.REVOLVER_ITEM },
@@ -380,4 +348,33 @@ local combineTable =
 	{ TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO1, TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO2, TEN.Objects.ObjID.CLOCKWORK_BEETLE },
 }
 
-return {constants = pickupConstants, combineTable = combineTable, GetInventoryData = GetInventoryData, GetItemData = lookupValue}
+local function GetRow(lookupValue)
+    
+	local lookupCol = COL.OBJECT_ID
+
+    for _, row in ipairs(pickupConstants) do
+        if row[lookupCol] == lookupValue then
+            return row
+        end
+    end
+
+    return nil
+end
+
+local function ConvertRowData(row)
+    return {
+        objectID = row[COL.OBJECT_ID],
+        yOffset = row[COL.YOFFSET],
+        scale = row[COL.SCALE],
+        rotation = row[COL.ROTATION],
+        menuActions = row[COL.MENUACTIONS],
+        name = row[COL.DISPLAY_NAME],
+        meshBits = row[COL.MESHBITS],
+        orientation = row[COL.ORIENTATION],
+		type = row[COL.TYPE],
+		combine = row[COL.COMBINE],
+		ringName = row[COL.RING],
+    }
+end
+
+return {constants = pickupConstants, combineTable = combineTable, ConvertRowData = ConvertRowData, GetRow = GetRow}
