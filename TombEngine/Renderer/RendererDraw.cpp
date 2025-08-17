@@ -1655,6 +1655,29 @@ namespace TEN::Renderer
 		PrepareDynamicLight(dynamicLight);
 	}
 
+	void Renderer::AddDynamicFogBulb(const Vector3& pos, float radius, float density, const Color& color, int hash)
+	{
+		if (_isLocked || g_GameFlow->LastFreezeMode != FreezeMode::None)
+			return;
+
+		auto dynamicLight = RendererLight{};
+
+		dynamicLight.Color = Vector3(color.x, color.y, color.z);
+
+		dynamicLight.RoomNumber = NO_VALUE;
+		dynamicLight.Intensity = density;
+		dynamicLight.Position = pos;
+		dynamicLight.In = 1.0f;
+		dynamicLight.Out = radius;
+		dynamicLight.Type = LightType::FogBulb;
+		dynamicLight.CastShadows = false;
+		dynamicLight.BoundingSphere = BoundingSphere(pos, radius);
+		dynamicLight.Luma = Luma(dynamicLight.Color);
+		dynamicLight.Hash = hash;
+
+		PrepareDynamicLight(dynamicLight);
+	}
+
 	void Renderer::PrepareDynamicLight(RendererLight& light)
 	{
 		// If hash is provided, search for same light in previous buffer.
@@ -3139,6 +3162,9 @@ namespace TEN::Renderer
 		for (int layer = 0; layer < 2; layer++)
 		{
 			if (!levelPtr->GetHorizonEnabled(layer) || levelPtr->GetHorizonTransparency(layer) <= EPSILON)
+				continue;
+
+			if (!_moveableObjects[levelPtr->GetHorizonObjectID(layer)].has_value())
 				continue;
 
 			SetDepthState(DepthState::None);

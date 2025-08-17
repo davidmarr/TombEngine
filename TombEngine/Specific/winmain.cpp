@@ -2,6 +2,7 @@
 #include "Specific/winmain.h"
 
 #include <CommCtrl.h>
+#include <DbgHelp.h>
 #include <process.h>
 #include <iostream>
 #include <codecvt>
@@ -264,6 +265,108 @@ unsigned CALLBACK ConsoleInput(void*)
 	return true;
 }
 
+void ShowExternalMessageBox(const std::string& text)
+{
+	// Try to locate error message utility resource.
+	HRSRC res = FindResource(NULL, MAKEINTRESOURCE(IDR_CRASHMSG), "EXE");
+	if (!res)
+		return;
+
+	// Load executable, if found.
+	HGLOBAL resData = LoadResource(NULL, res);
+	if (!resData)
+		return;
+
+	// Lock executable resource to get pointer to data.
+	void* resPtr = LockResource(resData);
+	if (!resPtr)
+		return;
+
+	const auto exePath = std::string("crashmsg.exe");
+
+	// Write executable to a disk.
+	HANDLE hFile = CreateFileA(exePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+		return;
+
+	DWORD written;
+	WriteFile(hFile, resPtr, SizeofResource(NULL, res), &written, NULL);
+	CloseHandle(hFile);
+
+	STARTUPINFOA si = { sizeof(si) };
+	PROCESS_INFORMATION pi;
+
+	// Execute the error message utility with the provided text.
+	std::string cmdLine = "\"" + exePath + "\" " + "\"" + text + "\"";
+	if (CreateProcessA(NULL, cmdLine.data(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	{
+		WaitForSingleObject(pi.hProcess, INFINITE);
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+
+	// Clean up error message utility afterwards.
+	DeleteFileA(exePath.c_str());
+}
+
+LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
+{
+	DWORD code = exceptionInfo->ExceptionRecord->ExceptionCode;
+	const char* codeName = "Unknown exception";
+
+	// Map exception codes to strings.
+	switch (code)
+	{
+		case EXCEPTION_ACCESS_VIOLATION:         codeName = "Access violation"; break;
+		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    codeName = "Array out of bounds"; break;
+		case EXCEPTION_BREAKPOINT:               codeName = "Breakpoint encountered"; break;
+		case EXCEPTION_DATATYPE_MISALIGNMENT:    codeName = "Data type misalignment"; break;
+		case EXCEPTION_FLT_DIVIDE_BY_ZERO:       codeName = "Floating-point division by zero"; break;
+		case EXCEPTION_FLT_OVERFLOW:             codeName = "Floating-point overflow"; break;
+		case EXCEPTION_ILLEGAL_INSTRUCTION:      codeName = "Illegal instruction"; break;
+		case EXCEPTION_IN_PAGE_ERROR:            codeName = "Exception in page error"; break;
+		case EXCEPTION_INT_DIVIDE_BY_ZERO:       codeName = "Integer division by zero"; break;
+		case EXCEPTION_INT_OVERFLOW:             codeName = "Integer overflow"; break;
+		case EXCEPTION_INVALID_DISPOSITION:      codeName = "Invalid disposition"; break;
+		case EXCEPTION_NONCONTINUABLE_EXCEPTION: codeName = "Non-continuable exception"; break;
+		case EXCEPTION_PRIV_INSTRUCTION:         codeName = "Private instruction exception"; break;
+		case EXCEPTION_SINGLE_STEP:              codeName = "Single-step exception"; break;
+		case EXCEPTION_STACK_OVERFLOW:           codeName = "Stack overflow"; break;
+	}
+
+	// Try to resolve symbol name from address.
+	HANDLE process = GetCurrentProcess();
+	SymInitialize(process, NULL, TRUE);
+
+	DWORD64 address = (DWORD64)exceptionInfo->ExceptionRecord->ExceptionAddress;
+	char symbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+	PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+	symbol->MaxNameLen = MAX_SYM_NAME;
+
+	// Display function name, if debug symbols are available, otherwise display address only.
+	std::ostringstream oss;
+	if (SymFromAddr(process, address, 0, symbol))
+	{
+		oss << "address " << symbol->Name << " (0x" << std::hex << address << ")";
+	}
+	else
+	{
+		oss << "address 0x" << std::hex << address;
+	}
+
+	auto errorMessage = "Unhandled exception: " + std::string(codeName) + " at " + oss.str() + ".";
+
+	// Set application to debug mode to prevent losing focus in fullscreen mode.
+	DebugMode = true;
+
+	// Log the exception and show error message.
+	TENLog(errorMessage, LogLevel::Error);
+	ShowExternalMessageBox(errorMessage);
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 void WinProcMsg()
 {
 	MSG msg;
@@ -431,7 +534,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gameDir = ConstructAssetDirectory(gameDir);
 
 	// Hide console window if mode isn't debug.
-#ifndef _DEBUG
+#if !_DEBUG
 	if (!DebugMode)
 	{
 		FreeConsole();
@@ -447,6 +550,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	// Initialize logging.
 	InitTENLog(gameDir);
+	SetUnhandledExceptionFilter(HandleException);
 
 	auto windowName = std::string("Starting TombEngine");
 
