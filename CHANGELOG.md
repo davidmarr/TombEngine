@@ -3,7 +3,7 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
-## [Version 1.9.2]
+## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
 ## New features
 * Added FIRE_PENDULUM (ID 458) object from TR3.
@@ -45,7 +45,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed `Input.ActionID.MOUSE_SCROLL_UP` and `Input.ActionID.MOUSE_SCROLL_DOWN` polling mouse movement instead of scrolling.
 * Fixed `Strings.ShowString` called without last two arguments not showing strings indefinitely.
 
-## [Version 1.9.1]
+## [Version 1.9.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.1) - 2025-06-25
 
 ### New features
 * Added ability to open doors with draw weapon key in dozy mode.
@@ -74,7 +74,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed `Camera:SetPosition` interfering with non-fixed camera position.
 * Renamed `Camera:PlayCamera` to `Camera:Play`.
 
-## [Version 1.9]
+## [Version 1.9](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9) - 2025-05-19
 
 ## New features
 * Added skinned meshes support for any object.
