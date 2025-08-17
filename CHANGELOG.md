@@ -39,6 +39,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed overbright ambient light not applied correctly to moveables.
 
 ### Lua API changes
+* Added log warnings in case callbacks or level functions are being redefined.
 * Added `Effects.EmitFogBulb` function to emit a dynamic fog bulb for a single frame.
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
 * Fixed `Input.ActionID.MOUSE_SCROLL_UP` and `Input.ActionID.MOUSE_SCROLL_DOWN` polling mouse movement instead of scrolling.
