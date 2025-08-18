@@ -206,7 +206,7 @@ namespace TEN::Scripting::DisplaySprite
 		const float aspectCorrectionBaseInv = 1.0f / aspectCorrectionBase;
 
 		const auto& sprite = g_Renderer.GetSprites()[object.meshIndex + _spriteID];
-		const float spriteAspect = static_cast<float>(sprite.Width) / sprite.Height;
+		const float spriteAspect = (float)sprite.Width / (float)sprite.Height;
 
 		// Scaled values
 		const Vector2 convertedScale = _scale * SCALE_CONVERSION;
