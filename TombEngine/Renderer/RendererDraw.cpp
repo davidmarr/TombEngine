@@ -3164,6 +3164,9 @@ namespace TEN::Renderer
 			if (!levelPtr->GetHorizonEnabled(layer) || levelPtr->GetHorizonTransparency(layer) <= EPSILON)
 				continue;
 
+			if (!_moveableObjects[levelPtr->GetHorizonObjectID(layer)].has_value())
+				continue;
+
 			SetDepthState(DepthState::None);
 			SetBlendMode(BlendMode::Opaque);
 			SetCullMode(CullMode::CounterClockwise);
