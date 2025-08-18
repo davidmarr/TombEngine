@@ -2431,7 +2431,7 @@ namespace TEN::Renderer
 				case ID_WATERFALL6:
 				case ID_WATERFALLSS1:
 				case ID_WATERFALLSS2:
-					DrawWaterfalls(itemToDraw, view, 0.5f, rendererPass);
+					DrawWaterfalls(itemToDraw, view, 10, rendererPass);
 					continue;
 
 				default:
@@ -2477,11 +2477,11 @@ namespace TEN::Renderer
 		auto maxX = std::max(std::max(v1.UV.x, v2.UV.x), v3.UV.x);
 		  
 		// Setup animated buffer
-		_stAnimated.Fps = FPS * 2;
+		_stAnimated.Fps = speed;
 		_stAnimated.NumFrames = 1;
 		_stAnimated.Type = 1; // UVRotate
-		_stAnimated.UVRotateDirection = 0.0f; // Top - Down
-		_stAnimated.UvRotateSpeed = speed;
+		_stAnimated.Animated = 1;
+		_stAnimated.IsWaterfall = 1;
 
 		// We need only top/bottom Y coordinate for UVRotate, but we pass whole
 		// rectangle anyway, in case later we may want to implement different UVRotate modes.
@@ -3342,16 +3342,27 @@ namespace TEN::Renderer
 								continue;
 
 							// Draw geometry.
-							if (animated)
+							if (IsWaterfall(itemToDraw->ObjectID))
 							{
-								SetupAnimatedTextures(bucket);
+								// HACK: waterfalls are the only object which animated behaviour is handled by the engine
+								BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 							}
 							else
 							{
-								TexturesAreNotAnimated();
+								// In all other cases the animated behaviour is handled by the designer
+								// in Tomb Editor or WadTool
+								if (animated)
+								{ 
+									SetupAnimatedTextures(bucket);
+								}
+								else
+								{
+									TexturesAreNotAnimated();
 
-								BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-								BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+									BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+									BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+								}
 							}
 					
 							DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
@@ -4081,6 +4092,7 @@ namespace TEN::Renderer
 			_stAnimated.Fps = 1;
 			_stAnimated.NumFrames = 1;
 			_stAnimated.Animated = 1;
+			_stAnimated.IsWaterfall = 0;
 
 			BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
 			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);

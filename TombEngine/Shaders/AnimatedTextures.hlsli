@@ -15,6 +15,7 @@ cbuffer AnimatedBuffer : register(b6)
     unsigned int Animated;
     float UVRotateDirection;
     float UVRotateSpeed;
+    int IsWaterfall;
 }
 
 float2 CalculateUVRotate(float2 uv, unsigned int frame)
@@ -43,6 +44,25 @@ float2 CalculateUVRotate(float2 uv, unsigned int frame)
     scrolledUV = clamp(scrolledUV, epsilon, 1.0f - epsilon);
 
     return scrolledUV;
+}
+
+float2 CalculateUVRotateForLegacyWaterfalls(float2 uv, unsigned int frame)
+{
+    if (FPS == 0)
+    {
+        return uv;
+    }
+    else
+    {
+        float step = uv.y - AnimFrames[frame].TopLeft.y;
+        float vert = AnimFrames[frame].TopLeft.y + (step / 2);
+		
+        float height = (AnimFrames[frame].BottomLeft.y - AnimFrames[frame].TopLeft.y) / 2;
+        float relPos = 1.0f - (InterpolatedFrame % FPS) / (float) FPS;
+        float newUV = vert + height * relPos;
+        
+        return float2(uv.x, newUV);
+    }
 }
 
 float2 GetFrame(unsigned int index, unsigned int offset)

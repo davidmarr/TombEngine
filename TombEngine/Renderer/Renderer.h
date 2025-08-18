@@ -612,6 +612,11 @@ namespace TEN::Renderer
 			_cbAnimated.UpdateData(_stAnimated, _context.Get());
 		}
 
+		static inline bool IsWaterfall(short objectNumber)
+		{
+			return (objectNumber >= ID_WATERFALL1 && objectNumber <= ID_WATERFALLSS2);
+		}
+
 	public:
 		Renderer();
 		~Renderer();
