@@ -3,6 +3,15 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 1.9.3]
+
+## New features
+* Added animated textures support for all objects.
+* Added UVRotate support.
+* Switched to LZ4 compression library and removed ZLIB support.
+
+### Bug fixes
+
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
 ## New features
