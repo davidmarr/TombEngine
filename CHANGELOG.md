@@ -8,7 +8,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## New features
 * Added animated textures support for all objects.
 * Added UVRotate support.
-* Switched to LZ4 compression library and removed ZLIB support.
+* Increased level loading speed by switching to LZ4 compression format.
+* Fixed motorbike sound going silent while doing jumps.
 
 ### Bug fixes
 
