@@ -2,6 +2,7 @@
 #include "./Blending.hlsli"
 #include "./VertexInput.hlsli"
 #include "./ShaderLight.hlsli"
+#include "./AnimatedTextures.hlsli"
 
 cbuffer ItemBuffer : register(b1)
 {
@@ -30,15 +31,18 @@ PixelShaderInput VS(VertexShaderInput input)
 
 	output.Position = mul(mul(float4(input.Position, 1.0f), World), ViewProjection);
 	output.Normal = (mul(float4(input.Normal, 0.0f), World).xyz);
-	output.Color = input.Color;
-	output.UV = input.UV;
-	output.WorldPosition = (mul(float4(input.Position, 1.0f), World).xyz);
+    output.Color = input.Color;
+    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
+    output.WorldPosition = (mul(float4(input.Position, 1.0f), World).xyz);
 	output.Sheen = input.Effects.w;
 	return output;
 }
 
 float4 PS(PixelShaderInput input) : SV_TARGET
 {
+	if (Animated && Type == 1)
+        input.UV = CalculateUVRotate(input.UV, 0);
+	
 	float4 tex = Texture.Sample(Sampler, input.UV);
 	float3 baseColor = tex.xyz * Color.xyz;
 	float3 normal = normalize(input.Normal);

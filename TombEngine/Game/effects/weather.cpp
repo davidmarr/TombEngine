@@ -589,7 +589,7 @@ namespace TEN::Effects::Environment
 
 				float dist = (level.GetWeatherType() == WeatherType::Snow) ? COLLISION_CHECK_DISTANCE : (COLLISION_CHECK_DISTANCE / 2);
 				float radius = Random::GenerateInt(0, dist);
-				short angle = Random::GenerateInt(ANGLE(0), ANGLE(180));
+				short angle = Random::GenerateAngle(ANGLE(-180), ANGLE(179));
 
 				auto xPos = Camera.pos.x + ((int)(phd_cos(angle) * radius));
 				auto zPos = Camera.pos.z + ((int)(phd_sin(angle) * radius));
