@@ -15,6 +15,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed motorbike sound going silent while doing jumps.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
 * Fixed controls being stuck when engine window is out of focus.
+* Fixed intense GPU usage when engine window is minimized.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
