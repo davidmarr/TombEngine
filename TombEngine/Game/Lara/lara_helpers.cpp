@@ -1081,7 +1081,7 @@ void DoLaraFallDamage(ItemInfo* item)
 
 	auto pointColl = GetPointCollision(*item);
 
-	if (pointColl.TestEnvironmentFlag(RoomEnvFlags::ENV_FLAG_WATER) &&
+	if ((pointColl.TestEnvironmentFlag(RoomEnvFlags::ENV_FLAG_WATER) || pointColl.TestEnvironmentFlag(RoomEnvFlags::ENV_FLAG_SWAMP)) &&
 		pointColl.GetWaterBottomHeight() >= CLICK(2))
 		return;
 
