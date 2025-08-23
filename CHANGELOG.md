@@ -9,9 +9,16 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added animated textures support for all objects.
 * Added UVRotate support.
 * Increased level loading speed by switching to LZ4 compression format.
-* Fixed motorbike sound going silent while doing jumps.
 
 ### Bug fixes
+* Fixed FIRE_PENDULUM light being overblown when weapons with explosive weapons are used.
+* Fixed POLEROPE object occasionally not being grabbable when placed on bridges.
+* Fixed motorbike sound going silent while doing jumps.
+* Fixed dying while landing into shallow water after freefall.
+* Fixed shotgun wideshot ammo having same accuracy as normal ammo.
+* Fixed projectiles sometimes flying through narrow room geometry corners.
+* Fixed controls being stuck when engine window is out of focus.
+* Fixed intense GPU usage when engine window is minimized.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
