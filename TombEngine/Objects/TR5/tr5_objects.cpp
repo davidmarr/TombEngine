@@ -415,7 +415,7 @@ static void StartEntity(ObjectInfo *obj)
 		obj->intelligent = true;
 		obj->damageType = DamageMode::None;
 		obj->LotType = LotType::Human;
-		obj->meshSwapSlot = ID_MESHSWAP_HITMAN;
+		obj->meshSwapSlot = ID_MESHSWAP_CYBORG;
 		obj->SetBoneRotationFlags(6, ROT_X | ROT_Y);
 		obj->SetBoneRotationFlags(13, ROT_X | ROT_Y);
 		obj->SetHitEffect(true);
