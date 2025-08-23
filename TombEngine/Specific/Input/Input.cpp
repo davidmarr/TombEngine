@@ -95,9 +95,9 @@ namespace TEN::Input
 			auto wnd = std::ostringstream{};
 			wnd << (size_t)handle;
 			paramList.insert(std::make_pair(std::string("WINDOW"), wnd.str()));
-			paramList.insert(std::make_pair(std::string("w32_keyboard"), std::string("DISCL_FOREGROUND")));
+			paramList.insert(std::make_pair(std::string("w32_keyboard"), std::string("DISCL_BACKGROUND")));
 			paramList.insert(std::make_pair(std::string("w32_keyboard"), std::string("DISCL_NONEXCLUSIVE")));
-			paramList.insert(std::make_pair(std::string("w32_mouse"), std::string("DISCL_FOREGROUND")));
+			paramList.insert(std::make_pair(std::string("w32_mouse"), std::string("DISCL_BACKGROUND")));
 			paramList.insert(std::make_pair(std::string("w32_mouse"), std::string("DISCL_NONEXCLUSIVE")));
 
 			OisInputManager = OIS::InputManager::createInputSystem(paramList);
