@@ -4111,6 +4111,9 @@ namespace TEN::Renderer
 
 	void Renderer::SetupAnimatedTextures(const RendererBucket& bucket)
 	{
+		_stAnimated.Animated = 1;
+		_stAnimated.IsWaterfall = 0;
+
 		const auto& set = _animatedTextureSets[bucket.Texture];
 
 		// Stream video texture, if video playback is active, otherwise show original texture.
@@ -4119,8 +4122,6 @@ namespace TEN::Renderer
 			_stAnimated.Type = 0; // Dummy type, should be set to 0 to avoid incorrect UV mapping.
 			_stAnimated.Fps = 1;
 			_stAnimated.NumFrames = 1;
-			_stAnimated.Animated = 1;
-			_stAnimated.IsWaterfall = 0;
 
 			BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
 			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
@@ -4143,7 +4144,6 @@ namespace TEN::Renderer
 			_stAnimated.Textures[0].TopRight = set.Textures[0].UV[1];
 			_stAnimated.Textures[0].BottomRight = set.Textures[0].UV[2];
 			_stAnimated.Textures[0].BottomLeft = set.Textures[0].UV[3];
-			_stAnimated.Animated = 1;  
 
 			BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicWrap);
 			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicWrap);
@@ -4153,7 +4153,6 @@ namespace TEN::Renderer
 			_stAnimated.Type = (int)set.Type;
 			_stAnimated.Fps = set.Fps;
 			_stAnimated.NumFrames = set.NumTextures;
-			_stAnimated.Animated = 1;
 
 			BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 			BindTexture(TextureRegister::NormalMap, &std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
