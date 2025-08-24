@@ -1849,8 +1849,8 @@ namespace TEN::Renderer
 		UpdateLaraAnimations(false);
 		UpdateItemAnimations(view);
 
-		_stBlending.AlphaTest = -1;
-		_stBlending.AlphaThreshold = -1;
+		_stBlending.AlphaTest = NO_VALUE;
+		_stBlending.AlphaThreshold = NO_VALUE;
 
 		CollectLightsForCamera();
 		RenderItemShadows(view);

@@ -172,6 +172,11 @@ namespace TEN::Hud
 		}
 	}
 
+	bool DrawItemsController::IsEmpty()
+	{
+		return _displayItems.empty();
+	}
+
 	bool DrawItemsController::IfItemExists(GAME_OBJECT_ID objectID)
 	{
 		for (auto& item : _displayItems)

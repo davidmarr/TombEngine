@@ -1265,7 +1265,13 @@ namespace TEN::Renderer
 		// Draw display sprites sorted by priority.
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
-		g_DrawItems.Draw();
+
+		if (!g_DrawItems.IsEmpty())
+		{
+			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
+			g_DrawItems.Draw();
+		}
+
 		DrawDisplaySprites(_gameCamera, true);
 		DrawAllStrings();
 		
@@ -1326,11 +1332,6 @@ namespace TEN::Renderer
 
 		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
 		_context->ClearRenderTargetView(_backBuffer.RenderTargetView.Get(), Colors::Black);
-
-		// Reset GPU state.
-		SetBlendMode(BlendMode::Opaque, true);
-		SetDepthState(DepthState::Write, true);
-		SetCullMode(CullMode::CounterClockwise, true);
 
 		RenderInventoryScene(&_backBuffer, &_dumpScreenRenderTarget, 0.5f);
 

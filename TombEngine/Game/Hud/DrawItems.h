@@ -116,6 +116,7 @@ namespace TEN::Hud
 		void SetItemMeshRotation(GAME_OBJECT_ID objectID, int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 		void SetItemVisibility(GAME_OBJECT_ID objectID, bool visible);
 
+		bool IsEmpty();
 		bool IfItemExists(GAME_OBJECT_ID objectID);
 		Vector3 GetItemPosition(GAME_OBJECT_ID objectID);
 		EulerAngles GetItemRotation(GAME_OBJECT_ID objectID);
@@ -126,7 +127,7 @@ namespace TEN::Hud
 
 		std::vector<DisplayItem>& GetItems();
 
-		//Camera settings
+		// Camera settings.
 		void SetCameraPosition(const Vector3& pos, bool disableInterpolation);
 		void SetCameraTargetPosition(const Vector3& target, bool disableInterpolation);
 
@@ -141,7 +142,7 @@ namespace TEN::Hud
 
 		void StoreCameraInterpolationData();
 
-		//Inventory override
+		// Inventory override.
 		bool GetInventoryOverride() const;
 		void SetInventoryOverride(bool value);
 
