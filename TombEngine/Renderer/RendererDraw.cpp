@@ -1788,7 +1788,8 @@ namespace TEN::Renderer
 
 	void Renderer::PrepareScene()
 	{
-		if (g_GameFlow->CurrentFreezeMode == FreezeMode::None)
+		if (g_GameFlow->CurrentFreezeMode == FreezeMode::None &&
+			g_Gui.GetInventoryMode() == InventoryMode::None)
 		{
 			_dynamicLightList ^= 1;
 			_dynamicLights[_dynamicLightList].clear();
