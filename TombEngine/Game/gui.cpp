@@ -484,6 +484,7 @@ namespace TEN::Gui
 			Windowed,
 			ShadowType,
 			Caustics,
+			Decals,
 			Antialiasing,
 			AmbientOcclusion,
 			HighFramerate,
@@ -534,6 +535,11 @@ namespace TEN::Gui
 				CurrentSettings.Configuration.EnableCaustics = !CurrentSettings.Configuration.EnableCaustics;
 				break;
 
+			case DisplaySettingsOption::Decals:
+				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+				CurrentSettings.Configuration.EnableDecals = !CurrentSettings.Configuration.EnableDecals;
+				break;
+
 			case DisplaySettingsOption::Antialiasing:
 				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
 
@@ -574,6 +580,7 @@ namespace TEN::Gui
 
 			case DisplaySettingsOption::ShadowType:
 				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+
 				if (CurrentSettings.Configuration.ShadowType == ShadowMode::All)
 					CurrentSettings.Configuration.ShadowType = ShadowMode::None;
 				else
@@ -584,6 +591,11 @@ namespace TEN::Gui
 			case DisplaySettingsOption::Caustics:
 				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
 				CurrentSettings.Configuration.EnableCaustics = !CurrentSettings.Configuration.EnableCaustics;
+				break;
+
+			case DisplaySettingsOption::Decals:
+				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+				CurrentSettings.Configuration.EnableDecals = !CurrentSettings.Configuration.EnableDecals;
 				break;
 
 			case DisplaySettingsOption::Antialiasing:
@@ -3047,7 +3059,7 @@ namespace TEN::Gui
 					g_Renderer.AddString(PHD_CENTER_X, objectNumber, textBuffer, PRINTSTRING_COLOR_YELLOW, (int)PrintStringFlags::Center | (int)PrintStringFlags::Outline);
 				}
 
-				if (!i && !ring.ObjectListMovement)
+				if (!i && !ring.ObjectListMovement) 
 				{
 					if (invObject.RotFlags & INV_ROT_X)
 						listObject.Orientation.x += ANGLE(5.0f / g_Renderer.GetFramerateMultiplier());
