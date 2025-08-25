@@ -57,7 +57,7 @@ namespace TEN::Input
 		bool TestConflict(ActionID actionID);
 
 		// Utilities
-
+		std::string GetBindingKeyName(ActionID actionID);
 		void Initialize();
 	};
 

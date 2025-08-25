@@ -12,6 +12,7 @@
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/TEN/Input/ActionIDs.h"
 #include "Scripting/Internal/TEN/Objects/Lara/AmmoTypes.h"
+#include "Scripting/Internal/TEN/Objects/Lara/WeaponModes.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
@@ -197,6 +198,15 @@ HandStatus LaraObject::GetHandStatus() const
 	return  HandStatus{ lara->Control.HandStatus };
 }
 
+/// Set the player's hand status.
+// @function LaraObject:SetHandStatus
+// @tparam Objects.HandStatus status Status type to set.
+void LaraObject::SetHandStatus(HandStatus status)
+{
+	auto* lara = GetLaraInfo(_moveable);
+	lara->Control.HandStatus = status;
+}
+
 /// Get the player's weapon type.
 // @function LaraObject:GetWeaponType
 // @usage
@@ -234,6 +244,64 @@ void LaraObject::SetWeaponType(LaraWeaponType weaponType, bool activate)
 			lara->Control.Weapon.LastGunType = weaponType;
 		else
 			lara->Control.Weapon.RequestGunType = weaponType;
+		break;
+	}
+}
+
+//docs required
+bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
+{
+	auto* lara = GetLaraInfo(_moveable);
+
+	switch (weaponType)
+	{
+	case LaraWeaponType::Revolver:
+	case LaraWeaponType::Crossbow:
+	case LaraWeaponType::HK:
+		return lara->Weapons[static_cast<int>(weaponType)].HasLasersight;
+
+	default:
+		return false;
+	}
+}
+
+//docs required
+void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate)
+{
+	auto* lara = GetLaraInfo(_moveable);
+
+	//Check for inventory to have lasersight
+	if (!lara->Inventory.HasLasersight)
+		return;
+
+	auto convertedActivate = ValueOr<bool>(activate, false);
+	switch (weaponType)
+	{
+	case LaraWeaponType::Revolver:
+	case LaraWeaponType::Crossbow:
+	case LaraWeaponType::HK:
+
+		// Check if laser sight is already attached to any other weapon
+		for (LaraWeaponType type : { LaraWeaponType::Revolver, LaraWeaponType::Crossbow, LaraWeaponType::HK })
+		{
+			if (type != weaponType && lara->Weapons[static_cast<int>(type)].HasLasersight)
+			{
+				// Laser sight is already in use, do nothing
+				return;
+			}
+		}
+
+		// Attach laser sight
+		lara->Weapons[static_cast<int>(weaponType)].HasLasersight = true;
+
+		//Activate weapon if required
+		if (convertedActivate == false)
+			lara->Control.Weapon.LastGunType = weaponType;
+		else
+			lara->Control.Weapon.RequestGunType = weaponType;
+		break;
+
+	default:
 		break;
 	}
 }
@@ -330,6 +398,49 @@ int LaraObject::GetAmmoType() const
 
 	return (int)*ammoType;
 }
+//docs required
+void LaraObject::SetAmmoType(PlayerAmmoType ammoType)
+{
+	auto& player = GetLaraInfo(*_moveable);
+
+	switch (ammoType)
+	{
+	case PlayerAmmoType::ShotgunNormal:
+		player.Weapons[(int)LaraWeaponType::Shotgun].SelectedAmmo = WeaponAmmoType::Ammo1;
+		break;
+
+	case PlayerAmmoType::ShotgunWide:
+		player.Weapons[(int)LaraWeaponType::Shotgun].SelectedAmmo = WeaponAmmoType::Ammo2;
+		break;
+
+	case PlayerAmmoType::CrossbowBoltNormal:
+		player.Weapons[(int)LaraWeaponType::Crossbow].SelectedAmmo = WeaponAmmoType::Ammo1;
+		break;
+
+	case PlayerAmmoType::CrossbowBoltPoison:
+		player.Weapons[(int)LaraWeaponType::Crossbow].SelectedAmmo = WeaponAmmoType::Ammo2;
+		break;
+
+	case PlayerAmmoType::CrossbowBoltExplosive:
+		player.Weapons[(int)LaraWeaponType::Crossbow].SelectedAmmo = WeaponAmmoType::Ammo3;
+		break;
+
+	case PlayerAmmoType::GrenadeNormal:
+		player.Weapons[(int)LaraWeaponType::GrenadeLauncher].SelectedAmmo = WeaponAmmoType::Ammo1;
+		break;
+
+	case PlayerAmmoType::GrenadeFrag:
+		player.Weapons[(int)LaraWeaponType::GrenadeLauncher].SelectedAmmo = WeaponAmmoType::Ammo2;
+		break;
+
+	case PlayerAmmoType::GrenadeFlash:
+		player.Weapons[(int)LaraWeaponType::GrenadeLauncher].SelectedAmmo = WeaponAmmoType::Ammo3;
+		break;
+
+	default:
+		break;
+	}
+}
 
 /// Get current weapon's ammo count.
 // @function LaraObject:GetAmmoCount
@@ -341,6 +452,69 @@ int LaraObject::GetAmmoCount() const
 	auto* lara = GetLaraInfo(_moveable);
 	auto& ammo = GetAmmo(Lara, Lara.Control.Weapon.GunType);
 	return (ammo.HasInfinite()) ? -1 : (int)ammo.GetCount();
+}
+
+//Private function required for inventory
+int LaraObject::GetWeaponMode() const
+{
+	const auto& player = GetLaraInfo(*_moveable);
+
+	auto weaponMode = std::optional<PlayerWeaponMode>(std::nullopt);
+	
+	switch (player.Control.Weapon.GunType)
+	{
+
+	case::LaraWeaponType::HK:
+		if (player.Weapons[(int)LaraWeaponType::GrenadeLauncher].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_1)
+		{
+			weaponMode = PlayerWeaponMode::HKRapid;
+		}
+		else if (player.Weapons[(int)LaraWeaponType::GrenadeLauncher].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_2)
+		{
+			weaponMode = PlayerWeaponMode::HKBurst;
+		}
+		else
+		{
+			weaponMode = PlayerWeaponMode::HKSniper;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	if (!weaponMode.has_value())
+	{
+		TENLog("GetWeaponMode() error; no weapon mode type.", LogLevel::Warning, LogConfig::All);
+		weaponMode = PlayerWeaponMode::None;
+	}
+
+	return static_cast<int>(weaponMode.value());
+}
+
+//Private function required for inventory
+void LaraObject::SetWeaponMode(PlayerWeaponMode weaponMode)
+{
+	auto& player = GetLaraInfo(*_moveable);
+
+	switch (weaponMode)
+	{
+	case PlayerWeaponMode::HKRapid:
+		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_1;
+		break;
+
+	case PlayerWeaponMode::HKBurst:
+		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_2;
+		break;
+
+	case PlayerWeaponMode::HKSniper:
+		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_3;
+		break;
+
+	default:
+		break;
+	}
 }
 
 /// Get current vehicle, if it exists.
@@ -397,6 +571,13 @@ bool LaraObject::IsTorchLit() const
 {
 	const auto& player = GetLaraInfo(*_moveable);
 	return player.Torch.IsLit;
+}
+
+
+WaterStatus LaraObject::GetWaterStatus() const
+{
+	auto* lara = GetLaraInfo(_moveable);
+	return  WaterStatus{ lara->Control.WaterStatus };
 }
 
 /// Align the player with a moveable object for interaction.
@@ -516,15 +697,21 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_UndrawWeapon, &LaraObject::UndrawWeapon,
 		ScriptReserved_PlayerDiscardTorch, &LaraObject::DiscardTorch,
 		ScriptReserved_GetHandStatus, &LaraObject::GetHandStatus,
+		ScriptReserved_SetHandStatus, & LaraObject::SetHandStatus,
 		ScriptReserved_GetWeaponType, &LaraObject::GetWeaponType,
 		ScriptReserved_SetWeaponType, &LaraObject::SetWeaponType,
+		ScriptReserved_GetLaserSight, & LaraObject::GetLaserSight,
+		ScriptReserved_SetLaserSight, & LaraObject::SetLaserSight,
 		ScriptReserved_GetAmmoType, &LaraObject::GetAmmoType,
+		ScriptReserved_SetAmmoType, & LaraObject::SetAmmoType,
 		ScriptReserved_GetAmmoCount, &LaraObject::GetAmmoCount,
+		ScriptReserved_GetWeaponMode, & LaraObject::GetWeaponMode,
+		ScriptReserved_SetWeaponMode, & LaraObject::SetWeaponMode,
 		ScriptReserved_GetVehicle, &LaraObject::GetVehicle,
 		ScriptReserved_GetTarget, &LaraObject::GetTarget,
 		ScriptReserved_GetPlayerInteractedMoveable, &LaraObject::GetPlayerInteractedMoveable,
 		ScriptReserved_PlayerIsTorchLit, &LaraObject::IsTorchLit,
-
+		ScriptReserved_GetWaterStatus, & LaraObject::GetWaterStatus,
 		ScriptReserved_PlayerInteract, &LaraObject::Interact,
 		ScriptReserved_PlayerTestInteraction, &LaraObject::TestInteraction,
 

@@ -918,6 +918,122 @@ namespace TEN::Renderer
 		}
 	}
 
+	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
+	{
+		if (item.Visible)
+		{
+			float t = GetInterpolationFactor();
+
+			auto objectNumber = item.ObjectID;
+			auto pos3D = item.GetInterpolatedPosition(t);
+			auto orient = item.GetInterpolatedOrientation(t);
+			auto scale = item.GetInterpolatedScale(t);
+			auto color = item.GetInterpolatedColor(t);
+			int meshBits = item.MeshBits;
+			
+			constexpr float NearPlane = 0.1f; // Near clipping plane
+			constexpr float FarPlane = BLOCK(100); // Far clipping plane
+
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
+
+			float aspectRatio = static_cast<float>(_screenWidth) / _screenHeight;
+
+			auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(t), g_DrawItems.GetInterpolatedCameraTargetPosition(t), Vector3::Up);
+			auto projMatrix = Matrix::CreatePerspectiveFieldOfView(
+				CurrentFOV, aspectRatio, NearPlane, FarPlane);
+
+			auto& moveableObject = _moveableObjects[objectNumber];
+			if (!moveableObject.has_value())
+				return;
+
+			const auto& object = Objects[objectNumber];
+			if (object.animIndex != -1)
+			{
+				auto frameData = AnimFrameInterpData
+				{
+					&g_Level.Frames[GetAnimData(object.animIndex).FramePtr],
+					&g_Level.Frames[GetAnimData(object.animIndex).FramePtr],
+					0.0f
+				};
+				UpdateAnimation(nullptr, *moveableObject, frameData, UINT_MAX);
+			}
+
+			SetBlendMode(BlendMode::Opaque);
+			SetCullMode(CullMode::CounterClockwise); //CounterClockwise
+			SetDepthState(DepthState::Write);
+
+			// Set vertex buffer.
+			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_context->IASetInputLayout(_inputLayout.Get());
+			_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+			// Set shaders.
+			_shaders.Bind(Shader::Inventory);
+
+			// Set matrices.
+			auto hudCamera = CCameraMatrixBuffer{};
+			hudCamera.CamDirectionWS = -Vector4::UnitZ;
+			hudCamera.ViewProjection = viewMatrix * projMatrix;
+			_cbCameraMatrices.UpdateData(hudCamera, _context.Get());
+			BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+
+			for (int i = 0; i < moveableObject->ObjectMeshes.size(); i++)
+			{
+				if (meshBits && !(meshBits & (1 << i)))
+					continue;
+
+				// If there's a mesh-specific override, apply it
+				if (item.MeshRotations.find(i) != item.MeshRotations.end())
+				{
+					auto rotOverride = item.GetInterpolatedMeshRotation(i, t);
+					moveableObject->LinearizedBones[i]->ExtraRotation = rotOverride.ToQuaternion();
+				}
+
+				// Construct world matrix. // pos.x, pos.y, pos.z
+				auto translationMatrix = Matrix::CreateTranslation(pos3D.x, pos3D.y, pos3D.z);
+				auto rotMatrix = orient.ToRotationMatrix();
+				auto scaleMatrix = Matrix::CreateScale(scale);
+				auto worldMatrix = scaleMatrix * rotMatrix * translationMatrix;
+
+				if (object.animIndex != NO_VALUE)
+				{
+					_stItem.World = moveableObject->AnimationTransforms[i] * worldMatrix;
+				}
+				else
+				{
+					_stItem.World = moveableObject->BindPoseTransforms[i] * worldMatrix;
+				}
+
+				_stItem.BoneLightModes[i] = (int)LightMode::Dynamic;
+				_stItem.Color = color;
+				_stItem.AmbientLight = g_DrawItems.GetAmbientLight();
+
+				_cbItem.UpdateData(_stItem, _context.Get());
+				BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
+				BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+
+				const auto& mesh = *moveableObject->ObjectMeshes[i];
+				for (const auto& bucket : mesh.Buckets)
+				{
+					if (bucket.NumVertices == 0)
+						continue;
+
+					BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+					BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+
+					// Always render items as alpha-blended surface.
+					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
+					SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+
+					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+					_numMoveablesDrawCalls++;
+				}
+			}
+		}
+	}
+
 	void Renderer::RenderTitleImage()
 	{
 		Texture2D texture;
@@ -1151,15 +1267,19 @@ namespace TEN::Renderer
 			RenderScene(&_backBuffer, _gameCamera, SceneRenderMode::NoHud);
 		}
 
-		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
-		// Draw3DObjectsIn2DSpace(_gameCamera);
-
 		// Draw display sprites sorted by priority.
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
-		DrawAllStrings();
-		DrawDisplaySprites(_gameCamera, true);
 
+		if (!g_DrawItems.IsEmpty())
+		{
+			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
+			g_DrawItems.Draw();
+		}
+
+		DrawDisplaySprites(_gameCamera, true);
+		DrawAllStrings();
+		
 		ClearScene();
 
 		_context->ClearState();
@@ -1217,11 +1337,6 @@ namespace TEN::Renderer
 
 		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
 		_context->ClearRenderTargetView(_backBuffer.RenderTargetView.Get(), Colors::Black);
-
-		// Reset GPU state.
-		SetBlendMode(BlendMode::Opaque, true);
-		SetDepthState(DepthState::Write, true);
-		SetCullMode(CullMode::CounterClockwise, true);
 
 		RenderInventoryScene(&_backBuffer, &_dumpScreenRenderTarget, 0.5f);
 

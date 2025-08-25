@@ -95,6 +95,18 @@ namespace TEN::Scripting::InventoryHandler
 		g_Gui.SetInventoryItemChosen(GAME_OBJECT_ID::ID_NO_OBJECT);
 	}
 
+	//Private function required for inventory
+	static int ConvertObjectToInventoryItem(int objectID)
+	{
+		return g_Gui.ConvertObjectToInventoryItem(objectID);
+	}
+
+	//Private function required for inventory
+	static int ConvertInventoryItemToObject(int objectNumber)
+	{
+		return g_Gui.ConvertInventoryItemToObject(objectNumber);
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableInventory = sol::table{ state->lua_state(), sol::create };
@@ -107,5 +119,7 @@ namespace TEN::Scripting::InventoryHandler
 		tableInventory.set_function(ScriptReserved_SetUsedItem, &SetUsedItem);
 		tableInventory.set_function(ScriptReserved_GetUsedItem, &GetUsedItem);
 		tableInventory.set_function(ScriptReserved_ClearUsedItem, &ClearUsedItem);
+		tableInventory.set_function("ConvertObjectToInventoryItem", &ConvertObjectToInventoryItem);
+		tableInventory.set_function("ConvertInventoryItemToObject", &ConvertInventoryItemToObject);
 	}
 }

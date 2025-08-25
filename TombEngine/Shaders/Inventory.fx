@@ -8,7 +8,7 @@ cbuffer ItemBuffer : register(b1)
 {
 	float4x4 World;
 	float4x4 Bones[32];
-	float4 ItemPosition;
+	float4 Color;
 	float4 AmbientLight;
 };
 
@@ -40,27 +40,29 @@ PixelShaderInput VS(VertexShaderInput input)
 
 float4 PS(PixelShaderInput input) : SV_TARGET
 {
-    if (Animated && Type == 1)
+	if (Animated && Type == 1)
         input.UV = CalculateUVRotate(input.UV, 0);
 	
-    float4 output = Texture.Sample(Sampler, input.UV);
-    float3 normal = normalize(input.Normal);
-    float3 pos = normalize(input.WorldPosition);
+	float4 tex = Texture.Sample(Sampler, input.UV);
+	float3 baseColor = tex.xyz * Color.xyz;
+	float3 normal = normalize(input.Normal);
+	float3 pos = normalize(input.WorldPosition);
 
-    DoAlphaTest(output);
-	
-    ShaderLight l;
-    l.Color = float3(1.0f, 1.0f, 0.5f);
-    l.Intensity = 0.3f;
-    l.Type = LT_SUN;
-    l.Direction = normalize(float3(-1.0f, -0.707f, -0.5f));
+ 	// Combine into float4 output
+    float4 output = float4(baseColor, tex.w * Color.w);
 
-    output.xyz += DoDirectionalLight(pos, normal, l);
-    output.xyz += DoSpecularSun(input.Normal, l, input.Sheen);
+	DoAlphaTest(output);
+	ShaderLight l;
+	l.Color = float3(AmbientLight.xyz);
+	l.Intensity = 0.3f;
+	l.Type = LT_SUN;
+	l.Direction = normalize(float3(-1.0f, -0.707f, -0.5f));
 
-	//adding some pertubations to the lighting to add a cool effect
-    float3 noise = SimplexNoise(output.xyz);
-    output.xyz = NormalNoise(output, noise, normal);
-	
-    return output;
+	float3 lighting = DoDirectionalLight(pos, normal, l) + DoSpecularSun(input.Normal, l, input.Sheen);
+
+	output.xyz += lighting * output.a;
+		//adding some pertubations to the lighting to add a cool effect
+		//float3 noise = SimplexNoise(output.xyz);
+		//output.xyz = NormalNoise(output, noise, normal);
+	return output;
 }

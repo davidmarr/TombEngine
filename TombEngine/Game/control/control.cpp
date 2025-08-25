@@ -26,6 +26,7 @@
 #include "Game/effects/tomb4fx.h"
 #include "Game/effects/weather.h"
 #include "Game/Gui.h"
+#include "Game/Hud/DrawItems.h"
 #include "Game/Hud/Hud.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_cheat.h"
@@ -224,6 +225,7 @@ GameStatus GamePhase(bool insideMenu)
 
 	// Update HUD.
 	g_Hud.Update(*LaraItem);
+	g_DrawItems.Update();
 	UpdateFadeScreenAndCinematicBars();
 
 	// Rumble screen (like in submarine level of TRC).
@@ -324,6 +326,8 @@ GameStatus FreezePhase()
 		PlaySoundSources();
 		Sound_UpdateScene();
 	}
+
+	g_DrawItems.Update();
 
 	// HACK: Update player hair if animation was switched in spectator mode.
 	// Needed for photo mode and other similar functionality.
@@ -563,6 +567,7 @@ void CleanUp()
 
 	// Clear HUD.
 	g_Hud.Clear();
+	g_DrawItems.Clear();
 
 	// Clear soundtrack masks.
 	ClearSoundTrackMasks();
@@ -812,13 +817,13 @@ GameStatus HandleMenuCalls(bool isTitle)
 	bool doInventory = (IsClicked(In::Inventory) || g_Gui.GetEnterInventory() != NO_VALUE) && playerAlive;
 
 	// Handle inventory.
-	if (doSave && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasSave && g_Gui.GetInventoryMode() != InventoryMode::Save)
+	if (doSave && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasSave && g_Gui.GetInventoryMode() != InventoryMode::Save && !g_DrawItems.GetInventoryOverride())
 	{
 		SaveGame::LoadHeaders();
 		g_Gui.SetInventoryMode(InventoryMode::Save);
 		g_Gui.CallInventory(LaraItem, false);
 	}
-	else if (doLoad && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasLoad && g_Gui.GetInventoryMode() != InventoryMode::Load)
+	else if (doLoad && g_GameFlow->IsLoadSaveEnabled() && Lara.Inventory.HasLoad && g_Gui.GetInventoryMode() != InventoryMode::Load && !g_DrawItems.GetInventoryOverride())
 	{
 		SaveGame::LoadHeaders();
 		g_Gui.SetInventoryMode(InventoryMode::Load);
@@ -830,8 +835,9 @@ GameStatus HandleMenuCalls(bool isTitle)
 		if (g_Gui.CallPause())
 			gameStatus = GameStatus::ExitToTitle;
 	}
-	else if (doInventory && LaraItem->HitPoints > 0 && !Lara.Control.Look.IsUsingBinoculars)
+	else if (doInventory && LaraItem->HitPoints > 0 && !Lara.Control.Look.IsUsingBinoculars && !g_DrawItems.GetInventoryOverride())
 	{
+
 		if (g_Gui.CallInventory(LaraItem, true))
 			gameStatus = GameStatus::LoadGame;
 	}

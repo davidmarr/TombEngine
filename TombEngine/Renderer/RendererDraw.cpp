@@ -1850,8 +1850,8 @@ namespace TEN::Renderer
 		UpdateLaraAnimations(false);
 		UpdateItemAnimations(view);
 
-		_stBlending.AlphaTest = -1;
-		_stBlending.AlphaThreshold = -1;
+		_stBlending.AlphaTest = NO_VALUE;
+		_stBlending.AlphaThreshold = NO_VALUE;
 
 		CollectLightsForCamera();
 		RenderItemShadows(view);
@@ -2024,7 +2024,10 @@ namespace TEN::Renderer
 
 		// HUD must be drawn before post-processing to be antialiased.
 		if (renderMode == SceneRenderMode::Full && g_GameFlow->LastGameStatus == GameStatus::Normal)
+		{
 			g_Hud.Draw(*LaraItem);
+			g_DrawItems.Draw();
+		}
 		
 		if (renderMode != SceneRenderMode::NoPostprocess)
 		{
@@ -2040,7 +2043,6 @@ namespace TEN::Renderer
 
 			DrawDebugInfo(view);
 			DrawAllStrings();
-
 			DrawDisplaySprites(view, true);
 		}
 
