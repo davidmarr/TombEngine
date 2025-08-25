@@ -1788,7 +1788,8 @@ namespace TEN::Renderer
 
 	void Renderer::PrepareScene()
 	{
-		if (g_GameFlow->CurrentFreezeMode == FreezeMode::None)
+		if (g_GameFlow->CurrentFreezeMode == FreezeMode::None &&
+			g_Gui.GetInventoryMode() == InventoryMode::None)
 		{
 			_dynamicLightList ^= 1;
 			_dynamicLights[_dynamicLightList].clear();
@@ -2924,6 +2925,7 @@ namespace TEN::Renderer
 					_stRoom.Caustics = int(g_Configuration.EnableCaustics && (nativeRoom.flags & ENV_FLAG_WATER));
 					_stRoom.AmbientColor = room.AmbientLight;
 					BindRoomLights(view.LightsToDraw);
+					BindRoomDecals(room.Decals);
 				}
 
 				_stRoom.Water = (nativeRoom.flags & ENV_FLAG_WATER) != 0 ? 1 : 0;
@@ -3728,6 +3730,7 @@ namespace TEN::Renderer
 		_stRoom.Caustics = (int)(g_Configuration.EnableCaustics && (nativeRoom->flags & ENV_FLAG_WATER));
 		_stRoom.AmbientColor = objectInfo->Room->AmbientLight;
 		BindRoomLights(view.LightsToDraw);
+		_stRoom.NumRoomDecals = 0; // Don't draw decals on sorted faces to avoid slowdowns.
 		_stRoom.Water = (nativeRoom->flags & ENV_FLAG_WATER) != 0 ? 1 : 0;
 		_cbRoom.UpdateData(_stRoom, _context.Get());
 

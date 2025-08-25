@@ -1,4 +1,6 @@
 #include "./CBCamera.hlsli"
+#include "./CBRoom.hlsli"
+#include "./CBStatic.hlsli"
 #include "./VertexInput.hlsli"
 #include "./VertexEffects.hlsli"
 #include "./Blending.hlsli"
@@ -6,19 +8,6 @@
 #include "./AnimatedTextures.hlsli"
 #include "./Shadows.hlsli"
 #include "./ShaderLight.hlsli"
-#include "./CBStatic.hlsli"
-
-cbuffer RoomBuffer : register(b5)
-{
-    int Water;
-    int Caustics;
-    int NumRoomLights;
-    int Padding;
-    float2 CausticsStartUV;
-    float2 CausticsScale;
-    float4 AmbientColor;
-    ShaderLight RoomLights[MAX_LIGHTS_PER_ROOM];
-};
 
 struct PixelShaderInput
 {

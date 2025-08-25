@@ -8,6 +8,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## New features
 * Added animated textures support for all objects.
 * Added UVRotate support.
+* Added bullet hole and explosion decals for room geometry.
 * Increased level loading speed by switching to LZ4 compression format.
 
 ### Bug fixes
@@ -17,11 +18,13 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed dying while landing into shallow water after freefall.
 * Fixed shotgun wideshot ammo having same accuracy as normal ammo.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
+* Fixed dynamic lights disappearing for a single frame after exiting game menus.
 * Fixed controls being stuck when engine window is out of focus.
 * Fixed intense GPU usage when engine window is minimized.
 
 ### Lua API changes
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`
+=======
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
