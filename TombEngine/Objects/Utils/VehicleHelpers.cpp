@@ -158,8 +158,11 @@ namespace TEN::Entities::Vehicles
 		pos->y = vehicleItem->Pose.Position.y - (forward * sinX) + (right * sinZ);
 		pos->z = vehicleItem->Pose.Position.z + (forward * cosY) - (right * sinY);
 
+		auto probePos = Vector3i(pos->x, pos->y - CLICK(2), pos->z);
+		auto roomNumber = FindRoomNumber(probePos, vehicleItem->RoomNumber, true);
+
 		// Get collision a bit higher to be able to detect bridges.
-		auto probe = GetPointCollision(Vector3i(pos->x, pos->y - CLICK(2), pos->z), vehicleItem->RoomNumber);
+		auto probe = GetPointCollision(probePos, roomNumber);
 
 		if (pos->y < probe.GetCeilingHeight() || probe.GetCeilingHeight() == NO_HEIGHT)
 			return NO_HEIGHT;
@@ -399,5 +402,21 @@ namespace TEN::Entities::Vehicles
 	{
 		float value = abs(vel / velMax);
 		g_Hud.Speedometer.UpdateValue(value);
+	}
+
+	void UpdateVehicleRoom(ItemInfo* vehicleItem, ItemInfo* laraItem, int currentRoomNumber)
+	{
+		auto finalPos = vehicleItem->Pose.Position;
+		finalPos.y -= CLICK(2);
+		auto roomNumber = FindRoomNumber(finalPos, currentRoomNumber, true);
+
+		if (roomNumber != currentRoomNumber)
+			currentRoomNumber = roomNumber;
+
+		if (currentRoomNumber != vehicleItem->RoomNumber)
+		{
+			ItemNewRoom(vehicleItem->Index, currentRoomNumber);
+			ItemNewRoom(laraItem->Index, currentRoomNumber);
+		}
 	}
 }
