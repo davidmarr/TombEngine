@@ -27,6 +27,8 @@ using namespace TEN::Math;
 
 namespace TEN::Entities::Vehicles
 {
+	constexpr auto VEHICLE_BASE_HEIGHT = CLICK(2);
+
 	enum class VehicleWakeEffectTag
 	{
 		FrontLeft,
@@ -159,7 +161,7 @@ namespace TEN::Entities::Vehicles
 		pos->z = vehicleItem->Pose.Position.z + (forward * cosY) - (right * sinY);
 
 		// Get collision a bit higher to be able to detect bridges.
-		auto probe = GetPointCollision(Vector3i(pos->x, pos->y - CLICK(2), pos->z), vehicleItem->RoomNumber);
+		auto probe = GetPointCollision(Vector3i(pos->x, pos->y - VEHICLE_BASE_HEIGHT, pos->z), vehicleItem->RoomNumber);
 
 		if (pos->y < probe.GetCeilingHeight() || probe.GetCeilingHeight() == NO_HEIGHT)
 			return NO_HEIGHT;
@@ -404,7 +406,7 @@ namespace TEN::Entities::Vehicles
 	void UpdateVehicleRoom(ItemInfo* vehicleItem, ItemInfo* laraItem, int currentRoomNumber)
 	{
 		auto finalPos = vehicleItem->Pose.Position;
-		finalPos.y -= CLICK(2);
+		finalPos.y -= VEHICLE_BASE_HEIGHT;
 		auto roomNumber = FindRoomNumber(finalPos, currentRoomNumber, true);
 
 		if (roomNumber != currentRoomNumber)
