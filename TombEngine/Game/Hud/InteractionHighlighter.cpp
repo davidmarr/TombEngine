@@ -83,7 +83,7 @@ namespace TEN::Hud
 									lara.Control.HandStatus == HandStatus::WeaponReady &&
 									!lara.LeftArm.Locked;
 
-					bool canIgnite = hasTorch && (lara.Torch.IsLit == (item.Status == ITEM_NOT_ACTIVE));
+					bool canIgnite = hasTorch && (lara.Torch.IsLit == (item.Status == ITEM_NOT_ACTIVE || item.Status == ITEM_DEACTIVATED));
 
 					// Flame emitter interaction overrides hand status checks, if player carries unlit torch.
 					if (hasTorch)
