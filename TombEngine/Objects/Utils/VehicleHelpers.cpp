@@ -53,6 +53,9 @@ namespace TEN::Entities::Vehicles
 		if (abs(laraItem->Pose.Position.y - vehicleItem->Pose.Position.y) > maxVerticalDistance)
 			return VehicleMountType::None;
 
+		// Do interaction highlight before bounds testing to give player more visual tolerance.
+		g_Hud.InteractionHighlighter.Test(*laraItem, *vehicleItem);
+
 		// Assess 2D distance to vehicle.
 		float distance2D = Vector2::Distance(
 			Vector2(laraItem->Pose.Position.x, laraItem->Pose.Position.z),
