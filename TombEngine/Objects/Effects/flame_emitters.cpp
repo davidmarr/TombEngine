@@ -86,6 +86,9 @@ namespace TEN::Entities::Effects
 	{
 		bool active = TriggerActive(item);
 
+		// Modify fade value in case flame emitter is being activated or deactivated.
+		// Additionally return activity status depending on whether fade is finished or not.
+
 		if (active)
 		{
 			if (item->ItemFlags[3] > 0)
