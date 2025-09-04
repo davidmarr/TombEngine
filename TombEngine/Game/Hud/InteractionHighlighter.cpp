@@ -19,7 +19,7 @@ namespace TEN::Hud
 	constexpr auto FADE_SPEED = 0.1f;
 	constexpr auto FADE_RATE  = 2.0f * FPS;
 
-	constexpr auto SPRITE_SCALE = 0.1f;
+	constexpr auto SPRITE_SCALE = 0.07f;
 
 	constexpr float INTERACTION_PADDING = CLICK(0.75f);
 	constexpr float INTERACTION_DISTANCE = BLOCK(2);
