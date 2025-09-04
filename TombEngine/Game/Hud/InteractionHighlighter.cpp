@@ -78,6 +78,7 @@ namespace TEN::Hud
 					break;
 
 				case ID_FLAME_EMITTER:
+				case ID_FLAME_EMITTER2:
 				{
 					bool hasTorch = lara.Control.Weapon.GunType == LaraWeaponType::Torch &&
 									lara.Control.HandStatus == HandStatus::WeaponReady &&
@@ -93,6 +94,9 @@ namespace TEN::Hud
 					break;
 				}
 				break;
+
+				default:
+					return false;
 			}
 		}
 
