@@ -245,32 +245,29 @@ namespace TEN::Entities::Effects
 				// If not a moving flame
 				if (item->TriggerFlags != 2)
 				{
-					if (item->TriggerFlags == 123)
+					float size = 1.0f;
+					switch (item->TriggerFlags)
 					{
-						// Middle of the block
-						AddFire(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, item->RoomNumber, 0.25f, item->ItemFlags[3]);
+					default:
+					case 0:
+						size = 2.0f;
+						break;
+
+					case 1:
+						size = 1.0f;
+						break;
+
+					case 3:
+						size = 0.5f;
+						break;
+
+					case 4:
+					case 123:
+						size = 0.25f;
+						break;
 					}
-					else
-					{
-						float size = 1.0f;
-						switch (item->TriggerFlags)
-						{
-						default:
-						case 0:
-							size = 2.0f;
-							break;
 
-						case 1:
-							size = 1.0f;
-							break;
-
-						case 3:
-							size = 0.5f;
-							break;
-						}
-
-						AddFire(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, item->RoomNumber, size, item->ItemFlags[3]);
-					}
+					AddFire(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, item->RoomNumber, size, item->ItemFlags[3]);
 				}
 
 				if (item->TriggerFlags == 0 || item->TriggerFlags == 2)
