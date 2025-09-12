@@ -223,53 +223,55 @@ namespace TEN::Entities::Vehicles
 
 	int DoVehicleWaterMovement(ItemInfo* vehicleItem, ItemInfo* laraItem, int currentVelocity, int radius, short* turnRate, const Vector3& wakeOffset)
 	{
-		if (TestEnvironment(ENV_FLAG_WATER, vehicleItem) ||
-			TestEnvironment(ENV_FLAG_SWAMP, vehicleItem))
+		auto point = GetPointCollision(*vehicleItem);
+
+		if (point.GetWaterSurfaceHeight() == NO_HEIGHT || point.GetWaterSurfaceHeight() > vehicleItem->Pose.Position.y)
+			return currentVelocity;
+
+		int waterDepth = point.GetWaterBottomHeight();
+
+		// HACK: Sometimes quadbike test position may end up under non-portal ceiling block.
+		// GetWaterDepth returns DEEP_WATER constant in that case, which is too large for our needs.
+		if (waterDepth == DEEP_WATER)
+			waterDepth = VEHICLE_WATER_HEIGHT_MAX;
+
+		if (waterDepth <= VEHICLE_WATER_HEIGHT_MAX)
 		{
-			int waterDepth = GetPointCollision(*vehicleItem).GetWaterBottomHeight();
+			int bottomRoomNumber = FindRoomNumber(vehicleItem->Pose.Position, vehicleItem->RoomNumber, true);
+			bool isWater = TestEnvironment(ENV_FLAG_WATER, bottomRoomNumber);
 
-			// HACK: Sometimes quadbike test position may end up under non-portal ceiling block.
-			// GetWaterDepth returns DEEP_WATER constant in that case, which is too large for our needs.
-			if (waterDepth == DEEP_WATER)
-				waterDepth = VEHICLE_WATER_HEIGHT_MAX;
-
-			if (waterDepth <= VEHICLE_WATER_HEIGHT_MAX)
+			if (currentVelocity != 0)
 			{
-				bool isWater = TestEnvironment(ENV_FLAG_WATER, vehicleItem);
+				auto coeff = isWater ? VEHICLE_WATER_VELOCITY_COEFF : VEHICLE_SWAMP_VELOCITY_COEFF;
+				currentVelocity -= std::copysign(currentVelocity * ((waterDepth / VEHICLE_WATER_HEIGHT_MAX) / coeff), currentVelocity);
 
-				if (currentVelocity != 0)
+				if (TEN::Math::Random::GenerateInt(0, 32) > 28)
+					SoundEffect(SFX_TR4_LARA_WADE, &Pose(vehicleItem->Pose.Position), SoundEnvironment::Land, isWater ? 0.8f : 0.7f);
+
+				if (isWater)
 				{
-					auto coeff = isWater ? VEHICLE_WATER_VELOCITY_COEFF : VEHICLE_SWAMP_VELOCITY_COEFF;
-					currentVelocity -= std::copysign(currentVelocity * ((waterDepth / VEHICLE_WATER_HEIGHT_MAX) / coeff), currentVelocity);
-
-					if (TEN::Math::Random::GenerateInt(0, 32) > 28)
-						SoundEffect(SFX_TR4_LARA_WADE, &Pose(vehicleItem->Pose.Position), SoundEnvironment::Land, isWater ? 0.8f : 0.7f);
-
-					if (isWater)
-					{
-						int waterHeight = GetPointCollision(*vehicleItem).GetWaterTopHeight();
-						SpawnVehicleWake(*vehicleItem, wakeOffset, waterHeight);
-					}
-				}
-
-				if (*turnRate)
-				{
-					auto coeff = isWater ? VEHICLE_WATER_TURN_RATE_COEFF : VEHICLE_SWAMP_TURN_RATE_COEFF;
-					*turnRate -= *turnRate * ((waterDepth / VEHICLE_WATER_HEIGHT_MAX) / coeff);
+					int waterHeight = GetPointCollision(*vehicleItem).GetWaterTopHeight();
+					SpawnVehicleWake(*vehicleItem, wakeOffset, waterHeight);
 				}
 			}
-			else
-			{
-				int waterHeight = vehicleItem->Pose.Position.y - GetPointCollision(*vehicleItem).GetWaterTopHeight();
 
-				if (waterDepth > VEHICLE_WATER_HEIGHT_MAX && waterHeight > VEHICLE_WATER_HEIGHT_MAX)
-				{
-					ExplodeVehicle(laraItem, vehicleItem);
-				}
-				else if (TEN::Math::Random::GenerateInt(0, 32) > 25)
-				{
-					Splash(vehicleItem);
-				}
+			if (*turnRate)
+			{
+				auto coeff = isWater ? VEHICLE_WATER_TURN_RATE_COEFF : VEHICLE_SWAMP_TURN_RATE_COEFF;
+				*turnRate -= *turnRate * ((waterDepth / VEHICLE_WATER_HEIGHT_MAX) / coeff);
+			}
+		}
+		else
+		{
+			int waterHeight = vehicleItem->Pose.Position.y - GetPointCollision(*vehicleItem).GetWaterTopHeight();
+
+			if (waterDepth > VEHICLE_WATER_HEIGHT_MAX && waterHeight > VEHICLE_WATER_HEIGHT_MAX)
+			{
+				ExplodeVehicle(laraItem, vehicleItem);
+			}
+			else if (TEN::Math::Random::GenerateInt(0, 32) > 25)
+			{
+				Splash(vehicleItem);
 			}
 		}
 
