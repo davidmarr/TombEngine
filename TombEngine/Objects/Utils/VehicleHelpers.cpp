@@ -28,6 +28,7 @@ using namespace TEN::Math;
 namespace TEN::Entities::Vehicles
 {
 	constexpr auto VEHICLE_BASE_HEIGHT = CLICK(2);
+	constexpr auto VEHICLE_FULL_HEIGHT = CLICK(3);
 
 	enum class VehicleWakeEffectTag
 	{
@@ -168,6 +169,17 @@ namespace TEN::Entities::Vehicles
 
 		if (pos->y < probe.GetCeilingHeight() || probe.GetCeilingHeight() == NO_HEIGHT)
 			return NO_HEIGHT;
+
+		// Prevent vehicle from glitching into crawlspaces. This may cause a deadlock on sloped crawlspaces leading
+		// to the room below, but this behaviour is still more correct than glitching the vehicle into it.
+		if (pos->y - VEHICLE_FULL_HEIGHT < probe.GetCeilingHeight())
+		{
+			auto centerProbe = GetPointCollision(*vehicleItem);
+			auto headspace = centerProbe.GetFloorHeight() - centerProbe.GetCeilingHeight() - VEHICLE_BASE_HEIGHT;
+
+			if (headspace >= VEHICLE_FULL_HEIGHT)
+				return NO_HEIGHT;
+		}
 
 		if (pos->y > probe.GetFloorHeight() && clamp)
 			pos->y = probe.GetFloorHeight();
