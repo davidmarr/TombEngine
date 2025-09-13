@@ -174,11 +174,12 @@ namespace TEN::Entities::Vehicles
 		// to the room below, but this behaviour is still more correct than glitching the vehicle into it.
 		if (pos->y - VEHICLE_FULL_HEIGHT < probe.GetCeilingHeight())
 		{
-			auto centerProbe = GetPointCollision(*vehicleItem);
-			auto headspace = centerProbe.GetFloorHeight() - centerProbe.GetCeilingHeight() - VEHICLE_BASE_HEIGHT;
-
-			if (headspace >= VEHICLE_FULL_HEIGHT)
-				return NO_HEIGHT;
+			auto headroom = probe.GetFloorHeight() - probe.GetCeilingHeight();
+			if (headroom <= VEHICLE_BASE_HEIGHT)
+			{
+				pos->y = probe.GetFloorHeight();
+				return probe.GetFloorHeight() - CLICK(1.5f);
+			}
 		}
 
 		if (pos->y > probe.GetFloorHeight() && clamp)
