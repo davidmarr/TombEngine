@@ -170,20 +170,15 @@ namespace TEN::Entities::Vehicles
 		if (pos->y < probe.GetCeilingHeight() || probe.GetCeilingHeight() == NO_HEIGHT)
 			return NO_HEIGHT;
 
-		// Prevent vehicle from glitching into crawlspaces. This may cause a deadlock on sloped crawlspaces leading
-		// to the room below, but this behaviour is still more correct than glitching the vehicle into it.
-		if (pos->y - VEHICLE_FULL_HEIGHT < probe.GetCeilingHeight())
-		{
-			auto headroom = probe.GetFloorHeight() - probe.GetCeilingHeight();
-			if (headroom <= VEHICLE_BASE_HEIGHT)
-			{
-				pos->y = probe.GetFloorHeight();
-				return probe.GetFloorHeight() - CLICK(1.5f); // Using NO_HEIGHT here may result in deadlocks.
-			}
-		}
-
 		if (pos->y > probe.GetFloorHeight() && clamp)
 			pos->y = probe.GetFloorHeight();
+
+		// Prevent vehicle from glitching into crawlspaces. This may cause a deadlock on sloped crawlspaces leading
+		// to the room below, but this behaviour is still more correct than glitching the vehicle into it.
+
+		auto headroom = probe.GetFloorHeight() - probe.GetCeilingHeight();
+		if ((pos->y - VEHICLE_FULL_HEIGHT) < probe.GetCeilingHeight() && headroom <= VEHICLE_BASE_HEIGHT)
+			return probe.GetFloorHeight() - CLICK(1.5f); // Using NO_HEIGHT here may result in deadlocks.
 
 		return probe.GetFloorHeight();
 	}
