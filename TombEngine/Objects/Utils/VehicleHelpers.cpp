@@ -178,7 +178,7 @@ namespace TEN::Entities::Vehicles
 			if (headroom <= VEHICLE_BASE_HEIGHT)
 			{
 				pos->y = probe.GetFloorHeight();
-				return probe.GetFloorHeight() - CLICK(1.5f);
+				return probe.GetFloorHeight() - CLICK(1.5f); // Using NO_HEIGHT here may result in deadlocks.
 			}
 		}
 
