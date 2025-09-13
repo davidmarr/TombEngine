@@ -25,7 +25,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed original game issue where enemies could be targeted through objects and static meshes.
 * Fixed enemies shooting through objects.
 * Fixed motorbike sound going silent while doing jumps.
-* Fixed original game vehicle collision issues while moving between stacked rooms and near crawlspaces.
+* Fixed several original game issues with vehicle collision near crawlspaces and stacked rooms.
 * Fixed ability to draw weapons on a tightrope.
 * Fixed dynamic lights disappearing for a single frame after exiting game menus.
 * Fixed controls being stuck when engine window is out of focus.
