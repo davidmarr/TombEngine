@@ -20,6 +20,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed GRENADE object not being activated by triggers and heavy triggers under shatters.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed dying while landing into shallow water after freefall.
+* Fixed rapids drowning animation not triggering after freefall.
 * Fixed shotgun wideshot ammo having same accuracy as normal ammo.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
 * Fixed original game issue where enemies could be targeted through objects and static meshes.
