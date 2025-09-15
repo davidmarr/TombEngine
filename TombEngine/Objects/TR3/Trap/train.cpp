@@ -14,6 +14,7 @@
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Setup.h"
+#include "Objects/Utils/VehicleHelpers.h"
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
@@ -68,13 +69,17 @@ namespace TEN::Entities::Traps
 			return;
 		}
 
-		item.Pose.Position.y -= 32;// ?
+		item.Pose.Position.y -= 32;
 
-		int probedRoomNumber = GetPointCollision(item).GetRoomNumber();
-		if (probedRoomNumber != item.RoomNumber)
-			ItemNewRoom(itemNumber, probedRoomNumber);
+		auto floorNormal = GetPointCollision(item, item.Pose.Orientation.ToDirection(), BLOCK(2)).GetFloorNormal();
+		auto localNormal = Vector3::TransformNormal(floorNormal, Matrix::CreateRotationY(-TO_RAD(item.Pose.Orientation.y)));
 
-		item.Pose.Orientation.x = -(rh - floorHeight) * 2;
+		auto targetOrient = item.Pose.Orientation;
+		targetOrient.x = FROM_RAD(atan2(localNormal.z, localNormal.y)) + ANGLE(180);
+
+		item.Pose.Orientation.InterpolateConstant(targetOrient, ANGLE(1));
+
+		UpdateVehicleRoom(&item);
 
 		SpawnDynamicLight(item.Pose.Position.x + BLOCK(3) * sinY, item.Pose.Position.y, item.Pose.Position.z + BLOCK(3) * cosY, 16, 31, 31, 31);
 
@@ -109,8 +114,14 @@ namespace TEN::Entities::Traps
 		if (!TestBoundsCollide(&item, playerItem, coll->Setup.Radius))
 			return;
 
-	if (!HandleItemSphereCollision(item, *playerItem))
-		return;
+		if (!HandleItemSphereCollision(item, *playerItem))
+			return;
+
+		if (item.ItemFlags[1] < TRAIN_VEL)
+		{
+			ObjectCollision(itemNumber, playerItem, coll);
+			return;
+		}
 
 		SoundEffect(SFX_TR4_LARA_GENERAL_DEATH, &playerItem->Pose, SoundEnvironment::Always);
 		SoundEffect(SFX_TR4_LARA_HIGH_FALL_DEATH, &playerItem->Pose, SoundEnvironment::Always);

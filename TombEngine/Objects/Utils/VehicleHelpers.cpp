@@ -418,6 +418,12 @@ namespace TEN::Entities::Vehicles
 
 	void UpdateVehicleRoom(ItemInfo* vehicleItem, ItemInfo* laraItem, int currentRoomNumber)
 	{
+		if (vehicleItem == nullptr)
+			return;
+
+		if (currentRoomNumber == NO_VALUE)
+			currentRoomNumber = vehicleItem->RoomNumber;
+
 		auto finalPos = vehicleItem->Pose.Position;
 		finalPos.y -= VEHICLE_BASE_HEIGHT;
 
@@ -428,7 +434,9 @@ namespace TEN::Entities::Vehicles
 		if (currentRoomNumber != vehicleItem->RoomNumber)
 		{
 			ItemNewRoom(vehicleItem->Index, currentRoomNumber);
-			ItemNewRoom(laraItem->Index, currentRoomNumber);
+
+			if (laraItem != nullptr)
+				ItemNewRoom(laraItem->Index, currentRoomNumber);
 		}
 	}
 }

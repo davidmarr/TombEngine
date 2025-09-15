@@ -18,6 +18,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed FIRE_PENDULUM light being overblown when explosive weapons are used.
 * Fixed POLEROPE object occasionally not being grabbable when placed on bridges.
 * Fixed GRENADE object not being activated by triggers and heavy triggers under shatters.
+* Fixed several collision issues for TRAIN object.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed dying while landing into shallow water after freefall.
 * Fixed rapids drowning animation not triggering after freefall.
