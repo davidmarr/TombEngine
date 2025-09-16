@@ -59,7 +59,6 @@ namespace TEN::Entities::Traps
 		item.Pose.Position.z += item.ItemFlags[1] * cosY;
 
 		short roomNumber;
-		long rh = TrainTestHeight(&item, 0, BLOCK(5), &roomNumber);
 		long floorHeight = TrainTestHeight(&item, 0, 0, &roomNumber);
 		item.Pose.Position.y = floorHeight;
 
@@ -69,9 +68,8 @@ namespace TEN::Entities::Traps
 			return;
 		}
 
-		item.Pose.Position.y -= 32;
-
-		auto floorNormal = GetPointCollision(item, item.Pose.Orientation.ToDirection(), BLOCK(2)).GetFloorNormal();
+		auto depth = GameBoundingBox(&item).GetDepth() / 2;
+		auto floorNormal = GetPointCollision(item, item.Pose.Orientation.ToDirection(), depth).GetFloorNormal();
 		auto localNormal = Vector3::TransformNormal(floorNormal, Matrix::CreateRotationY(-TO_RAD(item.Pose.Orientation.y)));
 
 		auto targetOrient = item.Pose.Orientation;
@@ -81,9 +79,10 @@ namespace TEN::Entities::Traps
 
 		UpdateVehicleRoom(&item);
 
-		SpawnDynamicLight(item.Pose.Position.x + BLOCK(3) * sinY, item.Pose.Position.y, item.Pose.Position.z + BLOCK(3) * cosY, 16, 31, 31, 31);
+		depth += CLICK(1);
+		SpawnDynamicLight(item.Pose.Position.x + depth * sinY, item.Pose.Position.y - CLICK(0.25f), item.Pose.Position.z + depth * cosY, 16, 64, 64, 64);
 
-		if (item.ItemFlags[1] != TRAIN_VEL)
+		if (item.ItemFlags[1] < item.ItemFlags[0])
 		{
 			item.ItemFlags[1] -= 48;
 			if (item.ItemFlags[1] < 0)
@@ -99,6 +98,8 @@ namespace TEN::Entities::Traps
 				ForcedFixedCamera.RoomNumber = roomNumber;
 				UseForcedFixedCamera = true;
 			}
+
+			StopSoundEffect(SFX_TR3_TUBE_LOOP);
 		}
 		else
 		{
@@ -117,7 +118,7 @@ namespace TEN::Entities::Traps
 		if (!HandleItemSphereCollision(item, *playerItem))
 			return;
 
-		if (item.ItemFlags[1] < TRAIN_VEL)
+		if (item.ItemFlags[1] < item.ItemFlags[0])
 		{
 			ObjectCollision(itemNumber, playerItem, coll);
 			return;
@@ -125,7 +126,6 @@ namespace TEN::Entities::Traps
 
 		SoundEffect(SFX_TR4_LARA_GENERAL_DEATH, &playerItem->Pose, SoundEnvironment::Always);
 		SoundEffect(SFX_TR4_LARA_HIGH_FALL_DEATH, &playerItem->Pose, SoundEnvironment::Always);
-		StopSoundEffect(SFX_TR3_TUBE_LOOP);
 
 		SetAnimation(*playerItem, ID_LARA_EXTRA_ANIMS, LEA_TRAIN_DEATH_START);
 		playerItem->Animation.IsAirborne = false;
