@@ -10,7 +10,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added UVRotate support.
 * Added interaction highlighter.
 * Added bullet hole and explosion decals for room geometry.
-* Added fading when activating and deactivating FLAME_EMITTER and FLAME_EMITTER2 objects.
+* Added ability to colorize FLAME_EMITTER and FLAME_EMITTER2 objects and fade them on activation or deactivation.
 * Added ability to colorize ROPE objects.
 * Increased level loading speed by switching to LZ4 compression format.
 
@@ -24,6 +24,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed rapids drowning animation not triggering after freefall.
 * Fixed shotgun wideshot ammo having same accuracy as normal ammo.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
+* Fixed original game issue with multiple burning torches not working correctly.
 * Fixed original game issue where enemies could be targeted through objects and static meshes.
 * Fixed enemies shooting through objects.
 * Fixed motorbike sound going silent while doing jumps.
