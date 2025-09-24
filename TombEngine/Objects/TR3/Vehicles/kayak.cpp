@@ -1047,7 +1047,7 @@ namespace TEN::Entities::Vehicles
 	void KayakLaraRapidsDrown(ItemInfo* laraItem)
 	{
 		// Already drowning...
-		if (laraItem->HitPoints <= 0)
+		if (laraItem->HitPoints == -1)
 			return;
 
 		auto* lara = GetLaraInfo(laraItem);
@@ -1111,11 +1111,7 @@ namespace TEN::Entities::Vehicles
 
 		if (lara->Context.Vehicle != NO_VALUE)
 		{
-			if (kayakItem->RoomNumber != probe.GetRoomNumber())
-			{
-				ItemNewRoom(lara->Context.Vehicle, probe.GetRoomNumber());
-				ItemNewRoom(laraItem->Index, probe.GetRoomNumber());
-			}
+			UpdateVehicleRoom(kayakItem, laraItem, probe.GetRoomNumber());
 
 			laraItem->Pose.Position = kayakItem->Pose.Position;
 			laraItem->Pose.Orientation.x = kayakItem->Pose.Orientation.x;
