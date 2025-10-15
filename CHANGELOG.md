@@ -28,6 +28,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed rapids drowning animation not triggering after freefall.
 * Fixed shotgun wideshot ammo having same accuracy as normal ammo.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
+* Fixed shatters not activating heavy triggers in rare occasions.
 * Fixed original game issue with multiple burning torches not working correctly.
 * Fixed original game issue where enemies could shoot and be targeted through objects and static meshes.
 * Fixed original game issues with vehicle collision near crawlspaces and stacked rooms.
