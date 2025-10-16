@@ -20,6 +20,16 @@ using TEN::Renderer::g_Renderer;
 
 namespace TEN::Scripting::DisplaySprite
 {
+	// NOTE: Conversion from more intuitive 100x100 screen space resolution to internal 800x600 is required.
+	// In a future refactor, everything will use 100x100 natively. -- Sezz 2023.08.31
+	constexpr auto POS_CONVERSION_COEFF = Vector2(DISPLAY_SPACE_RES.x / 100, DISPLAY_SPACE_RES.y / 100);
+	constexpr auto SCALE_CONVERSION_COEFF = 0.01f;
+	constexpr auto DEFAULT_PRIORITY = 0;
+	constexpr auto DEFAULT_ALIGN_MODE = DisplaySpriteAlignMode::Center;
+	constexpr auto DEFAULT_SCALE_MODE = DisplaySpriteScaleMode::Fit;
+	constexpr auto DEFAULT_BLEND_MODE = BlendMode::AlphaBlend;
+	constexpr auto DISPLAY_ASPECT = DISPLAY_SPACE_RES.x / DISPLAY_SPACE_RES.y;
+
 	void ScriptDisplaySprite::Register(sol::state& state, sol::table& parent)
 	{
 		// NOTE: Single constructor with a sol::optional argument for the color doesn't work, hence the two constructors. -- Sezz 2023.10.19
@@ -193,12 +203,6 @@ namespace TEN::Scripting::DisplaySprite
 
 		// Start calculation of the 4 vertices of the sprite with graphic resolution 800x600
 
-		// Constants
-		constexpr auto DEFAULT_ALIGN_MODE = DisplaySpriteAlignMode::Center;
-		constexpr auto DEFAULT_SCALE_MODE = DisplaySpriteScaleMode::Fit;
-		constexpr auto SCALE_CONVERSION = 0.01f;
-		constexpr auto DISPLAY_ASPECT = DISPLAY_SPACE_RES.x / DISPLAY_SPACE_RES.y;
-
 		// Screen and sprite data
 		auto screenRes = Vector2(g_Configuration.ScreenWidth, g_Configuration.ScreenHeight);
 		const float screenAspect = screenRes.x / screenRes.y;
@@ -209,7 +213,7 @@ namespace TEN::Scripting::DisplaySprite
 		const float spriteAspect = (float)sprite.Width / (float)sprite.Height;
 
 		// Scaled values
-		const Vector2 convertedScale = _scale * SCALE_CONVERSION;
+		const Vector2 convertedScale = _scale * SCALE_CONVERSION_COEFF;
 		const Vector2 convertedPos = _position * (DISPLAY_SPACE_RES / 100.0f);
 		const short convertedRot = ANGLE(_rotation);
 
@@ -387,16 +391,6 @@ namespace TEN::Scripting::DisplaySprite
 	void ScriptDisplaySprite::Draw(sol::optional<int> priority, sol::optional<DisplaySpriteAlignMode> alignMode,
 								   sol::optional<DisplaySpriteScaleMode> scaleMode, sol::optional<BlendMode> blendMode)
 	{
-		// NOTE: Conversion from more intuitive 100x100 screen space resolution to internal 800x600 is required.
-		// In a future refactor, everything will use 100x100 natively. -- Sezz 2023.08.31
-		constexpr auto POS_CONVERSION_COEFF	  = Vector2(DISPLAY_SPACE_RES.x / 100, DISPLAY_SPACE_RES.y / 100);
-		constexpr auto SCALE_CONVERSION_COEFF = 0.01f;
-
-		constexpr auto DEFAULT_PRIORITY	  = 0;
-		constexpr auto DEFAULT_ALIGN_MODE = DisplaySpriteAlignMode::Center;
-		constexpr auto DEFAULT_SCALE_MODE = DisplaySpriteScaleMode::Fit;
-		constexpr auto DEFAULT_BLEND_MODE = BlendMode::AlphaBlend;
-
 		// Object is not a sprite sequence; return early.
 		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
 		{
