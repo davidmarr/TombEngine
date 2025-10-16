@@ -44,7 +44,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
 * Added `Moveable:ShowInteractionHighlight` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
-* Added `DisplaySprite:GetAnchors()` method.
+* Added `DisplaySprite:GetAnchors` method.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
