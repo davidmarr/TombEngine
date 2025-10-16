@@ -44,6 +44,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
 * Added `Moveable:ShowInteractionHighlight` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
+* Added `DisplaySprite:GetAnchors()` method.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
@@ -87,7 +88,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
 * Fixed `Input.ActionID.MOUSE_SCROLL_UP` and `Input.ActionID.MOUSE_SCROLL_DOWN` polling mouse movement instead of scrolling.
 * Fixed `Strings.ShowString` called without last two arguments not showing strings indefinitely.
-* Added `DisplaySprite:GetAnchors()` method.
 
 ## [Version 1.9.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.1) - 2025-06-25
 
