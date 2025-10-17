@@ -175,7 +175,7 @@ namespace TEN::Scripting::DisplaySprite
 	// - `BOTTOM_LEFT`<br>
 	DisplayAnchors ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const
 	{
-		// Crea l'oggetto DisplayAnchors con valori di default (0,0)
+		// Create the DisplayAnchors object with default values (0,0)
 		DisplayAnchors anchors;
 
 		// Object is not a sprite sequence; return default anchors
