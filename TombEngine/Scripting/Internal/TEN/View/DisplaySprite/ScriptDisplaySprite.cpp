@@ -8,6 +8,7 @@
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
+#include "Scripting/Internal/TEN/Types/DisplayAnchors/DisplayAnchors.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 
 using namespace TEN::Scripting::Types;
@@ -161,8 +162,8 @@ namespace TEN::Scripting::DisplaySprite
 	// @function DisplaySprite:GetAnchors
 	// @tparam[opt=DisplaySpriteAlignMode.Center] View.AlignMode alignMode Alignment mode.
 	// @tparam[opt=DisplaySpriteScaleMode.Fit] View.ScaleMode scaleMode Scaling mode.
-	// @treturn table A table containing the vertices of the display sprite, which can be used to position other objects relative to it.<br>
-	// The table will contain the following keys:<br>
+	// @treturn DisplayAnchors An object containing the anchor points of the display sprite.<br>
+	// The object contains the following fields:<br>
 	// - `TOP_LEFT`<br>
 	// - `CENTER_TOP`<br>
 	// - `TOP_RIGHT`<br>
@@ -172,33 +173,24 @@ namespace TEN::Scripting::DisplaySprite
 	// - `BOTTOM_RIGHT`<br>
 	// - `CENTER_BOTTOM`<br>
 	// - `BOTTOM_LEFT`<br>
-	sol::table ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt, sol::this_state state) const
+	DisplayAnchors ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const
 	{
-		// Create a table to hold the anchor points.
-		auto anchorTable = sol::state_view(state).create_table();
-		anchorTable["TOP_LEFT"] = Vec2(0.0f, 0.0f),
-		anchorTable["CENTER_TOP"] = Vec2(0.0f, 0.0f),
-		anchorTable["TOP_RIGHT"] = Vec2(0.0f, 0.0f),
-		anchorTable["CENTER_LEFT"] = Vec2(0.0f, 0.0f),
-		anchorTable["CENTER"] = Vec2(0.0f, 0.0f),
-		anchorTable["CENTER_RIGHT"] = Vec2(0.0f, 0.0f),
-		anchorTable["BOTTOM_RIGHT"] = Vec2(0.0f, 0.0f),
-		anchorTable["CENTER_BOTTOM"] = Vec2(0.0f, 0.0f),
-		anchorTable["BOTTOM_LEFT"] = Vec2(0.0f, 0.0f);
+		// Crea l'oggetto DisplayAnchors con valori di default (0,0)
+		DisplayAnchors anchors;
 
-		// Object is not a sprite sequence; return anchors with value (0,0).
+		// Object is not a sprite sequence; return default anchors
 		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
 		{
 			TENLog("Attempted to draw display sprite from non-sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
-			return anchorTable;
+			return anchors;
 		}
 
-		// Sprite missing or sequence not found; return anchors with value (0,0).
+		// Sprite missing or sequence not found; return default anchors
 		const auto& object = Objects[_objectID];
 		if (!object.loaded || _spriteID >= abs(object.nmeshes))
 		{
 			TENLog("Attempted to draw missing sprite " + std::to_string(_spriteID) + " from sprite sequence object " + std::to_string(_objectID) + " as display sprite.", LogLevel::Warning);
-			return anchorTable;
+			return anchors;
 		}
 
 		// Start calculation of the 4 vertices of the sprite with graphic resolution 800x600
@@ -319,18 +311,18 @@ namespace TEN::Scripting::DisplaySprite
 		const Vector2 CENTER_RIGHT = (vertices[1] + vertices[2]) / 2.0f;
 		const Vector2 CENTER_BOTTOM = (vertices[2] + vertices[3]) / 2.0f;
 
-		// Fill the anchor table with the calculated vertices, rounded to 2 decimal places.
-		anchorTable["TOP_LEFT"] = Vec2(std::round((vertices[0].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[0].y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["CENTER_TOP"] = Vec2(std::round((CENTER_TOP.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_TOP.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["TOP_RIGHT"] = Vec2(std::round((vertices[1].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[1].y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["CENTER_LEFT"] = Vec2(std::round((CENTER_LEFT.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_LEFT.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["CENTER"] = Vec2(std::round((CENTER.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["CENTER_RIGHT"] = Vec2(std::round((CENTER_RIGHT.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_RIGHT.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["BOTTOM_RIGHT"] = Vec2(std::round((vertices[2].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[2].y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["CENTER_BOTTOM"] = Vec2(std::round((CENTER_BOTTOM.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_BOTTOM.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchorTable["BOTTOM_LEFT"] = Vec2(std::round((vertices[3].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[3].y / screenRes.y) * 10000.0f) / 100.0f);
+		// Popola l'oggetto DisplayAnchors con i valori calcolati
+		anchors.TopLeft = Vec2(std::round((vertices[0].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[0].y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.CenterTop = Vec2(std::round((CENTER_TOP.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_TOP.y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.TopRight = Vec2(std::round((vertices[1].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[1].y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.CenterLeft = Vec2(std::round((CENTER_LEFT.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_LEFT.y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.Center = Vec2(std::round((CENTER.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER.y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.CenterRight = Vec2(std::round((CENTER_RIGHT.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_RIGHT.y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.BottomRight = Vec2(std::round((vertices[2].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[2].y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.CenterBottom = Vec2(std::round((CENTER_BOTTOM.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_BOTTOM.y / screenRes.y) * 10000.0f) / 100.0f);
+		anchors.BottomLeft = Vec2(std::round((vertices[3].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[3].y / screenRes.y) * 10000.0f) / 100.0f);
 
-		return anchorTable;
+		return anchors;
 	}
 
 	/// Set the sprite sequence object ID used by the display sprite.
