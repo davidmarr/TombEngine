@@ -311,7 +311,7 @@ namespace TEN::Scripting::DisplaySprite
 		const Vector2 CENTER_RIGHT = (vertices[1] + vertices[2]) / 2.0f;
 		const Vector2 CENTER_BOTTOM = (vertices[2] + vertices[3]) / 2.0f;
 
-		// Popola l'oggetto DisplayAnchors con i valori calcolati
+		// Populate the DisplayAnchors object with the calculated values
 		anchors.TopLeft = Vec2(std::round((vertices[0].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[0].y / screenRes.y) * 10000.0f) / 100.0f);
 		anchors.CenterTop = Vec2(std::round((CENTER_TOP.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_TOP.y / screenRes.y) * 10000.0f) / 100.0f);
 		anchors.TopRight = Vec2(std::round((vertices[1].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[1].y / screenRes.y) * 10000.0f) / 100.0f);
