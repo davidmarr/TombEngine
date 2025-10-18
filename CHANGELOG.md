@@ -21,6 +21,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed GRENADE object not being activated by triggers and heavy triggers under shatters.
 * Fixed FISH_EMITTER fish escape direction when player is nearby.
 * Fixed EXPANDING_PLATFORM and RAISING_BLOCK rendering issues in flat state.
+* Fixed LOCUST_EMITTER object.
 * Fixed several collision issues for TRAIN object.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed wall embeddings after jumping on top of hard static meshes aligned to walls.
