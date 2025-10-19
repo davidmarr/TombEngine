@@ -10,7 +10,6 @@
 #include "Sound/sound.h"
 #include "Specific/clock.h"
 #include "Specific/trutils.h"
-#include "Specific/winmain.h"
 
 using namespace TEN::Gui;
 using namespace TEN::Math;
