@@ -21,6 +21,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed GRENADE object not being activated by triggers and heavy triggers under shatters.
 * Fixed FISH_EMITTER fish escape direction when player is nearby.
 * Fixed EXPANDING_PLATFORM and RAISING_BLOCK rendering issues in flat state.
+* Fixed LOCUST_EMITTER object.
 * Fixed several collision issues for TRAIN object.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed wall embeddings after jumping on top of hard static meshes aligned to walls.
@@ -44,6 +45,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
 * Added `Moveable:ShowInteractionHighlight` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
+* Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
