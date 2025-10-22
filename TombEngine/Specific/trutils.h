@@ -1,7 +1,11 @@
 #pragma once
 
+#include <SimpleMath.h>
+
 namespace TEN::Utils
 {
+	using namespace DirectX::SimpleMath;
+
 	// String utilities
 
 	std::string ConstructAssetDirectory(std::string customDirectory);
