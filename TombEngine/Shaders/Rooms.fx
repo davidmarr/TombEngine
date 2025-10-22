@@ -7,6 +7,7 @@
 #include "./AnimatedTextures.hlsli"
 #include "./Shadows.hlsli"
 #include "./ShaderLight.hlsli"
+#include "./Materials.hlsli"
 
 #define ROOM_LIGHT_COEFF 0.7f
 
@@ -22,7 +23,8 @@ struct PixelShaderInput
 	float4 FogBulbs : TEXCOORD2;
 	float DistanceFog : FOG;
 	float3 Tangent: TANGENT;
-	float3 Binormal: BINORMAL;
+    float3 Binormal : BINORMAL;
+    float3 FaceNormal : TEXCOORD3;
 };
 
 Texture2D Texture : register(t0);
@@ -48,12 +50,12 @@ PixelShaderInput VS(VertexShaderInput input)
 
 	// Setting effect weight on TE side prevents portal vertices from moving.
 	// Here we just read weight and decide if we should apply refraction or movement effect.
-	float weight = input.Effects.z;
+    float weight = DecodeWeight(input.Effects);
 
 	// Calculate vertex effects
-	float wibble = Wibble(input.Effects.xyz, input.Hash);
-	float3 pos = Move(input.Position, input.Effects.xyz * weight, wibble);
-	float3 col = Glow(input.Color.xyz, input.Effects.xyz, wibble);
+	float wibble = Wibble(input.Effects, DecodeHash(input.AnimationFrameOffsetIndexHash));
+	float3 pos = Move(input.Position, input.Effects * weight, wibble);
+	float3 col = Glow(input.Color.xyz, input.Effects, wibble);
 
 	// Refraction
 	float4 screenPos = mul(float4(pos, 1.0f), ViewProjection);
@@ -69,32 +71,19 @@ PixelShaderInput VS(VertexShaderInput input)
 	}
 	
 	output.Position = screenPos;
-	output.Normal = input.Normal;
+    output.Normal = input.Normal.xyz;
 	output.Color = float4(col, input.Color.w);
 	output.PositionCopy = screenPos;
-    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
+    output.UV = GetUVPossiblyAnimated(input.UV, DecodeIndexInPoly(input.Effects), DecodeAnimationFrameOffset(input.AnimationFrameOffsetIndexHash));
 	output.WorldPosition = pos;
-	output.Tangent = input.Tangent;
-	output.Binormal = input.Binormal;
-
+    output.Tangent = input.Tangent.xyz;
+    output.Binormal = cross(input.Normal.xyz, input.Tangent.xyz);
+    output.FaceNormal = input.FaceNormal;
+	
 	output.FogBulbs = DoFogBulbsForVertex(output.WorldPosition);
 	output.DistanceFog = DoDistanceFogForVertex(output.WorldPosition);
 
 	return output;
-}
-
-float3 UnpackNormalMap(float4 n)
-{
-	n = n * 2.0f - 1.0f;
-	n.z = saturate(1.0f - dot(n.xy, n.xy));
-	return n.xyz;
-}
-
-float3 PackNormal(float3 n)
-{
-	n = (n + 1.0f) * 0.5f;
-	n.z = 0;
-	return n.xyz;
 }
 
 PixelShaderOutput PS(PixelShaderInput input)
@@ -107,27 +96,39 @@ PixelShaderOutput PS(PixelShaderInput input)
 	output.Color = Texture.Sample(Sampler, input.UV);
 
 	DoAlphaTest(output.Color);
+	
+    float4 occlusionRoughnessSpecular = OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, input.UV);
+    float ambientOcclusion = occlusionRoughnessSpecular.x;
+    float roughness = occlusionRoughnessSpecular.y;
+    float specular = occlusionRoughnessSpecular.z;
+	
+    float3 emissive = EmissiveTexture.Sample(EmissiveSampler, input.UV).xyz;
 
 	float3x3 TBN = float3x3(input.Tangent, input.Binormal, input.Normal);
 	float3 normal = UnpackNormalMap(NormalTexture.Sample(NormalTextureSampler, input.UV));
 	normal = normalize(mul(normal, TBN));
+	
+    // Material effects
+    output.Color.xyz = CalculateReflections(input.WorldPosition, output.Color.xyz, input.FaceNormal, normal, specular);
 
 	float3 lighting = input.Color.xyz;
 	bool doLights = true;
 
-	float occlusion = 1.0f;
-	if (AmbientOcclusion == 1)
-	{
-		float2 samplePosition;
-		samplePosition = input.PositionCopy.xy / input.PositionCopy.w; // Perspective divide
-		samplePosition = samplePosition * 0.5f + 0.5f; // transform to range 0.0 - 1.0  
-		samplePosition.y = 1.0f - samplePosition.y;
-		occlusion = pow(SSAOTexture.Sample(SSAOSampler, samplePosition).x, AmbientOcclusionExponent);
+    float2 samplePosition = GetSamplePosition(input.PositionCopy);
+	
+	// Ambient occlusion
+    float occlusion = 1.0f;
+    if (AmbientOcclusion == 1 && BlendModeSupportsSSAO())
+    {
+        occlusion = pow(SSAOTexture.Sample(SSAOSampler, samplePosition).x, AmbientOcclusionExponent);
 		
-		if (BlendMode == BLENDMODE_ALPHABLEND)
-			occlusion = lerp(occlusion, 1.0f, output.Color.w);
-	}
+        if (BlendMode == BLENDMODE_ALPHABLEND)
+            occlusion = lerp(occlusion, 1.0f, output.Color.w);
+    }
+	
+    occlusion *= ambientOcclusion;
 
+	// Shadows
 	lighting = DoShadow(input.WorldPosition, normal, lighting, -2.5f);
 	lighting = DoBlobShadows(input.WorldPosition, lighting);
 
@@ -138,8 +139,9 @@ PixelShaderOutput PS(PixelShaderInput input)
 	{
 		if (onlyPointLights)
 		{
-			lighting += DoPointLight(input.WorldPosition, normal, RoomLights[i]) * ROOM_LIGHT_COEFF;
-		}
+            lighting += DoPointLight(input.WorldPosition, normal, RoomLights[i]) * ROOM_LIGHT_COEFF;
+            lighting += DoSpecularPoint(input.WorldPosition, normal, RoomLights[i], 0.0f, specular, roughness);
+        }
 		else
 		{
 			// Room dynamic lights can only be spot or point, so we use simplified function for that.
@@ -149,12 +151,13 @@ PixelShaderOutput PS(PixelShaderInput input)
 
 			float3 pointLight = float3(0.0f, 0.0f, 0.0f);
 			float3 spotLight  = float3(0.0f, 0.0f, 0.0f);
-			DoPointAndSpotLight(input.WorldPosition, normal, RoomLights[i], pointLight, spotLight);
+			DoPointAndSpotLight(input.WorldPosition, normal, RoomLights[i], specular, roughness, pointLight, spotLight);
 			
 			lighting += pointLight * isPoint * ROOM_LIGHT_COEFF + spotLight  * isSpot * ROOM_LIGHT_COEFF;
 		}
 	}
 
+	// Decals
 	if (!Animated && NumRoomDecals > 0)
 	{
 		float decalMask = 0.0f;
@@ -186,6 +189,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 		lighting *= (1.0 - decalMask);
 	}
 
+	// Caustics
     if (Caustics)
     {
         float attenuation = saturate(dot(float3(0.0f, -1.0f, 0.0f), normal));
@@ -214,6 +218,10 @@ PixelShaderOutput PS(PixelShaderInput input)
         lighting += (caustics * attenuation * 2.0f);
     }
 
+	// Emissive materials
+    lighting += emissive;
+		
+	// Fog bulbs and final color and light mixing
 	lighting -= float3(input.FogBulbs.w, input.FogBulbs.w, input.FogBulbs.w);
 	output.Color.xyz = output.Color.xyz * lighting * occlusion;
 	output.Color.xyz = saturate(output.Color.xyz);
@@ -221,5 +229,5 @@ PixelShaderOutput PS(PixelShaderInput input)
 	output.Color = DoFogBulbsForPixel(output.Color, float4(input.FogBulbs.xyz, 1.0f));
 	output.Color = DoDistanceFogForPixel(output.Color, FogColor, input.DistanceFog);
 
-	return output;
+    return output;
 }
