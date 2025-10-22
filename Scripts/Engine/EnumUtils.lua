@@ -1,15 +1,18 @@
---- Utility functions for working with enumerators.
+-----
+--- Utility functions for working with Enums of TEN.
 --
 -- 
+-- Enums in TEN are represented as tables with key-value pairs, where keys are the names of the enumerators and values are their corresponding integer values.
+-- This module provides functions to facilitate common operations on these enumerator tables.
 -- To use the functions within the scripts, the module must be called:
 --	local EnumUtils = require("Engine.EnumUtils")
--- @module EnumUtils
+-- @luautil EnumUtils
 
 local EnumUtils = {}
 
 --- Check if a value exists in an enumerator table
 -- @tparam table enum The enumerator table (e.g., TEN.Collision.MaterialType)
--- @tparam value The value to search for
+-- @tparam int value The value to search for
 -- @treturn bool true if the value exists in the enumerator, false otherwise
 -- @usage
 -- local isValid = EnumUtils.HasValue(TEN.Collision.MaterialType, 5)
@@ -17,7 +20,7 @@ local EnumUtils = {}
 --     print("Valid material type!")
 -- end
 function EnumUtils.HasValue(enum, value)
-    if type(enum) ~= "table" then
+    if type(enum) ~= "table" or type(value) ~= "number" then
         return false
     end
     for _, enumValue in pairs(enum) do
