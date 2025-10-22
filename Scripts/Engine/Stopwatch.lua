@@ -1,4 +1,4 @@
---- Basic timer that performs countdown. When it expires, you can set a specific *LevelFuncs* function to be activated.<br>Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
+--- Basic stopwatches that perform countup. Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
 --	local Stopwatch = require("Engine.Stopwatch")
 -- @luautil Stopwatch
 
@@ -75,3 +75,4 @@ end
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is not active.
 -- @tfield[opt=0] float startTime The time (in seconds) from which the stopwatch will start counting up.
 
+return Stopwatch
