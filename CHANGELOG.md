@@ -6,7 +6,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 1.10]
 
 ## New features
-* Added animated textures support for all objects.
+* Added material system with support for normal, specular, roughness, emissive, and ambient occlusion maps.
+* Added animated textures support for moveables and static meshes.
 * Added UVRotate support.
 * Added interaction highlighter.
 * Added bullet hole and explosion decals for room geometry.
@@ -14,6 +15,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added ability to colorize ROPE objects.
 * Added ability to antitrigger FISH_EMITTER.
 * Reworked thumbstick camera to act like in FLEP patch.
+* Increased renderer performance and reduced GPU memory usage.
 * Increased level loading speed by switching to LZ4 compression format.
 
 ### Bug fixes
@@ -40,7 +42,11 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed dynamic lights disappearing for a single frame after exiting game menus.
 * Fixed controls being stuck when engine window is out of focus.
 * Fixed missing "No" sound when player attempts to interact without particular items in the inventory.
+* Fixed rendering issues with some static meshes if same level file is reused for the title.
 * Fixed intense GPU usage when engine window is minimized.
+* Fixed wrong highlights when sun lights were used in mirror setups.
+* Fixed SSAO applied multiple times when additive surfaces are present in scene.
+* Fixed vertex effects (glow and move) not being rendered at full framerate.
 
 ### Lua API changes
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
