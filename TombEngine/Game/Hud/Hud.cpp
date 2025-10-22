@@ -20,13 +20,17 @@ namespace TEN::Hud
 		StatusBars.Update(playerItem);
 	}
 
-	void HudController::Draw(const ItemInfo& playerItem) const
+	void HudController::Draw2D(const ItemInfo& playerItem) const
 	{
 		InteractionHighlighter.Draw();
 		TargetHighlighter.Draw();
 		Speedometer.Draw();
-		PickupSummary.Draw();
 		StatusBars.Draw(playerItem);
+	}
+
+	void HudController::Draw3D()
+	{
+		PickupSummary.Draw();
 	}
 
 	void HudController::Clear()
