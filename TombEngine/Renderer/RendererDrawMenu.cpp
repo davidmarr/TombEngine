@@ -846,7 +846,7 @@ namespace TEN::Renderer
 		hudCamera.ViewProjection = viewMatrix * projMatrix;
 		hudCamera.Frame = GlobalCounter;
 		hudCamera.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
-		_cbCameraMatrices.UpdateData(hudCamera, _context.Get());
+		UpdateConstantBuffer(hudCamera, _cbCameraMatrices);
 		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 		for (int i = 0; i < moveableObject->ObjectMeshes.size(); i++)
@@ -879,7 +879,7 @@ namespace TEN::Renderer
 			_stItem.Color = Vector4::One;
 			_stItem.AmbientLight = AMBIENT_LIGHT_COLOR;
 
-			_cbItem.UpdateData(_stItem, _context.Get());
+			UpdateConstantBuffer(_stItem, _cbItem);
 
 			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
 			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
@@ -897,18 +897,18 @@ namespace TEN::Renderer
 					SetCullMode(CullMode::CounterClockwise);
 					SetDepthState(DepthState::Write);
 
-					if (animated)
+					BindBucketTextures(bucket, TextureSource::Moveables, animated);
+							
+#ifdef TEST_LEGACY_REFLECTIONS
+					if (objectNumber == ID_PISTOLS_ITEM)
 					{
-						SetupAnimatedTextures(bucket);
+						BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::LinearClamp);
+						_stMaterial.MaterialType = 1;
+						UpdateConstantBuffer(_stMaterial, _cbMaterial);
 					}
 					else
-					{
-						TexturesAreNotAnimated();
-
-
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-						BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-					}
+#endif
+						BindMaterial(bucket.MaterialIndex, false);
 
 					if (bucket.BlendMode != BlendMode::Opaque)
 						SetBlendMode(bucket.BlendMode, true);
@@ -1017,16 +1017,21 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 
 		// Bind and clear render target
-		_context->OMSetRenderTargets(1, _renderTarget.RenderTargetView.GetAddressOf(), _renderTarget.DepthStencilView.Get());
+		ID3D11RenderTargetView* pRenderViewPtrs[2];
+		pRenderViewPtrs[0] = _renderTarget.RenderTargetView.Get();
+		pRenderViewPtrs[1] = _emissiveAndRoughnessRenderTarget.RenderTargetView.Get();
+
 		_context->RSSetViewports(1, &_viewport);
 		ResetScissor();
 
 		_context->ClearDepthStencilView(_renderTarget.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
 		_context->ClearRenderTargetView(_renderTarget.RenderTargetView.Get(), Colors::Black);
+		_context->ClearRenderTargetView(_emissiveAndRoughnessRenderTarget.RenderTargetView.Get(), Colors::Transparent);
 
 		if (background != nullptr)
 			DrawFullScreenImage(background->ShaderResourceView.Get(), backgroundFade, _renderTarget.RenderTargetView.Get(), _renderTarget.DepthStencilView.Get());
 
+		_context->OMSetRenderTargets(2, &pRenderViewPtrs[0], _renderTarget.DepthStencilView.Get());
 		_context->ClearDepthStencilView(_renderTarget.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		unsigned int stride = sizeof(Vertex);
@@ -1071,14 +1076,6 @@ namespace TEN::Renderer
 		}
 		else
 		{
-			if (g_Gui.GetInventoryMode() == InventoryMode::InGame ||
-				g_Gui.GetInventoryMode() == InventoryMode::Examine)
-			{
-				// Set texture.
-				BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[0]), SamplerStateRegister::AnisotropicClamp);
-				BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[0]), SamplerStateRegister::AnisotropicClamp);
-			}
-
 			switch (g_Gui.GetInventoryMode())
 			{
 			case InventoryMode::Load:
@@ -1106,20 +1103,8 @@ namespace TEN::Renderer
 
 		_context->ClearDepthStencilView(_renderTarget.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-		switch (g_Configuration.AntialiasingMode)
-		{
-		case AntialiasingMode::None:
-			break;
-
-		case AntialiasingMode::Low:
-			ApplyFXAA(&_renderTarget, _gameCamera);
-			break;
-
-		case AntialiasingMode::Medium:
-		case AntialiasingMode::High:
-			ApplySMAA(&_renderTarget, _gameCamera);
-			break;
-		}
+		ApplyGlow(&_renderTarget, _gameCamera);
+		ApplyAntialiasing(&_renderTarget, _gameCamera);
 
 		CopyRenderTarget(&_renderTarget, renderTarget, _gameCamera);
 	}
@@ -1301,6 +1286,8 @@ namespace TEN::Renderer
 			PrintDebugMessage("    Sprites: %d", _numSortedSpritesDrawCalls);
 			PrintDebugMessage("SHADOW MAP draw calls: %d", _numShadowMapDrawCalls);
 			PrintDebugMessage("DEBRIS draw calls: %d", _numDebrisDrawCalls);
+			PrintDebugMessage("Constant buffers updates: %d", _numConstantBufferUpdates);
+			PrintDebugMessage("Material updates: %d requested, %d executed", _numRequestedMaterialsUpdates, _numExecutedMaterialsUpdates);
 
 			_spriteBatch->Begin(SpriteSortMode_Deferred, _renderStates->Opaque());
 
@@ -1309,7 +1296,7 @@ namespace TEN::Renderer
 			rect.right = rect.left+ thumbWidth;
 			rect.bottom = rect.top+thumbWidth / aspectRatio;
 
-			_spriteBatch->Draw(_normalsRenderTarget.ShaderResourceView.Get(), rect);
+			_spriteBatch->Draw(_normalsAndMaterialIndexRenderTarget.ShaderResourceView.Get(), rect);
 			thumbY += thumbWidth / aspectRatio;
 
 			rect.left = _screenWidth - thumbWidth;
