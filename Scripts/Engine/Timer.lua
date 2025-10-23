@@ -123,7 +123,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.scale = 1
 	thisTimer.unpausedColor = TEN.Color(255, 255, 255)
 	thisTimer.pausedColor = TEN.Color(255, 255, 0)
-	thisTimer.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW}
+	thisTimer.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
 	return setmetatable(self, Timer)
 end
 
@@ -611,7 +611,7 @@ function Timer:GetScale()
 	return LevelVars.Engine.Timer.timers[self.name].scale
 end
 
---- Set the paused color of the displayed timer when it is active.
+--- Set the paused color of the displayed timer when it is not active.
 -- @tparam[opt=TEN.Color(255&#44; 255&#44; 0&#44; 255)] Color color Timer's new paused color.
 -- @usage
 -- -- Example:
@@ -680,7 +680,7 @@ end
 --    Timer.Get("my_timer"):SetTextOption()
 -- end
 function Timer:SetTextOption(optionsTable)
-	optionsTable = optionsTable or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW}
+	optionsTable = optionsTable or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
 	if type(optionsTable) ~= "table" then
 		TEN.Util.PrintLog("Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
