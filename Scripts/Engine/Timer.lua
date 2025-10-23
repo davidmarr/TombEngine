@@ -87,7 +87,6 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 		return
 	end
 
-
 	local self = { name = name }
 	if LevelVars.Engine.Timer.timers[name] then
 		TEN.Util.PrintLog("Warning in Timer.Create(): a timer with name '" .. name .. "' already exists; overwriting it with a new one...", TEN.Util.LogLevel.WARNING)
