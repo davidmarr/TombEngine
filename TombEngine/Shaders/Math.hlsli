@@ -530,4 +530,36 @@ float4x4 BlendBoneMatrices(VertexShaderInput input, float4x4 bones[MAX_BONES], b
 		return blendedMatrix;
 	}
 }
+
+float3 UnpackNormalMap(float4 n)
+{
+    n = n * 2.0f - 1.0f;
+    n.z = saturate(1.0f - dot(n.xy, n.xy));
+    return n.xyz;
+}
+
+inline float Gaussian(float x, float sigma)
+{
+    // exp( -x^2 / (2*sigma^2) )
+    return exp(-(x * x) / (2.0 * sigma * sigma));
+}
+
+float3 SafeNormalize(float3 v)
+{
+    const float eps = 1e-8;
+    float l2 = dot(v, v);
+    float invLen = rsqrt(max(l2, eps));
+    float mask = saturate(l2 / (l2 + eps));
+    return v * invLen * mask;
+}
+
+float2 GetSamplePosition(float4 projectedPosition)
+{
+    float2 samplePosition;
+    samplePosition = projectedPosition.xy / projectedPosition.w;
+    samplePosition = samplePosition * 0.5f + 0.5f;
+    samplePosition.y = 1.0f - samplePosition.y;
+    return samplePosition;
+}
+
 #endif // MATH

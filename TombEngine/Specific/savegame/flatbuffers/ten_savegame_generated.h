@@ -2666,6 +2666,9 @@ struct TorchDataT : public flatbuffers::NativeTable {
   typedef TorchData TableType;
   TEN::Save::TorchState state = TEN::Save::TorchState::holding;
   bool is_lit = false;
+  int32_t fade = 0;
+  std::unique_ptr<TEN::Save::Vector3> current_color{};
+  std::unique_ptr<TEN::Save::Vector3> next_color{};
 };
 
 struct TorchData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -2674,7 +2677,10 @@ struct TorchData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   struct Traits;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_STATE = 4,
-    VT_IS_LIT = 6
+    VT_IS_LIT = 6,
+    VT_FADE = 8,
+    VT_CURRENT_COLOR = 10,
+    VT_NEXT_COLOR = 12
   };
   TEN::Save::TorchState state() const {
     return static_cast<TEN::Save::TorchState>(GetField<int32_t>(VT_STATE, 0));
@@ -2682,10 +2688,22 @@ struct TorchData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool is_lit() const {
     return GetField<uint8_t>(VT_IS_LIT, 0) != 0;
   }
+  int32_t fade() const {
+    return GetField<int32_t>(VT_FADE, 0);
+  }
+  const TEN::Save::Vector3 *current_color() const {
+    return GetStruct<const TEN::Save::Vector3 *>(VT_CURRENT_COLOR);
+  }
+  const TEN::Save::Vector3 *next_color() const {
+    return GetStruct<const TEN::Save::Vector3 *>(VT_NEXT_COLOR);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_STATE) &&
            VerifyField<uint8_t>(verifier, VT_IS_LIT) &&
+           VerifyField<int32_t>(verifier, VT_FADE) &&
+           VerifyField<TEN::Save::Vector3>(verifier, VT_CURRENT_COLOR) &&
+           VerifyField<TEN::Save::Vector3>(verifier, VT_NEXT_COLOR) &&
            verifier.EndTable();
   }
   TorchDataT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -2703,6 +2721,15 @@ struct TorchDataBuilder {
   void add_is_lit(bool is_lit) {
     fbb_.AddElement<uint8_t>(TorchData::VT_IS_LIT, static_cast<uint8_t>(is_lit), 0);
   }
+  void add_fade(int32_t fade) {
+    fbb_.AddElement<int32_t>(TorchData::VT_FADE, fade, 0);
+  }
+  void add_current_color(const TEN::Save::Vector3 *current_color) {
+    fbb_.AddStruct(TorchData::VT_CURRENT_COLOR, current_color);
+  }
+  void add_next_color(const TEN::Save::Vector3 *next_color) {
+    fbb_.AddStruct(TorchData::VT_NEXT_COLOR, next_color);
+  }
   explicit TorchDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -2717,8 +2744,14 @@ struct TorchDataBuilder {
 inline flatbuffers::Offset<TorchData> CreateTorchData(
     flatbuffers::FlatBufferBuilder &_fbb,
     TEN::Save::TorchState state = TEN::Save::TorchState::holding,
-    bool is_lit = false) {
+    bool is_lit = false,
+    int32_t fade = 0,
+    const TEN::Save::Vector3 *current_color = 0,
+    const TEN::Save::Vector3 *next_color = 0) {
   TorchDataBuilder builder_(_fbb);
+  builder_.add_next_color(next_color);
+  builder_.add_current_color(current_color);
+  builder_.add_fade(fade);
   builder_.add_state(state);
   builder_.add_is_lit(is_lit);
   return builder_.Finish();
@@ -4989,6 +5022,7 @@ struct CameraT : public flatbuffers::NativeTable {
   typedef Camera TableType;
   std::unique_ptr<TEN::Save::GameVector> position{};
   std::unique_ptr<TEN::Save::GameVector> target{};
+  std::unique_ptr<TEN::Save::EulerAngles> extra_orientation{};
 };
 
 struct Camera FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -4997,7 +5031,8 @@ struct Camera FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   struct Traits;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_POSITION = 4,
-    VT_TARGET = 6
+    VT_TARGET = 6,
+    VT_EXTRA_ORIENTATION = 8
   };
   const TEN::Save::GameVector *position() const {
     return GetStruct<const TEN::Save::GameVector *>(VT_POSITION);
@@ -5005,10 +5040,14 @@ struct Camera FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const TEN::Save::GameVector *target() const {
     return GetStruct<const TEN::Save::GameVector *>(VT_TARGET);
   }
+  const TEN::Save::EulerAngles *extra_orientation() const {
+    return GetStruct<const TEN::Save::EulerAngles *>(VT_EXTRA_ORIENTATION);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<TEN::Save::GameVector>(verifier, VT_POSITION) &&
            VerifyField<TEN::Save::GameVector>(verifier, VT_TARGET) &&
+           VerifyField<TEN::Save::EulerAngles>(verifier, VT_EXTRA_ORIENTATION) &&
            verifier.EndTable();
   }
   CameraT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -5026,6 +5065,9 @@ struct CameraBuilder {
   void add_target(const TEN::Save::GameVector *target) {
     fbb_.AddStruct(Camera::VT_TARGET, target);
   }
+  void add_extra_orientation(const TEN::Save::EulerAngles *extra_orientation) {
+    fbb_.AddStruct(Camera::VT_EXTRA_ORIENTATION, extra_orientation);
+  }
   explicit CameraBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -5040,8 +5082,10 @@ struct CameraBuilder {
 inline flatbuffers::Offset<Camera> CreateCamera(
     flatbuffers::FlatBufferBuilder &_fbb,
     const TEN::Save::GameVector *position = 0,
-    const TEN::Save::GameVector *target = 0) {
+    const TEN::Save::GameVector *target = 0,
+    const TEN::Save::EulerAngles *extra_orientation = 0) {
   CameraBuilder builder_(_fbb);
+  builder_.add_extra_orientation(extra_orientation);
   builder_.add_target(target);
   builder_.add_position(position);
   return builder_.Finish();
@@ -6087,6 +6131,7 @@ struct SwarmObjectInfoT : public flatbuffers::NativeTable {
   bool on = false;
   std::unique_ptr<TEN::Save::Pose> pose{};
   int32_t room_number = 0;
+  int32_t target = 0;
   int32_t flags = 0;
 };
 
@@ -6098,7 +6143,8 @@ struct SwarmObjectInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_ON = 4,
     VT_POSE = 6,
     VT_ROOM_NUMBER = 8,
-    VT_FLAGS = 10
+    VT_TARGET = 10,
+    VT_FLAGS = 12
   };
   bool on() const {
     return GetField<uint8_t>(VT_ON, 0) != 0;
@@ -6109,6 +6155,9 @@ struct SwarmObjectInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   int32_t room_number() const {
     return GetField<int32_t>(VT_ROOM_NUMBER, 0);
   }
+  int32_t target() const {
+    return GetField<int32_t>(VT_TARGET, 0);
+  }
   int32_t flags() const {
     return GetField<int32_t>(VT_FLAGS, 0);
   }
@@ -6117,6 +6166,7 @@ struct SwarmObjectInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint8_t>(verifier, VT_ON) &&
            VerifyField<TEN::Save::Pose>(verifier, VT_POSE) &&
            VerifyField<int32_t>(verifier, VT_ROOM_NUMBER) &&
+           VerifyField<int32_t>(verifier, VT_TARGET) &&
            VerifyField<int32_t>(verifier, VT_FLAGS) &&
            verifier.EndTable();
   }
@@ -6138,6 +6188,9 @@ struct SwarmObjectInfoBuilder {
   void add_room_number(int32_t room_number) {
     fbb_.AddElement<int32_t>(SwarmObjectInfo::VT_ROOM_NUMBER, room_number, 0);
   }
+  void add_target(int32_t target) {
+    fbb_.AddElement<int32_t>(SwarmObjectInfo::VT_TARGET, target, 0);
+  }
   void add_flags(int32_t flags) {
     fbb_.AddElement<int32_t>(SwarmObjectInfo::VT_FLAGS, flags, 0);
   }
@@ -6157,9 +6210,11 @@ inline flatbuffers::Offset<SwarmObjectInfo> CreateSwarmObjectInfo(
     bool on = false,
     const TEN::Save::Pose *pose = 0,
     int32_t room_number = 0,
+    int32_t target = 0,
     int32_t flags = 0) {
   SwarmObjectInfoBuilder builder_(_fbb);
   builder_.add_flags(flags);
+  builder_.add_target(target);
   builder_.add_room_number(room_number);
   builder_.add_pose(pose);
   builder_.add_on(on);
@@ -8569,6 +8624,7 @@ struct SaveGameT : public flatbuffers::NativeTable {
   std::vector<std::unique_ptr<TEN::Save::SwarmObjectInfoT>> spiders{};
   std::vector<std::unique_ptr<TEN::Save::SwarmObjectInfoT>> scarabs{};
   std::vector<std::unique_ptr<TEN::Save::SwarmObjectInfoT>> bats{};
+  std::vector<std::unique_ptr<TEN::Save::SwarmObjectInfoT>> locusts{};
   std::vector<std::unique_ptr<TEN::Save::DecalT>> decals{};
   std::vector<int32_t> flip_maps{};
   std::vector<int32_t> flip_stats{};
@@ -8638,42 +8694,43 @@ struct SaveGame FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_SPIDERS = 50,
     VT_SCARABS = 52,
     VT_BATS = 54,
-    VT_DECALS = 56,
-    VT_FLIP_MAPS = 58,
-    VT_FLIP_STATS = 60,
-    VT_FLIP_EFFECT = 62,
-    VT_FLIP_TIMER = 64,
-    VT_FLIP_STATUS = 66,
-    VT_CURRENT_FOV = 68,
-    VT_LAST_INV_ITEM = 70,
-    VT_ACTION_QUEUE = 72,
-    VT_SOUNDTRACKS = 74,
-    VT_CD_FLAGS = 76,
-    VT_VIDEO = 78,
-    VT_POSTPROCESS_MODE = 80,
-    VT_POSTPROCESS_STRENGTH = 82,
-    VT_POSTPROCESS_TINT = 84,
-    VT_ROPE = 86,
-    VT_PENDULUM = 88,
-    VT_ALTERNATE_PENDULUM = 90,
-    VT_VOLUMES = 92,
-    VT_GLOBAL_EVENT_SETS = 94,
-    VT_VOLUME_EVENT_SETS = 96,
-    VT_SCRIPT_VARS = 98,
-    VT_CALLBACKS_PRE_START = 100,
-    VT_CALLBACKS_POST_START = 102,
-    VT_CALLBACKS_PRE_END = 104,
-    VT_CALLBACKS_POST_END = 106,
-    VT_CALLBACKS_PRE_SAVE = 108,
-    VT_CALLBACKS_POST_SAVE = 110,
-    VT_CALLBACKS_PRE_LOAD = 112,
-    VT_CALLBACKS_POST_LOAD = 114,
-    VT_CALLBACKS_PRE_LOOP = 116,
-    VT_CALLBACKS_POST_LOOP = 118,
-    VT_CALLBACKS_PRE_USEITEM = 120,
-    VT_CALLBACKS_POST_USEITEM = 122,
-    VT_CALLBACKS_PRE_FREEZE = 124,
-    VT_CALLBACKS_POST_FREEZE = 126
+    VT_LOCUSTS = 56,
+    VT_DECALS = 58,
+    VT_FLIP_MAPS = 60,
+    VT_FLIP_STATS = 62,
+    VT_FLIP_EFFECT = 64,
+    VT_FLIP_TIMER = 66,
+    VT_FLIP_STATUS = 68,
+    VT_CURRENT_FOV = 70,
+    VT_LAST_INV_ITEM = 72,
+    VT_ACTION_QUEUE = 74,
+    VT_SOUNDTRACKS = 76,
+    VT_CD_FLAGS = 78,
+    VT_VIDEO = 80,
+    VT_POSTPROCESS_MODE = 82,
+    VT_POSTPROCESS_STRENGTH = 84,
+    VT_POSTPROCESS_TINT = 86,
+    VT_ROPE = 88,
+    VT_PENDULUM = 90,
+    VT_ALTERNATE_PENDULUM = 92,
+    VT_VOLUMES = 94,
+    VT_GLOBAL_EVENT_SETS = 96,
+    VT_VOLUME_EVENT_SETS = 98,
+    VT_SCRIPT_VARS = 100,
+    VT_CALLBACKS_PRE_START = 102,
+    VT_CALLBACKS_POST_START = 104,
+    VT_CALLBACKS_PRE_END = 106,
+    VT_CALLBACKS_POST_END = 108,
+    VT_CALLBACKS_PRE_SAVE = 110,
+    VT_CALLBACKS_POST_SAVE = 112,
+    VT_CALLBACKS_PRE_LOAD = 114,
+    VT_CALLBACKS_POST_LOAD = 116,
+    VT_CALLBACKS_PRE_LOOP = 118,
+    VT_CALLBACKS_POST_LOOP = 120,
+    VT_CALLBACKS_PRE_USEITEM = 122,
+    VT_CALLBACKS_POST_USEITEM = 124,
+    VT_CALLBACKS_PRE_FREEZE = 126,
+    VT_CALLBACKS_POST_FREEZE = 128
   };
   const TEN::Save::SaveGameHeader *header() const {
     return GetPointer<const TEN::Save::SaveGameHeader *>(VT_HEADER);
@@ -8752,6 +8809,9 @@ struct SaveGame FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *bats() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *>(VT_BATS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *locusts() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *>(VT_LOCUSTS);
   }
   const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Decal>> *decals() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Decal>> *>(VT_DECALS);
@@ -8924,6 +8984,9 @@ struct SaveGame FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_BATS) &&
            verifier.VerifyVector(bats()) &&
            verifier.VerifyVectorOfTables(bats()) &&
+           VerifyOffset(verifier, VT_LOCUSTS) &&
+           verifier.VerifyVector(locusts()) &&
+           verifier.VerifyVectorOfTables(locusts()) &&
            VerifyOffset(verifier, VT_DECALS) &&
            verifier.VerifyVector(decals()) &&
            verifier.VerifyVectorOfTables(decals()) &&
@@ -9096,6 +9159,9 @@ struct SaveGameBuilder {
   void add_bats(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>> bats) {
     fbb_.AddOffset(SaveGame::VT_BATS, bats);
   }
+  void add_locusts(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>> locusts) {
+    fbb_.AddOffset(SaveGame::VT_LOCUSTS, locusts);
+  }
   void add_decals(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Decal>>> decals) {
     fbb_.AddOffset(SaveGame::VT_DECALS, decals);
   }
@@ -9243,6 +9309,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>> spiders = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>> scarabs = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>> bats = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>> locusts = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TEN::Save::Decal>>> decals = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> flip_maps = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> flip_stats = 0,
@@ -9315,6 +9382,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(
   builder_.add_flip_stats(flip_stats);
   builder_.add_flip_maps(flip_maps);
   builder_.add_decals(decals);
+  builder_.add_locusts(locusts);
   builder_.add_bats(bats);
   builder_.add_scarabs(scarabs);
   builder_.add_spiders(spiders);
@@ -9378,6 +9446,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGameDirect(
     const std::vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *spiders = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *scarabs = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *bats = nullptr,
+    const std::vector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> *locusts = nullptr,
     const std::vector<flatbuffers::Offset<TEN::Save::Decal>> *decals = nullptr,
     const std::vector<int32_t> *flip_maps = nullptr,
     const std::vector<int32_t> *flip_stats = nullptr,
@@ -9429,6 +9498,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGameDirect(
   auto spiders__ = spiders ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>(*spiders) : 0;
   auto scarabs__ = scarabs ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>(*scarabs) : 0;
   auto bats__ = bats ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>(*bats) : 0;
+  auto locusts__ = locusts ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>>(*locusts) : 0;
   auto decals__ = decals ? _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Decal>>(*decals) : 0;
   auto flip_maps__ = flip_maps ? _fbb.CreateVector<int32_t>(*flip_maps) : 0;
   auto flip_stats__ = flip_stats ? _fbb.CreateVector<int32_t>(*flip_stats) : 0;
@@ -9480,6 +9550,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGameDirect(
       spiders__,
       scarabs__,
       bats__,
+      locusts__,
       decals__,
       flip_maps__,
       flip_stats__,
@@ -10127,6 +10198,9 @@ inline void TorchData::UnPackTo(TorchDataT *_o, const flatbuffers::resolver_func
   (void)_resolver;
   { auto _e = state(); _o->state = _e; }
   { auto _e = is_lit(); _o->is_lit = _e; }
+  { auto _e = fade(); _o->fade = _e; }
+  { auto _e = current_color(); if (_e) _o->current_color = std::unique_ptr<TEN::Save::Vector3>(new TEN::Save::Vector3(*_e)); }
+  { auto _e = next_color(); if (_e) _o->next_color = std::unique_ptr<TEN::Save::Vector3>(new TEN::Save::Vector3(*_e)); }
 }
 
 inline flatbuffers::Offset<TorchData> TorchData::Pack(flatbuffers::FlatBufferBuilder &_fbb, const TorchDataT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
@@ -10139,10 +10213,16 @@ inline flatbuffers::Offset<TorchData> CreateTorchData(flatbuffers::FlatBufferBui
   struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const TorchDataT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _state = _o->state;
   auto _is_lit = _o->is_lit;
+  auto _fade = _o->fade;
+  auto _current_color = _o->current_color ? _o->current_color.get() : 0;
+  auto _next_color = _o->next_color ? _o->next_color.get() : 0;
   return TEN::Save::CreateTorchData(
       _fbb,
       _state,
-      _is_lit);
+      _is_lit,
+      _fade,
+      _current_color,
+      _next_color);
 }
 
 inline LaraInventoryDataT *LaraInventoryData::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
@@ -10854,6 +10934,7 @@ inline void Camera::UnPackTo(CameraT *_o, const flatbuffers::resolver_function_t
   (void)_resolver;
   { auto _e = position(); if (_e) _o->position = std::unique_ptr<TEN::Save::GameVector>(new TEN::Save::GameVector(*_e)); }
   { auto _e = target(); if (_e) _o->target = std::unique_ptr<TEN::Save::GameVector>(new TEN::Save::GameVector(*_e)); }
+  { auto _e = extra_orientation(); if (_e) _o->extra_orientation = std::unique_ptr<TEN::Save::EulerAngles>(new TEN::Save::EulerAngles(*_e)); }
 }
 
 inline flatbuffers::Offset<Camera> Camera::Pack(flatbuffers::FlatBufferBuilder &_fbb, const CameraT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
@@ -10866,10 +10947,12 @@ inline flatbuffers::Offset<Camera> CreateCamera(flatbuffers::FlatBufferBuilder &
   struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const CameraT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _position = _o->position ? _o->position.get() : 0;
   auto _target = _o->target ? _o->target.get() : 0;
+  auto _extra_orientation = _o->extra_orientation ? _o->extra_orientation.get() : 0;
   return TEN::Save::CreateCamera(
       _fbb,
       _position,
-      _target);
+      _target,
+      _extra_orientation);
 }
 
 inline FixedCameraT *FixedCamera::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
@@ -11228,6 +11311,7 @@ inline void SwarmObjectInfo::UnPackTo(SwarmObjectInfoT *_o, const flatbuffers::r
   { auto _e = on(); _o->on = _e; }
   { auto _e = pose(); if (_e) _o->pose = std::unique_ptr<TEN::Save::Pose>(new TEN::Save::Pose(*_e)); }
   { auto _e = room_number(); _o->room_number = _e; }
+  { auto _e = target(); _o->target = _e; }
   { auto _e = flags(); _o->flags = _e; }
 }
 
@@ -11242,12 +11326,14 @@ inline flatbuffers::Offset<SwarmObjectInfo> CreateSwarmObjectInfo(flatbuffers::F
   auto _on = _o->on;
   auto _pose = _o->pose ? _o->pose.get() : 0;
   auto _room_number = _o->room_number;
+  auto _target = _o->target;
   auto _flags = _o->flags;
   return TEN::Save::CreateSwarmObjectInfo(
       _fbb,
       _on,
       _pose,
       _room_number,
+      _target,
       _flags);
 }
 
@@ -12112,6 +12198,7 @@ inline void SaveGame::UnPackTo(SaveGameT *_o, const flatbuffers::resolver_functi
   { auto _e = spiders(); if (_e) { _o->spiders.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->spiders[_i] = std::unique_ptr<TEN::Save::SwarmObjectInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = scarabs(); if (_e) { _o->scarabs.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->scarabs[_i] = std::unique_ptr<TEN::Save::SwarmObjectInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = bats(); if (_e) { _o->bats.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->bats[_i] = std::unique_ptr<TEN::Save::SwarmObjectInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
+  { auto _e = locusts(); if (_e) { _o->locusts.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->locusts[_i] = std::unique_ptr<TEN::Save::SwarmObjectInfoT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = decals(); if (_e) { _o->decals.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->decals[_i] = std::unique_ptr<TEN::Save::DecalT>(_e->Get(_i)->UnPack(_resolver)); } } }
   { auto _e = flip_maps(); if (_e) { _o->flip_maps.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->flip_maps[_i] = _e->Get(_i); } } }
   { auto _e = flip_stats(); if (_e) { _o->flip_stats.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->flip_stats[_i] = _e->Get(_i); } } }
@@ -12184,6 +12271,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(flatbuffers::FlatBufferBuild
   auto _spiders = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> (_o->spiders.size(), [](size_t i, _VectorArgs *__va) { return CreateSwarmObjectInfo(*__va->__fbb, __va->__o->spiders[i].get(), __va->__rehasher); }, &_va );
   auto _scarabs = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> (_o->scarabs.size(), [](size_t i, _VectorArgs *__va) { return CreateSwarmObjectInfo(*__va->__fbb, __va->__o->scarabs[i].get(), __va->__rehasher); }, &_va );
   auto _bats = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> (_o->bats.size(), [](size_t i, _VectorArgs *__va) { return CreateSwarmObjectInfo(*__va->__fbb, __va->__o->bats[i].get(), __va->__rehasher); }, &_va );
+  auto _locusts = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::SwarmObjectInfo>> (_o->locusts.size(), [](size_t i, _VectorArgs *__va) { return CreateSwarmObjectInfo(*__va->__fbb, __va->__o->locusts[i].get(), __va->__rehasher); }, &_va );
   auto _decals = _fbb.CreateVector<flatbuffers::Offset<TEN::Save::Decal>> (_o->decals.size(), [](size_t i, _VectorArgs *__va) { return CreateDecal(*__va->__fbb, __va->__o->decals[i].get(), __va->__rehasher); }, &_va );
   auto _flip_maps = _fbb.CreateVector(_o->flip_maps);
   auto _flip_stats = _fbb.CreateVector(_o->flip_stats);
@@ -12248,6 +12336,7 @@ inline flatbuffers::Offset<SaveGame> CreateSaveGame(flatbuffers::FlatBufferBuild
       _spiders,
       _scarabs,
       _bats,
+      _locusts,
       _decals,
       _flip_maps,
       _flip_stats,
