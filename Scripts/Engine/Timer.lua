@@ -88,7 +88,6 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	end
 
 
-	local self = {name = name}
 	local self = { name = name }
 	if LevelVars.Engine.Timer.timers[name] then
 		TEN.Util.PrintLog("Warning in Timer.Create(): a timer with name '" .. name .. "' already exists; overwriting it with a new one...", TEN.Util.LogLevel.WARNING)
@@ -171,7 +170,6 @@ end
 --       Timer.Get("my_timer"):Start()
 --    end
 -- end
-Timer.IfExists = function (name)
 Timer.IfExists = function(name)
 	if not Type.IsString(name) then
 		TEN.Util.PrintLog("Error in Timer.IfExists(): invalid name", TEN.Util.LogLevel.ERROR)
