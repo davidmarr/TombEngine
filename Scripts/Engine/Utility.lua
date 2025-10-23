@@ -1,5 +1,9 @@
---- Utility functions for various common tasks.<br>To use the functions within the scripts, the module must be called:
---  local Utl = require("Engine.Utility")
+-----
+--- Utility functions for various common tasks.
+--
+--
+-- To use the functions within the scripts, the module must be called:
+--	local Utl = require("Engine.Utility")
 -- @luautil Utility
 
 local Utility = {}
