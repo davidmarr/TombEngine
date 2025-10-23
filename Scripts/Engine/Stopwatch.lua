@@ -1,3 +1,4 @@
+-----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
 --- Basic stopwatches that perform countup. Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
 --	local Stopwatch = require("Engine.Stopwatch")
 -- @luautil Stopwatch
@@ -5,6 +6,7 @@
 local Type = require("Engine.Type")
 local Utility = require("Engine.Util")
 
+local zero = TEN.Time()
 local Stopwatch = {}
 Stopwatch.__index = Stopwatch
 LevelFuncs.Engine.Stopwatch = {}
@@ -14,7 +16,20 @@ LevelVars.Engine.Stopwatch = { stopwatches = {} }
 --- Create (but do not start) a new stopwatch.
 -- @tparam StopwatchData stopwatchData A table containing the parameters for the stopwatch.
 -- @treturn Stopwatch|nil The created stopwatch object, or nil on failure.
--- @usage local myStopwatch = Stopwatch.Create({ name = "MyStopwatch" })
+-- @usage
+-- -- Example 1: simple creation of a stopwatch
+-- local myStopwatch = Stopwatch.Create({ name = "MyStopwatch" })
+-- 
+-- -- Example 2: creation of a stopwatch with custom parameters
+-- local myStopwatch = Stopwatch.Create({
+--     name = "RaceTimer",
+--     timerFormat = { minutes = true, seconds = true, deciseconds = true },
+--     position = TEN.Vec2(100, 50),
+--     scale = 1.5,
+--     color = TEN.Color(0, 255, 0, 255),
+--     pausedColor = TEN.Color(255, 0, 0, 255),
+--     startTime = 10
+-- })
 Stopwatch.Create = function(stopwatchData)
     local errorPrefix = "Error in Stopwatch.Create(): "
     local warningPrefix = "Warning in Stopwatch.Create(): "
@@ -55,15 +70,62 @@ Stopwatch.Create = function(stopwatchData)
     if not Type.IsNumber(stopwatchEntry.startTime) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for startTime, startTime for '".. stopwatchData.name .."' timer will be set to 0", TEN.Util.LogLevel.WARNING)
     end
+    stopwatchEntry.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
     stopwatchEntry.currentTime = 0
     stopwatchEntry.active = false
     stopwatchEntry.paused = true
+    
+    stopwatchEntry.realtime = stopwatchEntry.startTime
     stopwatchEntry.skipFirstTick = true
     stopwatchEntry.hasTicked = true
-    stopwatchEntry.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
 
     return setmetatable(self, Stopwatch)
 end
+
+--- Delete a stopwatch by name.
+-- @tparam string name The name of the stopwatch to delete.
+-- @usage
+-- Stopwatch.Delete("MyStopwatch")
+Stopwatch.Delete = function(name)
+    LevelVars.Engine.Stopwatch.stopwatches[name] = nil
+end
+
+--- Get a stopwatch by name.
+-- @tparam string name The name of the stopwatch to retrieve.
+-- @treturn Stopwatch|table The stopwatch object if found, or a table with an error field set to true if not found.
+-- @usage
+-- local myStopwatch = Stopwatch.Get("MyStopwatch")
+Stopwatch.Get = function(name)
+    local errorPrefix = "in Stopwatch.Get(): "
+    local self = {}
+    if not Type.IsString(name) then
+        TEN.Util.PrintLog("Error " .. errorPrefix .. "name must be a string.", TEN.Util.LogLevel.ERROR)
+        self.error = true
+    elseif not LevelVars.Engine.Stopwatch.stopwatches[name] then
+        TEN.Util.PrintLog("Warning " .. errorPrefix .. "no stopwatch found with name '" .. tostring(name) .. "'.", TEN.Util.LogLevel.WARNING)
+        self.error = true
+    else
+        self.name = name
+    end
+    return setmetatable(self, Stopwatch)
+end
+
+--- Check if a stopwatch exists by name.
+-- @tparam string name The name of the stopwatch to check.
+-- @treturn bool True if the stopwatch exists, false otherwise.
+-- @usage
+-- local if Stopwatch.IfExists("MyStopwatch") then
+--     local myStopwatch = Stopwatch.Get("MyStopwatch")
+-- end
+Stopwatch.IfExists = function(name)
+    if not Type.IsString(name) then
+        TEN.Util.PrintLog("Error in Stopwatch.IfExists(): name must be a string.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    return LevelVars.Engine.Stopwatch.stopwatches[name] and true or false
+end
+
+
 ---
 -- Table setup for creating Stopwatch.
 -- @table StopwatchData
@@ -74,5 +136,76 @@ end
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is not active.
 -- @tfield[opt=0] float startTime The time (in seconds) from which the stopwatch will start counting up.
+
+
+----
+-- The list of all methods for Stopwatch objects. We suggest that you always use the Stopwatch.Get() function to use the methods of the Timer object to prevent errors or unexpected behavior
+-- @type StopwatchMethods
+-- @usage
+--	-- Examples of some methods
+-- Stopwatch.Get("MyStopwatch"):Start()
+-- Stopwatch.Get("MyStopwatch"):Pause()
+-- Stopwatch.Get("MyStopwatch"):Stop()
+
+
+--- Start or resume the stopwatch.
+-- @tparam[opt=false] bool reset If true, resets the stopwatch to startTime value.
+-- @usage
+-- -- Example 1: Start the stopwatch
+-- Stopwatch.Get("MyStopwatch"):Start()
+--
+-- -- Example 2: Start the stopwatch and reset its time to the starting time
+-- Stopwatch.Get("MyStopwatch"):Start(true)
+function Stopwatch:Start(reset)
+    if self.error then
+        TEN.Util.PrintLog("Error in Stopwatch:Start(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
+    else
+        local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+        stopwatchEntry.currentTime = reset and stopwatchEntry.startTime or stopwatchEntry.currentTime
+        stopwatchEntry.active = true
+        stopwatchEntry.paused = false
+    end
+end
+
+--- Pause the stopwatch.
+-- @usage
+-- Stopwatch.Get("MyStopwatch"):Pause()
+function Stopwatch:Pause()
+    if self.error then
+        TEN.Util.PrintLog("Error in Stopwatch:Pause(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
+    else
+        local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+        stopwatchEntry.paused = true
+    end
+end
+
+--- Stop the stopwatch.
+-- @usage
+-- Stopwatch.Get("MyStopwatch"):Stop()
+function Stopwatch:Stop()
+    if self.error then
+        TEN.Util.PrintLog("Error in Stopwatch:Stop(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
+    else
+        local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+        stopwatchEntry.active = false
+        stopwatchEntry.paused = true
+    end
+end
+
+LevelFuncs.Engine.Stopwatch.IncrementTime = function()
+    for _, stopwatchEntry in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
+        if stopwatchEntry.active and not stopwatchEntry.paused then
+            if stopwatchEntry.skipFirstTick then
+                stopwatchEntry.skipFirstTick = false
+            else
+                stopwatchEntry.realtime = stopwatchEntry.realtime + 1
+                stopwatchEntry.hasTicked = (stopwatchEntry.realtime.c % 10 == 0)
+                if stopwatchEntry.hasTicked then
+                    stopwatchEntry.currentTime = stopwatchEntry.currentTime + 3
+                end
+            end
+        end
+    end
+end
 
 return Stopwatch
