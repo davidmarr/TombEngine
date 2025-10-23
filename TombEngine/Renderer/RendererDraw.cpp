@@ -4157,7 +4157,7 @@ namespace TEN::Renderer
 			{
 				BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
 
-				if (std::get<3>(_animatedTextures[bucket.Texture]).Texture != nullptr)
+				if (std::get<3>(_animatedTextures[bucket.Texture]).Height > 1) // 1 means "placeholder texture".
 					BindTexture(TextureRegister::EmissiveMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
 			}
 			else
