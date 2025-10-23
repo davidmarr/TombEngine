@@ -5,10 +5,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10]
 
-## New features
+### New features
 * Added material system with support for normal, specular, roughness, emissive, and ambient occlusion maps.
 * Added animated textures support for moveables and static meshes.
-* Added UVRotate support.
+* Added UVRotate support with arbitrary texture rotation direction.
 * Added interaction highlighter.
 * Added bullet hole and explosion decals for room geometry.
 * Added ability to colorize FLAME_EMITTER and FLAME_EMITTER2 objects and fade them on activation or deactivation.
