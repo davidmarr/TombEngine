@@ -213,7 +213,6 @@ Type.IsEnumValue = function (variable, enumTable, showError)
     else
         showError = true
     end
-    print("showError: " .. tostring(showError))
     if not Type.IsTable(enumTable) or type(variable) ~= "number" or debug.getmetatable(enumTable).__type ~= "readonly" then
         if showError then
             TEN.Util.PrintLog("Error in Type.IsEnumValue(): enumTable must be a Enum and variable must be a number.", TEN.Util.LogLevel.ERROR)
