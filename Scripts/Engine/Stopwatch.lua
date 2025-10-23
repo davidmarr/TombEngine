@@ -50,7 +50,7 @@ Stopwatch.Create = function(stopwatchData)
     -- stopwatchEntry.name = stopwatchData.name
     local timerFormat = stopwatchData.timerFormat or false
     stopwatchEntry.timerFormat = Utility.CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. stopwatchData.name .."' timer will be set to false")
-    stopwatchEntry.position = Type.IsVec2(stopwatchData.position) and stopwatchData.position or TEN.Vec2(50, 90)
+    stopwatchEntry.position = Type.IsVec2(stopwatchData.position) and TEN.Vec2(TEN.Util.PercentToScreen(stopwatchData.position.x, stopwatchData.position.y)) or TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
     if not Type.IsVec2(stopwatchEntry.position) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for position, position for '".. stopwatchData.name .."' timer will be set to Vec2(50, 90)", TEN.Util.LogLevel.WARNING)
     end
@@ -66,14 +66,15 @@ Stopwatch.Create = function(stopwatchData)
     if not Type.IsColor(stopwatchEntry.pausedColor) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for pausedColor, pausedColor for '".. stopwatchData.name .."' timer will be set to Color(255, 255, 0, 255)", TEN.Util.LogLevel.WARNING)
     end
-    stopwatchEntry.startTime = Type.IsNumber(stopwatchData.startTime) and stopwatchData.startTime or 0
+    stopwatchEntry.startTime = Type.IsNumber(stopwatchData.startTime) and TEN.Time((math.floor(stopwatchData.startTime * 10) / 10)  * 30) or zero
     if not Type.IsNumber(stopwatchEntry.startTime) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for startTime, startTime for '".. stopwatchData.name .."' timer will be set to 0", TEN.Util.LogLevel.WARNING)
     end
     stopwatchEntry.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
-    stopwatchEntry.currentTime = 0
+    stopwatchEntry.currentTime = stopwatchEntry.startTime
     stopwatchEntry.active = false
     stopwatchEntry.paused = true
+    stopwatchEntry.stop = false
     
     stopwatchEntry.realtime = stopwatchEntry.startTime
     stopwatchEntry.skipFirstTick = true
@@ -164,6 +165,7 @@ function Stopwatch:Start(reset)
         stopwatchEntry.currentTime = reset and stopwatchEntry.startTime or stopwatchEntry.currentTime
         stopwatchEntry.active = true
         stopwatchEntry.paused = false
+        stopwatchEntry.stop = false
     end
 end
 
@@ -187,25 +189,46 @@ function Stopwatch:Stop()
         TEN.Util.PrintLog("Error in Stopwatch:Stop(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
     else
         local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-        stopwatchEntry.active = false
-        stopwatchEntry.paused = true
+        stopwatchEntry.stop = true
     end
 end
 
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
-    for _, stopwatchEntry in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
-        if stopwatchEntry.active and not stopwatchEntry.paused then
-            if stopwatchEntry.skipFirstTick then
-                stopwatchEntry.skipFirstTick = false
+    for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
+        if s.active and not s.paused then
+            if s.skipFirstTick then
+                s.skipFirstTick = false
             else
-                stopwatchEntry.realtime = stopwatchEntry.realtime + 1
-                stopwatchEntry.hasTicked = (stopwatchEntry.realtime.c % 10 == 0)
-                if stopwatchEntry.hasTicked then
-                    stopwatchEntry.currentTime = stopwatchEntry.currentTime + 3
+                s.realtime = s.realtime + 1
+                s.hasTicked = (s.realtime.c % 10 == 0)
+                if s.hasTicked then
+                    s.currentTime = s.currentTime + 3
                 end
             end
         end
     end
 end
+
+LevelFuncs.Engine.Stopwatch.UpdateAll = function()
+    for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
+        if s.active then
+            if s.timerFormat then
+                print(tostring(s.stop))
+                local textTimer = Utility.GenerateTimeFormattedString(s.currentTime, s.timerFormat)
+                local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, s.color, false, s.stringOption)
+                displayTime:SetColor((not s.paused or s.stop) and s.color or s.pausedColor)
+                TEN.Strings.ShowString(displayTime, s.stop and 1 or 1/30)
+                if s.stop then
+                    s.active = false
+                    s.paused = true
+                    s.skipFirstTick = true
+                end
+            end
+        end
+    end
+end
+
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
 
 return Stopwatch
