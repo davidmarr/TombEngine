@@ -199,6 +199,7 @@ end
 --- Check if the variable is an enum value.
 -- @tparam variable variable Variable to be checked.
 -- @tparam table enumTable Enum table to be checked against.
+-- @tparam[opt=true] bool showError (optional) If `true`, an error message will be printed if the parameters are invalid.
 -- @treturn bool `true` if the variable is a value of the enum, `false` otherwise.
 -- @usage
 -- LevelFuncs.SetMaterialType = function (matType)
@@ -206,9 +207,17 @@ end
 --          TEN.Collision.SetMaterialType(matType)
 --      end
 --  end
-Type.IsEnumValue = function (variable, enumTable)
+Type.IsEnumValue = function (variable, enumTable, showError)
+    if Type.IsBoolean(showError) then
+        showError = showError
+    else
+        showError = true
+    end
+    print("showError: " .. tostring(showError))
     if not Type.IsTable(enumTable) or type(variable) ~= "number" or debug.getmetatable(enumTable).__type ~= "readonly" then
-        TEN.Util.PrintLog("Error in Type.IsEnumValue(): enumTable must be a Enum and variable must be a number.", TEN.Util.LogLevel.ERROR)
+        if showError then
+            TEN.Util.PrintLog("Error in Type.IsEnumValue(): enumTable must be a Enum and variable must be a number.", TEN.Util.LogLevel.ERROR)
+        end
         return false
     end
     for _, value in pairs(enumTable) do
