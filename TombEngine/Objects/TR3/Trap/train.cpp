@@ -14,7 +14,6 @@
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Setup.h"
-#include "Objects/Utils/VehicleHelpers.h"
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
@@ -59,6 +58,7 @@ namespace TEN::Entities::Traps
 		item.Pose.Position.z += item.ItemFlags[1] * cosY;
 
 		short roomNumber;
+		long rh = TrainTestHeight(&item, 0, BLOCK(5), &roomNumber);
 		long floorHeight = TrainTestHeight(&item, 0, 0, &roomNumber);
 		item.Pose.Position.y = floorHeight;
 
@@ -68,21 +68,17 @@ namespace TEN::Entities::Traps
 			return;
 		}
 
-		auto depth = GameBoundingBox(&item).GetDepth() / 2;
-		auto floorNormal = GetPointCollision(item, item.Pose.Orientation.ToDirection(), depth).GetFloorNormal();
-		auto localNormal = Vector3::TransformNormal(floorNormal, Matrix::CreateRotationY(-TO_RAD(item.Pose.Orientation.y)));
+		item.Pose.Position.y -= 32;// ?
 
-		auto targetOrient = item.Pose.Orientation;
-		targetOrient.x = FROM_RAD(atan2(localNormal.z, localNormal.y)) + ANGLE(180);
+		int probedRoomNumber = GetPointCollision(item).GetRoomNumber();
+		if (probedRoomNumber != item.RoomNumber)
+			ItemNewRoom(itemNumber, probedRoomNumber);
 
-		item.Pose.Orientation.InterpolateConstant(targetOrient, ANGLE(1));
+		item.Pose.Orientation.x = -(rh - floorHeight) * 2;
 
-		UpdateVehicleRoom(&item);
+		SpawnDynamicLight(item.Pose.Position.x + BLOCK(3) * sinY, item.Pose.Position.y, item.Pose.Position.z + BLOCK(3) * cosY, 16, 31, 31, 31);
 
-		depth += CLICK(1);
-		SpawnDynamicLight(item.Pose.Position.x + depth * sinY, item.Pose.Position.y - CLICK(0.25f), item.Pose.Position.z + depth * cosY, 16, 64, 64, 64);
-
-		if (item.ItemFlags[1] < item.ItemFlags[0])
+		if (item.ItemFlags[1] != TRAIN_VEL)
 		{
 			item.ItemFlags[1] -= 48;
 			if (item.ItemFlags[1] < 0)
@@ -98,8 +94,6 @@ namespace TEN::Entities::Traps
 				ForcedFixedCamera.RoomNumber = roomNumber;
 				UseForcedFixedCamera = true;
 			}
-
-			StopSoundEffect(SFX_TR3_TUBE_LOOP);
 		}
 		else
 		{
@@ -115,17 +109,12 @@ namespace TEN::Entities::Traps
 		if (!TestBoundsCollide(&item, playerItem, coll->Setup.Radius))
 			return;
 
-		if (!HandleItemSphereCollision(item, *playerItem))
-			return;
-
-		if (item.ItemFlags[1] < item.ItemFlags[0])
-		{
-			ObjectCollision(itemNumber, playerItem, coll);
-			return;
-		}
+	if (!HandleItemSphereCollision(item, *playerItem))
+		return;
 
 		SoundEffect(SFX_TR4_LARA_GENERAL_DEATH, &playerItem->Pose, SoundEnvironment::Always);
 		SoundEffect(SFX_TR4_LARA_HIGH_FALL_DEATH, &playerItem->Pose, SoundEnvironment::Always);
+		StopSoundEffect(SFX_TR3_TUBE_LOOP);
 
 		SetAnimation(*playerItem, ID_LARA_EXTRA_ANIMS, LEA_TRAIN_DEATH_START);
 		playerItem->Animation.IsAirborne = false;

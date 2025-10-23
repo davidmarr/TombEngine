@@ -1,26 +1,23 @@
 #include "framework.h"
-
-#include "Game/animation.h"
-#include "Game/collision/collide_item.h"
-#include "Game/control/box.h"
+#include "Objects/Generic/Doors/generic_doors.h"
+#include "Specific/level.h"
 #include "Game/control/control.h"
+#include "Game/control/box.h"
+#include "Game/items.h"
 #include "Game/control/lot.h"
 #include "Game/Gui.h"
-#include "Game/Hud/Hud.h"
-#include "Game/items.h"
+#include "Specific/Input/Input.h"
+#include "Game/pickup/pickup.h"
+#include "Sound/sound.h"
+#include "Game/animation.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_struct.h"
-#include "Game/misc.h"
-#include "Game/pickup/pickup.h"
 #include "Math/Math.h"
-#include "Specific/Input/Input.h"
-#include "Specific/level.h"
-#include "Sound/sound.h"
+#include "Game/misc.h"
 #include "Objects/Generic/Doors/double_doors.h"
-#include "Objects/Generic/Doors/generic_doors.h"
+#include "Game/collision/collide_item.h"
 
-using namespace TEN::Hud;
 using namespace TEN::Input;
 
 namespace TEN::Entities::Doors
@@ -43,8 +40,6 @@ namespace TEN::Entities::Doors
 	{
 		auto* laraInfo = GetLaraInfo(laraItem);
 		auto* doorItem = &g_Level.Items[itemNumber];
-
-		g_Hud.InteractionHighlighter.Test(*laraItem, *doorItem, InteractionMode::Activation);
 
 		if (IsHeld(In::Action) &&
 			laraItem->Animation.ActiveState == LS_IDLE &&

@@ -77,7 +77,6 @@ local strings =
 	general_actions = { "General Actions" },
 	high = { "High" },
 	high_framerate = { "High Framerate" },
-	interaction_highlighter = { "Interaction Highlighter" },
 	level_secrets_found = { "Secrets Found in Level" },
 	load_game = { "Load Game" },
 	low = { "Low" },

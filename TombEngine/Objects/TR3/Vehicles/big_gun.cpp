@@ -9,7 +9,6 @@
 #include "Game/collision/Point.h"
 #include "Game/effects/effects.h"
 #include "Game/effects/tomb4fx.h"
-#include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_flare.h"
@@ -23,7 +22,6 @@
 #include "Specific/level.h"
 
 using namespace TEN::Collision::Point;
-using namespace TEN::Hud;
 using namespace TEN::Input;
 
 namespace TEN::Entities::Vehicles
@@ -156,8 +154,6 @@ namespace TEN::Entities::Vehicles
 
 		if (laraItem->HitPoints <= 0 || lara->Context.Vehicle != NO_VALUE)
 			return;
-
-		g_Hud.InteractionHighlighter.Test(*laraItem, *bigGunItem);
 
 		if (BigGunTestMount(laraItem, bigGunItem))
 		{

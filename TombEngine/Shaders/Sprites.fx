@@ -40,7 +40,7 @@ PixelShaderInput VS(VertexShaderInput input)
 
 	output.Position = mul(worldPosition, ViewProjection);
 	output.PositionCopy = output.Position;
-    output.Normal = input.Normal.xyz;
+	output.Normal = input.Normal;
 	output.Color = input.Color;
 	output.UV = input.UV;
 

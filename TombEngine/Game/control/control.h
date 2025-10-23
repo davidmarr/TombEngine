@@ -60,7 +60,6 @@ extern bool InitializeGame;
 extern bool DoTheGame;
 extern bool JustLoaded;
 extern bool ThreadEnded;
-extern bool DebugMode;
 
 extern int RequiredStartPos;
 extern int CurrentLevel;

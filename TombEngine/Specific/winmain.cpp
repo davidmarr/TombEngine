@@ -31,6 +31,7 @@ WINAPP App;
 unsigned int ThreadID, ConsoleThreadID, ThreadSuspendCount;
 uintptr_t ThreadHandle, ConsoleThreadHandle;
 HACCEL hAccTable;
+bool DebugMode = false;
 HWND WindowsHandle;
 
 // Indicates to hybrid graphics systems to prefer discrete part by default.
@@ -653,9 +654,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	catch (TENScriptException const& e)
 	{
-		auto errorMessage = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
-		TENLog(errorMessage, LogLevel::Error, LogConfig::All);
-		ShowExternalMessageBox(errorMessage);
+		std::string msg = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
+		TENLog(msg, LogLevel::Error, LogConfig::All);
 		ShutdownTENLog();
 		return 0;
 	}
@@ -778,9 +778,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	catch (std::exception& ex)
 	{
-		auto errorMessage = "Error during game initialization: " + std::string(ex.what());
-		TENLog(errorMessage, LogLevel::Error);
-		ShowExternalMessageBox(errorMessage);
+		TENLog("Error during game initialization: " + std::string(ex.what()), LogLevel::Error);
 		WinClose();
 		exit(EXIT_FAILURE);
 	}

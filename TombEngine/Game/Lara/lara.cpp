@@ -41,6 +41,7 @@
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Sound/sound.h"
 #include "Specific/Input/Input.h"
+#include "Specific/winmain.h"
 
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;

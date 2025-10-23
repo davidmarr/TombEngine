@@ -898,7 +898,12 @@ namespace TEN::Entities::Vehicles
 		if (lara->Context.Vehicle == itemNumber)
 		{
 			RubberBoatAnimation(rBoatItem, laraItem, collide);
-			UpdateVehicleRoom(rBoatItem, laraItem, probe.GetRoomNumber());
+
+			if (probe.GetRoomNumber() != rBoatItem->RoomNumber)
+			{
+				ItemNewRoom(itemNumber, probe.GetRoomNumber());
+				ItemNewRoom(laraItem->Index, probe.GetRoomNumber());
+			}
 
 			rBoatItem->Pose.Orientation.z += rBoat->LeanAngle;
 			laraItem->Pose = rBoatItem->Pose;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Game/Sink.h"
+#include "Objects/Sink.h"
 #include "Scripting/Internal/TEN/Objects/NamedBase.h"
 
 namespace sol { class state; }

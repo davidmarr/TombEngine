@@ -25,6 +25,7 @@ struct WINAPP
     bool ResetClock;
 };
 
+extern bool DebugMode;
 extern HWND WindowsHandle;
 extern WINAPP App;
 

@@ -1,14 +1,36 @@
 #include "./CBCamera.hlsli"
 #include "./CBItem.hlsli"
-#include "./CBInstancedStatics.hlsli"
-#include "./CBRoom.hlsli"
-#include "./Materials.hlsli"
 #include "./VertexInput.hlsli"
 #include "./VertexEffects.hlsli"
 #include "./AnimatedTextures.hlsli"
 #include "./Blending.hlsli"
 #include "./Math.hlsli"
-#include "./Materials.hlsli"
+
+#define INSTANCED_STATIC_MESH_BUCKET_SIZE 100
+
+cbuffer RoomBuffer : register(b5)
+{
+	int Water;
+};
+
+struct InstancedStaticMesh
+{
+	float4x4 World;
+	float4 Color;
+	float4 AmbientLight;
+	ShaderLight InstancedStaticLights[MAX_LIGHTS_PER_ITEM];
+	uint4 LightInfo;
+};
+
+cbuffer InstancedStaticMeshBuffer : register(b3)
+{
+	InstancedStaticMesh StaticMeshes[INSTANCED_STATIC_MESH_BUCKET_SIZE];
+};
+
+cbuffer StaticMatrixBuffer : register(b8)
+{
+	float4x4 StaticWorld;
+};
 
 struct PixelShaderInput
 {
@@ -30,7 +52,6 @@ struct PixelShaderOutput
 {
 	float4 Normals: SV_TARGET0;
 	float Depth: SV_TARGET1;
-    float4 Emissive : SV_Target2;
 };
 
 float3 DecodeNormalMap(float4 n)
@@ -52,11 +73,11 @@ PixelShaderInput VSRooms(VertexShaderInput input)
 
 	// Setting effect weight on TE side prevents portal vertices from moving.
 	// Here we just read weight and decide if we should apply refraction or movement effect.
-    float weight = DecodeWeight(input.Effects);
+	float weight = input.Effects.z;
 
 	// Calculate vertex effects
-	float wibble = Wibble(input.Effects, DecodeHash(input.AnimationFrameOffsetIndexHash));
-	float3 pos = Move(input.Position, input.Effects * weight, wibble);
+	float wibble = Wibble(input.Effects.xyz, input.Hash);
+	float3 pos = Move(input.Position, input.Effects.xyz * weight, wibble);
 
 	// Refraction
 	float4 screenPos = mul(float4(pos, 1.0f), ViewProjection);
@@ -72,12 +93,12 @@ PixelShaderInput VSRooms(VertexShaderInput input)
 	}
 
 	output.Position = screenPos;
-    output.Normal = input.Normal.xyz;
-	output.Tangent = input.Tangent.xyz;
-    output.Binormal = cross(input.Normal.xyz, input.Tangent.xyz);
+	output.Normal = input.Normal;
+	output.Tangent = input.Tangent;
+	output.Binormal = input.Binormal;
     output.PositionCopy = screenPos;
-    output.UV = GetUVPossiblyAnimated(input.UV, DecodeIndexInPoly(input.Effects), DecodeAnimationFrameOffset(input.AnimationFrameOffsetIndexHash));
-	
+    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
+
 	return output;
 }
 
@@ -90,16 +111,35 @@ PixelShaderInput VSItems(VertexShaderInput input)
 	float4x4 world = mul(blended, World);
 
 	// Calculate vertex effects
-	float wibble = Wibble(input.Effects, DecodeHash(input.AnimationFrameOffsetIndexHash));
-	float3 pos = Move(input.Position, input.Effects, wibble);
+	float wibble = Wibble(input.Effects.xyz, input.Hash);
+	float3 pos = Move(input.Position, input.Effects.xyz, wibble);
 
 	output.Position = mul(mul(float4(pos, 1.0f), world), ViewProjection);
     output.PositionCopy = output.Position;
-    output.UV = GetUVPossiblyAnimated(input.UV, DecodeIndexInPoly(input.Effects), DecodeAnimationFrameOffset(input.AnimationFrameOffsetIndexHash));
-    output.Normal = normalize(mul(input.Normal.xyz, (float3x3) world).xyz);
-    output.Tangent = normalize(mul(input.Tangent.xyz, (float3x3) world).xyz);
-    output.Binormal = SafeNormalize(mul(cross(input.Normal.xyz, input.Tangent.xyz), (float3x3) world).xyz);
-	
+    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
+    output.Normal = normalize(mul(input.Normal, (float3x3) world).xyz);
+	output.Tangent = normalize(mul(input.Tangent, (float3x3)world).xyz);
+	output.Binormal = normalize(mul(input.Binormal, (float3x3)world).xyz);
+
+	return output;
+}
+
+PixelShaderInput VSStatics(VertexShaderInput input)
+{
+	PixelShaderInput output;
+
+	float wibble = Wibble(input.Effects.xyz, input.Hash);
+	float3 pos = Move(input.Position, input.Effects.xyz, wibble);
+
+	float4 worldPosition = (mul(float4(pos, 1.0f), StaticWorld));
+
+	output.Position = mul(worldPosition, ViewProjection);
+    output.PositionCopy = output.Position;
+    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
+    output.Normal = normalize(mul(input.Normal, (float3x3) StaticWorld).xyz);
+	output.Tangent = normalize(mul(input.Tangent, (float3x3)StaticWorld).xyz);
+	output.Binormal = normalize(mul(input.Binormal, (float3x3)StaticWorld).xyz);
+
 	return output;
 }
 
@@ -107,19 +147,18 @@ PixelShaderInput VSInstancedStatics(VertexShaderInput input, uint InstanceID : S
 {
 	PixelShaderInput output;
 
-	// Calculate vertex effects
-    float wibble = Wibble(input.Effects, DecodeHash(input.AnimationFrameOffsetIndexHash));
-	float3 pos = Move(input.Position, input.Effects, wibble);
+	float wibble = Wibble(input.Effects.xyz, input.Hash);
+	float3 pos = Move(input.Position, input.Effects.xyz, wibble);
 
 	float4 worldPosition = (mul(float4(pos, 1.0f), StaticMeshes[InstanceID].World));
 
 	output.Position = mul(worldPosition, ViewProjection);
     output.PositionCopy = output.Position;
-    output.UV = GetUVPossiblyAnimated(input.UV, DecodeIndexInPoly(input.Effects), DecodeAnimationFrameOffset(input.AnimationFrameOffsetIndexHash));
-    output.Normal = normalize(mul(input.Normal.xyz, (float3x3) StaticMeshes[InstanceID].World).xyz);
-    output.Tangent = normalize(mul(input.Tangent.xyz, (float3x3) StaticMeshes[InstanceID].World).xyz);
-    output.Binormal = SafeNormalize(mul(cross(input.Normal.xyz, input.Tangent.xyz), (float3x3) StaticMeshes[InstanceID].World).xyz);
-	
+    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
+    output.Normal = normalize(mul(input.Normal, (float3x3) StaticMeshes[InstanceID].World).xyz);
+	output.Tangent = normalize(mul(input.Tangent, (float3x3)StaticMeshes[InstanceID].World).xyz);
+	output.Binormal = normalize(mul(input.Binormal, (float3x3)StaticMeshes[InstanceID].World).xyz);
+
 	return output;
 }
 
@@ -128,27 +167,18 @@ PixelShaderOutput PS(PixelShaderInput input)
 	PixelShaderOutput output;
 	
     if (Animated && Type == 1)
-        if (IsWaterfall == 1)
-            input.UV = CalculateUVRotateForLegacyWaterfalls(input.UV, 0);
-        else
-            input.UV = CalculateUVRotate(input.UV, 0);
+        input.UV = CalculateUVRotate(input.UV, 0);
 
 	float4 color = Texture.Sample(Sampler, input.UV);
 
 	DoAlphaTest(color);
-	
-    float4 emissive = EmissiveTexture.Sample(EmissiveSampler, input.UV);
-    float specular = OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, input.UV).z;
-	
+
 	float3x3 TBN = float3x3(input.Tangent, input.Binormal, input.Normal);
 	float3 normal = DecodeNormalMap(NormalTexture.Sample(NormalTextureSampler, input.UV));
 	normal = EncodeNormal(normalize(mul(mul(normal, TBN), (float3x3)View)));
 
 	output.Normals.xyz = normal;
-    output.Normals.w = MaterialType / 64.0f;
 	output.Depth = color.w > 0.0f ? input.PositionCopy.z / input.PositionCopy.w : 0.0f;
-    output.Emissive.xyz = emissive.xyz;
-    output.Emissive.w = specular;
-	
+
 	return output;
 }

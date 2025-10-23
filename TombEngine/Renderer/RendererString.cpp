@@ -2,6 +2,7 @@
 #include "Renderer/Renderer.h"
 
 #include "Specific/trutils.h"
+#include "Specific/winmain.h"
 
 namespace TEN::Renderer
 {

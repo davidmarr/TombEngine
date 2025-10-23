@@ -6,7 +6,7 @@ using namespace TEN::Math;
 
 namespace TEN::Entities::Creatures::TR3
 {
-	constexpr auto FISH_COUNT_MAX = 2048;
+	constexpr auto FISH_COUNT_MAX = 512;
 
 	struct FishData
 	{
@@ -14,9 +14,9 @@ namespace TEN::Entities::Creatures::TR3
 		bool IsPatrolling = false;
 		bool IsLethal	  = false;
 
-		Vector3i	Position	   = Vector3i::Zero;
+		Vector3		Position	   = Vector3::Zero;
 		int			RoomNumber	   = 0;
-		Vector3i	PositionTarget = Vector3i::Zero;
+		Vector3		PositionTarget = Vector3::Zero;
 		EulerAngles Orientation	   = EulerAngles::Identity;
 		float		Velocity	   = 0.0f;
 
@@ -41,6 +41,5 @@ namespace TEN::Entities::Creatures::TR3
 	void ControlFishSwarm(short itemNumber);
 
 	void UpdateFishSwarm();
-	void RemoveFishSwarm(ItemInfo& item);
 	void ClearFishSwarm();
 }

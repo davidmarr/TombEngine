@@ -27,7 +27,6 @@ static constexpr char ScriptReserved_Statistics[]		= "Statistics";
 // Settings sections
 static constexpr char ScriptReserved_Settings[]			= "Settings";
 static constexpr char ScriptReserved_SystemSettings[]	= "System";
-static constexpr char ScriptReserved_GameplaySettings[] = "Gameplay";
 static constexpr char ScriptReserved_FlareSettings[]	= "Flare";
 static constexpr char ScriptReserved_CameraSettings[]	= "Camera";
 static constexpr char ScriptReserved_AnimSettings[]		= "Animations";
@@ -210,7 +209,11 @@ static constexpr char ScriptReserved_GetOnKilled[]			= "GetOnKilled";
 static constexpr char ScriptReserved_SetOnKilled[]			= "SetOnKilled";
 static constexpr char ScriptReserved_GetOnHit[]				= "GetOnHit";
 static constexpr char ScriptReserved_SetOnHit[]				= "SetOnHit";
-static constexpr char ScriptReserved_ToVec2[]				= "ToVec2";
+static constexpr char ScriptReserved_GetOnCollidedWithObject[]	= "GetOnCollidedWithObject";
+static constexpr char ScriptReserved_SetOnCollidedWithObject[]	= "SetOnCollidedWithObject";
+static constexpr char ScriptReserved_GetOnCollidedWithRoom[]	= "GetOnCollidedWithRoom";
+static constexpr char ScriptReserved_SetOnCollidedWithRoom[]	= "SetOnCollidedWithRoom";
+static constexpr char ScriptReserved_ToVec2[]					= "ToVec2";
 static constexpr char ScriptReserved_AttachObjCamera[]		= "AttachObjCamera";
 static constexpr char ScriptReserved_AnimFromObject[]		= "AnimFromObject";
 static constexpr char ScriptReserved_ClearActivators[]		= "ClearActivators";
@@ -218,12 +221,6 @@ static constexpr char ScriptReserved_IsMoveableInside[]		= "IsMoveableInside";
 static constexpr char ScriptReserved_GetFlag[]				= "GetFlag";
 static constexpr char ScriptReserved_SetFlag[]				= "SetFlag";
 static constexpr char ScriptReserved_IsTagPresent[]			= "IsTagPresent";
-
-static constexpr char ScriptReserved_GetOnCollidedWithObject[]	= "GetOnCollidedWithObject";
-static constexpr char ScriptReserved_SetOnCollidedWithObject[]	= "SetOnCollidedWithObject";
-static constexpr char ScriptReserved_GetOnCollidedWithRoom[]	= "GetOnCollidedWithRoom";
-static constexpr char ScriptReserved_SetOnCollidedWithRoom[]	= "SetOnCollidedWithRoom";
-static constexpr char ScriptReserved_ShowInteractionHighlight[] = "ShowInteractionHighlight";
 
 // Flow Functions
 static constexpr char ScriptReserved_AddLevel[]					= "AddLevel";

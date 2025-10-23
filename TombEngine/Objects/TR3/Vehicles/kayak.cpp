@@ -13,7 +13,7 @@
 #include "Game/Lara/lara_flare.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Setup.h"
-#include "Game/Sink.h"
+#include "Objects/Sink.h"
 #include "Objects/TR3/Vehicles/kayak_info.h"
 #include "Objects/Utils/VehicleHelpers.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
@@ -1047,7 +1047,7 @@ namespace TEN::Entities::Vehicles
 	void KayakLaraRapidsDrown(ItemInfo* laraItem)
 	{
 		// Already drowning...
-		if (laraItem->HitPoints == -1)
+		if (laraItem->HitPoints <= 0)
 			return;
 
 		auto* lara = GetLaraInfo(laraItem);
@@ -1111,7 +1111,11 @@ namespace TEN::Entities::Vehicles
 
 		if (lara->Context.Vehicle != NO_VALUE)
 		{
-			UpdateVehicleRoom(kayakItem, laraItem, probe.GetRoomNumber());
+			if (kayakItem->RoomNumber != probe.GetRoomNumber())
+			{
+				ItemNewRoom(lara->Context.Vehicle, probe.GetRoomNumber());
+				ItemNewRoom(laraItem->Index, probe.GetRoomNumber());
+			}
 
 			laraItem->Pose.Position = kayakItem->Pose.Position;
 			laraItem->Pose.Orientation.x = kayakItem->Pose.Orientation.x;

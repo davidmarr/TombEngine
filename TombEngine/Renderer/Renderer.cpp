@@ -247,8 +247,6 @@ namespace TEN::Renderer
 		ReflectVectorOptionally(lights[index].Position);
 		ReflectVectorOptionally(lights[index].Direction);
 
-		lights[index].Direction.Normalize();
-
 		// Bitmask light type to filter it in the shader later.
 		return (1 << (31 - (int)light.Type));
 	}
@@ -261,6 +259,16 @@ namespace TEN::Renderer
 			lightTypeMask = lightTypeMask | BindLight(*lights[i], _stRoom.RoomLights, i);
 		
 		_stRoom.NumRoomLights = (int)lights.size() | lightTypeMask;
+	}
+
+	void Renderer::BindStaticLights(std::vector<RendererLight*>& lights)
+	{
+		int lightTypeMask = 0;
+
+		for (int i = 0; i < lights.size(); i++)
+			lightTypeMask = lightTypeMask | BindLight(*lights[i], _stStatic.Lights, i);
+		
+		_stStatic.NumLights = (int)lights.size() | lightTypeMask;
 	}
 
 	void Renderer::BindInstancedStaticLights(std::vector<RendererLight*>& lights, int instanceID)
@@ -340,42 +348,6 @@ namespace TEN::Renderer
 		_context->PSSetConstantBuffers(static_cast<UINT>(constantBufferType), 1, buffer);
 	}
 
-	void Renderer::BindMaterial(int materialIndex, bool force)
-	{
-		_numRequestedMaterialsUpdates++;
-
-		if ((int)g_Level.Materials[materialIndex].Type == _stMaterial.MaterialType && 
-			g_Level.Materials[materialIndex].Parameters0 == _stMaterial.MaterialParameters0 &&
-			g_Level.Materials[materialIndex].Parameters1 == _stMaterial.MaterialParameters1 &&
-			g_Level.Materials[materialIndex].Parameters2 == _stMaterial.MaterialParameters2 &&
-			g_Level.Materials[materialIndex].Parameters3 == _stMaterial.MaterialParameters3 &&
-			!force)
-			return;
-
-		MaterialShaderType type = g_Level.Materials[materialIndex].Type;
-
-		// TODO: in the future output from TE directly an optimized list
-		//if (materialIndex != _lastMaterialIndex || force)
-		{
-			_stMaterial.MaterialType = (int)type;
-			_stMaterial.MaterialParameters0 = g_Level.Materials[materialIndex].Parameters0;
-			_stMaterial.MaterialParameters1 = g_Level.Materials[materialIndex].Parameters1;
-			_stMaterial.MaterialParameters2 = g_Level.Materials[materialIndex].Parameters2;
-			_stMaterial.MaterialParameters3 = g_Level.Materials[materialIndex].Parameters3;
-
-			UpdateConstantBuffer(_stMaterial, _cbMaterial);
-
-			_lastMaterialIndex = materialIndex;
-
-			_numExecutedMaterialsUpdates++;
-		}
-
-		if (type == MaterialShaderType::Reflective)
-			BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::AnisotropicClamp);
-		else if (type == MaterialShaderType::SkyboxReflective)
-			BindTexture(TextureRegister::SkyboxEnvironmentReflections, &_skyboxRenderTarget, SamplerStateRegister::AnisotropicClamp);
-	}
-
 	void Renderer::SetBlendMode(BlendMode blendMode, bool force)
 	{
 		if (blendMode != _lastBlendMode || force)
@@ -416,7 +388,7 @@ namespace TEN::Renderer
 			}
 
 			_stBlending.BlendMode = static_cast<unsigned int>(blendMode);
-			UpdateConstantBuffer(_stBlending, _cbBlending);
+			_cbBlending.UpdateData(_stBlending, _context.Get());
 			
 			_lastBlendMode = blendMode;
 		}
@@ -502,7 +474,7 @@ namespace TEN::Renderer
 		{
 			_stBlending.AlphaTest = (int)mode;
 			_stBlending.AlphaThreshold = threshold;
-			UpdateConstantBuffer(_stBlending, _cbBlending);
+			_cbBlending.UpdateData(_stBlending, _context.Get());
 			BindConstantBufferPS(ConstantBufferRegister::Blending, _cbBlending.get());
 		}
 	}

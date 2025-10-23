@@ -1,20 +1,17 @@
 #include "framework.h"
 #include "Objects/Generic/Switches/cog_switch.h"
-
-#include "Game/animation.h"
-#include "Game/collision/collide_item.h"
-#include "Game/control/box.h"
 #include "Game/control/control.h"
-#include "Game/Hud/Hud.h"
-#include "Game/itemdata/door_data.h"
-#include "Game/items.h"
+#include "Specific/Input/Input.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
-#include "Objects/Generic/Doors/generic_doors.h"
 #include "Objects/Generic/Switches/generic_switch.h"
-#include "Specific/Input/Input.h"
+#include "Game/itemdata/door_data.h"
+#include "Game/control/box.h"
+#include "Objects/Generic/Doors/generic_doors.h"
+#include "Game/collision/collide_item.h"
+#include "Game/animation.h"
+#include "Game/items.h"
 
-using namespace TEN::Hud;
 using namespace TEN::Input;
 using namespace TEN::Entities::Doors;
 
@@ -68,8 +65,6 @@ namespace TEN::Entities::Switches
 			ObjectCollision(itemNum, laraItem, coll);
 			return;
 		}
-		
-		g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem, InteractionMode::Activation);
 
 		// Door is found, attach to it.
 

@@ -503,7 +503,6 @@ void LogicHandler::FreeLevelScripts()
 	_levelFuncs_tablesOfNames.emplace(std::make_pair(ScriptReserved_LevelFuncs, std::unordered_map<std::string, std::string>{}));
 
 	ResetLevelTables();
-
 	_onStart = sol::nil;
 	_onLoad = sol::nil;
 	_onLoop = sol::nil;
@@ -511,10 +510,6 @@ void LogicHandler::FreeLevelScripts()
 	_onEnd = sol::nil;
 	_onUseItem = sol::nil;
 	_onFreeze = sol::nil;
-
-	_functionCallCount = 0;
-	_insideFunction = false;
-
 	_handler.GetState()->collect_garbage();
 }
 
@@ -1020,12 +1015,6 @@ void LogicHandler::ExecuteFunction(const std::string& name, TEN::Control::Volume
 	{
 		func(nullptr, arguments);
 	}
-}
-
-unsigned int LogicHandler::GetFunctionCallCount()
-{
-	// Only return the count if we're inside a lua function call.
-	return _insideFunction ? _functionCallCount : 0;
 }
 
 void LogicHandler::OnStart()

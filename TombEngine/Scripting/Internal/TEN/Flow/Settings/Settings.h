@@ -50,13 +50,6 @@ namespace TEN::Scripting
 		static void Register(sol::table& parent);
 	};
 
-	struct GameplaySettings
-	{
-		bool TargetObjectOcclusion = true;
-
-		static void Register(sol::table& parent);
-	};
-
 	struct GraphicsSettings
 	{
 		bool Skinning = true;
@@ -130,7 +123,6 @@ namespace TEN::Scripting
 		AnimSettings				Animations = {};
 		CameraSettings				Camera	   = {};
 		FlareSettings				Flare	   = {};
-		GameplaySettings			Gameplay   = {};
 		GraphicsSettings			Graphics   = {};
 		std::array<HairSettings, 3> Hair	   = {};
 		HudSettings					Hud		   = {};

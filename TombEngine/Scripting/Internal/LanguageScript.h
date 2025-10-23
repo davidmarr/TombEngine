@@ -85,7 +85,6 @@
 #define STRING_AUTO_MONKEY_SWING_JUMP	"auto_monkey_swing_jump"
 #define STRING_AUTO_TARGETING			"auto_targeting"
 #define STRING_TARGET_HIGHLIGHTER		"target_highlighter"
-#define STRING_INTERACTION_HIGHLIGHTER	"interaction_highlighter"
 #define STRING_RUMBLE					"rumble"
 #define STRING_THUMBSTICK_CAMERA		"thumbstick_camera"
 #define STRING_SUBTITLES				"subtitles"

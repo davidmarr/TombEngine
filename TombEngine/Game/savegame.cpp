@@ -19,7 +19,6 @@
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_initialise.h"
 #include "Game/misc.h"
-#include "Game/Sink.h"
 #include "Game/spotcam.h"
 #include "Game/room.h"
 #include "Game/Setup.h"
@@ -27,9 +26,9 @@
 #include "Objects/Generic/Object/rope.h"
 #include "Objects/Generic/Switches/fullblock_switch.h"
 #include "Objects/Generic/puzzles_keys.h"
+#include "Objects/Sink.h"
 #include "Objects/TR3/Entity/FishSwarm.h"
 #include "Objects/TR4/Entity/tr4_beetle_swarm.h"
-#include "Objects/TR4/Entity/Locust.h"
 #include "Objects/TR5/Emitter/tr5_rats_emitter.h"
 #include "Objects/TR5/Emitter/tr5_bats_emitter.h"
 #include "Objects/TR5/Emitter/tr5_spider_emitter.h"
@@ -399,9 +398,6 @@ const std::vector<byte> SaveGame::Build()
 	Save::TorchDataBuilder torch{ fbb };
 	torch.add_state(currentTorchState);
 	torch.add_is_lit(Lara.Torch.IsLit);
-	torch.add_fade(Lara.Torch.Fade);
-	torch.add_current_color(&FromVector3(Lara.Torch.CurrentColor));
-	torch.add_next_color(&FromVector3(Lara.Torch.NextColor));
 	auto torchOffset = torch.Finish();
 
 	Save::LaraInventoryDataBuilder inventory{ fbb };
@@ -553,7 +549,6 @@ const std::vector<byte> SaveGame::Build()
 	Save::CameraBuilder camera{ fbb };
 	camera.add_position(&FromGameVector(Camera.pos));
 	camera.add_target(&FromGameVector(Camera.target));
-	camera.add_extra_orientation(&FromEulerAngles(EulerAngles(Camera.extraElevation, Camera.extraAngle, 0)));
 	auto cameraOffset = camera.Finish();
 
 
@@ -931,8 +926,8 @@ const std::vector<byte> SaveGame::Build()
 		fishSave.add_life(fish.Life);
 		fishSave.add_mesh_index(fish.MeshIndex);
 		fishSave.add_orientation(&FromEulerAngles(fish.Orientation));
-		fishSave.add_position(&FromVector3i(fish.Position));
-		fishSave.add_position_target(&FromVector3i(fish.PositionTarget));
+		fishSave.add_position(&FromVector3(fish.Position));
+		fishSave.add_position_target(&FromVector3(fish.PositionTarget));
 		fishSave.add_room_number(fish.RoomNumber);
 		fishSave.add_target_item_number((fish.TargetItemPtr == nullptr) ? -1 : fish.TargetItemPtr->Index);
 		fishSave.add_undulation(fish.Undulation);
@@ -1322,23 +1317,6 @@ const std::vector<byte> SaveGame::Build()
 	auto particleOffset = fbb.CreateVector(particles);
 
 	// Swarm enemies
-	std::vector<flatbuffers::Offset<Save::SwarmObjectInfo>> locusts;
-	for (int i = 0; i < MAX_LOCUSTS; i++)
-	{
-		auto* locust = &Locusts[i];
-
-		Save::SwarmObjectInfoBuilder locustInfo{ fbb };
-
-		locustInfo.add_flags(locust->Counter);
-		locustInfo.add_on(locust->On);
-		locustInfo.add_room_number(locust->RoomNumber);
-		locustInfo.add_pose(&FromPose(locust->Pose));
-		locustInfo.add_target(locust->Target);
-
-		locusts.push_back(locustInfo.Finish());
-	}
-	auto locustOffset = fbb.CreateVector(locusts);
-
 	std::vector<flatbuffers::Offset<Save::SwarmObjectInfo>> bats;
 	for (int i = 0; i < NUM_BATS; i++)
 	{
@@ -1654,7 +1632,6 @@ const std::vector<byte> SaveGame::Build()
 	sgb.add_volumes(volumesOffset);
 	sgb.add_fixed_cameras(camerasOffset);
 	sgb.add_particles(particleOffset);
-	sgb.add_locusts(locustOffset);
 	sgb.add_bats(batsOffset);
 	sgb.add_rats(ratsOffset);
 	sgb.add_spiders(spidersOffset);
@@ -2233,9 +2210,6 @@ static void ParsePlayer(const Save::SaveGame* s)
 	Lara.RightArm.Locked = s->lara()->right_arm()->locked();
 	Lara.RightArm.Orientation = ToEulerAngles(s->lara()->right_arm()->rotation());
 	Lara.Torch.IsLit = s->lara()->torch()->is_lit();
-	Lara.Torch.Fade = s->lara()->torch()->fade();
-	Lara.Torch.CurrentColor = ToVector3(s->lara()->torch()->current_color());
-	Lara.Torch.NextColor = ToVector3(s->lara()->torch()->next_color());
 	Lara.Torch.State = (TorchState)s->lara()->torch()->state();
 	Lara.Control.Rope.Segment = s->lara()->control()->rope()->segment();
 	Lara.Control.Rope.Direction = s->lara()->control()->rope()->direction();
@@ -2328,8 +2302,6 @@ static void ParsePlayer(const Save::SaveGame* s)
 	// Camera
 	Camera.pos = ToGameVector(s->camera()->position());
 	Camera.target = ToGameVector(s->camera()->target());
-	Camera.extraAngle = ToEulerAngles(s->camera()->extra_orientation()).y;
-	Camera.extraElevation = ToEulerAngles(s->camera()->extra_orientation()).x;
 
 	for (auto& item : g_Level.Items)
 	{
@@ -2384,8 +2356,8 @@ static void ParseEffects(const Save::SaveGame* s)
 		fish.Life = fishSave->life();
 		fish.MeshIndex = fishSave->mesh_index();
 		fish.Orientation = ToEulerAngles(fishSave->orientation());
-		fish.Position = ToVector3i(fishSave->position());
-		fish.PositionTarget = ToVector3i(fishSave->position_target());
+		fish.Position = ToVector3(fishSave->position());
+		fish.PositionTarget = ToVector3(fishSave->position_target());
 		fish.RoomNumber = fishSave->room_number();
 		fish.TargetItemPtr = (fishSave->target_item_number() == -1) ? nullptr : &g_Level.Items[fishSave->target_item_number()];
 		fish.Undulation = fishSave->undulation();
@@ -2498,18 +2470,7 @@ static void ParseEffects(const Save::SaveGame* s)
 		particle->lightFlicker = particleInfo->light_flicker();
 		particle->lightFlickerS = particleInfo->light_flicker_s();
 		particle->sound = particleInfo->sound();
-	}
 
-	for (int i = 0; i < s->locusts()->size(); i++)
-	{
-		auto* locustInfo = s->locusts()->Get(i);
-		auto* locust = &Locusts[i];
-
-		locust->On = locustInfo->on();
-		locust->Counter = locustInfo->flags();
-		locust->RoomNumber = locustInfo->room_number();
-		locust->Pose = ToPose(*locustInfo->pose());
-		locust->Target = locustInfo->target();
 	}
 
 	for (int i = 0; i < s->bats()->size(); i++)

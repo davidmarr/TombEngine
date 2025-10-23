@@ -3,14 +3,12 @@
 #include "Renderer/RendererEnums.h"
 #include "Renderer/Graphics/IndexBuffer.h"
 #include "Renderer/Graphics/VertexBuffer.h"
-#include "Math/Utils.h"
 
 namespace TEN::Renderer::Structures
 {
 	using namespace DirectX::SimpleMath;
 	using namespace TEN::Renderer;
 	using namespace TEN::Renderer::Graphics;
-	using namespace TEN::Math;
 
 	struct RendererHudBar
 	{
@@ -155,7 +153,7 @@ namespace TEN::Renderer::Structures
 			for (int i = 0; i < VERTEX_COUNT; i++)
 			{
 				vertices[i].Position = barVertices[i];
-				vertices[i].Color = VectorColorToRGBA_TempToVector4(colors[i]);
+				vertices[i].Color = colors[i];
 				vertices[i].UV = barUVs[i];
 			}
 
@@ -166,7 +164,7 @@ namespace TEN::Renderer::Structures
 			for (int i = 0; i < barBorderVertices.size(); i++)
 			{
 				borderVertices[i].Position = barBorderVertices[i];
-				borderVertices[i].Color = VectorColorToRGBA_TempToVector4(Vector4::One);
+				borderVertices[i].Color = Vector4::One;
 				borderVertices[i].UV = barBorderUVs[i];
 			}
 

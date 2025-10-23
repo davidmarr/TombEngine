@@ -40,13 +40,13 @@
 #include "Game/spotcam.h"
 #include "Math/Math.h"
 #include "Objects/Effects/LensFlare.h"
+#include "Objects/Effects/tr4_locusts.h"
 #include "Objects/Effects/Fireflies.h"
 #include "Objects/Generic/Object/objects.h"
 #include "Objects/Generic/Object/rope.h"
 #include "Objects/Generic/Switches/generic_switch.h"
 #include "Objects/TR3/Entity/FishSwarm.h"
 #include "Objects/TR4/Entity/tr4_beetle_swarm.h"
-#include "Objects/TR4/Entity/Locust.h"
 #include "Objects/TR5/Emitter/tr5_bats_emitter.h"
 #include "Objects/TR5/Emitter/tr5_rats_emitter.h"
 #include "Objects/TR5/Emitter/tr5_spider_emitter.h"
@@ -61,8 +61,8 @@
 #include "Specific/clock.h"
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
-#include "Specific/Video/Video.h"
 #include "Specific/winmain.h"
+#include "Specific/Video/Video.h"
 
 using namespace std::chrono;
 using namespace TEN::Effects;
@@ -106,7 +106,6 @@ bool InitializeGame	= false;
 bool DoTheGame		= false;
 bool JustLoaded		= false;
 bool ThreadEnded	= false;
-bool DebugMode		= false;
 
 int RequiredStartPos;
 int CurrentLevel;
@@ -389,6 +388,8 @@ unsigned CALLBACK GameMain(void *)
 
 	// Finish thread.
 	PostMessage(WindowsHandle, WM_CLOSE, NULL, NULL);
+	EndThread();
+
 	return true;
 }
 
@@ -528,10 +529,6 @@ void CleanUp()
 {
 	// Reset oscillator seed.
 	Wibble = 0;
-
-	// Reset extra camera angles.
-	Camera.extraAngle = 0;
-	Camera.extraElevation = 0;
 
 	// Clear player lock, otherwise controls will lock if user exits to title while playing flyby with locked controls.
 	Lara.Control.IsLocked = false;

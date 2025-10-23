@@ -3,13 +3,10 @@
 #include "./VertexInput.hlsli"
 #include "./Math.hlsli"
 #include "./ShaderLight.hlsli"
-#include "./SpriteEffects.hlsli"
-#include "./VertexEffects.hlsli"
 
 // NOTE: This shader is used for all opaque or not sorted transparent sprites, that can be instanced for a faster drawing
 
 #define INSTANCED_SPRITES_BUCKET_SIZE 512
-#define FADE_FACTOR .789f
 
 struct PixelShaderInput
 {
@@ -28,9 +25,7 @@ struct InstancedSprite
 	float4 UV[2];
 	float4 Color;
 	float IsBillboard;
-    float IsSoftParticle;
-    int RenderType;
-    int PerVertexColor;
+	float IsSoftParticle;
 };
 
 cbuffer InstancedSpriteBuffer : register(b13)
@@ -48,26 +43,22 @@ PixelShaderInput VS(VertexShaderInput input, uint InstanceID : SV_InstanceID)
 {
 	PixelShaderInput output;
 
-    InstancedSprite sprite = Sprites[InstanceID];
-	
 	float4 worldPosition;
 
-    if (sprite.IsBillboard == 1)
+	if (Sprites[InstanceID].IsBillboard == 1)
 	{
-        worldPosition = mul(float4(input.Position, 1.0f), sprite.World);
-        output.Position = mul(mul(float4(input.Position, 1.0f), sprite.World), ViewProjection);
-    }
+		worldPosition = mul(float4(input.Position, 1.0f), Sprites[InstanceID].World);
+		output.Position = mul(mul(float4(input.Position, 1.0f), Sprites[InstanceID].World), ViewProjection);
+	}
 	else
 	{
 		worldPosition = float4(input.Position, 1.0f);
 		output.Position = mul(float4(input.Position, 1.0f), ViewProjection);
 	}
-	
-    int polyIndex = DecodeIndexInPoly(input.Effects);
 
 	output.PositionCopy = output.Position;
-    output.Color = lerp(sprite.Color, input.Color, saturate((float) sprite.PerVertexColor));
-    output.UV = float2(sprite.UV[0][polyIndex], sprite.UV[1][polyIndex]);
+	output.Color = Sprites[InstanceID].Color;
+	output.UV = float2(Sprites[InstanceID].UV[0][input.PolyIndex], Sprites[InstanceID].UV[1][input.PolyIndex]);
 	output.InstanceID  = InstanceID;
 
 	output.FogBulbs = DoFogBulbsForVertex(worldPosition);
@@ -96,9 +87,7 @@ float4 PS(PixelShaderInput input) : SV_TARGET
 {
 	float4 output = Texture.Sample(Sampler, input.UV) * input.Color;
 
-    InstancedSprite sprite = Sprites[input.InstanceID];
-	
-    if (sprite.IsSoftParticle == 1)
+	if (Sprites[input.InstanceID].IsSoftParticle == 1)
 	{
 		float particleDepth = input.PositionCopy.z / input.PositionCopy.w;
 		input.PositionCopy.xy /= input.PositionCopy.w;
@@ -116,16 +105,6 @@ float4 PS(PixelShaderInput input) : SV_TARGET
 		float fade = (sceneDepth - particleDepth) * 1024.0f;
 		output.w = min(output.w, fade);
 	}
-	
-    if (sprite.RenderType == 1)
-    {
-        output = DoLaserBarrierEffect(input.Position, output, input.UV, FADE_FACTOR, Frame);
-    }
-
-    if (sprite.RenderType == 2)
-    {
-        output = DoLaserBeamEffect(input.Position, output, input.UV, FADE_FACTOR, Frame);
-    }
 
 	output.xyz *= 1.0f - Luma(input.FogBulbs.xyz);
 	output.xyz = saturate(output.xyz);

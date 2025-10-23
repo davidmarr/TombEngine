@@ -77,11 +77,9 @@ private:
 	std::unordered_map<CallbackPoint, std::unordered_set<std::string>*> _callbacks;
 	std::vector<std::variant<std::string, unsigned int>> _savedVarPath;
 
-	LuaHandler _handler;
-	std::string _consoleInput = {};
 	bool _shortenedCalls = false;
-	bool _insideFunction = false;
-	unsigned int _functionCallCount = 0;
+
+	std::string _consoleInput = {};
 
 	void PerformConsoleInput();
 
@@ -89,19 +87,14 @@ private:
 
 	void ResetLevelTables();
 	void ResetGameTables();
+	LuaHandler _handler;
 
 public:	
 	LogicHandler(sol::state* lua, sol::table& parent);
 
 	template <typename ... Ts> sol::protected_function_result CallLevelFuncBase(const sol::protected_function& func, Ts ... vs)
 	{
-		bool insideFunction = _insideFunction;
-		_insideFunction = true;
-		_functionCallCount++;
-
 		auto funcResult = func.call(vs...);
-		
-		_insideFunction = insideFunction;
 		return funcResult;
 	}
 
@@ -152,9 +145,8 @@ public:
 	void ExecuteScriptFile(const std::string& luaFilename) override;
 	void ExecuteString(const std::string& command) override;
 	void ExecuteFunction(const std::string& name, TEN::Control::Volumes::Activator, const std::string& arguments) override;
-	void ExecuteFunction(const std::string& name, short idOne, short idTwo) override;
 
-	unsigned int GetFunctionCallCount() override;
+	void ExecuteFunction(const std::string& name, short idOne, short idTwo) override;
 
 	void GetVariables(std::vector<SavedVar>& vars) override;
 	void SetVariables(const std::vector<SavedVar>& vars, bool onlyLevelVars) override;

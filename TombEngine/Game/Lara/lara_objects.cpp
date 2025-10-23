@@ -285,7 +285,6 @@ void lara_as_tightrope_idle(ItemInfo* item, CollisionInfo* coll)
 	auto* lara = GetLaraInfo(item);
 
 	lara->Control.Look.Mode = LookMode::Free;
-	lara->Control.HandStatus = HandStatus::Busy;
 
 	DoLaraTightropeBalanceRegen(item);
 	DoLaraTightropeLean(item);
@@ -330,8 +329,6 @@ void lara_as_tightrope_dismount(ItemInfo* item, CollisionInfo* coll)
 void lara_as_tightrope_walk(ItemInfo* item, CollisionInfo* coll) 
 {
 	auto* lara = GetLaraInfo(item);
-
-	lara->Control.HandStatus = HandStatus::Busy;
 
 	if (CanDismountTightrope(*item, *coll))
 	{

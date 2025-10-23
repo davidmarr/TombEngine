@@ -6,7 +6,6 @@
 #include "Game/items.h"
 #include "Game/lara/lara_fire.h"
 #include "Game/lara/lara_helpers.h"
-#include "Game/spotcam.h"
 #include "Math/Math.h"
 #include "Renderer/Renderer.h"
 #include "Specific/configuration.h"
@@ -218,10 +217,6 @@ namespace TEN::Hud
 	void TargetHighlighterController::Draw() const
 	{
 		//DrawDebug();
-
-		// Never highlight if flyby camera is active.
-		if (UseSpotCam)
-			return;
 
 		if (_crosshairs.empty())
 			return;

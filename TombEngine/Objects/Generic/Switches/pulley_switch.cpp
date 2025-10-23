@@ -3,7 +3,6 @@
 
 #include "Game/collision/collide_item.h"
 #include "Game/control/control.h"
-#include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
@@ -13,7 +12,6 @@
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 
-using namespace TEN::Hud;
 using namespace TEN::Input;
 
 enum PulleyFlags
@@ -90,8 +88,6 @@ namespace TEN::Entities::Switches
 		auto* laraInfo = GetLaraInfo(laraItem);
 		auto* switchItem = &g_Level.Items[itemNumber];
 
-		g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem);
-
 		bool isUnderwater = (laraInfo->Control.WaterStatus == WaterStatus::Underwater);
 
 		const auto& bounds = isUnderwater ? UnderwaterPulleyBounds : PulleyBounds;
@@ -115,7 +111,13 @@ namespace TEN::Entities::Switches
 				{
 					if (switchItem->ItemFlags[PulleyFlags::NotHidden])
 					{
-						SayNo(laraItem->Pose.Position);
+						if (OldPickupPos.x != laraItem->Pose.Position.x || OldPickupPos.y != laraItem->Pose.Position.y || OldPickupPos.z != laraItem->Pose.Position.z)
+						{
+							OldPickupPos.x = laraItem->Pose.Position.x;
+							OldPickupPos.y = laraItem->Pose.Position.y;
+							OldPickupPos.z = laraItem->Pose.Position.z;
+							SayNo();
+						}
 					}
 					else if (MoveLaraPosition(position, switchItem, laraItem))
 					{

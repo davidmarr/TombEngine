@@ -132,6 +132,7 @@ const ObjectCollisionBounds MSBounds =
 
 int NumRPickups;
 short RPickups[16];
+Vector3i OldPickupPos;
 
 bool SetInventoryCount(GAME_OBJECT_ID objectID, int count)
 {
@@ -295,8 +296,6 @@ void DoPickup(ItemInfo* laraItem)
 
 		GetFlameTorch();
 		lara->Torch.IsLit = (pickupItem->ItemFlags[3] & 1);
-		lara->Torch.Fade = 0;
-		lara->Torch.CurrentColor = lara->Torch.NextColor = pickupItem->Effect.PrimaryEffectColor;
 
 		KillItem(pickupItemNumber);
 		pickupItem->Pose.Orientation = prevOrient;
@@ -400,8 +399,6 @@ void PickupCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
 
 	if (item->ObjectNumber == ID_FLARE_ITEM && item->Active && lara->Control.Weapon.GunType == LaraWeaponType::Flare)
 		return;
-
-	g_Hud.InteractionHighlighter.Test(*laraItem, *item);
 
 	item->Pose.Orientation.y = laraItem->Pose.Orientation.y;
 	item->Pose.Orientation.z = 0.0f;
@@ -547,15 +544,12 @@ void PickupCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
 			item->Pose.Orientation = prevOrient;
 			return;
 		}
-
 		if (!lara->Control.IsMoving)
 		{
 			if (g_Gui.GetInventoryItemChosen() == NO_VALUE)
 			{
 				if (g_Gui.IsObjectInInventory(ID_CROWBAR_ITEM))
 					g_Gui.SetEnterInventory(ID_CROWBAR_ITEM);
-				else if (IsClicked(In::Action))
-					SayNo();
 
 				item->Pose.Orientation = prevOrient;
 				return;

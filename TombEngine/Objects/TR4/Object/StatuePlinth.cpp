@@ -8,7 +8,6 @@
 #include "Game/effects/effects.h"
 #include "Game/effects/tomb4fx.h"
 #include "Game/Gui.h"
-#include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
@@ -19,7 +18,6 @@
 #include "Specific/level.h"
 
 using namespace TEN::Gui;
-using namespace TEN::Hud;
 using namespace TEN::Input;
 
 namespace TEN::Entities::TR4
@@ -51,7 +49,7 @@ namespace TEN::Entities::TR4
 		auto& keyHoleItem = g_Level.Items[itemNumber];
 		const auto& player = GetLaraInfo(playerItem);
 
-		g_Hud.InteractionHighlighter.Test(*playerItem, keyHoleItem);
+		short* triggerIndexPtr = GetTriggerIndex(&keyHoleItem);
 
 		if (!keyHoleItem.ItemFlags[0])
 			keyHoleItem.ItemFlags[0] = PLACE_PLINTHITEM_FRAME;
@@ -69,7 +67,6 @@ namespace TEN::Entities::TR4
 			keyItem = ID_PUZZLE_ITEM1;
 		}
 
-		short* triggerIndexPtr = GetTriggerIndex(&keyHoleItem);
 		if (triggerIndexPtr == nullptr)
 			return;
 
@@ -117,8 +114,6 @@ namespace TEN::Entities::TR4
 						g_Gui.SetEnterInventory(keyItem);
 						keyHoleItem.ItemFlags[1] = 1;
 					}
-					else if (IsClicked(In::Action))
-						SayNo();
 				}
 
 				keyHoleItem.Pose.Orientation.y = prevYOrient;

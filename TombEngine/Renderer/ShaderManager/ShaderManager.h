@@ -16,7 +16,9 @@ namespace TEN::Renderer::Utils
 		RoomAmbient,
 		RoomAmbientSky,
 		Items,
+		Statics,
 		InstancedStatics,
+		Sprites,
 		InstancedSprites,
 		Sky,
 		Solid,
@@ -36,6 +38,7 @@ namespace TEN::Renderer::Utils
 		GBuffer,
 		GBufferRooms,
 		GBufferItems,
+		GBufferStatics,
 		GBufferInstancedStatics,
 
 		// SMAA
@@ -61,12 +64,6 @@ namespace TEN::Renderer::Utils
 
 		Ssao,
 		SsaoBlur,
-
-		// Fullscreen effects
-
-		Blur,
-		Downscale,
-		GlowCombine,
 
 		Count
 	};

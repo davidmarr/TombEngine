@@ -27,7 +27,7 @@ public:
 	HandStatus GetHandStatus() const;
 	void SetHandStatus(HandStatus status);
 	LaraWeaponType GetWeaponType() const;
-	void SetWeaponType(LaraWeaponType weaponType, sol::optional<bool> activate);
+	void SetWeaponType(LaraWeaponType weaponType, bool activate);
 	bool GetLaserSight(LaraWeaponType weaponType) const;
 	void SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate);
 	int GetAmmoType() const;

@@ -26,7 +26,6 @@
 #include "Objects/TR4/Entity/tr4_knight_templar.h" // OK
 #include "Objects/TR4/Entity/tr4_lara_double.h"
 #include "Objects/TR4/Entity/tr4_beetle_swarm.h"
-#include "Objects/TR4/Entity/Locust.h"
 #include "Objects/TR4/Entity/tr4_mummy.h" // OK
 #include "Objects/TR4/Entity/tr4_sas.h" // OK
 #include "Objects/TR4/Entity/tr4_sentry_gun.h" // OK
@@ -81,6 +80,9 @@
 // Vehicles
 #include "Objects/TR4/Vehicles/jeep.h"
 #include "Objects/TR4/Vehicles/motorbike.h"
+
+// Effects
+#include "Objects/Effects/tr4_locusts.h" // OK
 
 using namespace TEN::Entities::TR4;
 using namespace TEN::Entities::Traps;
@@ -578,17 +580,9 @@ namespace TEN::Entities
 		obj = &Objects[ID_LOCUSTS_EMITTER];
 		if (obj->loaded)
 		{
-			obj->Initialize = InitializeLocustEmitter;
-			obj->control = LocustEmitterControl;
-			obj->drawRoutine = nullptr;
-		}
-
-		obj = &Objects[ID_LOCUSTS];
-		if (obj->loaded)
-		{
-			obj->Initialize = InitializeLocustEmitter;
-			obj->control = LocustEmitterControl;
-			obj->drawRoutine = nullptr;
+			obj->Initialize = InitializeLocust;
+			obj->control = LocustControl;
+			obj->drawRoutine = NULL;
 		}
 
 		obj = &Objects[ID_WRAITH1];
@@ -617,7 +611,7 @@ namespace TEN::Entities
 		{
 			obj->Initialize = InitializeBeetleSwarm;
 			obj->control = BeetleSwarmControl;
-			obj->drawRoutine = nullptr;
+			obj->drawRoutine = NULL;
 		}
 
 		obj = &Objects[ID_SAS_DYING];

@@ -378,17 +378,11 @@ void UpdateFireProgress()
 
 void AddFire(int x, int y, int z, short roomNum, float size, short fade)
 {
-	AddFire(Vector3i(x, y, z), roomNum, Vector4::One, size, fade);
-}
-
-void AddFire(Vector3i& pos, int roomNumber, Vector4 color, float size, short fade)
-{
 	FIRE_LIST newFire;
 	
 	newFire.fade = (fade == 0 ? 1 : (unsigned char)fade);
-	newFire.position = pos;
-	newFire.roomNumber = roomNumber;
-	newFire.color = color;
+	newFire.position = Vector3i(x, y, z);
+	newFire.roomNumber = roomNum;
 	newFire.size = size;
 	newFire.StoreInterpolationData();
 	

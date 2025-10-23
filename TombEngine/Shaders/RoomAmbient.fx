@@ -1,6 +1,6 @@
 #include "./CBCamera.hlsli"
 #include "./CBRoom.hlsli"
-#include "./CBSky.hlsli"
+#include "./CBStatic.hlsli"
 #include "./VertexInput.hlsli"
 #include "./VertexEffects.hlsli"
 #include "./Blending.hlsli"
@@ -30,7 +30,7 @@ PixelShaderInput VS(VertexShaderInput input)
 	output.Position /= output.Position.w;
 
 	// For the back-map z has to be inverted
-	output.Position.z *= Hemisphere;
+	output.Position.z *= Emisphere;
 
 	float L = length(output.Position.xyz);
 
@@ -44,7 +44,7 @@ PixelShaderInput VS(VertexShaderInput input)
 	// Set z for z-buffering and neutralize w
 	output.Position.z = (L - NearPlane) / (FarPlane - NearPlane);
 	output.Position.w = 1.0f;
-    output.UV = GetUVPossiblyAnimated(input.UV, DecodeIndexInPoly(input.Effects), DecodeAnimationFrameOffset(input.AnimationFrameOffsetIndexHash));
+    output.UV = GetUVPossiblyAnimated(input.UV, input.PolyIndex, input.AnimationFrameOffset);
 	output.Color = input.Color;
 
 	return output;
@@ -59,7 +59,7 @@ PixelShaderInput VSSky(VertexShaderInput input)
 	output.Position /= output.Position.w;
 
 	// For the back-map z has to be inverted
-	output.Position.z *= Hemisphere;
+	output.Position.z *= Emisphere;
 
 	float L = length(output.Position.xyz);
 
@@ -74,7 +74,7 @@ PixelShaderInput VSSky(VertexShaderInput input)
 	output.Position.z = (L - NearPlane) / (FarPlane - NearPlane);
 	output.Position.w = 1.0f;
 
-    output.UV = GetUVPossiblyAnimated(input.UV, DecodeIndexInPoly(input.Effects), DecodeAnimationFrameOffset(input.AnimationFrameOffsetIndexHash));
+	output.UV = input.UV;
 	output.Color = Color;
 
 	return output;
@@ -82,35 +82,16 @@ PixelShaderInput VSSky(VertexShaderInput input)
 
 float4 PS(PixelShaderInput input) : SV_TARGET0
 {
-    if (Animated && Type == 1)
+    if (Type == 1)
         input.UV = CalculateUVRotate(input.UV, 0);
 	
-    float4 output = Texture.Sample(Sampler, input.UV);
+	float4 output = Texture.Sample(Sampler, input.UV);
 
-    clip(input.ClipDepth);
+	clip(input.ClipDepth);
 
-    DoAlphaTest(output);
+	DoAlphaTest(output);
 
-    output.xyz *= input.Color.xyz;
+	output.xyz *= input.Color.xyz;
 
-    return output;
-}
-
-
-float4 PSSky(PixelShaderInput input) : SV_TARGET
-{
-    if (Animated && Type == 1)
-        input.UV = CalculateUVRotate(input.UV, 0);
-	
-    float4 output = Texture.Sample(Sampler, input.UV);
-	
-    clip(input.ClipDepth);
-
-    DoAlphaTest(output);
-
-    float3 light = saturate(Color.xyz);
-    output.xyz *= light;
-    output.w *= Color.w;
-
-    return output;
+	return output;
 }

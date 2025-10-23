@@ -14,8 +14,6 @@ namespace TEN::Renderer::ConstantBuffers
 		//--
 		Matrix Projection;
 		//--
-		Matrix InverseView;
-		//--
 		Matrix InverseProjection;
 		//--
 		Matrix DualParaboloidView;
@@ -30,7 +28,7 @@ namespace TEN::Renderer::ConstantBuffers
 		unsigned int Frame;
 		unsigned int RoomNumber;
 		unsigned int CameraUnderwater;
-		int Hemisphere;
+		int Emisphere;
 		//--
 		int AmbientOcclusion;
 		int AmbientOcclusionExponent;

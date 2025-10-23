@@ -452,7 +452,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->Initialize = InitializeFishSwarm;
 		obj->control = ControlFishSwarm;
 		obj->intelligent = true;
-		obj->drawRoutine = nullptr;
+		obj->drawRoutine = NULL;
 	}
 }
 

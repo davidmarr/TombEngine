@@ -1292,7 +1292,11 @@ namespace TEN::Entities::Vehicles
 		motorbikeItem->Pose.Orientation.x += (xRot - motorbikeItem->Pose.Orientation.x) / 4;
 		motorbikeItem->Pose.Orientation.z += (zRot - motorbikeItem->Pose.Orientation.z) / 4;
 
-		UpdateVehicleRoom(motorbikeItem, laraItem, probe.GetRoomNumber());
+		if (probe.GetRoomNumber() != motorbikeItem->RoomNumber)
+		{
+			ItemNewRoom(lara->Context.Vehicle, probe.GetRoomNumber());
+			ItemNewRoom(laraItem->Index, probe.GetRoomNumber());
+		}
 
 		laraItem->Pose = motorbikeItem->Pose;
 

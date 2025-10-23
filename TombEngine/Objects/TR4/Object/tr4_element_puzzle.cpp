@@ -1,24 +1,22 @@
 #include "framework.h"
 #include "tr4_element_puzzle.h"
 
-#include "Game/animation.h"
-#include "Game/collision/collide_room.h"
-#include "Game/collision/collide_item.h"
-#include "Game/collision/Sphere.h"
+#include "Specific/level.h"
+#include "Game/Collision/Sphere.h"
 #include "Game/control/control.h"
-#include "Game/effects/effects.h"
-#include "Game/effects/tomb4fx.h"
-#include "Game/Hud/Hud.h"
-#include "Game/items.h"
+#include "Sound/sound.h"
+#include "Game/animation.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
-#include "Objects/Generic/Switches/generic_switch.h"
-#include "Sound/sound.h"
+#include "Game/effects/effects.h"
+#include "Game/effects/tomb4fx.h"
 #include "Specific/Input/Input.h"
-#include "Specific/level.h"
+#include "Objects/Generic/Switches/generic_switch.h"
+#include "Game/collision/collide_room.h"
+#include "Game/collision/collide_item.h"
+#include "Game/items.h"
 
 using namespace TEN::Collision::Sphere;
-using namespace TEN::Hud;
 using namespace TEN::Input;
 using namespace TEN::Entities::Switches;
 
@@ -165,8 +163,6 @@ namespace TEN::Entities::TR4
 	{
 		auto* laraInfo = GetLaraInfo(laraItem);
 		auto* puzzleItem = &g_Level.Items[itemNumber];
-
-		g_Hud.InteractionHighlighter.Test(*laraItem, *puzzleItem);
 
 		int flags = 0;
 

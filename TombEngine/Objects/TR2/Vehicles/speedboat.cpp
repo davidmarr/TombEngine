@@ -906,7 +906,12 @@ namespace TEN::Entities::Vehicles
 		if (lara->Context.Vehicle == itemNumber)
 		{
 			SpeedboatAnimation(speedboatItem, laraItem, collide);
-			UpdateVehicleRoom(speedboatItem, laraItem, probe.GetRoomNumber());
+
+			if (probe.GetRoomNumber() != speedboatItem->RoomNumber)
+			{
+				ItemNewRoom(lara->Context.Vehicle, probe.GetRoomNumber());
+				ItemNewRoom(laraItem->Index, probe.GetRoomNumber());
+			}
 
 			laraItem->Pose = speedboatItem->Pose;
 			speedboatItem->Pose.Orientation.z += speedboat->LeanAngle;

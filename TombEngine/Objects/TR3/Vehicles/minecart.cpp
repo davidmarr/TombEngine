@@ -983,7 +983,11 @@ namespace TEN::Entities::Vehicles
 			laraItem->Pose = minecartItem->Pose;
 
 		short probedRoomNumber = GetPointCollision(*minecartItem).GetRoomNumber();
-		UpdateVehicleRoom(minecartItem, laraItem, probedRoomNumber);
+		if (probedRoomNumber != minecartItem->RoomNumber)
+		{
+			ItemNewRoom(lara->Context.Vehicle, probedRoomNumber);
+			ItemNewRoom(laraItem->Index, probedRoomNumber);
+		}
 
 		TestTriggers(minecartItem, false);
 

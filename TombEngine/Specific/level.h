@@ -29,8 +29,6 @@ struct TEXTURE
 	int height;
 	std::vector<byte> colorMapData;
 	std::vector<byte> normalMapData;
-	std::vector<byte> occlusionRoughnessSpecularMapData;
-	std::vector<byte> emissiveMapData;
 };
 
 struct ANIMATED_TEXTURES_FRAME
@@ -78,21 +76,6 @@ struct SPRITE
 	float y3;
 	float x4;
 	float y4;
-};
-
-struct MaterialData
-{
-	std::string Name;
-	MaterialShaderType Type;
-	Vector4 Parameters0;
-	Vector4 Parameters1;
-	Vector4 Parameters2;
-	Vector4 Parameters3;
-	bool HasNormalMap;
-	bool HasAmbientOcclusionMap;
-	bool HasRoughnessMap;
-	bool HasSpecularMap;
-	bool HasEmissiveMap;
 };
 
 struct MESH
@@ -169,7 +152,7 @@ struct LEVEL
 	std::vector<SPRITE>			 Sprites   = {};
 	std::vector<MirrorData>		 Mirrors = {};
 
-	// Texture and materials
+	// Texture
 
 	TEXTURE				 SkyTexture		   = {};
 	std::vector<TEXTURE> RoomTextures	   = {};
@@ -178,7 +161,6 @@ struct LEVEL
 	std::vector<TEXTURE> AnimatedTextures  = {};
 	std::vector<TEXTURE> SpritesTextures   = {};
 	std::vector<ANIMATED_TEXTURES_SEQUENCE> AnimatedTexturesSequences = {};
-	std::vector<MaterialData> Materials    = {};
 };
 
 extern const std::vector<GAME_OBJECT_ID> BRIDGE_OBJECT_IDS;
@@ -212,7 +194,6 @@ void LoadAnimatedTextures();
 void LoadEventSets();
 void LoadAIObjects();
 void LoadMirrors();
-void LoadMaterials();
 
 void GetCarriedItems();
 void GetAIPickups();
