@@ -38,16 +38,16 @@ Utility.Vec2PercentToScreen = function (vec2Percent)
 end
 
 --- Check if a table contains a specific value.
--- @tparam tbl The table to check.
+-- @tparam table tbl The table to check.
 -- @tparam any val The value to search for.
 -- @treturn bool True if the value is found, false otherwise.
 -- @usage
--- -- Example whith associative table:
+-- -- Example with associative table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
 -- local hasBanana = Utl.TableHasValue(tbl, "banana") -- Result: true
 -- local hasGrape = Utl.TableHasValue(tbl, "grape") -- Result: false
 --
--- -- Example whith array table:
+-- -- Example with array table:
 -- local tbl = { "apple", "banana", "cherry" }
 -- local hasBanana = Utl.TableHasValue(tbl, "banana") -- Result: true
 -- local hasGrape = Utl.TableHasValue(tbl, "grape") -- Result: false
@@ -64,16 +64,16 @@ Utility.TableHasValue = function (tbl, val)
 end
 
 --- Check if a table contains a specific key.
--- @tparam tbl The table to check.
+-- @tparam table tbl The table to check.
 -- @tparam any key The key to search for.
 -- @treturn bool True if the key is found, false otherwise.
 -- @usage
--- -- Example whith associative table:
+-- -- Example with associative table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
 -- local hasBananaKey = Utl.TableHasKey(tbl, "banana") -- Result: true
 -- local hasGrapeKey = Utl.TableHasKey(tbl, "grape") -- Result: false
 --
--- -- Example whith array table:
+-- -- Example with array table:
 -- local tbl = { "apple", "banana", "cherry" }
 -- local hasBananaKey = Utl.TableHasKey(tbl, 2) -- Result: true
 -- local hasGrapeKey = Utl.TableHasKey(tbl, 4) -- Result: false
@@ -87,6 +87,28 @@ Utility.TableHasKey = function (tbl, key)
         end
     end
     return false
+end
+
+--- Create a read-only version of a table.
+-- @tparam table tbl The table to make read-only.
+-- @treturn table A read-only version of the input table.
+-- @usage
+-- local readOnlyTable = Utl.TableReadonly(originalTable)
+Utility.TableReadonly = function(tbl)
+    if not Type.IsTable(tbl) then
+        TEN.Util.PrintLog("Error in Utility.TableReadonly: input is not a table.", TEN.Util.LogLevel.ERROR)
+        return {}
+    end
+
+    return setmetatable({}, {
+        __index = tbl,
+        __newindex = function(_, key, _)
+            TEN.Util.PrintLog("Error, cannot modify '" .. tostring(key) .. "': table is read-only", TEN.Util.LogLevel.ERROR)
+        end,
+        __len = function() return #tbl end,
+        __pairs = function() return pairs(tbl) end,
+        __ipairs = function() return ipairs(tbl) end
+    })
 end
 
 --- Split a string into a table using a specified delimiter.
