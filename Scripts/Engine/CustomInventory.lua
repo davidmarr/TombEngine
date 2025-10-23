@@ -1297,7 +1297,7 @@ function CustomInventory.Run()
 
         if inventoryDelay >= 2 then
             TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
-            Flow.SetFreezeMode(Flow.FreezeMode.SPECTATOR) -- SHOULD RUN IN FULL MODE
+            Flow.SetFreezeMode(Flow.FreezeMode.FULL)
         end
     end
 
