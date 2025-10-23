@@ -127,7 +127,7 @@ local WEAPON_AMMO_LOOKUP = {
     [TEN.Objects.ObjID.PISTOLS_ITEM] = {TEN.Objects.ObjID.PISTOLS_AMMO_ITEM},
     [TEN.Objects.ObjID.UZI_ITEM] = {TEN.Objects.ObjID.UZI_AMMO_ITEM},
     [TEN.Objects.ObjID.SHOTGUN_ITEM] = {TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM, TEN.Objects.ObjID.SHOTGUN_AMMO2_ITEM},
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {REVOLVER_AMMO_ITEM},
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {TEN.Objects.ObjID.REVOLVER_AMMO_ITEM},
     [TEN.Objects.ObjID.CROSSBOW_ITEM] = {TEN.Objects.ObjID.CROSSBOW_AMMO1_ITEM, TEN.Objects.ObjID.CROSSBOW_AMMO2_ITEM, TEN.Objects.ObjID.CROSSBOW_AMMO3_ITEM},
     [TEN.Objects.ObjID.HK_ITEM] = {TEN.Objects.ObjID.HK_AMMO_ITEM},
     [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = {TEN.Objects.ObjID.GRENADE_AMMO1_ITEM, TEN.Objects.ObjID.GRENADE_AMMO2_ITEM, TEN.Objects.ObjID.GRENADE_AMMO3_ITEM},
@@ -965,7 +965,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         local data = BuildInventoryItem(itemData)
 
         --Check if weapon is present and skip adding ammo to main inventory ring
-        if data.type == TYPE.AMMO and data.ringType ~= RING.AMMO then
+        if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
     
             local weaponPresent = TEN.Inventory.GetItemCount(AMMO_SET[data.objectID].weapon)
             if weaponPresent ~= 0 then
@@ -1194,6 +1194,7 @@ end
 
 local SetupSecondaryRing = function(ringName, item)
     --used for combine and ammo rings
+
     previousRing = selectedRing
     combineItem1 = item or GetSelectedItem(selectedRing).objectID
     targetRingAngle = 0
@@ -1239,7 +1240,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     else
         --LevelFuncs.Engine.CustomInventory.DrawInventoryText()
         Input(inventoryMode)
-        LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
+        --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
 
         --Set rotation of InventoryItems like compass and stopwatch
@@ -1742,11 +1743,10 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
         end
     elseif mode == INVENTORY_MODE.AMMO_SELECT_SETUP then
-        
-        
-        SetupSecondaryRing(RING.AMMO, combineItem1)
-        inventoryMode = INVENTORY_MODE.AMMO_SELECT_OPEN
-        
+
+            SetupSecondaryRing(RING.AMMO, combineItem1)
+            inventoryMode = INVENTORY_MODE.AMMO_SELECT_OPEN
+
     elseif mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
 
         SaveItemData(selectedItem)
