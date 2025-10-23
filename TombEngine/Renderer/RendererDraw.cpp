@@ -4148,10 +4148,18 @@ namespace TEN::Renderer
 
 		if (animated)
 		{
-			const auto& set = _animatedTextureSets[bucket.Texture];
+			// If video texture is used, directly bind it as a color map, and optionally as an emissive map, if it was
+			// set for the source placeholder texture.
 
+			const auto& set = _animatedTextureSets[bucket.Texture];
+				
 			if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture->Texture)
+			{
 				BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
+
+				if (std::get<3>(_animatedTextures[bucket.Texture]).Texture != nullptr)
+					BindTexture(TextureRegister::EmissiveMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
+			}
 			else
 				BindAtlasTextures(bucket, TextureSource::Animated);
 		}
