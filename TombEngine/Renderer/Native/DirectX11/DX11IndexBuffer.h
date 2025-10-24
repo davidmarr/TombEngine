@@ -5,8 +5,9 @@
 #include "Specific/fast_vector.h"
 #include "Renderer/RendererUtils.h"
 #include "Game/Debug/Debug.h"
+#include "Renderer/Graphics/IIndexBuffer.h"
 
-namespace TEN::Renderer::Graphics
+namespace TEN::Renderer::Native::DirectX11
 {
 	using Microsoft::WRL::ComPtr;
 
@@ -14,7 +15,7 @@ namespace TEN::Renderer::Graphics
 	using namespace TEN::Renderer::Graphics;
 	using namespace TEN::Debug;
 
-	class IndexBuffer
+	class DX11IndexBuffer final : public IIndexBuffer
 	{
 	private:
 		int _numIndices = 0;
@@ -22,9 +23,7 @@ namespace TEN::Renderer::Graphics
 	public:
 		ComPtr<ID3D11Buffer> Buffer;
 
-		IndexBuffer() {}
-
-		IndexBuffer(ID3D11Device* device, int numIndices, int* indices)
+		DX11IndexBuffer(ID3D11Device* device, int numIndices, int* indices)
 		{
 			D3D11_BUFFER_DESC desc = {};
 			desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -48,7 +47,7 @@ namespace TEN::Renderer::Graphics
 			_numIndices = numIndices;
 		}
 
-		IndexBuffer(ID3D11Device* device, int numIndices, fast_vector<int> indices)
+		DX11IndexBuffer(ID3D11Device* device, int numIndices, fast_vector<int> indices)
 		{
 			D3D11_BUFFER_DESC desc = {};
 			desc.Usage = D3D11_USAGE_DYNAMIC;

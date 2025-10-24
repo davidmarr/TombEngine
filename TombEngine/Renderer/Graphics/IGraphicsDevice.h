@@ -1,0 +1,78 @@
+#pragma once
+#include <vector>
+#include "Specific/fast_vector.h"
+#include <string>
+#include <SimpleMath.h>
+#include "Renderer/Graphics/IIndexBuffer.h"
+#include "Renderer/Graphics/IVertexBuffer.h"
+#include "Renderer/Graphics/IRenderTarget2D.h"
+#include "Renderer/Graphics/IRenderTargetCube.h"
+#include "Renderer/Graphics/ITexture2D.h"
+#include "Renderer/Graphics/ITexture2DArray.h"
+#include "Renderer/Graphics/IConstantBuffer.h"
+#include "Renderer/RendererEnums.h"
+#include "Renderer/Structures/RendererRectangle.h"
+#include "Renderer/Structures/RendererViewport.h"
+
+using namespace TEN::Renderer::Structures;
+using namespace DirectX;
+using namespace DirectX::SimpleMath;
+
+namespace TEN::Renderer::Graphics
+{
+	class IGraphicsDevice
+	{
+	public:
+		virtual IVertexBuffer* CreateVertexBuffer(int numVertices, int vertexSize, void* data) = 0;
+		virtual bool UpdateVertexBuffer(int startVertex, int count, int vertexSize, void* data) = 0;
+		virtual void BindVertexBuffer(IVertexBuffer* vertexBuffer) = 0;
+
+		virtual IIndexBuffer* CreateIndexBuffer(int numIndices, int* data) = 0;
+		virtual IIndexBuffer* CreateIndexBuffer(int numIndices, int startIndex, int* data) = 0;
+		virtual void BindIndexBuffer(IIndexBuffer* indexBuffer) = 0;
+
+		virtual IRenderTarget2D* CreateRenderTarget2D(int width, int height, ColorFormat colorFormat, bool isTypeless, ColorFormat depthFormat) = 0;
+		virtual IRenderTarget2D* CreateRenderTarget2DFromAnother(IRenderTarget2D*, ColorFormat colorFormat) = 0;
+
+		virtual IRenderTargetCube* CreateRenderTargetCube(int size, ColorFormat colorFormat, ColorFormat depthFormat) = 0;
+
+		virtual ITexture2D* CreateTexture2D(int width, int height, byte* data) = 0;
+		virtual ITexture2D* CreateTexture2D(int width, int height,ColorFormat format, int pitch, const void* data) = 0;
+		virtual ITexture2D* CreateTexture2D(const std::wstring& fileName) = 0;
+		virtual ITexture2D* CreateTexture2D(int length, byte* data) = 0;
+
+		virtual ITexture2DArray* CreateTexture2DArray(int size, int count, ColorFormat colorFormat, ColorFormat depthFormat) = 0;
+
+		virtual void SetBlendMode(BlendMode blendMode, bool force = false) = 0;
+		virtual void SetDepthState(DepthState depthState, bool force = false) = 0;
+		virtual void SetCullMode(CullMode cullMode, bool force = false) = 0;
+		virtual void SetAlphaTest(AlphaTestMode mode, float threshold, bool force = false) = 0;
+		virtual void SetScissor(RendererRectangle rectangle) = 0;
+
+		virtual void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) = 0;
+		virtual void BindRenderTargetAsTexture(TextureRegister registerType, IRenderTarget2D* target, SamplerStateRegister samplerType) = 0;
+		virtual void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
+		virtual void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
+
+		virtual void DrawIndexedTriangles(int count, int baseIndex, int baseVertex) = 0;
+		virtual void DrawIndexedInstancedTriangles(int count, int instances, int baseIndex, int baseVertex) = 0;
+		virtual void DrawInstancedTriangles(int count, int instances, int baseVertex) = 0;
+		virtual void DrawTriangles(int count, int baseVertex) = 0;
+
+		virtual void ClearRenderTarget2D(IRenderTarget2D* renderTarget, XMFLOAT4 clearColor) = 0;
+		virtual void ClearRenderTarget2DOfArray(ITexture2DArray* textureArray, int index, XMFLOAT4 clearColor) = 0;
+		virtual void ClearRenderTarget2DOfCube(IRenderTargetCube* textureCube, int index, XMFLOAT4 clearColor) = 0;
+		
+		virtual void ClearDepthStencil(IRenderTarget2D* renderTarget, float depth, unsigned char stencil) = 0;
+		virtual void ClearDepthStencilOfArray(ITexture2DArray* textureArray, int index, float depth, unsigned char stencil) = 0;
+		virtual void ClearDepthStencilOfCube(IRenderTargetCube* textureCube, int index, float depth, unsigned char stencil) = 0;
+
+		virtual void SetViewport(RendererViewport viewport) = 0;
+		virtual void SetInputLayout(InputLayout inputLayout) = 0;
+		virtual void SetPrimitiveType(PrimitiveType primitiveType) = 0;
+
+		virtual void Initialize(const std::string& gameDir, int w, int h, bool windowed, HWND handle) = 0;
+
+		virtual ~IGraphicsDevice() = default;
+	};
+}

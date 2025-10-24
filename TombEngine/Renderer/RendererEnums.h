@@ -337,3 +337,23 @@ enum class MaterialShaderType
 	Reflective = 1,
 	SkyboxReflective = 2
 };
+
+enum class ColorFormat
+{
+	Rgba8_Unorm,
+	Rgba8_Unorm_Srgb,
+	R32_Float
+};
+
+enum class InputLayout
+{
+	Vertex,
+	PostProcessVertex
+};
+
+enum class PrimitiveType
+{
+	TriangleList,
+	TriangleStrip,
+	LineList
+};
