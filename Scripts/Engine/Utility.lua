@@ -89,7 +89,7 @@ Utility.TableHasKey = function (tbl, key)
     return false
 end
 
---- Create a read-only version of a table.
+--- Creates a read-only version of a table. Very useful for creating tables with constants.
 -- @tparam table tbl The table to make read-only.
 -- @treturn table A read-only version of the input table.
 -- @usage
