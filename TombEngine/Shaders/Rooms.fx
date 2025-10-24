@@ -109,7 +109,8 @@ PixelShaderOutput PS(PixelShaderInput input)
 	normal = normalize(mul(normal, TBN));
 	
     // Material effects
-    output.Color.xyz = CalculateReflections(input.WorldPosition, output.Color.xyz, input.FaceNormal, normal, specular);
+	float3 blendedNormal = normalize(lerp(input.FaceNormal, normal, 0.1f)); // TODO: Make alpha customizable
+    output.Color.xyz = CalculateReflections(input.WorldPosition, output.Color.xyz, blendedNormal, specular);
 
 	float3 lighting = input.Color.xyz;
 	bool doLights = true;
