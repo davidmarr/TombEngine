@@ -600,11 +600,36 @@ bool LaraObject::IsTorchLit() const
 	return player.Torch.IsLit;
 }
 
-
+//add docs later
 WaterStatus LaraObject::GetWaterStatus() const
 {
 	auto* lara = GetLaraInfo(_moveable);
 	return  WaterStatus{ lara->Control.WaterStatus };
+}
+
+//add docs later
+int LaraObject::GetWaterSkinStatus(bool flag) const
+{
+	const auto& inventory = GetLaraInfo(*_moveable).Inventory;
+	const auto value = flag ? inventory.SmallWaterskin : inventory.BigWaterskin;
+	return std::max(0, static_cast<int>(value) - 1);
+}
+
+//add docs later
+void LaraObject::SetWaterSkinStatus(int amount, bool flag)
+{
+	auto& inventory = GetLaraInfo(*_moveable).Inventory;
+
+	const int maxValue = flag ? 4 : 6; // small = 4 (1 base + 3 liters), big = 6 (1 base + 5 liters)
+
+	amount = std::clamp(amount, 0, maxValue - 1);
+
+	const byte newValue = static_cast<byte>(amount + 1);
+
+	if (flag)
+		inventory.SmallWaterskin = newValue;
+	else
+		inventory.BigWaterskin = newValue;
 }
 
 /// Align the player with a moveable object for interaction.
@@ -739,6 +764,8 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_GetPlayerInteractedMoveable, &LaraObject::GetPlayerInteractedMoveable,
 		ScriptReserved_PlayerIsTorchLit, &LaraObject::IsTorchLit,
 		ScriptReserved_GetWaterStatus, & LaraObject::GetWaterStatus,
+		ScriptReserved_GetWaterSkinStatus, & LaraObject::GetWaterSkinStatus,
+		ScriptReserved_SetWaterSkinStatus, & LaraObject::SetWaterSkinStatus,
 		ScriptReserved_PlayerInteract, &LaraObject::Interact,
 		ScriptReserved_PlayerTestInteraction, &LaraObject::TestInteraction,
 
