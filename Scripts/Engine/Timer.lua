@@ -683,11 +683,14 @@ function Timer:SetTextOption(optionsTable)
 	if type(optionsTable) ~= "table" then
 		TEN.Util.PrintLog("Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
-		for _, v in pairs(optionsTable) do
-			if not Type.IsNumber(v) or v < 0 or v > 3 then
+		for _, option in pairs(optionsTable) do
+			if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
 				TEN.Util.PrintLog("Error in Timer:SetTextOption(): invalid value in options for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 				return
 			end
+		end
+		if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+			table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
 		end
 		LevelVars.Engine.Timer.timers[self.name].stringOption = optionsTable
 	end
