@@ -610,7 +610,7 @@ function Timer:GetScale()
 	return LevelVars.Engine.Timer.timers[self.name].scale
 end
 
---- Set the paused color of the displayed timer when it is not active.
+--- Set the paused color of the displayed timer when it is in pause.
 -- @tparam[opt=TEN.Color(255&#44; 255&#44; 0&#44; 255)] Color color Timer's new paused color.
 -- @usage
 -- -- Example:
