@@ -90,7 +90,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 		else
 			input.UV = CalculateUVRotate(input.UV, 0);
 	
-	float4 tex = Texture.Sample(Sampler, input.UV);	
+	float4 tex = Texture.Sample(Sampler, input.UV);
 	
     DoAlphaTest(tex);
 
@@ -106,7 +106,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 	normal = normalize(mul(normal, TBN));
 	
     // Material effects
-    output.Color.xyz = CalculateReflections(input.WorldPosition, output.Color.xyz, input.FaceNormal, normal, specular);
+    tex.xyz = CalculateReflections(input.WorldPosition, tex.xyz, normal , specular);
 
     float2 samplePosition = GetSamplePosition(input.PositionCopy);
 	

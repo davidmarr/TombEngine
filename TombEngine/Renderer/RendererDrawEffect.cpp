@@ -1251,7 +1251,8 @@ namespace TEN::Renderer
 			if (flashBucket.Polygons.size() == 0)
 				continue;
 
-			BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+			BindBucketTextures(flashBucket, TextureSource::Moveables, false);
+			BindMaterial(flashBucket.MaterialIndex, false);
 
 			auto meshOffset = g_Level.Frames[GetAnimData(gunflash, 0).FramePtr].Offset;
 			auto offset = settings.MuzzleOffset + Vector3(meshOffset.x, meshOffset.z, meshOffset.y); // Offsets are inverted because of bone orientation.
