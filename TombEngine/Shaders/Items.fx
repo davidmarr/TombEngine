@@ -43,9 +43,6 @@ SamplerState AmbientMapFrontSampler : register(s7);
 Texture2D AmbientMapBackTexture : register(t8);
 SamplerState AmbientMapBackSampler : register(s8);
 
-Texture2D SSAOTexture : register(t9);
-SamplerState SSAOSampler : register(s9);
-
 PixelShaderInput VS(VertexShaderInput input)
 {
 	PixelShaderInput output;
@@ -85,14 +82,16 @@ PixelShaderOutput PS(PixelShaderInput input)
 	PixelShaderOutput output;
 
     if (Animated && Type == 1)
+    {
         if (IsWaterfall == 1)
             input.UV = CalculateUVRotateForLegacyWaterfalls(input.UV, 0);
-		else
-			input.UV = CalculateUVRotate(input.UV, 0);
+        else
+            input.UV = CalculateUVRotate(input.UV, 0);
+    }
 	
-	float4 tex = Texture.Sample(Sampler, input.UV);
-	
-    DoAlphaTest(tex);
+    // Apply parallax mapping
+    float3x3 TBNf = float3x3(input.Tangent, input.Binormal, input.FaceNormal);
+    input.UV = ParallaxOcclusionMapping(TBNf, input.WorldPosition, input.UV);  
 
     float4 occlusionRoughnessSpecular = OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, input.UV);
     float ambientOcclusion = occlusionRoughnessSpecular.x;
@@ -105,20 +104,14 @@ PixelShaderOutput PS(PixelShaderInput input)
 	float3 normal = UnpackNormalMap(NormalTexture.Sample(NormalTextureSampler, input.UV));
 	normal = normalize(mul(normal, TBN));
 	
+	float4 tex = Texture.Sample(Sampler, input.UV);
+	DoAlphaTest(tex);
+	
     // Material effects
     tex.xyz = CalculateReflections(input.WorldPosition, tex.xyz, normal , specular);
 
-    float2 samplePosition = GetSamplePosition(input.PositionCopy);
-	
-	float occlusion = 1.0f;
-    if (AmbientOcclusion == 1 && BlendModeSupportsSSAO())
-	{
-		occlusion = pow(SSAOTexture.Sample(SSAOSampler, samplePosition).x, AmbientOcclusionExponent);
-		
-		if (BlendMode == BLENDMODE_ALPHABLEND)
-			occlusion = lerp(occlusion, 1.0f, tex.w);
-	}
-	
+    // Ambient occlusion
+    float occlusion = CalculateOcclusion(GetSamplePosition(input.PositionCopy), tex.w);
     occlusion *= ambientOcclusion;
 
 	float3 color = (BoneLightModes[input.Bone / 4][input.Bone % 4] == 0) ?

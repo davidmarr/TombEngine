@@ -1699,6 +1699,7 @@ void LoadMaterials()
 		material.Parameters2 = ReadVector4();
 		material.Parameters3 = ReadVector4();
 		material.HasNormalMap = ReadBool();
+		material.HasHeightMap = ReadBool();
 		material.HasAmbientOcclusionMap = ReadBool();
 		material.HasRoughnessMap = ReadBool();
 		material.HasSpecularMap = ReadBool();
