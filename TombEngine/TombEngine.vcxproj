@@ -809,6 +809,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Graphics\Vertices\PostProcessVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\SpriteVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\Vertex.h" />
+    <ClInclude Include="Renderer\Native\DirectX11\DX11GraphicsDevice.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11IndexBuffer.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTarget2D.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTargetCube.h" />
@@ -1331,6 +1332,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Physics\Objects\CollisionMesh.cpp" />
     <ClCompile Include="Physics\Objects\CollisionMeshDesc.cpp" />
     <ClCompile Include="Renderer\Frustum.cpp" />
+    <ClCompile Include="Renderer\Native\DirectX11\DX11GraphicsDevice.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Renderer\RendererAntialiasing.cpp" />
     <ClCompile Include="Renderer\RendererCompatibility.cpp" />

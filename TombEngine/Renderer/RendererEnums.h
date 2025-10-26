@@ -120,7 +120,8 @@ enum class CullMode
 	Unknown = -1,
 	None = 0,
 	Clockwise = 1,
-	CounterClockwise = 2
+	CounterClockwise = 2,
+	Wireframe = 3
 };
 
 enum class ShadowMode

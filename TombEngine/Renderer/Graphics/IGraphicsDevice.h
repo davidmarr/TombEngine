@@ -43,10 +43,9 @@ namespace TEN::Renderer::Graphics
 
 		virtual ITexture2DArray* CreateTexture2DArray(int size, int count, ColorFormat colorFormat, ColorFormat depthFormat) = 0;
 
-		virtual void SetBlendMode(BlendMode blendMode, bool force = false) = 0;
-		virtual void SetDepthState(DepthState depthState, bool force = false) = 0;
-		virtual void SetCullMode(CullMode cullMode, bool force = false) = 0;
-		virtual void SetAlphaTest(AlphaTestMode mode, float threshold, bool force = false) = 0;
+		virtual void SetBlendMode(BlendMode blendMode) = 0;
+		virtual void SetDepthState(DepthState depthState) = 0;
+		virtual void SetCullMode(CullMode cullMode) = 0;
 		virtual void SetScissor(RendererRectangle rectangle) = 0;
 
 		virtual void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) = 0;

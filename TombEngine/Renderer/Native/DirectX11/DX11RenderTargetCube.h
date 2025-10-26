@@ -5,6 +5,7 @@
 #include <SimpleMath.h>
 #include "Renderer/Native/DirectX11/DX11TextureBase.h"
 #include "Renderer/RendererUtils.h"
+#include "Renderer/Graphics/IRenderTargetCube.h"
 
 namespace TEN::Renderer::Native::DirectX11
 {
@@ -15,7 +16,7 @@ namespace TEN::Renderer::Native::DirectX11
 	using Microsoft::WRL::ComPtr;
 	using std::array;
 
-	class DX11RenderTargetCube : public DX11TextureBase
+	class DX11RenderTargetCube : public IRenderTargetCube, protected DX11TextureBase
 	{
 	public:
 		static constexpr Vector3 forwardVectors[6] = 

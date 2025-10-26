@@ -3,6 +3,7 @@
 #include <wrl/client.h>
 #include "Renderer/Native/DirectX11/DX11TextureBase.h"
 #include "Renderer/RendererUtils.h"
+#include "Renderer/Graphics/IRenderTarget2D.h"
 
 namespace TEN::Renderer::Native::DirectX11
 {
@@ -10,7 +11,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	using Microsoft::WRL::ComPtr;
 
-	class DX11RenderTarget2D : public DX11TextureBase
+	class DX11RenderTarget2D : public IRenderTarget2D, protected DX11TextureBase
 	{
 	public:
 		ComPtr<ID3D11RenderTargetView>	 RenderTargetView;

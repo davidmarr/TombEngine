@@ -4,6 +4,7 @@
 #include <vector>
 #include "Renderer/Native/DirectX11/DX11TextureBase.h"
 #include "Renderer/RendererUtils.h"
+#include "Renderer/Graphics/ITexture2DArray.h"
 
 namespace TEN::Renderer::Native::DirectX11
 {
@@ -12,7 +13,7 @@ namespace TEN::Renderer::Native::DirectX11
 	
 	using Microsoft::WRL::ComPtr;
 
-	class DX11Texture2DArray : public DX11TextureBase
+	class DX11Texture2DArray :public ITexture2DArray, protected DX11TextureBase
 	{
 	public:
 

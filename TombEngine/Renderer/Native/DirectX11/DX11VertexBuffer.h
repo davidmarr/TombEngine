@@ -15,8 +15,7 @@ namespace TEN::Renderer::Native::DirectX11
 	using namespace TEN::Renderer::Graphics;
 
 	using Microsoft::WRL::ComPtr;
-
-	template <typename CVertex>
+	
 	class DX11VertexBuffer final : public IVertexBuffer
 	{
 	private:
@@ -24,7 +23,8 @@ namespace TEN::Renderer::Native::DirectX11
 
 	public:
 		ComPtr<ID3D11Buffer> Buffer;
-		
+		int Stride;
+
 		DX11VertexBuffer() 
 		{
 		};
@@ -32,10 +32,12 @@ namespace TEN::Renderer::Native::DirectX11
 		template <typename CVertex>
 		DX11VertexBuffer(ID3D11Device* device, int numVertices, std::vector<CVertex> vertices)
 		{
+			Stride = sizeof(CVertex);
+
 			D3D11_BUFFER_DESC desc = {};
 
 			desc.Usage = D3D11_USAGE_DYNAMIC;
-			desc.ByteWidth = sizeof(CVertex) * (numVertices > 0 ? numVertices : 1);
+			desc.ByteWidth = Stride * (numVertices > 0 ? numVertices : 1);
 			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
@@ -43,7 +45,7 @@ namespace TEN::Renderer::Native::DirectX11
 			{
 				D3D11_SUBRESOURCE_DATA initData = {};
 				initData.pSysMem = vertices.data();
-				initData.SysMemPitch = sizeof(CVertex) * numVertices;
+				initData.SysMemPitch = Stride * numVertices;
 
 				throwIfFailed(device->CreateBuffer(&desc, &initData, &Buffer));
 			}
@@ -58,10 +60,12 @@ namespace TEN::Renderer::Native::DirectX11
 		template <typename CVertex>
 		DX11VertexBuffer(ID3D11Device* device, int numVertices, fast_vector<CVertex> vertices)
 		{
+			Stride = sizeof(CVertex);
+
 			D3D11_BUFFER_DESC desc = {};
 
 			desc.Usage = D3D11_USAGE_DYNAMIC;
-			desc.ByteWidth = sizeof(CVertex) * (numVertices > 0 ? numVertices : 1);
+			desc.ByteWidth = Stride * (numVertices > 0 ? numVertices : 1);
 			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
@@ -69,7 +73,7 @@ namespace TEN::Renderer::Native::DirectX11
 			{
 				D3D11_SUBRESOURCE_DATA initData = {};
 				initData.pSysMem = vertices.data();
-				initData.SysMemPitch = sizeof(CVertex) * numVertices;
+				initData.SysMemPitch = Stride * numVertices;
 
 				throwIfFailed(device->CreateBuffer(&desc, &initData, &Buffer));
 			}
@@ -84,10 +88,12 @@ namespace TEN::Renderer::Native::DirectX11
 		template <typename CVertex>
 		DX11VertexBuffer(ID3D11Device* device, int numVertices, CVertex* vertices)
 		{
+			Stride = sizeof(CVertex);
+
 			D3D11_BUFFER_DESC desc = {};
 
 			desc.Usage = D3D11_USAGE_DYNAMIC;
-			desc.ByteWidth = sizeof(CVertex) * (numVertices > 0 ? numVertices : 1);
+			desc.ByteWidth = Stride * (numVertices > 0 ? numVertices : 1);
 			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
@@ -95,7 +101,7 @@ namespace TEN::Renderer::Native::DirectX11
 			{
 				D3D11_SUBRESOURCE_DATA initData = {};
 				initData.pSysMem = vertices;
-				initData.SysMemPitch = sizeof(CVertex) * numVertices;
+				initData.SysMemPitch = Stride * numVertices;
 
 				throwIfFailed(device->CreateBuffer(&desc, &initData, &Buffer));
 			}
@@ -116,7 +122,7 @@ namespace TEN::Renderer::Native::DirectX11
 			if (SUCCEEDED(res))
 			{
 				void* dataPtr = (mappedResource.pData);
-				memcpy(dataPtr, &data[startVertex], count * sizeof(CVertex));
+				memcpy(dataPtr, &data[startVertex], count * Stride);
 				context->Unmap(Buffer.Get(), 0);
 				return true;
 			}
