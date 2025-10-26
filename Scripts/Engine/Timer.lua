@@ -689,7 +689,7 @@ function Timer:SetTextOption(optionsTable)
 				return
 			end
 		end
-		if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+		if not Utility.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
 			table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
 		end
 		LevelVars.Engine.Timer.timers[self.name].stringOption = optionsTable
