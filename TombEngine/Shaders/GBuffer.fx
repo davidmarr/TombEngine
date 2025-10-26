@@ -138,7 +138,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 	DoAlphaTest(color);
 	
     float4 emissive = EmissiveTexture.Sample(EmissiveSampler, input.UV);
-    float specular = OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, input.UV).z;
+    float specular = ORSHTexture.Sample(ORSHSampler, input.UV).z;
 	
 	float3x3 TBN = float3x3(input.Tangent, input.Binormal, input.Normal);
 	float3 normal = DecodeNormalMap(NormalTexture.Sample(NormalTextureSampler, input.UV));

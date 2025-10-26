@@ -4184,7 +4184,7 @@ namespace TEN::Renderer
 
 		BindTexture(TextureRegister::ColorMap, &std::get<0>(atlas), SamplerStateRegister::AnisotropicClamp);
 		BindTexture(TextureRegister::NormalMap, &std::get<1>(atlas), SamplerStateRegister::AnisotropicClamp);
-		BindTexture(TextureRegister::OcclusionRoughnessSpecularMap, &std::get<2>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::ORSHMap, &std::get<2>(atlas), SamplerStateRegister::AnisotropicClamp);
 		BindTexture(TextureRegister::EmissiveMap, &std::get<3>(atlas), SamplerStateRegister::AnisotropicClamp);
 	}
 }

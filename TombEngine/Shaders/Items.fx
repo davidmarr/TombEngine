@@ -93,10 +93,10 @@ PixelShaderOutput PS(PixelShaderInput input)
     float3x3 TBNf = float3x3(input.Tangent, input.Binormal, input.FaceNormal);
     input.UV = ParallaxOcclusionMapping(TBNf, input.WorldPosition, input.UV);  
 
-    float4 occlusionRoughnessSpecular = OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, input.UV);
-    float ambientOcclusion = occlusionRoughnessSpecular.x;
-    float roughness = occlusionRoughnessSpecular.y;
-    float specular = occlusionRoughnessSpecular.z;
+    float4 ORSH = ORSHTexture.Sample(ORSHSampler, input.UV);
+    float ambientOcclusion = ORSH.x;
+    float roughness = ORSH.y;
+    float specular = ORSH.z;
 	
     float3 emissive = EmissiveTexture.Sample(EmissiveSampler, input.UV).xyz;
 	
