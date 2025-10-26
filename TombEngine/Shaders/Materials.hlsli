@@ -1,12 +1,29 @@
 #ifndef MATERIALSSHADER
 #define MATERIALSSHADER
 
+#include "./Blending.hlsli"
 #include "./CBCamera.hlsli"
 #include "./CBMaterial.hlsli"
 
 #define MATERIAL_DEFAULT           0
 #define MATERIAL_REFLECTIVE        1
 #define MATERIAL_SKYBOX_REFLECTIVE 2
+
+#define MATERIAL_FLAG_MASK 0xFF
+#define MATERIAL_FLAG_HEIGHTMAP 1 << 8
+#define MATERIAL_FLAG_OCCLUSION 1 << 9
+#define MATERIAL_FLAG_EMISSIVE  1 << 10
+
+#define POM_MIN_STEPS 2
+#define POM_MAX_STEPS 16
+#define POM_FADE_START 5000
+#define POM_FADE_END 6000
+#define POM_FADE_TOLERANCE 0.001f
+#define POM_MIN_ANGLE 0.4f
+#define POM_HEIGHT_SCALE 0.0035f
+
+Texture2D SSAOTexture : register(t9);
+SamplerState SSAOSampler : register(s9);
 
 Texture2D OcclusionRoughnessSpecularTexture : register(t10);
 SamplerState OcclusionRoughnessSpecularSampler : register(s10);
@@ -78,11 +95,13 @@ float3 CalculateLegacyReflections(float3 worldPosition, float3 normal, float spe
 
 float3 CalculateReflections(float3 position, float3 color, float3 normal, float3 specular)
 {
-    if (MaterialType == MATERIAL_SKYBOX_REFLECTIVE)
+    int materialType = MaterialTypeAndFlags & MATERIAL_FLAG_MASK;
+	
+    if (materialType == MATERIAL_SKYBOX_REFLECTIVE)
     {
         return CalculateSkyBoxReflections(position, normal, specular, color);
     }
-    else if (MaterialType == MATERIAL_REFLECTIVE)
+    else if (materialType == MATERIAL_REFLECTIVE)
     {
         return CalculateLegacyReflections(position, normal, specular, color);
     }
@@ -90,6 +109,91 @@ float3 CalculateReflections(float3 position, float3 color, float3 normal, float3
     {
         return color;
     }
+}
+
+float2 ParallaxOcclusionMapping(float3x3 TBN, float3 pos, float2 baseUV)
+{
+    if (!(MaterialTypeAndFlags & MATERIAL_FLAG_HEIGHTMAP))
+        return baseUV;
+
+    float3 camVector = CamPositionWS - pos;
+	
+    // Discard parallax mapping over the distance.
+    float fade = saturate(1.0f - (length(camVector) - POM_FADE_START) / (POM_FADE_END - POM_FADE_START));
+    if (fade <= POM_FADE_TOLERANCE)
+        return baseUV;
+
+    // Build orthonormal TBN basis (fix potential handedness in TR coordinate system).
+    float3 t = normalize(TBN[0]);
+    float3 b = normalize(TBN[1]);
+    float3 n = normalize(TBN[2]);
+    float3 recomputedB = cross(n, t);
+    float handedness = dot(recomputedB, b) >= 0.0f ? 1.0f : -1.0f;
+    b = recomputedB * handedness;
+
+    // Compute view direction in tangent space.
+    float3 viewW = normalize(camVector);
+    float3 viewDirTangent = -normalize(float3(dot(viewW, t), dot(viewW, b), dot(viewW, n)));
+
+    // Flip tangent-space Y to match inverted TR coordinate system.
+    viewDirTangent.y = -viewDirTangent.y;
+	
+	// Clamp steep view angles to avoid artifacts.
+	viewDirTangent.z = clamp(viewDirTangent.z, POM_MIN_ANGLE, 1.0f);
+
+    // Adaptive sample count based on angle.
+    int numSamples = max(1, (int)ceil(lerp(POM_MAX_STEPS, POM_MIN_STEPS, saturate(viewDirTangent.z))));
+    float layerDepth = 1.0f / numSamples;
+
+    // Parallax amount & delta UV.
+    float2 deltaUV = (viewDirTangent.xy / viewDirTangent.z) * POM_HEIGHT_SCALE / numSamples;
+
+    // Iterative depth search.
+	
+    float currentDepth = 0.0f;
+    float2 currentUV = baseUV;
+    float2 wrappedUV = frac(currentUV);
+    float currentMapDepth = 1.0f - OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, wrappedUV).w;
+
+    [loop]
+    for (int i = 0; i < numSamples; i++)
+    {
+        if (currentDepth >= currentMapDepth)
+            break;
+
+        currentUV += deltaUV;
+        currentDepth += layerDepth;
+
+        wrappedUV = frac(currentUV);
+        currentMapDepth = 1.0f - OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, wrappedUV).w;
+    }
+
+    // Linear refinement between last two steps.
+    float2 prevUV = currentUV - deltaUV;
+    float2 wrappedPrevUV = frac(prevUV);
+    float mapDepthPrev = 1.0f - OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, wrappedPrevUV).w;
+
+    float afterDepth = currentMapDepth - currentDepth;
+    float beforeDepth = mapDepthPrev - (currentDepth - layerDepth);
+
+    float weight = saturate(afterDepth / (afterDepth - beforeDepth + EPSILON));
+    float2 finalUV = lerp(frac(currentUV), wrappedPrevUV, weight);
+
+    // Distance fade between parallax UV and flat UV.
+    return lerp(baseUV, finalUV, fade);
+}
+
+float CalculateOcclusion(float2 samplePosition, float alpha)
+{
+    if (AmbientOcclusion == 0 || !BlendModeSupportsSSAO() || (MaterialTypeAndFlags & MATERIAL_FLAG_HEIGHTMAP))
+		return 1.0f;
+		
+	float occlusion = pow(SSAOTexture.Sample(SSAOSampler, samplePosition).x, AmbientOcclusionExponent);
+	
+	if (BlendMode == BLENDMODE_ALPHABLEND)
+		occlusion = lerp(occlusion, 1.0f, alpha);
+	
+	return occlusion;
 }
 
 #endif

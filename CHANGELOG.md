@@ -6,7 +6,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 1.10]
 
 ### New features
-* Added material system with support for normal, specular, roughness, emissive, and ambient occlusion maps.
+* Added material system with support for normal, specular, roughness, emissive, parallax and ambient occlusion maps.
 * Added animated textures support for moveables and static meshes.
 * Added UVRotate support with arbitrary texture rotation direction.
 * Added interaction highlighter.

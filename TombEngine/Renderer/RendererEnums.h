@@ -293,6 +293,7 @@ enum class TextureSource
 	Statics,
 	Animated
 };
+
 enum class SMAAMode
 {
 	MODE_SMAA_1X,
