@@ -82,12 +82,16 @@ Stopwatch.Create = function(stopwatchData)
         TEN.Util.PrintLog(warningPrefix .. "wrong value for startTime, startTime for '".. stopwatchData.name .."' timer will be set to 0", TEN.Util.LogLevel.WARNING)
     end
     stopwatchEntry.startTime = Type.IsNumber(stopwatchData.startTime) and TEN.Time((math.floor(stopwatchData.startTime * 10) / 10)  * 30) or zero
-    stopwatchEntry.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+
+    -- check stringOption
+    local warning1Message = warningPrefix .. "stringOption must be a table. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
+    local warning2Message = warningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
+    stopwatchEntry.stringOption = LevelFuncs.Engine.Stopwatch.CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
+
     stopwatchEntry.currentTime = stopwatchEntry.startTime
     stopwatchEntry.active = false
     stopwatchEntry.paused = true
     stopwatchEntry.stop = false
-    
     stopwatchEntry.realtime = stopwatchEntry.startTime
     stopwatchEntry.skipFirstTick = true
     stopwatchEntry.hasTicked = true
@@ -127,8 +131,14 @@ end
 -- @tparam string name The name of the stopwatch to check.
 -- @treturn bool True if the stopwatch exists, false otherwise.
 -- @usage
--- local if Stopwatch.IfExists("MyStopwatch") then
+-- -- Example1: Check if a stopwatch exists before using it
+-- if Stopwatch.IfExists("MyStopwatch") then
 --     local myStopwatch = Stopwatch.Get("MyStopwatch")
+-- end
+--
+-- -- Example2: Check if a stopwatch exists before creating it
+-- if not Stopwatch.IfExists("MyStopwatch") then
+--     local myStopwatch = Stopwatch.Create({ name = "MyStopwatch" })
 -- end
 Stopwatch.IfExists = function(name)
     if not Type.IsString(name) then
@@ -143,12 +153,13 @@ end
 -- Table setup for creating Stopwatch.
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
+-- @tfield[opt=0] float startTime The time (in seconds) from which the stopwatch will start counting up.
 -- @tfield[opt=false] table|bool timerFormat Sets the time display. See <a href="Timer.html#timerFormat">Timer format</a> for details.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is not active.
--- @tfield[opt=0] float startTime The time (in seconds) from which the stopwatch will start counting up.
+-- @tfield[opt={TEN.Strings.DisplayStringOption.CENTER&#44; TEN.Strings.DisplayStringOption.SHADOW&#44; TEN.Strings.DisplayStringOption.VERTICAL_CENTER}] table stringOption A table containing values from @{TEN.Strings.DisplayStringOption} to set the text options.
 
 
 ----
@@ -234,7 +245,8 @@ function Stopwatch:GetCurrentTimeInSeconds()
 end
 
 --- Get the current time of the stopwatch formatted as a string.
--- @tparam[opt=false] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details. If not provided, the stopwatch's timerFormat will be used.
+-- @tparam[opt=false] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- If not provided, will default to {minutes = true, seconds = true, deciseconds = false}.
 -- @treturn string The formatted time string.
 function Stopwatch:GetCurrentTimeFormatted(timerFormat)
     if self.error then
@@ -242,7 +254,7 @@ function Stopwatch:GetCurrentTimeFormatted(timerFormat)
         return "00:00.0"
     else
         local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-        local format = timerFormat or stopwatchEntry.timerFormat
+        local format = timerFormat or {minutes = true, seconds = true, deciseconds = false}
         local errorMessage = "Warning in Stopwatch:GetCurrentTimeFormatted(): wrong value for timerFormat, default format will be used."
         return Util.GenerateTimeFormattedString(stopwatchEntry.currentTime, format, errorMessage)
     end
@@ -438,22 +450,9 @@ function Stopwatch:SetTextOptions(optionsTable)
     if self.error then
         TEN.Util.PrintLog("Error in Stopwatch:SetTextOption(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
     else
-        optionsTable = optionsTable or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
-        if not Type.IsTable(optionsTable) then
-            TEN.Util.PrintLog("Error in Stopwatch:SetTextOption(): optionsTable must be a table.", TEN.Util.LogLevel.ERROR)
-            return
-        else
-            for _, option in ipairs(optionsTable) do
-                if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
-                    TEN.Util.PrintLog("Error in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption.", TEN.Util.LogLevel.ERROR)
-                    return
-                end
-            end
-        end
-        if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
-            table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
-        end
-        LevelVars.Engine.Stopwatch.stopwatches[self.name].stringOption = optionsTable
+        local warning1Message = "Error in Stopwatch:SetTextOption(): optionsTable must be a table."
+        local warning2Message = "Error in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption."
+        LevelVars.Engine.Stopwatch.stopwatches[self.name].stringOption = LevelFuncs.Engine.Stopwatch.CheckTextOptions(optionsTable, warning1Message, warning2Message)
     end
 end
 
@@ -472,7 +471,10 @@ end
 --- Check if the stopwatch is active.
 -- @treturn bool True if the stopwatch is active, false otherwise.
 -- @usage
--- local isActive = Stopwatch.Get("MyStopwatch"):IsActive()
+-- Example: Activate a post-process effect only if the stopwatch is active
+-- if Stopwatch.Get("MyStopwatch"):IsActive() then
+--     TEN.View.SetPostProcessMode(TEN.View.PostProcessMode.EXCLUSION)
+-- end
 function Stopwatch:IsActive()
     if self.error then
         TEN.Util.PrintLog("Error in Stopwatch:IsActive(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
@@ -481,6 +483,19 @@ function Stopwatch:IsActive()
     return LevelVars.Engine.Stopwatch.stopwatches[self.name].active
 end
 
+--- Check if the stopwatch is active.
+-- Returns `true` every 0.1 seconds when the stopwatch is active and not paused.<br>
+-- TEN's engine runs on a 0.03-second internal tick, while stopwatches ticks every 0.1 seconds.<br>
+-- Use `IsTicking()` to ensure consistency and avoid unexpected behavior — for example, inside the `OnLoop` event.
+-- @treturn bool True if the stopwatch is ticking, false otherwise.
+-- @usage
+-- -- Example: Display currentTime when the stopwatch is active and ticking
+-- LevelFuncs.OnLoop = function() -- this function is present in the .lua file of the level
+--     if Stopwatch.Get("MyStopwatch"):IsActive() and Stopwatch.Get("MyStopwatch"):IsTicking() then
+--         local currentTime = Stopwatch.Get("MyStopwatch"):GetCurrentTimeFormatted()
+--         print("Current Time: " .. currentTime)
+--     end
+-- end
 function Stopwatch:IsTicking()
     if self.error then
         TEN.Util.PrintLog("Error in Stopwatch:IsTicking(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
@@ -488,6 +503,26 @@ function Stopwatch:IsTicking()
     end
     local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
     return not stopwatchEntry.paused and stopwatchEntry.ticking or false
+end
+
+LevelFuncs.Engine.Stopwatch.CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
+    local defaultOptions = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+    optionsTable = optionsTable or defaultOptions
+    if not Type.IsTable(optionsTable) then
+        TEN.Util.PrintLog(warning1Message, TEN.Util.LogLevel.WARNING)
+        return defaultOptions
+    else
+        for _, option in ipairs(optionsTable) do
+            if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
+                TEN.Util.PrintLog(warning2Message, TEN.Util.LogLevel.WARNING)
+                return defaultOptions
+            end
+        end
+    end
+    if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+        table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
+    end
+    return optionsTable
 end
 
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
