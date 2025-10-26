@@ -4,8 +4,7 @@
 -- @luautil Stopwatch
 
 local Type = require("Engine.Type")
-local Utility = require("Engine.Util")
-local Utl = require("Engine.Utility")
+local Util = require("Engine.Util")
 
 local zero = TEN.Time()
 local Stopwatch = {}
@@ -49,28 +48,40 @@ Stopwatch.Create = function(stopwatchData)
     LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name] = {}
     local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name]
     -- stopwatchEntry.name = stopwatchData.name
+
+    -- check timerFormat
     local timerFormat = stopwatchData.timerFormat or false
-    stopwatchEntry.timerFormat = Utility.CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. stopwatchData.name .."' timer will be set to false")
+    stopwatchEntry.timerFormat = Util.CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. stopwatchData.name .."' timer will be set to false")
+    
+    -- check position
     stopwatchEntry.position = Type.IsVec2(stopwatchData.position) and TEN.Vec2(TEN.Util.PercentToScreen(stopwatchData.position.x, stopwatchData.position.y)) or TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
     if not Type.IsVec2(stopwatchEntry.position) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for position, position for '".. stopwatchData.name .."' timer will be set to Vec2(50, 90)", TEN.Util.LogLevel.WARNING)
     end
+
+    -- check scale
     stopwatchEntry.scale = Type.IsNumber(stopwatchData.scale) and stopwatchData.scale or 1
     if not Type.IsNumber(stopwatchEntry.scale) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for scale, scale for '".. stopwatchData.name .."' timer will be set to 1", TEN.Util.LogLevel.WARNING)
     end
+
+    -- check color
     stopwatchEntry.color = Type.IsColor(stopwatchData.color) and stopwatchData.color or TEN.Color(255, 255, 255, 255)
     if not Type.IsColor(stopwatchEntry.color) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for color, color for '".. stopwatchData.name .."' timer will be set to Color(255, 255, 255, 255)", TEN.Util.LogLevel.WARNING)
     end
+    
+    -- check pausedColor
     stopwatchEntry.pausedColor = Type.IsColor(stopwatchData.pausedColor) and stopwatchData.pausedColor or TEN.Color(255, 255, 0, 255)
     if not Type.IsColor(stopwatchEntry.pausedColor) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for pausedColor, pausedColor for '".. stopwatchData.name .."' timer will be set to Color(255, 255, 0, 255)", TEN.Util.LogLevel.WARNING)
     end
-    stopwatchEntry.startTime = Type.IsNumber(stopwatchData.startTime) and TEN.Time((math.floor(stopwatchData.startTime * 10) / 10)  * 30) or zero
-    if not Type.IsNumber(stopwatchEntry.startTime) then
+
+    -- check startTime
+    if not Type.IsNull(stopwatchData.startTime) and not Type.IsNumber(stopwatchData.startTime) then
         TEN.Util.PrintLog(warningPrefix .. "wrong value for startTime, startTime for '".. stopwatchData.name .."' timer will be set to 0", TEN.Util.LogLevel.WARNING)
     end
+    stopwatchEntry.startTime = Type.IsNumber(stopwatchData.startTime) and TEN.Time((math.floor(stopwatchData.startTime * 10) / 10)  * 30) or zero
     stopwatchEntry.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
     stopwatchEntry.currentTime = stopwatchEntry.startTime
     stopwatchEntry.active = false
@@ -233,7 +244,7 @@ function Stopwatch:GetCurrentTimeFormatted(timerFormat)
         local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
         local format = timerFormat or stopwatchEntry.timerFormat
         local errorMessage = "Warning in Stopwatch:GetCurrentTimeFormatted(): wrong value for timerFormat, default format will be used."
-        return Utility.GenerateTimeFormattedString(stopwatchEntry.currentTime, format, errorMessage)
+        return Util.GenerateTimeFormattedString(stopwatchEntry.currentTime, format, errorMessage)
     end
 end
 
@@ -284,7 +295,7 @@ function Stopwatch:IfCurrentTimeIs(operator, seconds)
         local secondsRounded = math.floor(seconds * 10) / 10
         local time = TEN.Time(secondsRounded * 30)
         if stopwatchEntry.hasTicked then
-            return Utility.CompareValues(stopwatchEntry.currentTime, time, operator)
+            return Util.CompareValues(stopwatchEntry.currentTime, time, operator)
         end
     end
 end
@@ -439,9 +450,9 @@ function Stopwatch:SetTextOptions(optionsTable)
                 end
             end
         end
-        -- if not Utl.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
-        --     table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
-        -- end
+        if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+            table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
+        end
         LevelVars.Engine.Stopwatch.stopwatches[self.name].stringOption = optionsTable
     end
 end
@@ -499,7 +510,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
         if s.active then
             if s.timerFormat then
-                local textTimer = Utility.GenerateTimeFormattedString(s.currentTime, s.timerFormat)
+                local textTimer = Util.GenerateTimeFormattedString(s.currentTime, s.timerFormat)
                 local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, s.color, false, s.stringOption)
                 displayTime:SetColor((not s.paused or s.stop) and s.color or s.pausedColor)
                 TEN.Strings.ShowString(displayTime, s.stop and 1 or 1/30)
