@@ -29,7 +29,7 @@ struct TEXTURE
 	int height;
 	std::vector<byte> colorMapData;
 	std::vector<byte> normalMapData;
-	std::vector<byte> occlusionRoughnessSpecularMapData;
+	std::vector<byte> ORSHMapData;
 	std::vector<byte> emissiveMapData;
 };
 

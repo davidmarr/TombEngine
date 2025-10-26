@@ -25,8 +25,8 @@
 Texture2D SSAOTexture : register(t9);
 SamplerState SSAOSampler : register(s9);
 
-Texture2D OcclusionRoughnessSpecularTexture : register(t10);
-SamplerState OcclusionRoughnessSpecularSampler : register(s10);
+Texture2D ORSHTexture : register(t10);
+SamplerState ORSHSampler : register(s10);
 
 Texture2D EmissiveTexture : register(t11);
 SamplerState EmissiveSampler : register(s11);
@@ -153,7 +153,7 @@ float2 ParallaxOcclusionMapping(float3x3 TBN, float3 pos, float2 baseUV)
     float currentDepth = 0.0f;
     float2 currentUV = baseUV;
     float2 wrappedUV = frac(currentUV);
-    float currentMapDepth = 1.0f - OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, wrappedUV).w;
+    float currentMapDepth = 1.0f - ORSHTexture.Sample(ORSHSampler, wrappedUV).w;
 
     [loop]
     for (int i = 0; i < numSamples; i++)
@@ -165,13 +165,13 @@ float2 ParallaxOcclusionMapping(float3x3 TBN, float3 pos, float2 baseUV)
         currentDepth += layerDepth;
 
         wrappedUV = frac(currentUV);
-        currentMapDepth = 1.0f - OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, wrappedUV).w;
+        currentMapDepth = 1.0f - ORSHTexture.Sample(ORSHSampler, wrappedUV).w;
     }
 
     // Linear refinement between last two steps.
     float2 prevUV = currentUV - deltaUV;
     float2 wrappedPrevUV = frac(prevUV);
-    float mapDepthPrev = 1.0f - OcclusionRoughnessSpecularTexture.Sample(OcclusionRoughnessSpecularSampler, wrappedPrevUV).w;
+    float mapDepthPrev = 1.0f - ORSHTexture.Sample(ORSHSampler, wrappedPrevUV).w;
 
     float afterDepth = currentMapDepth - currentDepth;
     float beforeDepth = mapDepthPrev - (currentDepth - layerDepth);
