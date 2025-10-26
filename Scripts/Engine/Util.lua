@@ -82,7 +82,7 @@ Util.GenerateTimeFormattedString = function (time, timerFormat, errorFormat)
 
     	if timerFormat.deciseconds then
         	local deciseconds = math.floor(time.c / 10)
-			return (index == 1) and deciseconds or formattedString .. "." .. deciseconds
+			return (index == 1) and tostring(deciseconds) or tostring(formattedString .. "." .. deciseconds)
     	end
     	return formattedString
 	end
