@@ -105,21 +105,32 @@ namespace TEN::Scripting::Util
 		return std::make_tuple(resX, resY);
 	}
 
+	/// Translate a Vec2 of display position coordinates to Vec2 pixel coordinates.
+	//To be used with @{Strings.DisplayString:SetPosition} and @{Strings.DisplayString}.
+	//@function PercentToScreen
+	//@tparam Vec2 percentPos Display position to translate to pixel coordinates.
+	//@treturn Vec2 Pixel coordinates.
+	//@usage
+	//local percentPos = Vec2(25, 75)
+	//local screenPos = Util.PercentToScreen(percentPos)
+	//local str1 = DisplayString("Position at 25% X and 75% Y", screenPos)
+	//ShowString(str1, 4)
+	static Vec2 PercentToScreen(const Vec2& percentPos)
+	{
+		auto [screenX, screenY] = PercentToScreen(percentPos.x, percentPos.y);
+		return Vec2((float)screenX, (float)screenY);
+	}
+
 	/// Translate a pair of pixel coordinates to display position coordinates.
-	// To be used with @{Strings.DisplayString:GetPosition}.
-	// @function ScreenToPercent
-	// @tparam int|Vec2 x X pixel coordinate to translate to display position, or Vec2 containing both coordinates.
-	// @tparam[opt] int y Y pixel coordinate to translate to display position (omit if using Vec2).
-	// @treturn float|Vec2 x X component of display position (or Vec2 if Vec2 input was used).
-	// @treturn[opt] float y Y component of display position (omit if Vec2 input was used).
-	// @usage
-	// -- Using individual coordinates
-	// local percentX, percentY = TEN.Util.ScreenToPercent(800, 600)
-	// 
-	// -- Using Vec2
-	// local screenPos = Vec2(800, 600)
-	// local percentPos = TEN.Util.ScreenToPercent(screenPos)
-	// print(percentPos.x, percentPos.y)
+	//To be used with @{Strings.DisplayString:GetPosition}.
+	//@function ScreenToPercent
+	//@tparam int x X pixel coordinate to translate to display position.
+	//@tparam int y Y pixel coordinate to translate to display position.
+	//@treturn float x X component of display position.
+	//@treturn float y Y component of display position.
+	//@usage
+	//local screenX, screenY = PercentToScreen(25, 75)
+	//local percentX, percentY = ScreenToPercent(screenX, screenY)
 	static std::tuple<float, float> ScreenToPercent(int x, int y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -129,8 +140,15 @@ namespace TEN::Scripting::Util
 		return std::make_tuple(resX, resY);
 	}
 
-	/// Translate a Vec2 of pixel coordinates to display position coordinates.
-	// This overload is documented in the main ScreenToPercent function above.
+	/// Translate a Vec2 of pixel coordinates to Vec2 display position coordinates.
+	//To be used with @{Strings.DisplayString:GetPosition}.
+	//@function ScreenToPercent
+	//@tparam Vec2 screenPos Pixel coordinates to translate to display position.
+	//@treturn Vec2 Display position.
+	//@usage
+	//local screenPos = Vec2(400, 300)
+	//local percentPos = Util.ScreenToPercent(screenPos)
+	//print('Percent X: ' .. percentPos.x .. ' Percent Y: ' .. percentPos.y)
 	static Vec2 ScreenToPercent(const Vec2& screenPos)
 	{
 		auto [percentX, percentY] = ScreenToPercent((int)screenPos.x, (int)screenPos.y);
@@ -213,7 +231,12 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_GetDisplayPosition, &GetDisplayPosition);
 		tableUtil.set_function(ScriptReserved_PickMoveable, &PickMoveable);
 		tableUtil.set_function(ScriptReserved_PickStatic, &PickStatic);
-		tableUtil.set_function(ScriptReserved_PercentToScreen, &PercentToScreen);
+		tableUtil.set_function(ScriptReserved_PercentToScreen,
+			sol::overload(
+				static_cast<std::tuple<int, int>(*)(float, float)>(&PercentToScreen),
+				static_cast<Vec2(*)(const Vec2&)>(&PercentToScreen)
+			)
+		);
 		tableUtil.set_function(ScriptReserved_ScreenToPercent,
 			sol::overload(
 				static_cast<std::tuple<float, float>(*)(int, int)>(&ScreenToPercent),
