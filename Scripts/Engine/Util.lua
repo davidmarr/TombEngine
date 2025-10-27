@@ -102,34 +102,6 @@ Util.CompareValue = function(operand, reference, operator)
     return operators[operator + 1] and operators[operator + 1](operand, reference) or false
 end
 
---- Convert a Vec2 in pixel coordinates to percent display coordinates.
--- @tparam Vec2 vec2Screen The Vec2 in pixel coordinates.
--- @treturn Vec2 The Vec2 in percent display coordinates.
--- @usage
--- local screenPos = TEN.Vec2(400, 300)
--- local percentPos = Utility.Vec2ScreenToPercent(screenPos)
-Util.Vec2ScreenToPercent = function (vec2Screen)
-    if not Type.IsVec2(vec2Screen) then
-        TEN.Util.PrintLog("Error in Utility.Vec2ScreenToPercent: input is not a Vec2.", TEN.Util.LogLevel.ERROR)
-        return TEN.Vec2(0, 0)
-    end
-    return TEN.Vec2(TEN.Util.ScreenToPercent(vec2Screen.x, vec2Screen.y))
-end
-
---- Convert a Vec2 in percent display coordinates to pixel coordinates.
--- @tparam Vec2 vec2Percent The Vec2 in percent display coordinates.
--- @treturn Vec2 The Vec2 in pixel coordinates.
--- @usage
--- local percentPos = TEN.Vec2(50, 50)
--- local screenPos = Utility.Vec2PercentToScreen(percentPos)
-Util.Vec2PercentToScreen = function (vec2Percent)
-    if not Type.IsVec2(vec2Percent) then
-        TEN.Util.PrintLog("Error in Utility.Vec2PercentToScreen: input is not a Vec2.", TEN.Util.LogLevel.ERROR)
-        return TEN.Vec2(0, 0)
-    end
-    return TEN.Vec2(TEN.Util.PercentToScreen(vec2Percent.x, vec2Percent.y))
-end
-
 --- Check if a table contains a specific value.
 -- @tparam table tbl The table to check.
 -- @tparam any val The value to search for.

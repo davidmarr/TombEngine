@@ -106,12 +106,20 @@ namespace TEN::Scripting::Util
 	}
 
 	/// Translate a pair of pixel coordinates to display position coordinates.
-	//To be used with @{Strings.DisplayString:GetPosition}.
-	//@function ScreenToPercent
-	//@tparam int x X pixel coordinate to translate to display position.
-	//@tparam int y Y pixel coordinate to translate to display position.
-	//@treturn float x X component of display position.
-	//@treturn float y Y component of display position.
+	// To be used with @{Strings.DisplayString:GetPosition}.
+	// @function ScreenToPercent
+	// @tparam int|Vec2 x X pixel coordinate to translate to display position, or Vec2 containing both coordinates.
+	// @tparam[opt] int y Y pixel coordinate to translate to display position (omit if using Vec2).
+	// @treturn float|Vec2 x X component of display position (or Vec2 if Vec2 input was used).
+	// @treturn[opt] float y Y component of display position (omit if Vec2 input was used).
+	// @usage
+	// -- Using individual coordinates
+	// local percentX, percentY = TEN.Util.ScreenToPercent(800, 600)
+	// 
+	// -- Using Vec2
+	// local screenPos = Vec2(800, 600)
+	// local percentPos = TEN.Util.ScreenToPercent(screenPos)
+	// print(percentPos.x, percentPos.y)
 	static std::tuple<float, float> ScreenToPercent(int x, int y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -119,6 +127,14 @@ namespace TEN::Scripting::Util
 		float resX = x / fWidth * 100.0f;
 		float resY = y / fHeight * 100.0f;
 		return std::make_tuple(resX, resY);
+	}
+
+	/// Translate a Vec2 of pixel coordinates to display position coordinates.
+	// This overload is documented in the main ScreenToPercent function above.
+	static Vec2 ScreenToPercent(const Vec2& screenPos)
+	{
+		auto [percentX, percentY] = ScreenToPercent((int)screenPos.x, (int)screenPos.y);
+		return Vec2(percentX, percentY);
 	}
 
 	/// Pick a moveable by the given display position.
@@ -198,7 +214,12 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_PickMoveable, &PickMoveable);
 		tableUtil.set_function(ScriptReserved_PickStatic, &PickStatic);
 		tableUtil.set_function(ScriptReserved_PercentToScreen, &PercentToScreen);
-		tableUtil.set_function(ScriptReserved_ScreenToPercent, &ScreenToPercent);
+		tableUtil.set_function(ScriptReserved_ScreenToPercent,
+			sol::overload(
+				static_cast<std::tuple<float, float>(*)(int, int)>(&ScreenToPercent),
+				static_cast<Vec2(*)(const Vec2&)>(&ScreenToPercent)
+			)
+		);
 		tableUtil.set_function(ScriptReserved_PrintLog, &PrintLog);
 
 		// COMPATIBILITY
