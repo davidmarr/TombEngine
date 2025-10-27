@@ -667,7 +667,11 @@ void Moveable::SetItemFlags(short value, int index)
 	_moveable->ItemFlags[index] = value;
 }
 
-/// Get the location value stored in the Enemy AI.
+/// Get the OCB of the AI object that the enemy is currently trying to reach.
+// Used exclusively by:
+// - SOPHIA_LEIGH
+// - VON_CROY
+// - The GUIDE, only if he has ItemFlags[2] bit 1 set
 // @function Moveable:GetLocationAI
 // @treturn short The value contained in the LocationAI of the creature.
 short Moveable::GetLocationAI() const
@@ -682,7 +686,11 @@ short Moveable::GetLocationAI() const
 	return 0;
 }
 
-/// Updates the location in the enemy AI with the given value.
+/// Updates the AI object OCB that the enemy should try to reach.
+// Used exclusively by:
+// - SOPHIA_LEIGH
+// - VON_CROY
+// - The GUIDE, only if he has ItemFlags[2] bit 1 set (otherwise, he ignore it and simply look for the next AI object OCB until he reaches the one set by the last call to flipeffect 30)
 // @function Moveable:SetLocationAI
 // @tparam short value Value to store.
 void Moveable::SetLocationAI(short value)

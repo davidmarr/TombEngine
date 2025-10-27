@@ -4148,10 +4148,18 @@ namespace TEN::Renderer
 
 		if (animated)
 		{
-			const auto& set = _animatedTextureSets[bucket.Texture];
+			// If video texture is used, directly bind it as a color map, and optionally as an emissive map, if it was
+			// set for the source placeholder texture.
 
+			const auto& set = _animatedTextureSets[bucket.Texture];
+				
 			if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture->Texture)
+			{
 				BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
+
+				if (g_Level.Materials[bucket.MaterialIndex].HasEmissiveMap)
+					BindTexture(TextureRegister::EmissiveMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
+			}
 			else
 				BindAtlasTextures(bucket, TextureSource::Animated);
 		}
@@ -4161,56 +4169,22 @@ namespace TEN::Renderer
 
 	void Renderer::BindAtlasTextures(const RendererBucket& bucket, TextureSource textureSource)
 	{
+		auto* atlasList = &_roomTextures;
+
 		switch (textureSource)
 		{
-		case TextureSource::Rooms:
-			BindTexture(TextureRegister::ColorMap,
-				&std::get<0>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::NormalMap,
-				&std::get<1>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::OcclusionRoughnessSpecularMap,
-				&std::get<2>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::EmissiveMap,
-				&std::get<3>(_roomTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-			break;
-
-		case TextureSource::Moveables:
-			BindTexture(TextureRegister::ColorMap,
-				&std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::NormalMap,
-				&std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::OcclusionRoughnessSpecularMap,
-				&std::get<2>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::EmissiveMap,
-				&std::get<3>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-			break;
-
-		case TextureSource::Statics:
-			BindTexture(TextureRegister::ColorMap,
-				&std::get<0>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::NormalMap,
-				&std::get<1>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::OcclusionRoughnessSpecularMap,
-				&std::get<2>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::EmissiveMap,
-				&std::get<3>(_staticTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-			break;
-
-		case TextureSource::Animated:
-			BindTexture(TextureRegister::ColorMap,
-				&std::get<0>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::NormalMap,
-				&std::get<1>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::OcclusionRoughnessSpecularMap,
-				&std::get<2>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-			BindTexture(TextureRegister::EmissiveMap,
-				&std::get<3>(_animatedTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-			break;
-
+			case TextureSource::Rooms:     atlasList = &_roomTextures;      break;
+			case TextureSource::Moveables: atlasList = &_moveablesTextures; break;
+			case TextureSource::Statics:   atlasList = &_staticTextures;    break;
+			case TextureSource::Animated:  atlasList = &_animatedTextures;  break;
+			default: return;
 		}
+
+		auto& atlas = (*atlasList)[bucket.Texture];
+
+		BindTexture(TextureRegister::ColorMap, &std::get<0>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::NormalMap, &std::get<1>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::ORSHMap, &std::get<2>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::EmissiveMap, &std::get<3>(atlas), SamplerStateRegister::AnisotropicClamp);
 	}
 }

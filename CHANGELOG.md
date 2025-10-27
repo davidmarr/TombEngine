@@ -5,10 +5,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10]
 
-## New features
-* Added material system with support for normal, specular, roughness, emissive, and ambient occlusion maps.
+### New features
+* Added material system with support for normal, specular, roughness, emissive, parallax and ambient occlusion maps.
 * Added animated textures support for moveables and static meshes.
-* Added UVRotate support.
+* Added UVRotate support with arbitrary texture rotation direction.
 * Added interaction highlighter.
 * Added bullet hole and explosion decals for room geometry.
 * Added ability to colorize FLAME_EMITTER and FLAME_EMITTER2 objects and fade them on activation or deactivation.
@@ -25,11 +25,14 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed FISH_EMITTER fish escape direction when player is nearby.
 * Fixed EXPANDING_PLATFORM and RAISING_BLOCK rendering issues in flat state.
 * Fixed LOCUST_EMITTER object.
+* Fixed SNOWMOBILE not displaying moving tracks (SNOWMOBILE_TRACKS object required).
+  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Vehicles/TEN_Skidoo.wad2).
 * Fixed several collision issues for TRAIN object.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed wall embeddings after jumping on top of hard static meshes aligned to walls.
 * Fixed dying while landing into shallow water after freefall.
 * Fixed rapids drowning animation not triggering after freefall.
+* Fixed firearm targeting alignment biased to the left side.
 * Fixed shotgun wideshot ammo having same accuracy as normal ammo.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
 * Fixed shatters not activating heavy triggers in rare occasions.
