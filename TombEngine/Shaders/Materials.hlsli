@@ -137,12 +137,15 @@ float2 ParallaxOcclusionMapping(float3x3 TBN, float3 pos, float2 baseUV)
 
     // Flip tangent-space Y to match inverted TR coordinate system.
     viewDirTangent.y = -viewDirTangent.y;
-	
-	// Clamp steep view angles to avoid artifacts.
-	viewDirTangent.z = clamp(viewDirTangent.z, POM_MIN_ANGLE, 1.0f);
+
+    // Bring parallax angle to full available range, otherwise effect will be undersampled.
+    float factor = saturate((viewDirTangent.z - POM_MIN_ANGLE) / (1.0f - POM_MIN_ANGLE));
+    int numSamples = max(1, (int)ceil(lerp(POM_MAX_STEPS, POM_MIN_STEPS, factor)));
+
+    // Clamp steep angles to avoid artifacts.
+    viewDirTangent.z = clamp(viewDirTangent.z, POM_MIN_ANGLE, 1.0f);
 
     // Adaptive sample count based on angle.
-    int numSamples = max(1, (int)ceil(lerp(POM_MAX_STEPS, POM_MIN_STEPS, saturate(viewDirTangent.z))));
     float layerDepth = 1.0f / numSamples;
 
     // Parallax amount & delta UV.
