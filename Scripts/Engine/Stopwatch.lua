@@ -21,14 +21,20 @@ LevelVars.Engine.Stopwatch = { stopwatches = {} }
 -- local myStopwatch = Stopwatch.Create({ name = "MyStopwatch" })
 -- 
 -- -- Example 2: creation of a stopwatch with custom parameters
+-- local options = {
+--     TEN.Strings.DisplayStringOption.RIGHT,
+--     TEN.Strings.DisplayStringOption.SHADOW,
+--     TEN.Strings.DisplayStringOption.VERTICAL_CENTER
+-- }
 -- local myStopwatch = Stopwatch.Create({
 --     name = "RaceTimer",
---     timerFormat = { minutes = true, seconds = true, deciseconds = true },
---     position = TEN.Vec2(100, 50),
+--     startTime = 10
+--     timerFormat = { seconds = true, deciseconds = true },
+--     position = TEN.Vec2(90, 10),
 --     scale = 1.5,
 --     color = TEN.Color(0, 255, 0, 255),
 --     pausedColor = TEN.Color(255, 0, 0, 255),
---     startTime = 10
+--     stringOption = options,
 -- })
 Stopwatch.Create = function(stopwatchData)
     local errorPrefix = "Error in Stopwatch.Create(): "
@@ -155,16 +161,16 @@ end
 -- @tfield string name The name of the stopwatch.
 -- @tfield[opt=0] float startTime The time (in seconds) from which the stopwatch will start counting up.
 -- @tfield[opt=false] table|bool timerFormat Sets the time display. See <a href="Timer.html#timerFormat">Timer format</a> for details.
--- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position on screen where the stopwatch will be displayed.
+-- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is not active.
--- @tfield[opt={TEN.Strings.DisplayStringOption.CENTER&#44; TEN.Strings.DisplayStringOption.SHADOW&#44; TEN.Strings.DisplayStringOption.VERTICAL_CENTER}] table stringOption A table containing values from @{TEN.Strings.DisplayStringOption} to set the text options.
+-- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table stringOption A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
 
 
 ----
--- The list of all methods for Stopwatch objects. We suggest that you always use the Stopwatch.Get() function to use the methods of the Timer object to prevent errors or unexpected behavior
--- @type StopwatchMethods
+-- The list of all methods for Stopwatch objects. We suggest that you always use the @{Stopwatch.Get} function to use the methods of the Timer object to prevent errors or unexpected behavior
+-- @type Stopwatch
 -- @usage
 --	-- Examples of some methods
 -- Stopwatch.Get("MyStopwatch"):Start()
@@ -245,8 +251,7 @@ function Stopwatch:GetCurrentTimeInSeconds()
 end
 
 --- Get the current time of the stopwatch formatted as a string.
--- @tparam[opt=false] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
--- If not provided, will default to {minutes = true, seconds = true, deciseconds = false}.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn string The formatted time string.
 function Stopwatch:GetCurrentTimeFormatted(timerFormat)
     if self.error then
@@ -260,7 +265,7 @@ function Stopwatch:GetCurrentTimeFormatted(timerFormat)
     end
 end
 
---- Set the current time of the stopwatch.
+--- Set the current time of the stopwatch. Values with only 1 tenth of a second (0.1) are accepted, example: 1.5 - 6.0 - 9.9 - 123.6. No negative values allowed!
 -- @tparam float newTime The new time to set (in seconds).
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetCurrentTime(30.5) -- Set time to 30.5 seconds
@@ -279,7 +284,9 @@ function Stopwatch:SetCurrentTime(newTime)
     end
 end
 
---- Check if the current time of the stopwatch meets a specific condition.
+--- Check if the current time of the stopwatch meets a specific condition. <br> It's recommended to use the IfCurrentTimeIs method to have error-free comparisons.
+-- Values with only 1 tenth of a second (0.1) are accepted, example: 1.5 - 6.0 - 9.9 - 123.6. No negative values allowed!<br>
+-- Please note: to have continuous control, the remaining time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
 -- @tparam int operator The type of comparison.<br>
 -- 0 : If the remaining time is equal to the value<br>
 -- 1 : If the remaining time is different from the value<br>
@@ -288,8 +295,33 @@ end
 -- 4 : If the remaining time is greater the value<br>
 -- 5 : If the remaining time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
--- Values with only 1 tenth of a second (0.1) are accepted, example: 1.5 - 6.0 - 9.9 - 123.6. No negative values allowed!<br>
--- Please note: to have continuous control, the remaining time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
+-- @treturn bool True if the condition is met, false otherwise.
+-- @usage
+-- -- Example1: Alternative method to create a sequence of events based on stopwatch time
+-- LevelFuncs.OnLoop = function()
+--     local stopwatch = Stopwatch.Get("MyStopwatch")
+--     if stopwatch:IfCurrentTimeIs(0, 2.0) then -- If current time is equal to 2.0 seconds
+--         -- Do something
+--     end
+--     if stopwatch:IfCurrentTimeIs(0, 4.0) then -- If current time is equal to 4.0 seconds
+--         -- Do something else
+--     end
+--    if stopwatch:IfCurrentTimeIs(0, 6.0) then -- If current time is equal to 6.0 seconds
+--         -- Do another thing
+--     end
+-- end
+--
+-- -- Example2: Using callbacks
+-- LevelFuncs.MySequenceOfEvents = function()
+--     local stopwatch = Stopwatch.Get("MyStopwatch")
+--     if stopwatch:IfCurrentTimeIs(0, 3.0) then -- If current time is equal to 3.0 seconds
+--         -- Do something
+--     end
+--     if stopwatch:IfCurrentTimeIs(0, 5.0) then -- If current time is equal to 5.0 seconds
+--         -- Do something else
+--     end
+-- end
+-- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.MySequenceOfEvents)
 function Stopwatch:IfCurrentTimeIs(operator, seconds)
     if self.error then
         TEN.Util.PrintLog("Error in Stopwatch:IfCurrentTimeIs(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
@@ -418,7 +450,7 @@ function Stopwatch:SetColor(color)
 end
 
 --- Sets the color of the stopwatch display when paused.
--- @tparam[opt=Color(255&#44; 255&#44; 0, 255)] Color color The new color for the stopwatch display when paused.
+-- @tparam[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color color The new color for the stopwatch display when paused.
 -- @usage
 -- -- Example: Set paused color to blue
 -- Stopwatch.Get("MyStopwatch"):SetPausedColor(TEN.Color(0, 0, 255, 255))
@@ -438,11 +470,12 @@ function Stopwatch:SetPausedColor(color)
     end
 end
 
---- Sets the text options for the stopwatch display.
--- @tparam table optionsTable A table containing values from @{TEN.Strings.DisplayStringOption} to set the text options.
+--- Sets the text options for the stopwatch display. Vertical center option is always added automatically if not present.
+-- @tparam[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table optionsTable A table containing values from @{Strings.DisplayStringOption} to set the text options.<br>
 -- @usage
 -- -- Example: Set text options to center and blink
--- Stopwatch.Get("MyStopwatch"):SetTextOptions({ TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.BLINK })
+-- local options = { TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.BLINK }
+-- Stopwatch.Get("MyStopwatch"):SetTextOptions(options)
 --
 -- -- Example: Set text options to default (center, shadow, vertical center)
 -- Stopwatch.Get("MyStopwatch"):SetTextOptions()
