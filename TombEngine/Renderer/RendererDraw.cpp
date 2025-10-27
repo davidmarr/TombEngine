@@ -2734,6 +2734,8 @@ namespace TEN::Renderer
 					{
 						UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
+						bool bindTextureAndMaterialsRequired = true;
+
 						for (int animated = 0; animated < 2; animated++)
 						{
 							for (auto& bucket : refMesh->Buckets)
@@ -2743,19 +2745,26 @@ namespace TEN::Renderer
 									continue;
 								}
 
-								BindBucketTextures(bucket, TextureSource::Statics, animated);
-								BindMaterial(bucket.MaterialIndex, false);
-
 								int passes = rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest ? 2 : 1;
 								for (int p = 0; p < passes; p++)
 								{
 									if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
 										continue;
+
+									if (bindTextureAndMaterialsRequired)
+									{
+										BindBucketTextures(bucket, TextureSource::Statics, animated);
+										BindMaterial(bucket.MaterialIndex, false);
+
+										bindTextureAndMaterialsRequired = false;
+									}
 																		
 									DrawIndexedInstancedTriangles(bucket.NumIndices, instancesCount, bucket.StartIndex, 0);
 
 									_numInstancedStaticsDrawCalls++;
 								}
+
+								bindTextureAndMaterialsRequired = false;
 							}
 						}
 					}
@@ -2910,19 +2919,9 @@ namespace TEN::Renderer
 				const auto& room = *view.RoomsToDraw[i];
 				const auto& nativeRoom = g_Level.Rooms[room.RoomNumber];
 
-				if (rendererPass != RendererPass::GBuffer)
-				{
-					_stRoom.Caustics = int(g_Configuration.EnableCaustics && (nativeRoom.flags & ENV_FLAG_WATER));
-					_stRoom.AmbientColor = Vector3(room.AmbientLight.x, room.AmbientLight.y, room.AmbientLight.z);
-					BindRoomLights(view.LightsToDraw);
-					BindRoomDecals(room.Decals);
-				}
-
-				_stRoom.Water = (nativeRoom.flags & ENV_FLAG_WATER) != 0 ? 1 : 0;
-				UpdateConstantBuffer(_stRoom, _cbRoom);
-
-				SetScissor(room.ClipBounds);
-
+				bool bindRoomDataRequired = true;
+				bool bindTexturesAndMaterialsRequired = true;
+				
 				for (int animated = 0; animated < 2; animated++)
 				{
 					for (const auto& bucket : room.Buckets)
@@ -2930,9 +2929,6 @@ namespace TEN::Renderer
 						if (((animated == 1) ^ bucket.Animated) || bucket.NumVertices == 0)
 							continue;
 
-						BindMaterial(bucket.MaterialIndex, false);
-						BindBucketTextures(bucket, TextureSource::Rooms, animated);
-						
 						int passes = rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest ? 2 : 1;
 
 						for (int p = 0; p < passes; p++)
@@ -2940,10 +2936,38 @@ namespace TEN::Renderer
 							if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
 								continue;
 
+							if (bindRoomDataRequired)
+							{
+								if (rendererPass != RendererPass::GBuffer)
+								{
+									_stRoom.Caustics = int(g_Configuration.EnableCaustics && (nativeRoom.flags & ENV_FLAG_WATER));
+									_stRoom.AmbientColor = Vector3(room.AmbientLight.x, room.AmbientLight.y, room.AmbientLight.z);
+									BindRoomLights(view.LightsToDraw);
+									BindRoomDecals(room.Decals);
+								}
+
+								_stRoom.Water = (nativeRoom.flags & ENV_FLAG_WATER) != 0 ? 1 : 0;
+								UpdateConstantBuffer(_stRoom, _cbRoom);
+
+								SetScissor(room.ClipBounds);
+
+								bindRoomDataRequired = false;
+							}
+
+							if (bindTexturesAndMaterialsRequired)
+							{
+								BindMaterial(bucket.MaterialIndex, false);
+								BindBucketTextures(bucket, TextureSource::Rooms, animated);
+
+								bindTexturesAndMaterialsRequired = false;
+							}
+
 							DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
 
 							_numRoomsDrawCalls++;
 						}
+
+						bindTexturesAndMaterialsRequired = true;
 					}
 				}
 			}
@@ -3369,6 +3393,8 @@ namespace TEN::Renderer
 		}
 		else
 		{
+			bool bindTextureAndMaterialsRequired = true;
+
 			for (int animated = 0; animated < 2; animated++)
 			{
 				for (auto& bucket : mesh->Buckets)
@@ -3398,33 +3424,40 @@ namespace TEN::Renderer
 					else
 					{
 						int passes = rendererPass == RendererPass::Opaque && blendMode == BlendMode::AlphaTest ? 2 : 1;
-						
-						// HACK: for waterfalls
-						if (IsWaterfall(itemToDraw->ObjectID))
-							BindAtlasTextures(bucket, TextureSource::Moveables);
-						else
-							BindBucketTextures(bucket, TextureSource::Moveables, animated);
 					
-#ifdef TEST_LEGACY_REFLECTIONS
-						if (itemToDraw->ObjectID == ID_LARA)
-						{
-							BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::LinearClamp);
-							_stMaterial.MaterialType = 1;
-							UpdateConstantBuffer(_stMaterial, _cbMaterial);
-						}
-						else
-#endif
-							BindMaterial(bucket.MaterialIndex, false);
-
 						for (int p = 0; p < passes; p++)
 						{
 							if (!SetupBlendModeAndAlphaTest(blendMode, rendererPass, p))
 								continue;
+
+							if (bindTextureAndMaterialsRequired)
+							{
+								// HACK: for waterfalls
+								if (IsWaterfall(itemToDraw->ObjectID))
+									BindAtlasTextures(bucket, TextureSource::Moveables);
+								else
+									BindBucketTextures(bucket, TextureSource::Moveables, animated);
+
+#ifdef TEST_LEGACY_REFLECTIONS
+								if (itemToDraw->ObjectID == ID_LARA)
+								{
+									BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::LinearClamp);
+									_stMaterial.MaterialType = 1;
+									UpdateConstantBuffer(_stMaterial, _cbMaterial);
+								}
+								else
+#endif
+									BindMaterial(bucket.MaterialIndex, false);
+
+								bindTextureAndMaterialsRequired = false;
+							}
 												
 							DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
 
 							_numMoveablesDrawCalls++;
 						}
+
+						bindTextureAndMaterialsRequired = true;
 					}
 				}
 			}
