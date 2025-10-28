@@ -39,6 +39,7 @@ local Type = {}
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a number, `false` otherwise.
 -- @usage
+-- --example of use
 --  local num = 255
 --  if Type.IsNumber(num) then
 --      num = num + 1
@@ -51,6 +52,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a string, `false` otherwise.
 -- @usage
+-- --example of use
 --  local str = "Hi"
 --  if Type.IsString(str) then
 --      TEN.Util.PrintLog(str .. "everyone!", Util.LogLevel.INFO)
@@ -64,6 +66,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a boolean, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.test = function (test)
 --      if Type.IsBoolean(test) then
 --          LevelVars.test = test
@@ -79,6 +82,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a table, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.PairsTable = function (table)
 --      if Type.IsTable(table) then
 --          for k, v in pairs(table) do
@@ -94,6 +98,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a null, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.AddProp = function (prop)
 --      if Type.IsNull(prop) then
 --          TEN.Util.PrintLog("Error!", Util.LogLevel.ERROR)
@@ -109,6 +114,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a function, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.RunFunc = function (func)
 --      if Type.IsFunction(func) then
 --          func()
@@ -122,6 +128,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a Color, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.SetColor = function(color)
 --      if Type.IsColor(color) then
 --          string:SetColor(color)
@@ -135,6 +142,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a Rotation, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.SetRotation = function (rot)
 --      if Type.IsRotation(rot) then
 --          Lara:SetRotation(rot)
@@ -148,6 +156,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a Vec2, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.SetSpritePos = function (pos)
 --      if Type.IsVec2(pos) then
 --          sprite:SetPosition(pos)
@@ -161,6 +170,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a Vec3, `false` otherwise.
 -- @usage
+-- --example of use
 --	LevelFuncs.SetLaraPos = function (pos)
 --      if Type.IsVec3(pos) then
 --          Lara:SetPosition(pos)
@@ -174,6 +184,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a Time object, `false` otherwise.
 -- @usage
+-- --example of use
 --	LevelFuncs.IncreaseTime = function (time)
 --      if Type.IsTime(time) then
 --          time + 1
@@ -187,6 +198,7 @@ end
 -- @tparam variable variable Variable to be checked.
 -- @treturn bool `true` if the variable is a LevelFunc, `false` otherwise.
 -- @usage
+-- --example of use
 --  LevelFuncs.SetCallback = function (func)
 --      if Type.IsFunction(func) then
 --          TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, func)
