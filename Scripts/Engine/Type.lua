@@ -200,7 +200,7 @@ end
 -- @usage
 -- --example of use
 --  LevelFuncs.SetCallback = function (func)
---      if Type.IsFunction(func) then
+--      if Type.IsLevelFunc(func) then
 --          TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, func)
 --      end
 --  end
