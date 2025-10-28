@@ -52,9 +52,9 @@ namespace TEN::Renderer::Native::DirectX11
 		int Resolution;
 		D3D11_VIEWPORT Viewport;
 
-		RenderTargetCube() : Resolution(0), Viewport({}) {};
+		DX11RenderTargetCube() : Resolution(0), Viewport({}) {};
 		
-		RenderTargetCube(ID3D11Device* device, int resolution, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
+		DX11RenderTargetCube(ID3D11Device* device, int resolution, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
 			: Resolution(resolution)
 		{
 

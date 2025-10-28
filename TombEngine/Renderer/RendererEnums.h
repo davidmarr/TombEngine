@@ -339,11 +339,14 @@ enum class MaterialShaderType
 	SkyboxReflective = 2
 };
 
-enum class ColorFormat
+enum class PixelFormat
 {
-	Rgba8_Unorm,
-	Rgba8_Unorm_Srgb,
-	R32_Float
+	Unknown,
+	RGBA8_Unorm,
+	RGBA8_Unorm_Srgb,
+	R8G8_Unorm,
+	R32_Float,
+	D24_S8
 };
 
 enum class InputLayout
@@ -357,4 +360,11 @@ enum class PrimitiveType
 	TriangleList,
 	TriangleStrip,
 	LineList
+};
+
+enum class DepthStencilClearFlags
+{
+	Depth,
+	Stencil,
+	DepthAndStencil
 };

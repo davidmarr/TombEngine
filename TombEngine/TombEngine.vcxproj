@@ -809,6 +809,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Graphics\Vertices\PostProcessVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\SpriteVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\Vertex.h" />
+    <ClInclude Include="Renderer\Native\DirectX11\DX11ConstantBuffer.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11GraphicsDevice.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11IndexBuffer.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTarget2D.h" />
