@@ -97,7 +97,8 @@ local INVENTORY_MODE =
     AMMO_SELECT_CLOSE = 24,
     SAVE_SETUP = 25,
     SAVE_MENU = 26,
-    SAVE_CLOSE = 27
+    SAVE_CLOSE = 27,
+    COMBINE_COMPLETE = 28
 }
 
 local SOUND_MAP = Settings.SOUND_MAP
@@ -204,6 +205,7 @@ local combineItem1 = nil
 local combineItem2 = nil
 local combineResult = nil
 local performCombine = false
+local addedItems = 0
 
 --Structure for inventory
 local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
@@ -949,6 +951,7 @@ end
 --Only uses combine and ammo as an option. Everything else dumps the whole inventory.
 LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selectedWeapon)
 
+    addedItems = 0
     local items  = PICKUP_DATA.constants
     gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
 
@@ -1044,7 +1047,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
             TEN.DrawItem.AddItem(data.objectID, RING_CENTER[data.ringName], data.rotation, data.scale, data.meshBits)
             TEN.DrawItem.SetItemColor(data.objectID, COLOR_MAP.ITEM_COLOR)
-
+            addedItems = addedItems + 1
         end
 
         ::continue::
@@ -1373,10 +1376,10 @@ local AnimateInventory = function(mode)
     local ringAnimation = {
         { key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = RING_RADIUS },
         { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
-        { key = "camera", type = Interpolate.Type.VEC3, start = CAMERA_START, finish = CAMERA_END },
-        { key = "target", type = Interpolate.Type.VEC3, start = TARGET_START, finish = TARGET_END },
         { key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
         { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
+        { key = "camera", type = Interpolate.Type.VEC3, start = CAMERA_START, finish = CAMERA_END },
+        { key = "target", type = Interpolate.Type.VEC3, start = TARGET_START, finish = TARGET_END },
         }
 
     local useAnimation = {
@@ -1393,10 +1396,10 @@ local AnimateInventory = function(mode)
         }
 
     local combineRingAnimation = {
-        { key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = RING_RADIUS },
-        { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
-        { key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
-        { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
+        ringAnimation[1],
+        ringAnimation[2],
+        ringAnimation[3],
+        ringAnimation[4]
         }
 
     local combineClose = {
@@ -1458,7 +1461,7 @@ local AnimateInventory = function(mode)
                 return true
             end
         
-    elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT then
+    elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT or mode == INVENTORY_MODE.COMBINE_SUCCESS then
         
         if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID) then
             return true
@@ -1470,16 +1473,12 @@ local AnimateInventory = function(mode)
             return true
         end
 
-    elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
+    elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING or mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
 
         if PerformBatchMotion("CombineRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
             return true
         end
-    elseif mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
-        if PerformBatchMotion("CombineSuccess", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID) then
-            return true
-        end
     elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
 
         local allMotionComplete = true
@@ -1487,6 +1486,22 @@ local AnimateInventory = function(mode)
         for index in pairs(inventory.ring) do
 
             if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
+                allMotionComplete = false 
+            end
+
+        end
+        
+        if allMotionComplete then
+            return true
+        end
+
+    elseif mode == INVENTORY_MODE.COMBINE_COMPLETE then
+
+        local allMotionComplete = true
+
+        for index in pairs(inventory.ring) do
+
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index, nil, true) then
                 allMotionComplete = false 
             end
 
@@ -1508,11 +1523,7 @@ local AnimateInventory = function(mode)
                 end
             end
         end
-    elseif mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
 
-        if PerformBatchMotion("AmmoRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
-            return true
-        end
     elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
 
         if PerformBatchMotion("AmmoRingClosing", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
@@ -1728,10 +1739,15 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             combineItem2 = nil
             combineResult = nil
             performCombine = false
-            inventoryMode = INVENTORY_MODE.RING_OPENING
+            inventoryMode = INVENTORY_MODE.COMBINE_COMPLETE
             LevelVars.Engine.CustomInventory.InventoryOpen = true
         end
+    elseif mode == INVENTORY_MODE.COMBINE_COMPLETE then
+        
 
+        if AnimateInventory(mode) then
+            inventoryMode = INVENTORY_MODE.INVENTORY
+        end
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
         
