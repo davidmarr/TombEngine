@@ -1,6 +1,23 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
 --- Basic stopwatches that perform countup. Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
 --	local Stopwatch = require("Engine.Stopwatch")
+--
+-- Example usage:
+--	local Stopwatch = require("Engine.Stopwatch")
+--
+--	-- Create simple stopwatch
+--	Stopwatch.Create({ name = "MyStopwatch" })
+--
+--	-- Create LevelFuncs to start, pause and stop the stopwatch
+--	LevelFuncs.StartMyStopwatch = function()
+--        Stopwatch.Get("MyStopwatch"):Start()
+--	end
+--	LevelFuncs.PauseMyStopwatch = function()
+--        Stopwatch.Get("MyStopwatch"):Pause()
+--	end
+--	LevelFuncs.StopMyStopwatch = function()
+--        Stopwatch.Get("MyStopwatch"):Stop()
+--	end
 -- @luautil Stopwatch
 
 local Type = require("Engine.Type")
@@ -298,27 +315,31 @@ end
 -- @treturn bool True if the condition is met, false otherwise.
 -- @usage
 -- -- Example1: Alternative method to create a sequence of events based on stopwatch time
--- LevelFuncs.OnLoop = function()
+-- LevelFuncs.OnLoop = function() -- this LevelFuncs is already present in your level script
 --     local stopwatch = Stopwatch.Get("MyStopwatch")
---     if stopwatch:IfCurrentTimeIs(0, 2.0) then -- If current time is equal to 2.0 seconds
---         -- Do something
---     end
---     if stopwatch:IfCurrentTimeIs(0, 4.0) then -- If current time is equal to 4.0 seconds
---         -- Do something else
---     end
---    if stopwatch:IfCurrentTimeIs(0, 6.0) then -- If current time is equal to 6.0 seconds
---         -- Do another thing
+--     if stopwatch:IsActive() then
+--         if stopwatch:IfCurrentTimeIs(0, 2.0) then -- If current time is equal to 2.0 seconds
+--             -- Do something
+--         end
+--         if stopwatch:IfCurrentTimeIs(0, 4.0) then -- If current time is equal to 4.0 seconds
+--             -- Do something else
+--         end
+--         if stopwatch:IfCurrentTimeIs(0, 6.0) then -- If current time is equal to 6.0 seconds
+--             -- Do another thing
+--         end
 --     end
 -- end
 --
 -- -- Example2: Using callbacks
 -- LevelFuncs.MySequenceOfEvents = function()
 --     local stopwatch = Stopwatch.Get("MyStopwatch")
---     if stopwatch:IfCurrentTimeIs(0, 3.0) then -- If current time is equal to 3.0 seconds
---         -- Do something
---     end
---     if stopwatch:IfCurrentTimeIs(0, 5.0) then -- If current time is equal to 5.0 seconds
---         -- Do something else
+--     if stopwatch:IsActive() then
+--         if stopwatch:IfCurrentTimeIs(0, 3.0) then -- If current time is equal to 3.0 seconds
+--             -- Do something
+--         end
+--         if stopwatch:IfCurrentTimeIs(0, 5.0) then -- If current time is equal to 5.0 seconds
+--             -- Do something else
+--         end
 --     end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.MySequenceOfEvents)
