@@ -296,10 +296,10 @@ function Timer:GetRemainingTimeInSeconds()
 end
 
 --- Get the formatted remaining time of a timer.
--- @tparam ?table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.<br>
 -- @treturn string The formatted remaining time.
 -- @usage
--- -- Example:
+-- -- Example 1: Display remaining time in secs.decisecs
 -- local TimerFormat = {seconds = true, deciseconds = true}
 -- if Timer.IfExists("my_timer") then
 --    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
@@ -307,7 +307,16 @@ end
 --    local str = TEN.Strings.DisplayString("Timer: " .. timer, pos)
 --    TEN.Strings.ShowString(str, 1)
 -- end
+--
+-- -- Example 2: Display remaining with default format (mins:secs.decisecs)
+-- if Timer.IfExists("my_timer") then
+--    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local timer = Timer.Get("my_timer"):GetRemainingTimeFormatted()
+--    local str = TEN.Strings.DisplayString("Timer: " .. timer, pos)
+--    TEN.Strings.ShowString(str, 1)
+-- end
 function Timer:GetRemainingTimeFormatted(timerFormat)
+	timerFormat = timerFormat or {minutes = true, seconds = true, deciseconds = true}
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	local errorFormat = "Error in Timer:GetRemainingTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
 	return Utility.GenerateTimeFormattedString(thisTimer.remainingTime, timerFormat, errorFormat)
@@ -415,17 +424,25 @@ function Timer:GetTotalTimeInSeconds()
 end
 
 --- Get the formatted total time of a timer. This is the amount of time the timer will start with, as well as when starting a new loop
--- @tparam ?table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.<br>
 -- @treturn string The formatted total time.
 -- @usage
--- -- Example:
+-- -- Example 1: Display total time in secs.decisecs
 -- local TimerFormat = {minutes = false, seconds = true, deciseconds = true}
 -- if Timer.IfExists("my_timer") then
 --    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
 --    local totalTime = Timer.Get("my_timer"):GetTotalTimeFormatted(TimerFormat)
 --    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
 -- end
+--
+-- -- Example 2: Display total time with default format (mins:secs.decisecs)
+-- if Timer.IfExists("my_timer") then
+--    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local totalTime = Timer.Get("my_timer"):GetTotalTimeFormatted()
+--    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
+-- end
 function Timer:GetTotalTimeFormatted(timerFormat)
+	timerFormat = timerFormat or {minutes = true, seconds = true, deciseconds = true}
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	local errorFormat = "Error in Timer:GetTotalTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
 	return Utility.GenerateTimeFormattedString(thisTimer.totalTime, timerFormat, errorFormat)
@@ -653,7 +670,7 @@ function Timer:SetUnpausedColor(color)
 end
 
 --- Set text options for a timer. Note: the <em>VERTICAL_CENTER</em> option is always added.
--- @tparam[opt={TEN.Strings.DisplayStringOption.CENTER&#44; TEN.Strings.DisplayStringOption.SHADOW&#44; TEN.Strings.DisplayStringOption.VERTICAL_CENTER}] table optionsTable Table containing timer's new text options. See @{Strings.DisplayStringOption}<br>
+-- @tparam[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table optionsTable Table containing timer's new text options. See @{Strings.DisplayStringOption}<br>
 -- @usage
 -- -- Example 1
 -- -- right alignment
