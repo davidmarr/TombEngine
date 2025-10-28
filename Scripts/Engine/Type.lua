@@ -202,11 +202,17 @@ end
 -- @tparam[opt=true] bool showError (optional) If `true`, an error message will be printed if the parameters are invalid.
 -- @treturn bool `true` if the variable is a value of the enum, `false` otherwise.
 -- @usage
--- LevelFuncs.SetMaterialType = function (matType)
---      if Type.IsEnumValue(matType, TEN.Collision.MaterialType) then
---          TEN.Collision.SetMaterialType(matType)
---      end
---  end
+-- -- Example: set flags for DisplayString in a module script
+-- local string = TEN.Strings.DisplayString("Example", TEN.Vec2(50, 50))
+-- LevelFuncs.SetDisplayStringFlags = function (flag)
+--     for _, flag in ipairs(flags) do
+--         if not Type.IsEnumValue(flag, TEN.Strings.DisplayStringOption) then
+--             TEN.Util.PrintLog("Invalid flag for DisplayStringOption enum.", TEN.Util.LogLevel.ERROR)
+--             return
+--         end
+--     end
+--     string:SetFlags(flags)
+-- end
 Type.IsEnumValue = function (variable, enumTable, showError)
     if Type.IsBoolean(showError) then
         showError = showError
