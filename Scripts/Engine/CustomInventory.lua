@@ -30,18 +30,6 @@ local EXAMINE_TEXT_POS = Vec2(50, 80)
 local ALPHA_MAX = 255
 local ALPHA_MIN = 0
 
--- ITEM = {
---     ObjectID = 1,
---     Count = 2,
---     YOffset = 3,
---     Scale = 4,
---     Rotation = 5,
---     MenuActions = 6,
---     Name = 7,
---     MeshBits = 8,
---     Orientation = 9
--- }
-
 local TYPE = {
     WEAPON = 1,
     AMMO = 2,
@@ -391,29 +379,87 @@ local BuildInventoryItem = function(data)
     return data
 end
 
-local ReplaceInventoryItem = function(oldItemID, newItemID)
+local PerformWaterskinCombine = function(flag)
 
-    local item = GetInventoryItem(oldItemID)
-    gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
+    local smallLiters = Lara:GetWaterSkinStatus(false) - 1  -- How many liters in the small one?
+    local bigLiters = Lara:GetWaterSkinStatus(true) -1      -- How many liters in the big one?
+    local smallCapacity = 3 - smallLiters                    -- How many more liters can fit in the small one?
+    local bigCapacity = 5 - bigLiters                        -- How many more liters can fit in the big one?
 
-    local itemData = PICKUP_DATA.ConvertRowData(PICKUP_DATA.GetRow(newItemID))
-    local data = BuildInventoryItem(itemData)
-    
-    -- Store current transform before replacement
-    local oldPos    = TEN.DrawItem.GetItemPosition(oldItemID)
-    local oldColor  = TEN.DrawItem.GetItemColor(oldItemID)
+    local i
 
-    -- Apply updated transform while preserving old position, rotation, etc.
-    TEN.DrawItem.AddItem(newItemID, oldPos, data.rotation, data.scale, data.meshBits)
-    TEN.DrawItem.SetItemColor(newItemID, oldColor)
+    if flag then
+        -- Big one isn't empty and the small one isn't full.
+        if Lara:GetWaterSkinStatus(true) ~= 1 and smallCapacity > 0 then
+            i = bigLiters
 
-    -- Update inventory entry fields
-    item = data
+            while i > 0 do
+                if smallCapacity > 0 then
+                    smallLiters = smallLiters + 1
+                    smallCapacity = smallCapacity - 1
+                    bigLiters = bigLiters - 1
+                end
 
+                i = i - 1
+            end
+
+            Lara:SetWaterSkinStatus(smallLiters + 1, false) 
+            Lara:SetWaterSkinStatus(bigLiters + 1, true)
+            combineItem1 = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
+            return true
+        end
+    else
+        -- Small one isn't empty and the big one isn't full.
+        if Lara:GetWaterSkinStatus(false) ~= 1 and bigCapacity > 0 then
+            i = smallLiters
+
+            while i > 0 do
+                if bigCapacity > 0 then
+                    bigLiters = bigLiters + 1
+                    bigCapacity = bigCapacity - 1
+                    smallLiters = smallLiters - 1
+                end
+
+                i = i - 1
+            end
+
+            Lara:SetWaterSkinStatus(smallLiters + 1, false) 
+            Lara:SetWaterSkinStatus(bigLiters + 1, true)
+            combineItem1 = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
+
+            return true
+        end
+    end
+
+    return false
 end
 
 local CombineItems = function(item1, item2)
-	
+
+
+    local data1 = GetInventoryItem(item1).type
+    local data2 = GetInventoryItem(item2).type
+
+    if data1 == TYPE.WATERSKIN and data2 == TYPE.WATERSKIN then
+        if (item1 >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and
+            item1 <= TEN.Objects.ObjID.WATERSKIN1_3 and
+            item2 >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and
+            item2 <= TEN.Objects.ObjID.WATERSKIN2_5) then
+    
+            if (PerformWaterskinCombine(true)) then
+                return true
+            end
+        elseif(item2 >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and
+            item2 <= TEN.Objects.ObjID.WATERSKIN1_3 and
+            item1 >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and
+            item1 <= TEN.Objects.ObjID.WATERSKIN2_5) then
+                if (PerformWaterskinCombine(false)) then
+                    return true
+                end
+        end
+
+	end
+
     for _, combo in ipairs(PICKUP_DATA.combineTable) do
 		
         local a, b, result = combo[1], combo[2], combo[3]
@@ -461,7 +507,6 @@ local SeparateItems = function(item3)
 
 		if item3 == result then
 
-            print("item found")
             -- Check if item is actually present
             local count = TEN.Inventory.GetItemCount(item3)
 
@@ -469,14 +514,11 @@ local SeparateItems = function(item3)
                 return false
             end
 
-            print("item count check passed")
-
             -- If the separate result is a weapon that supports lasersight, disable it
             if WEAPON_LASERSIGHT_DATA[result]
                 and WEAPON_SET[result]
                 and WEAPON_SET[result].slot then
                 Lara:SetLaserSight(WEAPON_SET[result].slot, false)
-                print("laser sight removed")
             end
 
             -- Remove the original items
@@ -765,7 +807,6 @@ local ShowItemMenu = function()
     itemMenu:Draw()
 
 end
-
 
 local guiIsPulsed = function(actionID)
 
@@ -1804,7 +1845,6 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
         if AnimateInventory(mode) then
-            ReplaceInventoryItem(combineItem1, combineResult)
             inventoryMode = INVENTORY_MODE.COMBINE_CLOSE
         end
 
@@ -2128,128 +2168,6 @@ LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
 
     return overrides
 
-end
-
-local PerformWaterskinCombine = function(flag)
-
---     bool GuiController::PerformWaterskinCombine(ItemInfo* item, bool flag)
--- 	{
--- 		auto& player = GetLaraInfo(*item);
-
--- 		int smallLiters = player.Inventory.SmallWaterskin - 1; // How many liters in the small one?
--- 		int bigLiters = player.Inventory.BigWaterskin - 1;	  // How many liters in the big one?
--- 		int smallCapacity = 3 - smallLiters;				  // How many more liters can fit in the small one?
--- 		int bigCapacity = 5 - bigLiters;					  // How many more liters can fit in the big one?
-
--- 		int i;
--- 		if (flag)
--- 		{
--- 			// Big one isn't empty and the small one isn't full.
--- 			if (player.Inventory.BigWaterskin != 1 && smallCapacity)
--- 			{
--- 				i = bigLiters;
-
--- 				do
--- 				{
--- 					if (smallCapacity)
--- 					{
--- 						smallLiters++;
--- 						smallCapacity--;
--- 						bigLiters--;
--- 					}
-
--- 					i--;
--- 				} while (i);
-
--- 				player.Inventory.SmallWaterskin = smallLiters + 1;
--- 				player.Inventory.BigWaterskin = bigLiters + 1;
--- 				CombineObject1 = (smallLiters + 1) + (INV_OBJECT_SMALL_WATERSKIN_EMPTY - 1);
--- 				return true;
--- 			}
--- 		}
--- 		else
--- 		{
--- 			// Small one isn't empty and the big one isn't full.
--- 			if (player.Inventory.SmallWaterskin != 1 && bigCapacity)
--- 			{
--- 				i = player.Inventory.SmallWaterskin - 1;
-
--- 				do
--- 				{
--- 					if (bigCapacity)
--- 					{
--- 						bigLiters++;
--- 						bigCapacity--;
--- 						smallLiters--;
--- 					}
-
--- 					i--;
--- 				} while (i);
-
--- 				player.Inventory.SmallWaterskin = smallLiters + 1;
--- 				player.Inventory.BigWaterskin = bigLiters + 1;
--- 				CombineObject1 = (bigLiters + 1) + (INV_OBJECT_BIG_WATERSKIN_EMPTY - 1);
--- 				return true;
--- 			}
--- 		}
-
--- 		return false;
--- 	}
--- }
-    function PerformWaterskinCombine(item, flag)
-    local player = GetLaraInfo(item)
-
-        local smallLiters = player.Inventory.SmallWaterskin - 1  -- How many liters in the small one?
-        local bigLiters = player.Inventory.BigWaterskin - 1      -- How many liters in the big one?
-        local smallCapacity = 3 - smallLiters                    -- How many more liters can fit in the small one?
-        local bigCapacity = 5 - bigLiters                        -- How many more liters can fit in the big one?
-
-        local i
-
-        if flag then
-            -- Big one isn't empty and the small one isn't full.
-            if player.Inventory.BigWaterskin ~= 1 and smallCapacity > 0 then
-                i = bigLiters
-
-                while i > 0 do
-                    if smallCapacity > 0 then
-                        smallLiters = smallLiters + 1
-                        smallCapacity = smallCapacity - 1
-                        bigLiters = bigLiters - 1
-                    end
-
-                    i = i - 1
-                end
-
-                player.Inventory.SmallWaterskin = smallLiters + 1
-                player.Inventory.BigWaterskin = bigLiters + 1
-                CombineObject1 = (smallLiters + 1) + (INV_OBJECT_SMALL_WATERSKIN_EMPTY - 1)
-                return true
-            end
-        else
-            -- Small one isn't empty and the big one isn't full.
-            if player.Inventory.SmallWaterskin ~= 1 and bigCapacity > 0 then
-                i = player.Inventory.SmallWaterskin - 1
-
-                while i > 0 do
-                    if bigCapacity > 0 then
-                        bigLiters = bigLiters + 1
-                        bigCapacity = bigCapacity - 1
-                        smallLiters = smallLiters - 1
-                    end
-
-                    i = i - 1
-                end
-
-                player.Inventory.SmallWaterskin = smallLiters + 1
-                player.Inventory.BigWaterskin = bigLiters + 1
-                CombineObject1 = (bigLiters + 1) + (INV_OBJECT_BIG_WATERSKIN_EMPTY - 1)
-                return true
-            end
-        end
-
-        return false
-    end
 end
 
 LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)

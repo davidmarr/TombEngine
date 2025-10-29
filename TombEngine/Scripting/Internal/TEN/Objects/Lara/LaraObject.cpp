@@ -609,28 +609,30 @@ WaterStatus LaraObject::GetWaterStatus() const
 }
 
 //add docs later
-int LaraObject::GetWaterSkinStatus(bool flag) const
+int LaraObject::GetWaterSkinStatus(TypeOrNil<bool> flag) const
 {
+	
+	auto convertedFlag = ValueOr<bool>(flag, false);
+
 	const auto& inventory = GetLaraInfo(*_moveable).Inventory;
-	const auto value = flag ? inventory.SmallWaterskin : inventory.BigWaterskin;
-	return std::max(0, static_cast<int>(value) - 1);
+	const auto value = convertedFlag ? inventory.BigWaterskin : inventory.SmallWaterskin;
+	return value;
 }
 
 //add docs later
-void LaraObject::SetWaterSkinStatus(int amount, bool flag)
+void LaraObject::SetWaterSkinStatus(int amount, TypeOrNil<bool> flag)
 {
+	auto convertedFlag = ValueOr<bool>(flag, false);
 	auto& inventory = GetLaraInfo(*_moveable).Inventory;
 
-	const int maxValue = flag ? 4 : 6; // small = 4 (1 base + 3 liters), big = 6 (1 base + 5 liters)
+	const int maxValue = convertedFlag ? 6 : 4; // small = 4 (1 base + 3 liters), big = 6 (1 base + 5 liters)
 
-	amount = std::clamp(amount, 0, maxValue - 1);
+	amount = std::clamp(amount, 0, maxValue);
 
-	const byte newValue = static_cast<byte>(amount + 1);
-
-	if (flag)
-		inventory.SmallWaterskin = newValue;
+	if (convertedFlag)
+		inventory.BigWaterskin = amount;
 	else
-		inventory.BigWaterskin = newValue;
+		inventory.SmallWaterskin = amount;
 }
 
 /// Align the player with a moveable object for interaction.

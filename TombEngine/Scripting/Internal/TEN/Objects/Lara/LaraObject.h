@@ -42,8 +42,8 @@ public:
 
 	WaterStatus GetWaterStatus() const;
 
-	int GetWaterSkinStatus(bool flag) const;
-	void SetWaterSkinStatus(int amount, bool flag);
+	int GetWaterSkinStatus(TypeOrNil<bool> flag) const;
+	void SetWaterSkinStatus(int amount, TypeOrNil<bool> flag);
 
 	void Interact(const Moveable& mov, TypeOrNil<int> animNumber,
 				  const TypeOrNil<Vec3>& offset, const TypeOrNil<Vec3>& offsetConstraintMin, const TypeOrNil<Vec3>& offsetConstraintMax,
