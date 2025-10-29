@@ -297,11 +297,12 @@ void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activa
 {
 	auto* lara = GetLaraInfo(_moveable);
 
+	auto convertedActivate = ValueOr<bool>(activate, false);
+
 	//Check for inventory to have lasersight
-	if (!lara->Inventory.HasLasersight)
+	if (!lara->Inventory.HasLasersight && convertedActivate)
 		return;
 
-	auto convertedActivate = ValueOr<bool>(activate, false);
 	switch (weaponType)
 	{
 	case LaraWeaponType::Revolver:
@@ -319,7 +320,7 @@ void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activa
 		}
 
 		// Attach laser sight
-		lara->Weapons[static_cast<int>(weaponType)].HasLasersight = true;
+		lara->Weapons[static_cast<int>(weaponType)].HasLasersight = convertedActivate;
 
 		//Activate weapon if required
 		if (convertedActivate == false)

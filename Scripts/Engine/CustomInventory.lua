@@ -98,7 +98,9 @@ local INVENTORY_MODE =
     SAVE_SETUP = 25,
     SAVE_MENU = 26,
     SAVE_CLOSE = 27,
-    COMBINE_COMPLETE = 28
+    COMBINE_COMPLETE = 28,
+    SEPARATE = 29,
+    SEPARATE_COMPLETE = 30
 }
 
 local SOUND_MAP = Settings.SOUND_MAP
@@ -451,6 +453,49 @@ local CombineItems = function(item1, item2)
 	return false
 end
 
+local SeparateItems = function(item3)
+	
+    for _, combo in ipairs(PICKUP_DATA.combineTable) do
+		
+        local a, b, result = combo[1], combo[2], combo[3]
+
+		if item3 == result then
+
+            print("item found")
+            -- Check if item is actually present
+            local count = TEN.Inventory.GetItemCount(item3)
+
+            if count == 0 then
+                return false
+            end
+
+            print("item count check passed")
+
+            -- If the separate result is a weapon that supports lasersight, disable it
+            if WEAPON_LASERSIGHT_DATA[result]
+                and WEAPON_SET[result]
+                and WEAPON_SET[result].slot then
+                Lara:SetLaserSight(WEAPON_SET[result].slot, false)
+                print("laser sight removed")
+            end
+
+            -- Remove the original items
+            TEN.Inventory.TakeItem(item3, 1)
+
+            -- Add the new separated items
+            TEN.Inventory.GiveItem(a, 1)
+            TEN.Inventory.GiveItem(b, 1)
+
+            combineItem1 = a
+
+			return true
+		end
+	end
+
+	-- No valid combination found
+	return false
+end
+
 local CreateRingMenu = function(ringName)
     
     local ringItems = {}
@@ -667,6 +712,8 @@ local ParseMenuAction = function(menuActions)
     elseif hasItemAction(menuActions, ItemAction.LOAD) then
         saveList = false
         inventoryMode = INVENTORY_MODE.SAVE_SETUP
+    elseif hasItemAction(menuActions, ItemAction.SEPARATE) then
+        inventoryMode = INVENTORY_MODE.SEPARATE
     elseif hasChooseAmmo(menuActions) then
         inventoryMode = INVENTORY_MODE.AMMO_SELECT_SETUP
     end
@@ -1529,6 +1576,37 @@ local AnimateInventory = function(mode)
         if PerformBatchMotion("AmmoRingClosing", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
             return true
         end
+    elseif mode == INVENTORY_MODE.SEPARATE then
+
+    local allMotionComplete = true
+
+    for index in pairs(inventory.ring) do
+
+        if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
+            allMotionComplete = false 
+        end
+
+    end
+    
+    if allMotionComplete then
+        return true
+    end
+
+    elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
+
+        local allMotionComplete = true
+
+        for index in pairs(inventory.ring) do
+
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index, nil, true) then
+                allMotionComplete = false 
+            end
+
+        end
+        
+        if allMotionComplete then
+            return true
+        end
     end
 
 end
@@ -1788,7 +1866,20 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             selectedRing = previousRing
             inventoryMode = INVENTORY_MODE.ITEM_SELECTED
         end
-
+    elseif mode == INVENTORY_MODE.SEPARATE then
+        
+        if AnimateInventory(mode) then
+            SeparateItems(selectedItem.objectID)
+            inventoryOpenItem = combineItem1
+            combineItem1 = nil
+            LevelVars.Engine.CustomInventory.InventoryOpen = true
+            inventoryMode = INVENTORY_MODE.SEPARATE_COMPLETE
+        end
+    elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
+        
+        if AnimateInventory(mode) then
+            inventoryMode = INVENTORY_MODE.INVENTORY
+        end
     end
 end
 
