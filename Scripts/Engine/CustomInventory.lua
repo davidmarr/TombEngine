@@ -380,53 +380,43 @@ local BuildInventoryItem = function(data)
 end
 
 local PerformWaterskinCombine = function(flag)
+    -- flag = true  → pour from big → small
+    -- flag = false → pour from small → big
 
-    local smallLiters = Lara:GetWaterSkinStatus(false) - 1  -- How many liters in the small one?
-    local bigLiters = Lara:GetWaterSkinStatus(true) -1      -- How many liters in the big one?
-    local smallCapacity = 3 - smallLiters                    -- How many more liters can fit in the small one?
-    local bigCapacity = 5 - bigLiters                        -- How many more liters can fit in the big one?
+    local smallRaw = Lara:GetWaterSkinStatus(false)
+    local bigRaw = Lara:GetWaterSkinStatus(true)
 
-    local i
+    -- Convert to liters only if player has the skin
+    local smallLiters = (smallRaw > 0) and (smallRaw - 1) or 0
+    local bigLiters = (bigRaw > 0) and (bigRaw - 1) or 0
+
+    local smallCapacity = 3 - smallLiters
+    local bigCapacity = 5 - bigLiters
 
     if flag then
-        -- Big one isn't empty and the small one isn't full.
-        if Lara:GetWaterSkinStatus(true) ~= 1 and smallCapacity > 0 then
-            i = bigLiters
+        -- Pour from big into small
+        if bigRaw > 1 and smallCapacity > 0 then
+            local transfer = math.min(bigLiters, smallCapacity)
+            smallLiters = smallLiters + transfer
+            bigLiters = bigLiters - transfer
 
-            while i > 0 do
-                if smallCapacity > 0 then
-                    smallLiters = smallLiters + 1
-                    smallCapacity = smallCapacity - 1
-                    bigLiters = bigLiters - 1
-                end
-
-                i = i - 1
-            end
-
-            Lara:SetWaterSkinStatus(smallLiters + 1, false) 
+            Lara:SetWaterSkinStatus(smallLiters + 1, false)
             Lara:SetWaterSkinStatus(bigLiters + 1, true)
+
             combineItem1 = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
             return true
         end
     else
-        -- Small one isn't empty and the big one isn't full.
-        if Lara:GetWaterSkinStatus(false) ~= 1 and bigCapacity > 0 then
-            i = smallLiters
+        -- Pour from small into big
+        if smallRaw > 1 and bigCapacity > 0 then
+            local transfer = math.min(smallLiters, bigCapacity)
+            bigLiters = bigLiters + transfer
+            smallLiters = smallLiters - transfer
 
-            while i > 0 do
-                if bigCapacity > 0 then
-                    bigLiters = bigLiters + 1
-                    bigCapacity = bigCapacity - 1
-                    smallLiters = smallLiters - 1
-                end
-
-                i = i - 1
-            end
-
-            Lara:SetWaterSkinStatus(smallLiters + 1, false) 
+            Lara:SetWaterSkinStatus(smallLiters + 1, false)
             Lara:SetWaterSkinStatus(bigLiters + 1, true)
-            combineItem1 = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
 
+            combineItem1 = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
             return true
         end
     end
@@ -446,14 +436,14 @@ local CombineItems = function(item1, item2)
             item2 >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and
             item2 <= TEN.Objects.ObjID.WATERSKIN2_5) then
     
-            if (PerformWaterskinCombine(true)) then
+            if (PerformWaterskinCombine(false)) then
                 return true
             end
         elseif(item2 >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and
             item2 <= TEN.Objects.ObjID.WATERSKIN1_3 and
             item1 >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and
             item1 <= TEN.Objects.ObjID.WATERSKIN2_5) then
-                if (PerformWaterskinCombine(false)) then
+                if (PerformWaterskinCombine(true)) then
                     return true
                 end
         end
