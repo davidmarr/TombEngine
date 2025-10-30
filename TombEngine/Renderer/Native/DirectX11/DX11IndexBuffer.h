@@ -47,49 +47,7 @@ namespace TEN::Renderer::Native::DirectX11
 			_numIndices = numIndices;
 		}
 
-		DX11IndexBuffer(ID3D11Device* device, int numIndices, fast_vector<int> indices)
-		{
-			D3D11_BUFFER_DESC desc = {};
-			desc.Usage = D3D11_USAGE_DYNAMIC;
-			desc.ByteWidth = sizeof(int) * (numIndices > 0 ? numIndices : 1);
-			desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-			if (numIndices > 0)
-			{
-				D3D11_SUBRESOURCE_DATA initData = {};
-				initData.pSysMem = indices.data();
-				initData.SysMemPitch = sizeof(int) * numIndices;
-
-				throwIfFailed(device->CreateBuffer(&desc, &initData, &Buffer));
-			}
-			else
-			{
-				throwIfFailed(device->CreateBuffer(&desc, nullptr, &Buffer));
-			}
-
-			_numIndices = numIndices;
-		}
-
-		bool Update(ID3D11DeviceContext* context, std::vector<int>& data, int startIndex, int count)
-		{
-			D3D11_MAPPED_SUBRESOURCE mappedResource;
-			HRESULT res = context->Map(Buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-			if (SUCCEEDED(res))
-			{
-				void* dataPtr = mappedResource.pData;
-				std::memcpy(dataPtr, &data[startIndex], count * sizeof(int));
-				context->Unmap(Buffer.Get(), 0);
-				return true;
-			}
-			else
-			{
-				TENLog("Could not update constant buffer! " + std::to_string(res), LogLevel::Error);
-				return false;
-			}
-		}
-
-		bool Update(ID3D11DeviceContext* context, fast_vector<int>& data, int startIndex, int count)
+		bool Update(ID3D11DeviceContext* context, int* data, int startIndex, int count)
 		{
 			D3D11_MAPPED_SUBRESOURCE mappedResource;
 			HRESULT res = context->Map(Buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);

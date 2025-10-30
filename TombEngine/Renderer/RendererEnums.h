@@ -349,6 +349,15 @@ enum class PixelFormat
 	D24_S8
 };
 
+enum class VertexInputFormat
+{
+	RGBA8_Unorm,
+	R8G8_Unorm,
+	R32_Float,
+	RGB32_Float,
+	RGBA32_Float
+};
+
 enum class InputLayout
 {
 	Vertex,

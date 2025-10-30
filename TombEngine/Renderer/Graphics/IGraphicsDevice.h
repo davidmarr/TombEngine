@@ -10,9 +10,13 @@
 #include "Renderer/Graphics/ITexture2D.h"
 #include "Renderer/Graphics/ITexture2DArray.h"
 #include "Renderer/Graphics/IConstantBuffer.h"
+#include "Renderer/Graphics/IInputLayout.h"
+#include "Renderer/Graphics/IShader.h"
 #include "Renderer/RendererEnums.h"
 #include "Renderer/Structures/RendererRectangle.h"
+#include "Renderer/Structures/RendererInputLayout.h"
 #include "Renderer/Structures/RendererViewport.h"
+#include "Renderer/ShaderManager/ShaderManager.h"
 
 using namespace TEN::Renderer::Structures;
 using namespace DirectX;
@@ -24,21 +28,21 @@ namespace TEN::Renderer::Graphics
 	{
 	public:
 		virtual IVertexBuffer* CreateVertexBuffer(int numVertices, int vertexSize, void* data) = 0;
-		virtual bool UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) = 0;
+		virtual void UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) = 0;
 		virtual void BindVertexBuffer(IVertexBuffer* vertexBuffer) = 0;
 
 		virtual IIndexBuffer* CreateIndexBuffer(int numIndices, int* data) = 0;
-		virtual IIndexBuffer* CreateIndexBuffer(int numIndices, int startIndex, int* data) = 0;
+		virtual void UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data) = 0;
 		virtual void BindIndexBuffer(IIndexBuffer* indexBuffer) = 0;
 
 		virtual IRenderTarget2D* CreateRenderTarget2D(int width, int height, PixelFormat colorFormat, bool isTypeless, PixelFormat depthFormat) = 0;
-		virtual IRenderTarget2D* CreateRenderTarget2DFromAnother(IRenderTarget2D*, PixelFormat colorFormat) = 0;
+		virtual IRenderTarget2D* CreateRenderTarget2DFromAnother(IRenderTarget2D* parentRenderTarget, PixelFormat colorFormat) = 0;
 
 		virtual IRenderTargetCube* CreateRenderTargetCube(int size, PixelFormat colorFormat, PixelFormat depthFormat) = 0;
 
 		virtual ITexture2D* CreateTexture2D(int width, int height, byte* data) = 0;
 		virtual ITexture2D* CreateTexture2D(int width, int height,PixelFormat format, int pitch, const void* data) = 0;
-		virtual ITexture2D* CreateTexture2D(const std::wstring& fileName) = 0;
+		virtual ITexture2D* CreateTexture2D(const std::string fileName) = 0;
 		virtual ITexture2D* CreateTexture2D(int length, byte* data) = 0;
 
 		virtual ITexture2DArray* CreateTexture2DArray(int size, int count, PixelFormat colorFormat, PixelFormat depthFormat) = 0;
@@ -69,10 +73,22 @@ namespace TEN::Renderer::Graphics
 		virtual void ClearDepthStencilOfCube(IRenderTargetCube* textureCube, int index, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) = 0;
 
 		virtual void SetViewport(RendererViewport viewport) = 0;
-		virtual void SetInputLayout(InputLayout inputLayout) = 0;
 		virtual void SetPrimitiveType(PrimitiveType primitiveType) = 0;
 
-		virtual void Initialize(const std::string& gameDir, int w, int h, bool windowed, HWND handle) = 0;
+		virtual void SetInputLayout(IInputLayout* inputLayout) = 0;
+		virtual IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields) = 0;
+
+		virtual void CreateDevice() = 0;
+		virtual void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) = 0;
+		virtual IRenderTarget2D* InitializeSwapChain(int width, int height, HWND handle) = 0;
+
+		virtual std::string GetDefaultAdapterName() = 0;
+		virtual void ChangeScreenResolution(int width, int height, bool windowed) = 0;
+
+		virtual IShader* CreateShader(ShaderCompileRequest& request) = 0;
+		virtual void BindVertexShader(IShader* shader, bool forceNull) = 0;
+		virtual void BindGeometryShader(IShader* shader, bool forceNull) = 0;
+		virtual void BindPixelShader(IShader* shader, bool forceNull) = 0;
 
 		virtual ~IGraphicsDevice() = default;
 	};

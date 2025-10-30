@@ -14,6 +14,8 @@
 #include "Renderer/Native/DirectX11/DX11Texture2D.h"
 #include "Renderer/Native/DirectX11/DX11Texture2DArray.h"
 #include "Renderer/Native/DirectX11/DX11ConstantBuffer.h"
+#include "Renderer/Native/DirectX11/DX11InputLayout.h"
+#include "Renderer/Native/DirectX11/DX11Shader.h"
 
 using namespace TEN::Renderer::Graphics;
 using namespace TEN::Renderer::Graphics;
@@ -53,6 +55,11 @@ namespace TEN::Renderer::Native::DirectX11
 		D3D11_VIEWPORT _shadowMapViewport;
 		Viewport _viewportToolkit;
 
+		int _screenWidth;
+		int _screenHeight;
+		int _isWindowed;
+		int _refreshRate;
+
 		inline DXGI_FORMAT GetDXGIFormat(PixelFormat format)
 		{
 			switch (format)
@@ -87,13 +94,26 @@ namespace TEN::Renderer::Native::DirectX11
 			}
 		}
 
+		std::vector<D3D_SHADER_MACRO> ToD3DMacros(const std::map<std::string, std::string>& m)
+		{
+			std::vector<D3D_SHADER_MACRO> out;
+			out.reserve(m.size() + 1);
+			for (auto& kv : m)
+			{
+				out.push_back(D3D_SHADER_MACRO{ kv.first.c_str(),
+												kv.second.empty() ? nullptr : kv.second.c_str() });
+			}
+			out.push_back(D3D_SHADER_MACRO{ nullptr, nullptr });
+			return out;
+		}
+
 	public:
 		IVertexBuffer* CreateVertexBuffer(int numVertices, int vertexSize, void* data) override;
-		bool UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) override;
+		void UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) override;
 		void BindVertexBuffer(IVertexBuffer* vertexBuffer) override;
 
 		IIndexBuffer* CreateIndexBuffer(int numIndices, int* data) override;
-		IIndexBuffer* CreateIndexBuffer(int numIndices, int startIndex, int* data) override;
+		void UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data) override;
 		void BindIndexBuffer(IIndexBuffer* indexBuffer) override;
 
 		IRenderTarget2D* CreateRenderTarget2D(int width, int height, PixelFormat colorFormat, bool isTypeless, PixelFormat depthFormat) override;
@@ -102,7 +122,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		ITexture2D* CreateTexture2D(int width, int height, byte* data) override;
 		ITexture2D* CreateTexture2D(int width, int height, PixelFormat format, int pitch, const void* data) override;
-		ITexture2D* CreateTexture2D(const std::wstring& fileName) override;
+		ITexture2D* CreateTexture2D(const std::string fileName) override;
 		ITexture2D* CreateTexture2D(int length, byte* data) override;
 		ITexture2DArray* CreateTexture2DArray(int size, int count, PixelFormat colorFormat, PixelFormat depthFormat) override;
 
@@ -132,10 +152,22 @@ namespace TEN::Renderer::Native::DirectX11
 		void ClearDepthStencilOfCube(IRenderTargetCube* textureCube, int index, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
 
 		void SetViewport(RendererViewport viewport) override;
-		void SetInputLayout(InputLayout inputLayout) override;
 		void SetPrimitiveType(PrimitiveType primitiveType) override;
 
-		void Initialize(const std::string& gameDir, int w, int h, bool windowed, HWND handle) override;
+		void SetInputLayout(IInputLayout* inputLayout) override;
+		IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields) override;
+
+		void CreateDevice() override;
+		void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) override;
+		IRenderTarget2D* InitializeSwapChain(int width, int height, HWND handle) override;
+
+		std::string GetDefaultAdapterName() override;
+		void ChangeScreenResolution(int width, int height, bool windowed) override;
+
+		IShader* CreateShader(ShaderCompileRequest& request) override;
+		void BindVertexShader(IShader* shader, bool forceNull) override;
+		void BindGeometryShader(IShader* shader, bool forceNull) override;
+		void BindPixelShader(IShader* shader, bool forceNull) override;
 
 		~DX11GraphicsDevice() override = default;
 	};

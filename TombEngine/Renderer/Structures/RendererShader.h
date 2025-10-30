@@ -11,7 +11,8 @@ namespace TEN::Renderer::Structures
 		Pixel,
 		Vertex,
 		PixelAndVertex,
-		Compute
+		Compute,
+		Geometry
 	};
 
 	struct RendererPixelShaderAndBlob
