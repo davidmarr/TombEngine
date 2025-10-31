@@ -34,8 +34,8 @@ end
 
 --- Generate a formatted time string based on the provided time and format.
 -- @tparam Time time The Time object containing hours, minutes, seconds, and centiseconds
--- @tparam table timerFormat A table specifying which time components to include (hours, minutes, seconds, deciseconds).
--- @tparam string|bool errorFormat An optional error message to log if the format is invalid.
+-- @tparam table format A table specifying which time components to include (hours, minutes, seconds, deciseconds).
+-- @tparam[opt=false] string|bool error An optional error message to log if the format is invalid.
 -- @treturn string The formatted time string.
 -- @usage
 -- -- Example 1: Basic usage
@@ -48,39 +48,39 @@ end
 -- local format = { minutes = true, seconds = true, deciseconds = true }
 -- local formattedString = Utility.GenerateTimeFormattedString(time, format)
 -- print(formattedString) -- Output: "90:45.5"
-Util.GenerateTimeFormattedString = function (time, timerFormat, errorFormat)
-    errorFormat = Type.IsString(errorFormat) and errorFormat or false
-    timerFormat = Util.CheckTimeFormat(timerFormat)
+Util.GenerateTimeFormattedString = function (time, format, error)
+    error = Type.IsString(error) and error or false
+    format = Util.CheckTimeFormat(format)
 
 	if not Type.IsTime(time) then
-		if errorFormat then
-			TEN.Util.PrintLog(errorFormat, TEN.Util.LogLevel.ERROR)
+		if error then
+			TEN.Util.PrintLog(error, TEN.Util.LogLevel.ERROR)
 		end
 		return "Error"
 	end
-	if not timerFormat then
-		if errorFormat then
-			TEN.Util.PrintLog(errorFormat, TEN.Util.LogLevel.ERROR)
+	if not format then
+		if error then
+			TEN.Util.PrintLog(error, TEN.Util.LogLevel.ERROR)
 		end
 		return "Error"
 	else
 		local result = {}
 		local index = 1
-		if timerFormat.hours then
+		if format.hours then
         	result[index] = string.format("%02d", time.h)
         	index = index + 1
     	end
-    	if timerFormat.minutes then
-        	result[index] = string.format("%02d", timerFormat.hours and time.m or (time.m + (60 * time.h)))
+    	if format.minutes then
+        	result[index] = string.format("%02d", format.hours and time.m or (time.m + (60 * time.h)))
         	index = index + 1
     	end
-    	if timerFormat.seconds then
-        	result[index] = string.format("%02d", timerFormat.minutes and time.s or (time.s + (60 * time.m)))
+    	if format.seconds then
+        	result[index] = string.format("%02d", format.minutes and time.s or (time.s + (60 * time.m)))
         	index = index + 1
     	end
 		local formattedString = table.concat(result, ":")
 
-    	if timerFormat.deciseconds then
+    	if format.deciseconds then
         	local deciseconds = math.floor(time.c / 10)
 			return (index == 1) and tostring(deciseconds) or tostring(formattedString .. "." .. deciseconds)
     	end
