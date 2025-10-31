@@ -58,6 +58,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Moveable:ShowInteractionHighlight` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
+* Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
 * Fixed errors while creating climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
