@@ -238,24 +238,24 @@ Util.Smoothstep = function (edge0, edge1, x)
     local isVec2 = Type.IsVec2(edge0) and Type.IsVec2(edge1)
     -- Check if working with Vec3
     local isVec3 = Type.IsVec3(edge0) and Type.IsVec3(edge1)
-    
+
     if isColor then
         if not Type.IsNumber(x) then
             TEN.Util.PrintLog("Error in Utility.Smoothstep: interpolation factor x is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Color(0, 0, 0, 0)
         end
-        
+
         -- Scale and clamp x to 0..1 range
         local t = math.max(0, math.min(1, x))
         -- Evaluate polynomial
         t = t * t * (3 - 2 * t)
-        
+
         -- Interpolate each color component
         local r = edge0.r + (edge1.r - edge0.r) * t
         local g = edge0.g + (edge1.g - edge0.g) * t
         local b = edge0.b + (edge1.b - edge0.b) * t
         local a = edge0.a + (edge1.a - edge0.a) * t
-        
+
         return TEN.Color(
             math.floor(r + 0.5),
             math.floor(g + 0.5),
@@ -267,12 +267,12 @@ Util.Smoothstep = function (edge0, edge1, x)
             TEN.Util.PrintLog("Error in Utility.Smoothstep: interpolation factor x is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Rotation(0, 0, 0)
         end
-        
+
         -- Scale and clamp x to 0..1 range
         local t = math.max(0, math.min(1, x))
         -- Evaluate polynomial
         t = t * t * (3 - 2 * t)
-        
+
         -- Use native Rotation:Lerp with smoothstep factor
         return edge0:Lerp(edge1, t)
     elseif isVec2 then
@@ -280,12 +280,12 @@ Util.Smoothstep = function (edge0, edge1, x)
             TEN.Util.PrintLog("Error in Utility.Smoothstep: interpolation factor x is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Vec2(0, 0)
         end
-        
+
         -- Scale and clamp x to 0..1 range
         local t = math.max(0, math.min(1, x))
         -- Evaluate polynomial
         t = t * t * (3 - 2 * t)
-        
+
         -- Use native Vec2:Lerp with smoothstep factor
         return edge0:Lerp(edge1, t)
     elseif isVec3 then
@@ -293,12 +293,12 @@ Util.Smoothstep = function (edge0, edge1, x)
             TEN.Util.PrintLog("Error in Utility.Smoothstep: interpolation factor x is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Vec3(0, 0, 0)
         end
-        
+
         -- Scale and clamp x to 0..1 range
         local t = math.max(0, math.min(1, x))
         -- Evaluate polynomial
         t = t * t * (3 - 2 * t)
-        
+
         -- Use native Vec3:Lerp with smoothstep factor
         return edge0:Lerp(edge1, t)
     elseif Type.IsNumber(edge0) and Type.IsNumber(edge1) and Type.IsNumber(x) then
@@ -350,22 +350,22 @@ Util.Lerp = function(a, b, t)
     local isVec2 = Type.IsVec2(a) and Type.IsVec2(b)
     -- Check if working with Vec3
     local isVec3 = Type.IsVec3(a) and Type.IsVec3(b)
-    
+
     if isColor then
         if not Type.IsNumber(t) then
             TEN.Util.PrintLog("Error in Utility.Lerp: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Color(0, 0, 0, 0)
         end
-        
+
         -- Clamp t to 0..1 range
         local clampedT = math.max(0, math.min(1, t))
-        
+
         -- Interpolate each color component
         local r = a.r + (b.r - a.r) * clampedT
         local g = a.g + (b.g - a.g) * clampedT
         local bComp = a.b + (b.b - a.b) * clampedT
         local alpha = a.a + (b.a - a.a) * clampedT
-        
+
         return TEN.Color(
             math.floor(r + 0.5),
             math.floor(g + 0.5),
@@ -377,10 +377,10 @@ Util.Lerp = function(a, b, t)
             TEN.Util.PrintLog("Error in Utility.Lerp: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Rotation(0, 0, 0)
         end
-        
+
         -- Clamp t to 0..1 range
         local clampedT = math.max(0, math.min(1, t))
-        
+
         -- Use native Rotation:Lerp method
         return a:Lerp(b, clampedT)
     elseif isVec2 then
@@ -388,10 +388,10 @@ Util.Lerp = function(a, b, t)
             TEN.Util.PrintLog("Error in Utility.Lerp: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Vec2(0, 0)
         end
-        
+
         -- Clamp t to 0..1 range
         local clampedT = math.max(0, math.min(1, t))
-        
+
         -- Use native Vec2:Lerp method
         return a:Lerp(b, clampedT)
     elseif isVec3 then
@@ -399,10 +399,10 @@ Util.Lerp = function(a, b, t)
             TEN.Util.PrintLog("Error in Utility.Lerp: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
             return TEN.Vec3(0, 0, 0)
         end
-        
+
         -- Clamp t to 0..1 range
         local clampedT = math.max(0, math.min(1, t))
-        
+
         -- Use native Vec3:Lerp method
         return a:Lerp(b, clampedT)
     elseif Type.IsNumber(a) and Type.IsNumber(b) and Type.IsNumber(t) then
