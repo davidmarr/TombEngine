@@ -658,20 +658,22 @@ namespace TEN::Renderer
 
 		static inline unsigned int PackVector3(Vector3 n)
 		{
-			n.Normalize();
+			if (n.Length() > EPSILON)
+				n.Normalize();
 
-			auto ToS8 = [](float v) -> unsigned int {
+			auto ToS8 = [](float v) -> unsigned int
+			{
 				float x = std::clamp(v, -1.0f, 1.0f) * 127.0f; // [-127..127]
-				return static_cast<int8_t>(std::lround(x));
-				};
+				return (char)(std::lround(x));
+			};
 
-			const unsigned char R = static_cast<unsigned char>(ToS8(n.x));
-			const unsigned char G = static_cast<unsigned char>(ToS8(n.y));
-			const unsigned char B = static_cast<unsigned char>(ToS8(n.z));
-			const unsigned char A = static_cast<unsigned char>(ToS8(0.0f));
+			const unsigned char X = (unsigned char)(ToS8(n.x));
+			const unsigned char Y = (unsigned char)(ToS8(n.y));
+			const unsigned char Z = (unsigned char)(ToS8(n.z));
+			const unsigned char W = (unsigned char)(ToS8(0.0f));
 
 			// Little-endian: memoria [R][G][B][A], come DXGI_FORMAT_R8G8B8A8_SNORM
-			return (unsigned int)R | ((unsigned int)G << 8) | ((unsigned int)B << 16) | ((unsigned int)A << 24);
+			return (unsigned int)X | ((unsigned int)Y << 8) | ((unsigned int)Z << 16) | ((unsigned int)W << 24);
 		}
 
 		static inline unsigned int PackAnimationFrameOffsetIndexHash(int frameOffset, int meshIndex, int hash)
