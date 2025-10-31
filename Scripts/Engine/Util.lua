@@ -1,4 +1,4 @@
------<style>table.function_list td.name {min-width: 395px;}</style>
+-----<style>table.function_list td.name {min-width: 380px;}</style>
 --- Util - This module is a collection of help functions. To use the functions within the scripts, the module must be called:
 --	local Utility = require("Engine.Util")
 -- @luautil Utility
