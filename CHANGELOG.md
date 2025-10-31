@@ -30,6 +30,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed several collision issues for TRAIN object.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed wall embeddings after jumping on top of hard static meshes aligned to walls.
+* Fixed occasional problems with grabbing ledges after doing backjump onto slopes.
 * Fixed dying while landing into shallow water after freefall.
 * Fixed rapids drowning animation not triggering after freefall.
 * Fixed firearm targeting alignment biased to the left side.
@@ -57,6 +58,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Moveable:ShowInteractionHighlight` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
+* Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
+* Fixed errors while creating climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17

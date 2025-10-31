@@ -428,9 +428,10 @@ void EnumerateLegacyTracks()
 
 		std::regex upToThreeDigits("((\\d{1,3})[^\\.]*)");
 		std::smatch result;
+
 		for (const auto& file : std::filesystem::directory_iterator{ dir })
 		{
-			std::string fileName = file.path().filename().string();
+			auto fileName = file.path().filename().u8string();
 			auto bResult = std::regex_search(fileName, result, upToThreeDigits);
 			if (!result.empty())
 			{

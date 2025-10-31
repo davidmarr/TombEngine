@@ -439,7 +439,7 @@ void Moveable::SetPosition(const Vec3& pos, sol::optional<bool> updateRoom)
 		}
 	}
 
-	if (_moveable->IsBridge())
+	if (_initialized && _moveable->IsBridge())
 	{
 		auto& bridge = GetBridgeObject(*_moveable);
 		bridge.Update(*_moveable);
@@ -520,7 +520,7 @@ void Moveable::SetRotation(const Rotation& rot)
 
 	_moveable->Pose.Orientation = newRot;
 
-	if (_moveable->IsBridge())
+	if (_initialized && _moveable->IsBridge())
 	{
 		auto& bridge = GetBridgeObject(*_moveable);
 		bridge.Update(*_moveable);
