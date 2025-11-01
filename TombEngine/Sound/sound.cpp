@@ -415,17 +415,15 @@ void FreeSamples()
 void EnumerateLegacyTracks()
 {
 	auto dir = std::filesystem::path{ FullAudioDirectory };
-
-    if (!std::filesystem::is_directory(dir))
-    {
-        TENLog("Folder \"" + dir.string() + "\" does not exist. ", LogLevel::Warning, LogConfig::All);
-        return;
-    }
+	if (!std::filesystem::is_directory(dir))
+	{
+		TENLog("Folder \"" + dir.string() + "\" does not exist. ", LogLevel::Warning, LogConfig::All);
+		return;
+	}
 
 	try 
 	{
 		// Capture three-digit filenames, or those which start with three digits.
-
 		std::regex upToThreeDigits("((\\d{1,3})[^\\.]*)");
 		std::smatch result;
 
@@ -455,7 +453,6 @@ void EnumerateLegacyTracks()
 	{
 		TENLog(e.what(), LogLevel::Error, LogConfig::All);
 	}
-
 }
 
 float GetSoundTrackLoudness(SoundTrackType mode)
