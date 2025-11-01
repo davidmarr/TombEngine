@@ -59,10 +59,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
 * Added `Type.IsEnumValue` helper function to determine if particular value belongs to an enumeration.
+* Added several helper functions in the `Util` module.
+* Added overloads for `Util.PercentToScreen(Vec2(x, y))` and `Util.ScreenToPercent(Vec2(x, y))`.
 * Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
-* Added help functions in the Util.lua module
-* Added overload for TEN.Util.PercentToScreen(Vec2(x, y)) and TEN.Util.ScreenToPercent(Vec2(x, y))
-* Fixed errors while creating climbable `Moveable` objects.
+* Fixed errors while spawning climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
