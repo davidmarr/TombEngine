@@ -494,7 +494,7 @@ static void StartEntity(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeLightingGuide;
 		//obj->control = ControlLightingGuide;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		obj->shadowType = ShadowMode::All;
 		obj->radius = 256;
 		obj->HitPoints = NOT_TARGETABLE;
@@ -560,7 +560,7 @@ static void StartEntity(ObjectInfo *obj)
 	obj = &Objects[ID_RATS_EMITTER];
 	if (obj->loaded)
 	{
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		obj->Initialize = InitializeLittleRats;
 		obj->control = LittleRatsControl;
 	}
@@ -568,7 +568,7 @@ static void StartEntity(ObjectInfo *obj)
 	obj = &Objects[ID_BATS_EMITTER];
 	if (obj->loaded)
 	{
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		obj->Initialize = InitializeLittleBats;
 		obj->control = LittleBatsControl;
 	}
@@ -576,7 +576,7 @@ static void StartEntity(ObjectInfo *obj)
 	obj = &Objects[ID_SPIDERS_EMITTER];
 	if (obj->loaded)
 	{
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		obj->Initialize = InitializeSpiders;
 		obj->control = SpidersEmitterControl;
 	}
@@ -701,7 +701,7 @@ static void StartObject(ObjectInfo *obj)
 	if (obj->loaded)
 	{
 		obj->control = PulseLightControl;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_STROBE_LIGHT];
@@ -712,14 +712,14 @@ static void StartObject(ObjectInfo *obj)
 	if (obj->loaded)
 	{
 		obj->control = ColorLightControl;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_BLINKING_LIGHT];
 	if (obj->loaded)
 	{
 		obj->control = BlinkingLightControl;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		
 	}
 
@@ -732,7 +732,7 @@ static void StartObject(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeSmokeEmitter;
 		obj->control = ControlSmokeEmitter;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_SMOKE_EMITTER_WHITE];
@@ -740,7 +740,7 @@ static void StartObject(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeSmokeEmitter;
 		obj->control = ControlSmokeEmitter;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_SMOKE_EMITTER];
@@ -748,7 +748,7 @@ static void StartObject(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeSmokeEmitter;
 		obj->control = ControlSmokeEmitter;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_WATERFALL_EMITTER];
@@ -756,19 +756,19 @@ static void StartObject(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeWaterfall;
 		obj->control = ControlWaterfall;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_TELEPORTER];
 	if (obj->loaded)
 	{
 		obj->control = ControlTeleporter;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_LARA_START_POS];
 	if (obj->loaded)
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 
 	obj = &Objects[ID_HIGH_OBJECT1];
 	if (obj->loaded)
@@ -781,7 +781,7 @@ static void StartObject(ObjectInfo *obj)
 	obj = &Objects[ID_EMBER_EMITTER];
 	if (obj->loaded)
 	{
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		obj->control = ControlEmberEmitter;
 	}
 
@@ -790,7 +790,7 @@ static void StartObject(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeFireflySwarm;
 		obj->control = ControlFireflySwarm;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_GEN_SLOT1];
@@ -810,7 +810,7 @@ static void StartObject(ObjectInfo *obj)
 		obj = &Objects[objectNumber];
 		if (obj->loaded)
 		{
-			obj->DoNotDraw = true;
+			obj->Hidden = true;
 			obj->collision = AIPickupCollision;
 		}
 	}
@@ -820,7 +820,7 @@ static void StartObject(ObjectInfo *obj)
 	{
 		//obj->Initialize = InitializePortal;
 		//obj->control = PortalControl;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_WATERFALLSS1];
@@ -924,7 +924,7 @@ static void StartTrap(ObjectInfo *obj)
 	{
 		obj->Initialize = InitializeExplosion;
 		obj->control = ControlExplosion;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_LASER_BARRIER];
@@ -933,7 +933,7 @@ static void StartTrap(ObjectInfo *obj)
 		obj->Initialize = InitializeLaserBarrier;
 		obj->control = ControlLaserBarrier;
 		obj->collision = CollideLaserBarrier;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_LASER_BEAM];
@@ -942,7 +942,7 @@ static void StartTrap(ObjectInfo *obj)
 		obj->Initialize = InitializeLaserBeam;
 		obj->control = ControlLaserBeam;
 		obj->collision = CollideLaserBeam;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_MOVING_LASER];

@@ -391,7 +391,7 @@ void StartTraps(ObjectInfo* object)
 	{
 		object->Initialize = InitializeDartEmitter;
 		object->control = ControlDartEmitter;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_HOMING_DART_EMITTER];
@@ -399,7 +399,7 @@ void StartTraps(ObjectInfo* object)
 	{
 		object->Initialize = InitializeDartEmitter;
 		object->control = ControlDartEmitter;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_ROPE];
@@ -408,7 +408,7 @@ void StartTraps(ObjectInfo* object)
 		object->Initialize = InitializeRope;
 		object->control = RopeControl;
 		object->collision = RopeCollision;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_POLEROPE];
@@ -460,7 +460,7 @@ void StartServiceObjects(ObjectInfo* object)
 	object = &Objects[ID_CAMERA_TARGET];
 	if (object->loaded)
 	{
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_TIGHT_ROPE];
@@ -468,18 +468,18 @@ void StartServiceObjects(ObjectInfo* object)
 	{
 		object->Initialize = InitializeTightrope;
 		object->collision = TightropeCollision;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_EARTHQUAKE];
 	if (object->loaded)
-		object->DoNotDraw = true;
+		object->Hidden = true;
 
 	object = &Objects[ID_KILL_ALL_TRIGGERS];
 	if (object->loaded)
 	{
 		object->control = KillAllCurrentItems;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 		object->HitPoints = 0;
 	}
 
@@ -487,14 +487,14 @@ void StartServiceObjects(ObjectInfo* object)
 	if (object->loaded)
 	{
 		object->control = ControlTriggerTriggerer;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_WATERFALLMIST];
 	if (object->loaded)
 	{
 		object->control = ControlWaterfallMist;
-		object->DoNotDraw = true;
+		object->Hidden = true;
 	}
 
 	for (int objectID = ID_ANIMATING1; objectID <= ID_ANIMATING128; objectID++)

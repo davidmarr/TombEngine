@@ -235,7 +235,7 @@ void InitializeObjects()
 		obj->AlwaysActive = false;
 		obj->waterCreature = false;
 		obj->nonLot = false;
-		obj->DoNotDraw = false;
+		obj->Hidden = false;
 		obj->damageType = DamageMode::Any;
 		obj->LotType = LotType::Basic;
 		obj->meshSwapSlot = NO_VALUE;

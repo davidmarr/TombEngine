@@ -142,7 +142,7 @@ namespace TEN::Hud
 		const auto playerBoundingBox = player.GetObb();
 
 		// Only check bounding box intersection if not in custom mode.
-		if (!Objects[item.ObjectNumber].DoNotDraw && !playerBoundingBox.Intersects(inflatedBoundingBox))
+		if (!Objects[item.ObjectNumber].Hidden && !playerBoundingBox.Intersects(inflatedBoundingBox))
 			return;
 
 		auto position = itemBoundingBox.Center;

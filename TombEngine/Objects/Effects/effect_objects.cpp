@@ -16,7 +16,7 @@ void InitializeEffectsObjects()
 	obj = &Objects[ID_FLAME];
 	{
 		obj->control = nullptr;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_FLAME_EMITTER];
@@ -25,7 +25,7 @@ void InitializeEffectsObjects()
 		obj->Initialize = InitializeFlameEmitter;
 		obj->collision = FlameEmitterCollision;
 		obj->control = FlameEmitterControl;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_FLAME_EMITTER2];
@@ -34,7 +34,7 @@ void InitializeEffectsObjects()
 		obj->Initialize = InitializeFlameEmitter2;
 		obj->collision = FlameEmitterCollision;
 		obj->control = FlameEmitter2Control;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_FLAME_EMITTER3];
@@ -42,7 +42,7 @@ void InitializeEffectsObjects()
 	{
 		obj->Initialize = InitializeFlameEmitter3;
 		obj->control = FlameEmitter3Control;
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 	}
 
 	obj = &Objects[ID_ENERGY_BUBBLES];
@@ -55,7 +55,7 @@ void InitializeEffectsObjects()
 	obj = &Objects[ID_LENS_FLARE];
 	if (obj->loaded)
 	{
-		obj->DoNotDraw = true;
+		obj->Hidden = true;
 		obj->control = ControlLensFlare;
 		obj->AlwaysActive = true;
 	}

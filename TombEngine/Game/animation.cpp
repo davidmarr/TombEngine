@@ -706,7 +706,7 @@ Vector3i GetJointPosition(const ItemInfo& item, int jointIndex, const Vector3i& 
 
 	// Always return object's root position if it's invisible, because we can't predict its
 	// joint position otherwise, since it's not animated.
-	if (incorrectJoint || Objects[item.ObjectNumber].DoNotDraw || item.Status == ITEM_INVISIBLE)
+	if (incorrectJoint || Objects[item.ObjectNumber].Hidden || item.Status == ITEM_INVISIBLE)
 		return Geometry::TranslatePoint(item.Pose.Position, item.Pose.Orientation, relOffset);
 
 	// Use matrices done in renderer to transform relative offset.
