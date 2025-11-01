@@ -62,6 +62,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
 * Fixed errors while creating climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
+* Added `DisplaySprite:GetAnchors` method.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
