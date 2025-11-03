@@ -51,15 +51,18 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed wrong highlights when sun lights were used in mirror setups.
 * Fixed SSAO applied multiple times when additive surfaces are present in scene.
 * Fixed vertex effects (glow and move) not being rendered at full framerate.
+* Fixed incorrect roll values in flyby cameras.
 * Fixed HUD elements being drawn during cinematic flybys or in title level.
 
 ### Lua API changes
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
 * Added `Moveable:ShowInteractionHighlight` method.
+* Added `DisplaySprite:GetFlags` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
+* Added `Type.IsEnumValue` helper function to determine if particular value belongs to an enumeration.
 * Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
-* Fixed errors while creating climbable `Moveable` objects.
+* Fixed errors while spawning climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17

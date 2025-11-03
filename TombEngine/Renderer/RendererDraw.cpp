@@ -3438,16 +3438,7 @@ namespace TEN::Renderer
 								else
 									BindBucketTextures(bucket, TextureSource::Moveables, animated);
 
-#ifdef TEST_LEGACY_REFLECTIONS
-								if (itemToDraw->ObjectID == ID_LARA)
-								{
-									BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::LinearClamp);
-									_stMaterial.MaterialType = 1;
-									UpdateConstantBuffer(_stMaterial, _cbMaterial);
-								}
-								else
-#endif
-									BindMaterial(bucket.MaterialIndex, false);
+								BindMaterial(bucket.MaterialIndex, false);
 
 								bindTextureAndMaterialsRequired = false;
 							}

@@ -647,12 +647,15 @@ namespace TEN::Renderer
 
 		static inline unsigned int PackEffectsAndIndexInPoly(Vector3 effects, float sheen, int indexInPoly)
 		{
+			// Clamp values to 254 (UCHAR_MAX - 1) to avoid overflow during back conversion in shaders.
+
 			int packed =
-				((int)(effects.x * 255.0f) << GLOW_VERTEX_SHIFT) |
-				((int)(effects.y * 255.0f) << MOVE_VERTEX_SHIFT) |
-				((int)(sheen * 255.0f) << SHININESS_VERTEX_SHIFT) |
+				((int)floor(effects.x * (UCHAR_MAX - 1)) << GLOW_VERTEX_SHIFT) |
+				((int)floor(effects.y * (UCHAR_MAX - 1)) << MOVE_VERTEX_SHIFT) |
+				((int)floor(sheen     * (UCHAR_MAX - 1)) << SHININESS_VERTEX_SHIFT) |
 				((int)effects.z << LOCKED_VERTEX_SHIFT) |
 				(indexInPoly << INDEX_IN_POLY_VERTEX_SHIFT);
+
 			return packed;
 		}
 
@@ -663,7 +666,7 @@ namespace TEN::Renderer
 
 			auto ToS8 = [](float v) -> unsigned int
 			{
-				float x = std::clamp(v, -1.0f, 1.0f) * 127.0f; // [-127..127]
+				float x = std::clamp(v, -1.0f, 1.0f) * CHAR_MAX;
 				return (char)(std::lround(x));
 			};
 
