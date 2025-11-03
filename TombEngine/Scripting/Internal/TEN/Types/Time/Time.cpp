@@ -108,11 +108,22 @@ namespace TEN::Scripting
 	/// Create a Time object.
 	// @function Time
 	// @treturn Time A new Time object initialized to zero time.
+	// @usage
+	// -- Create Time object with zero time
+	// local time = Time() -- 0 frames
+
 
 	/// Create a Time object from a total game frame count (1 second = 30 frames).
 	// @function Time
 	// @tparam int gameFrames Total game frame count.
 	// @treturn Time A new Time object initialized with the given frame count.
+	// @usage
+	// -- Example1: Create Time object for 3 seconds (90 frames)
+	// local time = Time(90) -- 3 seconds
+	//
+	// -- Example2: Create Time object with 120 seconds (3600 frames)
+	// local seconds = 120
+	// local time = Time(seconds * 30)
 	Time::Time(int gameFrames)
 	{
 		_frameCount = std::clamp(gameFrames, 0, INT_MAX);
@@ -122,6 +133,9 @@ namespace TEN::Scripting
 	// @function Time
 	// @tparam string formattedTime Time in the format "HH:MM:SS[.CC]", where [.CC] is centiseconds and is optional.
 	// @treturn Time A new Time object parsed from the given string.
+	// @usage
+	// -- Create Time object from formatted string "00:01:30.50"
+	// local time = Time("00:01:30.50") -- 1 minute, 30 seconds, and 50 centiseconds
 	Time::Time(const std::string& formattedTime)
 	{
 		SetFromFormattedString(formattedTime);
@@ -131,6 +145,10 @@ namespace TEN::Scripting
 	// @function Time
 	// @tparam table timeUnits A time unit table in the format {HH, MM, SS, [CC]}, where [CC] is optional.
 	// @treturn Time A new Time object initialized with the given values.
+	// @usage
+	// -- Create Time object for 0 hours, 2 minutes, 15 seconds, and 75 centiseconds
+	// local timeUnits = {0, 2, 15, 75} -- 0 hours, 2 minutes, 15 seconds, and 75 centiseconds
+	// local time = Time(timeUnits)
 	Time::Time(const sol::table& hmsTable)
 	{
 		SetFromTable(hmsTable);
@@ -140,6 +158,10 @@ namespace TEN::Scripting
 	// @function tostring
 	// @tparam Time this Time object.
 	// @treturn string A string showing time in "HH:MM:SS.CC" format.
+	// @usage
+	// -- Example of converting Time object to string
+	// local time = Time(3661) -- 2 minutes, 2 seconds, and 1 frame
+	// print(tostring(time)) -- "00:02:02.03"
 	std::string Time::ToString() const
 	{
 		auto hmsc = GetHmsc();
@@ -158,6 +180,10 @@ namespace TEN::Scripting
 	/// Get the total game frame count.
 	// @function Time:GetFrameCount
 	// @treturn int Total number of game frames.
+	// @usage
+	// -- Get total frame count from Time object
+	// local time = Time(150) -- 5 seconds
+	// print(time:GetFrameCount()) -- 150
 	int Time::GetFrameCount() const
 	{
 		return _frameCount;
@@ -166,6 +192,10 @@ namespace TEN::Scripting
 	/// Get the time in hours, minutes, seconds, and centiseconds as a table.
 	// @function Time:GetTimeUnits
 	// @treturn table A table in the format {HH, MM, SS, CC}.
+	// @usage
+	// -- Get time units from Time object
+	// local time = Time(3675) -- 2 minutes, 2 seconds, and 15 frames
+	// local units = time:GetTimeUnits() -- {0, 2, 2, 50}
 	sol::table Time::GetTimeUnits(sol::this_state state) const
 	{
 		auto hmsc = GetHmsc();
