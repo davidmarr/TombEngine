@@ -46,7 +46,7 @@ namespace TEN::Scripting::Util
 	// @treturn bool true if there is a line of sight, false if not.
 	// @usage
 	// local flamePlinthPos = flamePlinth:GetPosition() + Vec3(0, flamePlinthHeight, 0);
-	// print(Misc.HasLineOfSight(enemyHead:GetRoomNumber(), enemyHead:GetPosition(), flamePlinthPos))
+	// print(TEN.Util.HasLineOfSight(enemyHead:GetRoomNumber(), enemyHead:GetPosition(), flamePlinthPos))
 	static bool HasLineOfSight(int roomID, const Vec3& posA, const Vec3& posB)
 	{
 		auto vector0 = posA.ToGameVector();
@@ -62,6 +62,8 @@ namespace TEN::Scripting::Util
 	// @tparam Vec3 posA First position.
 	// @tparam Vec3 posB Second position.
 	// @treturn float Horizontal distance between the two positions.
+	// @usage
+	// local dist = TEN.Util.CalculateHorizontalDistance(Lara:GetPosition(), enemyHead:GetPosition())
 	static float CalculateHorizontalDistance(const Vec3& posA, const Vec3& posB)
 	{
 		auto pos0 = Vector2(posA.x, posA.z);
@@ -77,7 +79,7 @@ namespace TEN::Scripting::Util
 	// Example: Display a string at the player's position.
 	// local string = DisplayString('Example', 0, 0, Color(255, 255, 255), false)
 	// local displayPos = GetDisplayPosition(Lara:GetPosition())
-	// string:SetPosition(PercentToScreen(displayPos.x, displayPos.y))
+	// string:SetPosition(TEN.Util.PercentToScreen(displayPos))
 	static sol::optional<Vec2> GetDisplayPosition(const Vec3& worldPos)
 	{
 		auto displayPos = g_Renderer.Get2DPosition(worldPos.ToVector3());
@@ -98,9 +100,10 @@ namespace TEN::Scripting::Util
 	//@treturn int y Y coordinate in pixels.
 	//@usage	
 	//local halfwayX, halfwayY = PercentToScreen(50, 50)
-	//local baddy
+	//local ScreenPos = Vec2(halfwayX, halfwayY)
 	//local spawnLocationNullmesh = GetMoveableByName("position_behind_left_pillar")
-	//local str1 = DisplayString("You spawned an enemy!", halfwayX, halfwayY, Color(255, 100, 100), false, { DisplayStringOption.SHADOW, DisplayStringOption.CENTER })
+	//local flags = { DisplayStringOption.SHADOW, DisplayStringOption.CENTER }
+	//local str1 = DisplayString("You spawned an enemy!", ScreenPos, Color(255, 100, 100), false, flags)
 	//
 	//LevelFuncs.triggerOne = function(obj) 
 	//	ShowString(str1, 4)
@@ -169,6 +172,15 @@ namespace TEN::Scripting::Util
 	// @function PickMoveableByDisplayPosition
 	// @tparam Vec2 position Display space position in percent.
 	// @treturn Objects.Moveable Picked moveable (nil if no moveable was found under the cursor).
+	// @usage
+	// -- Example: Pick a moveable at the center of the screen.
+	// local screenCenter = Vec2(50, 50)
+	// local pickedMoveable = TEN.Util.PickMoveableByDisplayPosition(screenCenter)
+	// if pickedMoveable then
+	//     print("Picked moveable: " .. pickedMoveable:GetName())
+	// else
+	//     print("No moveable found at the center of the screen.")
+	// end
 	static sol::optional <std::unique_ptr<Moveable>> PickMoveable(const Vec2& screenPos)
 	{
 		auto realScreenPos = PercentToScreen(screenPos.x, screenPos.y);
@@ -187,6 +199,15 @@ namespace TEN::Scripting::Util
 	// @function PickStaticByDisplayPosition
 	// @tparam Vec2 position Display space position in percent.
 	// @treturn Objects.Static Picked static mesh (nil if no static mesh was found under the cursor).
+	// @usage
+	// -- Example: Pick a static mesh at the center of the screen.
+	// local screenCenter = Vec2(50, 50)
+	// local pickedStatic = TEN.Util.PickStaticByDisplayPosition(screenCenter)
+	// if pickedStatic then
+	//     print("Picked static mesh.")
+	// else
+	//     print("No static mesh found at the center of the screen.")
+	// end
 	static sol::optional <std::unique_ptr<Static>> PickStatic(const Vec2& screenPos)
 	{
 		auto realScreenPos = PercentToScreen(screenPos.x, screenPos.y);
@@ -547,7 +568,7 @@ namespace TEN::Scripting::Util
 	// Returns a Lua table containing the extracted parts.
 	// @function SplitString
 	// @tparam string str The string to split.
-	// @tparam[opt] string delimiter The delimiter to use for splitting. If not specified or empty, splits on any whitespace.
+	// @tparam[opt=space " "] string delimiter The delimiter to use for splitting.
 	// @treturn table Array table containing the split parts.
 	// @usage
 	// -- Split by comma:
