@@ -208,7 +208,7 @@ namespace TEN::Scripting
 		return table;
 	}
 
-	/// Get a formatted time string with customizable components.
+	/// Get a time string formatted with a custom format. If the format is incorrect, the default value will be used.
 	// @function Time:GetFormattedString
 	// @tparam[opt={true&#44; true&#44; true&#44; true}] table format Boolean table {includeHours, includeMinutes, includeSeconds, includeDeciseconds}.<br>
 	// @treturn string A formatted time string (e.g., "12:34:56.7" or custom format based on the provided table).
@@ -288,27 +288,65 @@ namespace TEN::Scripting
 			seconds = hours * SQUARE(TIME_UNIT) + minutes * TIME_UNIT + seconds;
 		}
 
-		char buffer[16]{};
+		// Calculate the number of digits needed for each component
+		auto countDigits = [](int value) -> int {
+			if (value == 0) return 1;
+			int digits = 0;
+			while (value > 0) {
+				value /= 10;
+				digits++;
+			}
+			return digits;
+		};
+
+		char buffer[32]{}; // Increased buffer size to handle larger numbers
 		char* ptr = buffer;
 
 		if (includeHours)
 		{
-			*ptr++ = '0' + (hours / 10);
-			*ptr++ = '0' + (hours % 10);
+			int digits = countDigits(hours);
+			if (digits == 1) {
+				*ptr++ = '0';
+				*ptr++ = '0' + hours;
+			} else {
+				for (int i = digits - 1; i >= 0; --i) {
+					int divisor = 1;
+					for (int j = 0; j < i; ++j) divisor *= 10;
+					*ptr++ = '0' + (hours / divisor) % 10;
+				}
+			}
 		}
 
 		if (includeMinutes)
 		{
 			if (ptr != buffer) *ptr++ = ':';
-			*ptr++ = '0' + (minutes / 10);
-			*ptr++ = '0' + (minutes % 10);
+			int digits = countDigits(minutes);
+			if (digits == 1) {
+				*ptr++ = '0';
+				*ptr++ = '0' + minutes;
+			} else {
+				for (int i = digits - 1; i >= 0; --i) {
+					int divisor = 1;
+					for (int j = 0; j < i; ++j) divisor *= 10;
+					*ptr++ = '0' + (minutes / divisor) % 10;
+				}
+			}
 		}
 
 		if (includeSeconds)
 		{
 			if (ptr != buffer) *ptr++ = ':';
-			*ptr++ = '0' + (seconds / 10);
-			*ptr++ = '0' + (seconds % 10);
+			int digits = countDigits(seconds);
+			if (digits == 1) {
+				*ptr++ = '0';
+				*ptr++ = '0' + seconds;
+			} else {
+				for (int i = digits - 1; i >= 0; --i) {
+					int divisor = 1;
+					for (int j = 0; j < i; ++j) divisor *= 10;
+					*ptr++ = '0' + (seconds / divisor) % 10;
+				}
+			}
 		}
 
 		if (includeDeciseconds)
