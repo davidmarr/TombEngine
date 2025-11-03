@@ -6,7 +6,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 1.10]
 
 ### New features
-* Added material system with support for normal, specular, roughness, emissive, and ambient occlusion maps.
+* Added material system with support for normal, specular, roughness, emissive, parallax and ambient occlusion maps.
 * Added animated textures support for moveables and static meshes.
 * Added UVRotate support with arbitrary texture rotation direction.
 * Added interaction highlighter.
@@ -30,8 +30,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed several collision issues for TRAIN object.
 * Fixed OCB 4 not working for FLAME_EMITTER2.
 * Fixed wall embeddings after jumping on top of hard static meshes aligned to walls.
+* Fixed occasional problems with grabbing ledges after doing backjump onto slopes.
 * Fixed dying while landing into shallow water after freefall.
 * Fixed rapids drowning animation not triggering after freefall.
+* Fixed firearm targeting alignment biased to the left side.
 * Fixed shotgun wideshot ammo having same accuracy as normal ammo.
 * Fixed projectiles sometimes flying through narrow room geometry corners.
 * Fixed shatters not activating heavy triggers in rare occasions.
@@ -49,12 +51,18 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed wrong highlights when sun lights were used in mirror setups.
 * Fixed SSAO applied multiple times when additive surfaces are present in scene.
 * Fixed vertex effects (glow and move) not being rendered at full framerate.
+* Fixed incorrect roll values in flyby cameras.
+* Fixed HUD elements being drawn during cinematic flybys or in title level.
 
 ### Lua API changes
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
 * Added `Moveable:ShowInteractionHighlight` method.
+* Added `DisplaySprite:GetFlags` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
+* Added `Type.IsEnumValue` helper function to determine if particular value belongs to an enumeration.
+* Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
+* Fixed errors while spawning climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17

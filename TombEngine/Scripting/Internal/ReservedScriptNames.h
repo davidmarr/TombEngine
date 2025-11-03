@@ -137,6 +137,7 @@ static constexpr char ScriptReserved_SetColor[]				= "SetColor";
 static constexpr char ScriptReserved_GetArea[]				= "GetArea";
 static constexpr char ScriptReserved_SetArea[]				= "SetArea";
 static constexpr char ScriptReserved_SetFlags[]				= "SetFlags";
+static constexpr char ScriptReserved_GetFlags[]				= "GetFlags";
 static constexpr char ScriptReserved_SetTranslated[]		= "SetTranslated";
 static constexpr char ScriptReserved_GetPosition[]			= "GetPosition";
 static constexpr char ScriptReserved_GetJointPosition[]		= "GetJointPosition";

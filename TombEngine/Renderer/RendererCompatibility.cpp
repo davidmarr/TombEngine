@@ -52,7 +52,7 @@ namespace TEN::Renderer
 		_effects = std::vector<RendererEffect>(allocatedItemSize, effect);
 		
 		auto emptyNormalMap = std::vector<unsigned char>{ 128, 128, 255, 255 };
-		auto emptyOcclusionRoughnessSpecularMap = std::vector<unsigned char>{ 255, 255, 0, 255 };
+		auto emptyORSHMap = std::vector<unsigned char>{ 255, 255, 0, 255 };
 		auto emptyEmissiveMap = std::vector<unsigned char>{ 0, 0, 0, 0 };
 
 		TENLog("Allocated renderer object memory.", LogLevel::Info);
@@ -72,14 +72,14 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			ITexture2D* ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = _graphicsDevice->CreateTexture2D((int)texture->occlusionRoughnessSpecularMapData.size(), texture->occlusionRoughnessSpecularMapData.data());
+				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
 			ITexture2D* emissive;
@@ -96,7 +96,7 @@ namespace TEN::Renderer
 			AtlasTexturesSet tex = std::make_tuple(
 				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
 				normal,
-				occlusionRoughnessSpecular,
+				ORSH,
 				emissive);
 
 			_animatedTextures[i] = tex;
@@ -160,14 +160,14 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			ITexture2D* ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = _graphicsDevice->CreateTexture2D((int)texture->occlusionRoughnessSpecularMapData.size(), texture->occlusionRoughnessSpecularMapData.data());
+				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
 			ITexture2D* emissive;
@@ -184,8 +184,8 @@ namespace TEN::Renderer
 			AtlasTexturesSet tex = std::make_tuple(
 				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
 				normal,
-				occlusionRoughnessSpecular,
-				emissive);
+				ORSH,
+				emissive); 
 			
 			_roomTextures[i] = tex;
 
@@ -216,14 +216,14 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			ITexture2D* ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = _graphicsDevice->CreateTexture2D((int)texture->occlusionRoughnessSpecularMapData.size(), texture->occlusionRoughnessSpecularMapData.data());
+				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
 			ITexture2D* emissive;
@@ -240,9 +240,9 @@ namespace TEN::Renderer
 			AtlasTexturesSet tex = std::make_tuple(
 				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
 				normal,
-				occlusionRoughnessSpecular,
-				emissive);
-						
+				ORSH,
+				emissive); 
+
 			_moveablesTextures[i] = tex;
 
 #ifdef DUMP_TEXTURES
@@ -272,14 +272,14 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			ITexture2D* ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = _graphicsDevice->CreateTexture2D((int)texture->occlusionRoughnessSpecularMapData.size(), texture->occlusionRoughnessSpecularMapData.data());
+				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
 			ITexture2D* emissive;
@@ -296,8 +296,8 @@ namespace TEN::Renderer
 			AtlasTexturesSet tex = std::make_tuple(
 				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
 				normal,
-				occlusionRoughnessSpecular,
-				emissive);
+				ORSH,
+				emissive); 
 			
 			_staticTextures[i] = tex;
 
@@ -654,7 +654,7 @@ namespace TEN::Renderer
 				_moveableObjects[MoveablesIds[i]] = RendererObject();
 				RendererObject &moveable = *_moveableObjects[MoveablesIds[i]];
 				moveable.Id = MoveablesIds[i];
-				moveable.DoNotDraw = (obj->drawRoutine == nullptr);
+				moveable.Hidden = obj->Hidden;
 				moveable.ShadowType = obj->shadowType;
 													   
 				for (int j = 0; j < obj->nmeshes; j++)
