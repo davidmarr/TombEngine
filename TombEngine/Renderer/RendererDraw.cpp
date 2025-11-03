@@ -2764,7 +2764,7 @@ namespace TEN::Renderer
 									_numInstancedStaticsDrawCalls++;
 								}
 
-								bindTextureAndMaterialsRequired = false;
+								bindTextureAndMaterialsRequired = true; 
 							}
 						}
 					}

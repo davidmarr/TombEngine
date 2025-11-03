@@ -51,6 +51,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed wrong highlights when sun lights were used in mirror setups.
 * Fixed SSAO applied multiple times when additive surfaces are present in scene.
 * Fixed vertex effects (glow and move) not being rendered at full framerate.
+* Fixed incorrect roll values in flyby cameras.
 * Fixed HUD elements being drawn during cinematic flybys or in title level.
 
 ### Lua API changes
