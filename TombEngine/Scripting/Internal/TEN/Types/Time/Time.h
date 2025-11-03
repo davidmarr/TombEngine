@@ -40,6 +40,7 @@ namespace TEN::Scripting
 		// Utilities
 
 		std::string ToString() const;
+		std::string Time::GetFormattedString(sol::object formatObj) const;
 
 		// Operators
 
@@ -73,5 +74,10 @@ namespace TEN::Scripting
 		void SetFromHMSC(int hours, int minutes = 0, int seconds = 0, int cents = 0);
 		void SetFromFormattedString(const std::string& formattedTime);
 		void SetFromTable(const sol::table& hmscTable);
+
+		// Cache per ultimo risultato formattato
+		mutable int _lastFrameCount = -1;
+		mutable std::string _cachedResult;
+		mutable uint8_t _lastFormatFlags = 0xFF;
 	};
 }

@@ -1,4 +1,4 @@
------<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
+-----<style>table.function_list td.name {min-width: 395px;}</style>
 --- Basic timer that performs countdown. When it expires, you can set a specific *LevelFuncs* function to be activated. Timers are updated automatically at every frame before OnLoop event. To use Timer inside scripts you need to call the module:
 --	local Timer = require("Engine.Timer")
 --
@@ -8,7 +8,7 @@
 --	-- This will be called when the timer runs out
 --	LevelFuncs.FinishTimer = function(victoryMessage)
 --		-- Open a door, display a message, make an explosion or whatever you wish
---		local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--		local pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
 --		local str = TEN.Strings.DisplayString(victoryMessage, pos)
 --		TEN.Strings.ShowString(str, 1)
 --	end
@@ -50,9 +50,19 @@
 -- @luautil Timer
 
 local Type = require("Engine.Type")
-local Utility = require("Engine.Util")
 
 local zero = TEN.Time()
+local validKeys = {hours = true, minutes = true, seconds = true, deciseconds = true}
+local defaultFormat = {false, false, false, false}
+local defaultOptions = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+local operators = {
+    function(a, b) return a == b end,
+    function(a, b) return a ~= b end,
+    function(a, b) return a < b end,
+    function(a, b) return a <= b end,
+    function(a, b) return a > b end,
+    function(a, b) return a >= b end,
+}
 local Timer = {}
 Timer.__index = Timer
 LevelFuncs.Engine.Timer = {}
@@ -106,7 +116,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.loop = loop
 
 	timerFormat = timerFormat or false
-	thisTimer.timerFormat = Utility.CheckTimeFormat(timerFormat, "Warning in Timer.Create(): wrong value for timerFormat, timerFormat for '".. name .."' timer will be set to false")
+	thisTimer.timerFormat = LevelFuncs.Engine.Timer.CheckTimeFormat(timerFormat, "Warning in Timer.Create(): wrong value for timerFormat, timerFormat for '".. name .."' timer will be set to false")
 
 	thisTimer.func = func or nil
 	if not Type.IsNull(func) and not Type.IsLevelFunc(func) then
@@ -118,7 +128,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.paused = true
 	thisTimer.skipFirstTick = true
 	thisTimer.hasTicked = true
-	thisTimer.pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
+	thisTimer.pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 90))
 	thisTimer.scale = 1
 	thisTimer.unpausedColor = TEN.Color(255, 255, 255)
 	thisTimer.pausedColor = TEN.Color(255, 255, 0)
@@ -302,7 +312,7 @@ end
 -- -- Example 1: Display remaining time in secs.decisecs
 -- local TimerFormat = {seconds = true, deciseconds = true}
 -- if Timer.IfExists("my_timer") then
---    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
 --    local timer = Timer.Get("my_timer"):GetRemainingTimeFormatted(TimerFormat)
 --    local str = TEN.Strings.DisplayString("Timer: " .. timer, pos)
 --    TEN.Strings.ShowString(str, 1)
@@ -310,7 +320,7 @@ end
 --
 -- -- Example 2: Display remaining with default format (mins:secs.decisecs)
 -- if Timer.IfExists("my_timer") then
---    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
 --    local timer = Timer.Get("my_timer"):GetRemainingTimeFormatted()
 --    local str = TEN.Strings.DisplayString("Timer: " .. timer, pos)
 --    TEN.Strings.ShowString(str, 1)
@@ -319,7 +329,8 @@ function Timer:GetRemainingTimeFormatted(timerFormat)
 	timerFormat = timerFormat or {minutes = true, seconds = true, deciseconds = true}
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	local errorFormat = "Error in Timer:GetRemainingTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
-	return Utility.GenerateTimeFormattedString(thisTimer.remainingTime, timerFormat, errorFormat)
+	timerFormat = LevelFuncs.Engine.Timer.CheckTimeFormat(timerFormat, errorFormat)
+	return thisTimer.remainingTime:GetFormattedString(timerFormat)
 end
 
 --- Set the remaining time of a timer.
@@ -389,7 +400,7 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
 	if LevelVars.Engine.Timer.timers[self.name].hasTicked then
-		return Utility.CompareValue(remainingTime, time, operator)
+		return LevelFuncs.Engine.Timer.CompareValues(remainingTime, time, operator)
 	else
 		return false
 	end
@@ -430,14 +441,14 @@ end
 -- -- Example 1: Display total time in secs.decisecs
 -- local TimerFormat = {minutes = false, seconds = true, deciseconds = true}
 -- if Timer.IfExists("my_timer") then
---    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
 --    local totalTime = Timer.Get("my_timer"):GetTotalTimeFormatted(TimerFormat)
 --    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
 -- end
 --
 -- -- Example 2: Display total time with default format (mins:secs.decisecs)
 -- if Timer.IfExists("my_timer") then
---    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
 --    local totalTime = Timer.Get("my_timer"):GetTotalTimeFormatted()
 --    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
 -- end
@@ -445,7 +456,8 @@ function Timer:GetTotalTimeFormatted(timerFormat)
 	timerFormat = timerFormat or {minutes = true, seconds = true, deciseconds = true}
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	local errorFormat = "Error in Timer:GetTotalTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
-	return Utility.GenerateTimeFormattedString(thisTimer.totalTime, timerFormat, errorFormat)
+	timerFormat = LevelFuncs.Engine.Timer.CheckTimeFormat(timerFormat, errorFormat)
+	return thisTimer.totalTime:GetFormattedString(timerFormat)
 end
 
 --- Set the total time for a timer.
@@ -495,7 +507,7 @@ function Timer:IfTotalTimeIs(operator, seconds)
 	local totalTime = LevelVars.Engine.Timer.timers[self.name].totalTime
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
-	return Utility.CompareValue(totalTime, time, operator)
+	return LevelFuncs.Engine.Timer.CompareValues(totalTime, time, operator)
 end
 
 --- Set whether or not the timer loops.
@@ -532,7 +544,7 @@ end
 -- LevelFuncs.KillLara = function(victoryMessage)
 --    TEN.Util.PrintLog("Kill Lara", TEN.Util.LogLevel.INFO)
 --    Lara:SetHP(0)
---    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
+--    local pos = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
 --    local str = TEN.Strings.DisplayString(victoryMessage, pos)
 --    TEN.Strings.ShowString(str, 1)
 -- end
@@ -577,7 +589,7 @@ function Timer:SetPosition(x, y)
 	elseif not Type.IsNumber(y) then
 		TEN.Util.PrintLog("Error in Timer:SetPosition(): wrong value for Y in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
-		LevelVars.Engine.Timer.timers[self.name].pos = TEN.Vec2(TEN.Util.PercentToScreen(x, y))
+		LevelVars.Engine.Timer.timers[self.name].pos = TEN.Util.PercentToScreen(TEN.Vec2(x, y))
 	end
 end
 
@@ -696,21 +708,9 @@ end
 --    Timer.Get("my_timer"):SetTextOption()
 -- end
 function Timer:SetTextOption(optionsTable)
-	optionsTable = optionsTable or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
-	if type(optionsTable) ~= "table" then
-		TEN.Util.PrintLog("Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
-	else
-		for _, option in pairs(optionsTable) do
-			if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
-				TEN.Util.PrintLog("Error in Timer:SetTextOption(): invalid value in options for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
-				return
-			end
-		end
-		if not Utility.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
-			table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
-		end
-		LevelVars.Engine.Timer.timers[self.name].stringOption = optionsTable
-	end
+	local warning1 = "Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer"
+	local warning2 = "Error in Timer:SetTextOption(): invalid value in options for '" .. self.name .. "' timer"
+	LevelVars.Engine.Timer.timers[self.name].stringOption = LevelFuncs.Engine.Timer.CheckTextOptions(optionsTable, warning1, warning2)
 end
 
 --- Get whether or not the timer is paused
@@ -757,6 +757,57 @@ function Timer:IsTicking()
 	return not thisTimer.paused and thisTimer.hasTicked or false
 end
 
+LevelFuncs.Engine.Timer.CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
+    optionsTable = optionsTable or defaultOptions
+    if not Type.IsTable(optionsTable) then
+        TEN.Util.PrintLog(warning1Message, TEN.Util.LogLevel.WARNING)
+        return defaultOptions
+    else
+        for _, option in ipairs(optionsTable) do
+            if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
+                TEN.Util.PrintLog(warning2Message, TEN.Util.LogLevel.WARNING)
+                return defaultOptions
+            end
+        end
+    end
+    if not TEN.Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+        table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
+    end
+    return optionsTable
+end
+
+LevelFuncs.Engine.Timer.CheckTimeFormat = function (timerFormat, errorText)
+    print("Checking timer format...")
+    errorText = errorText and Type.IsString(errorText) and errorText or false
+    if Type.IsTable(timerFormat) then
+        for k, v in pairs(timerFormat) do
+            if not validKeys[k] or type(v) ~= "boolean" then
+                if errorText then
+                    TEN.Util.PrintLog(errorText, TEN.Util.LogLevel.WARNING)
+                end
+                return defaultFormat
+            end
+        end
+        return { timerFormat.hours or false, timerFormat.minutes or false, timerFormat.seconds or false, timerFormat.deciseconds or false }
+    elseif Type.IsBoolean(timerFormat) then
+        if timerFormat then
+            return { false, false, true, false }
+        else
+            return defaultFormat
+        end
+    end
+    if errorText then
+        TEN.Util.PrintLog(errorText, TEN.Util.LogLevel.WARNING)
+    end
+    return defaultFormat
+end
+
+LevelFuncs.Engine.Timer.CompareValues = function(operand, reference, operator)
+    operand = operand == true and 1 or operand == false and 0 or operand
+    reference = reference == true and 1 or reference == false and 0 or reference
+    return operators[operator + 1] and operators[operator + 1](operand, reference) or false
+end
+
 LevelFuncs.Engine.Timer.Decrease = function ()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active and not t.paused then
@@ -777,8 +828,7 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active then
 			if t.timerFormat then
-				local timerString = TEN.Strings.DisplayString("TIMER", t.pos, t.scale, t.unpausedColor, false, t.stringOption)
-				timerString:SetKey(Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat))
+				local timerString = TEN.Strings.DisplayString(t.remainingTime:GetFormattedString(t.timerFormat), t.pos, t.scale, t.unpausedColor, false, t.stringOption)
 				timerString:SetColor(t.paused and t.pausedColor or t.unpausedColor)
 				TEN.Strings.ShowString(timerString, (t.remainingTime == zero and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30)
 			end

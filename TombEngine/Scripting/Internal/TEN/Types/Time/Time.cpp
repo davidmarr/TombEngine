@@ -40,66 +40,13 @@ namespace TEN::Scripting
 			// Methods
 			"GetTimeUnits", &Time::GetTimeUnits,
 			"GetFrameCount", &Time::GetFrameCount,
+			"GetFormattedString", & Time::GetFormattedString,
 
 			// Readable and writable fields
 			"h", sol::property(&Time::GetHours,		   &Time::SetHours),
 			"m", sol::property(&Time::GetMinutes,	   &Time::SetMinutes),
 			"s", sol::property(&Time::GetSeconds,	   &Time::SetSeconds),
 			"c", sol::property(&Time::GetCentiseconds, &Time::SetCentiseconds));
-	}
-
-	/// Create a Time object.
-	// @function Time
-	// @treturn Time A new Time object initialized to zero time.
-
-	/// Create a Time object from a total game frame count (1 second = 30 frames).
-	// @function Time
-	// @tparam int gameFrames Total game frame count.
-	// @treturn Time A new Time object initialized with the given frame count.
-	Time::Time(int gameFrames)
-	{
-		_frameCount = std::clamp(gameFrames, 0, INT_MAX);
-	}
-
-	/// Create a Time object from a formatted string.
-	// @function Time
-	// @tparam string formattedTime Time in the format "HH:MM:SS[.CC]", where [.CC] is centiseconds and is optional.
-	// @treturn Time A new Time object parsed from the given string.
-	Time::Time(const std::string& formattedTime)
-	{
-		SetFromFormattedString(formattedTime);
-	}
-
-	/// Create a Time object from a time unit table (hours, minutes, seconds, centiseconds).
-	// @function Time
-	// @tparam table timeUnits A time unit table in the format {HH, MM, SS, [CC]}, where [CC] is optional.
-	// @treturn Time A new Time object initialized with the given values.
-	Time::Time(const sol::table& hmsTable)
-	{
-		SetFromTable(hmsTable);
-	}
-
-	/// Get the total game frame count.
-	// @function Time:GetFrameCount
-	// @treturn int Total number of game frames.
-	int Time::GetFrameCount() const
-	{
-		return _frameCount;
-	}
-
-	/// Get the time in hours, minutes, seconds, and centiseconds as a table.
-	// @function Time:GetTimeUnits
-	// @treturn table A table in the format {HH, MM, SS, CC}.
-	sol::table Time::GetTimeUnits(sol::this_state state) const
-	{
-		auto hmsc = GetHmsc();
-		auto table = sol::state_view(state).create_table();
-
-		table.add(hmsc.Hours);
-		table.add(hmsc.Minutes);
-		table.add(hmsc.Seconds);
-		table.add(hmsc.Centiseconds);
-		return table;
 	}
 
 	/// (int) Hours component.
@@ -158,6 +105,37 @@ namespace TEN::Scripting
 		SetFromHMSC(h, m, s, value);
 	}
 
+	/// Create a Time object.
+	// @function Time
+	// @treturn Time A new Time object initialized to zero time.
+
+	/// Create a Time object from a total game frame count (1 second = 30 frames).
+	// @function Time
+	// @tparam int gameFrames Total game frame count.
+	// @treturn Time A new Time object initialized with the given frame count.
+	Time::Time(int gameFrames)
+	{
+		_frameCount = std::clamp(gameFrames, 0, INT_MAX);
+	}
+
+	/// Create a Time object from a formatted string.
+	// @function Time
+	// @tparam string formattedTime Time in the format "HH:MM:SS[.CC]", where [.CC] is centiseconds and is optional.
+	// @treturn Time A new Time object parsed from the given string.
+	Time::Time(const std::string& formattedTime)
+	{
+		SetFromFormattedString(formattedTime);
+	}
+
+	/// Create a Time object from a time unit table (hours, minutes, seconds, centiseconds).
+	// @function Time
+	// @tparam table timeUnits A time unit table in the format {HH, MM, SS, [CC]}, where [CC] is optional.
+	// @treturn Time A new Time object initialized with the given values.
+	Time::Time(const sol::table& hmsTable)
+	{
+		SetFromTable(hmsTable);
+	}
+
 	///  Convert this Time object to a formatted string.
 	// @function tostring
 	// @tparam Time this Time object.
@@ -172,6 +150,147 @@ namespace TEN::Scripting
 			<< std::setw(2) << std::setfill('0') << hmsc.Seconds << "."
 			<< std::setw(2) << std::setfill('0') << hmsc.Centiseconds;
 		return stream.str();
+	}
+
+	/// List of all methods of the Time object:
+	// @type Time
+
+	/// Get the total game frame count.
+	// @function Time:GetFrameCount
+	// @treturn int Total number of game frames.
+	int Time::GetFrameCount() const
+	{
+		return _frameCount;
+	}
+
+	/// Get the time in hours, minutes, seconds, and centiseconds as a table.
+	// @function Time:GetTimeUnits
+	// @treturn table A table in the format {HH, MM, SS, CC}.
+	sol::table Time::GetTimeUnits(sol::this_state state) const
+	{
+		auto hmsc = GetHmsc();
+		auto table = sol::state_view(state).create_table();
+
+		table.add(hmsc.Hours);
+		table.add(hmsc.Minutes);
+		table.add(hmsc.Seconds);
+		table.add(hmsc.Centiseconds);
+		return table;
+	}
+
+	/// Get a formatted time string with customizable components.
+	// @function Time:GetFormattedString
+	// @tparam[opt={true&#44; true&#44; true&#44; true}] table format Boolean table {includeHours, includeMinutes, includeSeconds, includeDeciseconds}.<br>
+	// @treturn string A formatted time string (e.g., "12:34:56.7" or custom format based on the provided table).
+	// @usage
+	// -- Get full formatted time string
+	// local time = Time(3750) -- 2 minutes, 5 seconds
+	// print(time:GetFormattedString()) -- "00:02:05.0"
+	//
+	// -- Get formatted time string without hours and deciseconds
+	// local format = {false, true, true, false}
+	// print(time:GetFormattedString(format)) -- "02:05"
+	//
+	// -- Get formatted time string with only total seconds
+	// local format = {false, false, true, false}
+	// print(time:GetFormattedString(format)) -- "125"
+	std::string Time::GetFormattedString(sol::object formatObj) const
+	{
+		// Calculate format flags
+		uint8_t formatFlags = 0xFF; // default: all true
+
+		bool includeHours = true;
+		bool includeMinutes = true;
+		bool includeSeconds = true;
+		bool includeDeciseconds = true;
+
+		if (formatObj.is<sol::table>())
+		{
+			sol::table format = formatObj.as<sol::table>();
+			
+			if (format.size() == 4)
+			{
+				auto h = format.get<sol::optional<bool>>(1);
+				auto m = format.get<sol::optional<bool>>(2);
+				auto s = format.get<sol::optional<bool>>(3);
+				auto d = format.get<sol::optional<bool>>(4);
+
+				if (h.has_value() && m.has_value() && s.has_value() && d.has_value())
+				{
+					includeHours = h.value();
+					includeMinutes = m.value();
+					includeSeconds = s.value();
+					includeDeciseconds = d.value();
+
+					// Encode flags into a byte
+					formatFlags = (includeHours ? 0x08 : 0) |
+								  (includeMinutes ? 0x04 : 0) |
+								  (includeSeconds ? 0x02 : 0) |
+								  (includeDeciseconds ? 0x01 : 0);
+				}
+			}
+		}
+
+		// Check if we can use the cached result
+		if (_lastFrameCount == _frameCount && _lastFormatFlags == formatFlags)
+		{
+			return _cachedResult;
+		}
+
+		// Update the cache
+		_lastFrameCount = _frameCount;
+		_lastFormatFlags = formatFlags;
+
+		auto hmsc = GetHmsc();
+
+		int hours = hmsc.Hours;
+		int minutes = hmsc.Minutes;
+		int seconds = hmsc.Seconds;
+		int deciseconds = hmsc.Centiseconds / 10;
+
+		if (!includeHours && includeMinutes)
+		{
+			minutes = hours * TIME_UNIT + minutes;
+		}
+
+		if (!includeMinutes && includeSeconds)
+		{
+			seconds = hours * SQUARE(TIME_UNIT) + minutes * TIME_UNIT + seconds;
+		}
+
+		char buffer[16]{};
+		char* ptr = buffer;
+
+		if (includeHours)
+		{
+			*ptr++ = '0' + (hours / 10);
+			*ptr++ = '0' + (hours % 10);
+		}
+
+		if (includeMinutes)
+		{
+			if (ptr != buffer) *ptr++ = ':';
+			*ptr++ = '0' + (minutes / 10);
+			*ptr++ = '0' + (minutes % 10);
+		}
+
+		if (includeSeconds)
+		{
+			if (ptr != buffer) *ptr++ = ':';
+			*ptr++ = '0' + (seconds / 10);
+			*ptr++ = '0' + (seconds % 10);
+		}
+
+		if (includeDeciseconds)
+		{
+			if (ptr != buffer) *ptr++ = '.';
+			*ptr++ = '0' + deciseconds; // Single digit (0-9)
+		}
+
+		*ptr = '\0';
+
+		_cachedResult = std::string(buffer, ptr - buffer);
+		return _cachedResult;
 	}
 
 	Time& Time::operator ++()
