@@ -11,7 +11,7 @@ namespace TEN::Renderer
 		SetBlendMode(BlendMode::Opaque);
 		SetCullMode(CullMode::CounterClockwise);
 		SetDepthState(DepthState::Write);
-		_context->RSSetViewports(1, &view.Viewport);
+		_graphicsDevice->SetViewport(view.Viewport);
 		ResetScissor();
 
 		float screenFadeFactor = renderMode == SceneRenderMode::Full ? ScreenFadeCurrent : 1.0f;
@@ -22,15 +22,15 @@ namespace TEN::Renderer
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
 		_stPostProcessBuffer.EffectStrength = _postProcessStrength;
 		_stPostProcessBuffer.Tint = _postProcessTint;
-		UpdateConstantBuffer(_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _fullscreenTriangleVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
 		_shaders.Bind(Shader::PostProcess);
 
@@ -64,7 +64,7 @@ namespace TEN::Renderer
 				_stPostProcessBuffer.LensFlares[i].Color = view.LensFlaresToDraw[i].Color.ToVector3();
 			}
 			_stPostProcessBuffer.NumLensFlares = (int)view.LensFlaresToDraw.size();
-			UpdateConstantBuffer(_stPostProcessBuffer, _cbPostProcessBuffer);
+			UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
 			BindRenderTargetAsTexture(TextureRegister::ColorMap, &_postProcessRenderTarget[currentRenderTarget], SamplerStateRegister::PointWrap);
 			DrawTriangles(3, 0);
@@ -152,20 +152,20 @@ namespace TEN::Renderer
 		SetBlendMode(BlendMode::Opaque, true);
 		SetCullMode(CullMode::CounterClockwise, true);
 		SetDepthState(DepthState::Write, true);
-		_context->RSSetViewports(1, &view.Viewport);
+		_graphicsDevice->SetViewport(view.Viewport);
 		ResetScissor();
 
 		// Common vertex shader to all fullscreen effects
 		_shaders.Bind(Shader::PostProcess);
 
 		// We draw a fullscreen triangle
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _fullscreenTriangleVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		_context->ClearRenderTargetView(dest->RenderTargetView.Get(), clearColor);
@@ -203,13 +203,13 @@ namespace TEN::Renderer
 		_shaders.Bind(Shader::PostProcess);
 
 		// We draw a fullscreen triangle
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _fullscreenTriangleVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		_context->ClearRenderTargetView(dest->RenderTargetView.Get(), clearColor);
@@ -219,7 +219,7 @@ namespace TEN::Renderer
 		DrawTriangles(3, 0);
 
 		ResetScissor();
-		_context->RSSetViewports(1, &view.Viewport);
+		_graphicsDevice->SetViewport(view.Viewport);
 	}
 
 	void Renderer::ApplyGlow(RenderTarget2D* renderTarget, RenderView& view)
@@ -250,19 +250,19 @@ namespace TEN::Renderer
 
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
 
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _fullscreenTriangleVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
 		// Downscale 
 		_shaders.Bind(Shader::Downscale);
 
 		_stPostProcessBuffer.DownscaleFactor = GLOW_DOWNSCALE_FACTOR;
-		UpdateConstantBuffer(_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		_context->ClearRenderTargetView(_glowRenderTarget[0].RenderTargetView.Get(), clearColor);
@@ -283,14 +283,14 @@ namespace TEN::Renderer
 		_context->OMSetRenderTargets(1, _glowRenderTarget[1].RenderTargetView.GetAddressOf(), nullptr);
 
 		_stPostProcessBuffer.BlurDirection = Vector2(1.0f, 0.0f);
-		UpdateConstantBuffer(_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
 		BindRenderTargetAsTexture(TextureRegister::ColorMap, &_glowRenderTarget[0], SamplerStateRegister::LinearClamp);
 		DrawTriangles(3, 0);
 
 		// Vertical blur
 		_stPostProcessBuffer.BlurDirection = Vector2(0.0f, 1.0f);
-		UpdateConstantBuffer(_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
 		_context->ClearRenderTargetView(_glowRenderTarget[0].RenderTargetView.Get(), clearColor);
 		_context->OMSetRenderTargets(1, _glowRenderTarget[0].RenderTargetView.GetAddressOf(), nullptr);
@@ -299,7 +299,7 @@ namespace TEN::Renderer
 		DrawTriangles(3, 0);
 
 		// Reset viewport
-		_context->RSSetViewports(1, &view.Viewport);
+		_graphicsDevice->SetViewport(view.Viewport);
 		ResetScissor();
 
 		// Copy render target to temp render target
@@ -310,7 +310,7 @@ namespace TEN::Renderer
 
 		_stPostProcessBuffer.GlowSoftAdd = 1;
 		_stPostProcessBuffer.GlowIntensity = 1.0f;
-		UpdateConstantBuffer(_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
 		_context->ClearRenderTargetView(renderTarget->RenderTargetView.Get(), clearColor);
 		_context->OMSetRenderTargets(1, renderTarget->RenderTargetView.GetAddressOf(), nullptr);

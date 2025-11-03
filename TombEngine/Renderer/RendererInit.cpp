@@ -14,6 +14,7 @@
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
 #include "Specific/winmain.h"
+#include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
 
 extern GameConfiguration g_Configuration;
 
@@ -30,35 +31,30 @@ namespace TEN::Renderer
 		_screenHeight = h;
 		_isWindowed = windowed;
 
-		InitializeScreen(w, h, handle, false);
+		_graphicsDevice->Initialize(gameDir, w, h, windowed, handle);
 		InitializeCommonTextures();
 
 		// Load shaders.
 		_shaders.LoadShaders(w, h);
 
-		// Initialize render states.
-		_renderStates = std::make_unique<CommonStates>(_device.Get());
-	    
 		// Initialize input layout using first vertex shader.
-		D3D11_INPUT_ELEMENT_DESC inputLayoutItems[] =
-		{
-			{ "POSITION",             0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,                            D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",               0, DXGI_FORMAT_R8G8B8A8_SNORM,     0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD",             0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "COLOR",                0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",              0, DXGI_FORMAT_R8G8B8A8_SNORM,     0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",               1, DXGI_FORMAT_R8G8B8A8_SNORM,     0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "BONEINDICES",          0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "BONEWEIGHTS",          0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "EFFECTS",              0, DXGI_FORMAT_R32_UINT,		     0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "EFFECTS",			  1, DXGI_FORMAT_R32_UINT,           0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		};
+		std::vector<RendererInputLayoutField> inputLayoutItems;
+		inputLayoutItems.push_back({ VertexInputFormat::RGB32_Float, 0, "POSITION" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Snorm, 0, "NORMAL" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGB32_Float, 0, "TEXCOORD" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGBA32_Float, 0, "COLOR" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Snorm, 0, "TANGENT" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Snorm, 1, "NORMAL" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Uint, 0, "BONEINDICES" });
+		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Uint, 0, "BONEWEIGHTS" });
+		inputLayoutItems.push_back({ VertexInputFormat::R32_Uint, 0, "EFFECTS" });
+		inputLayoutItems.push_back({ VertexInputFormat::R32_Uint, 1, "EFFECTS" });
 
 		const auto& roomShader = _shaders.Get(Shader::Rooms);
-		Utils::throwIfFailed(_device->CreateInputLayout(inputLayoutItems, 10, roomShader.Vertex.Blob->GetBufferPointer(), roomShader.Vertex.Blob->GetBufferSize(), &_inputLayout));
-
+		_graphicsDevice->CreateInputLayout(inputLayoutItems);
+		
 		// Initialize constant buffers.
-		_cbCameraMatrices = CreateConstantBuffer<CCameraMatrixBuffer>();
+		_cbCameraMatrices = CreateConstantBuffer<CItemBuffer>();
 		_cbItem = CreateConstantBuffer<CItemBuffer>();
 		_cbSky = CreateConstantBuffer<CSkyBuffer>();
 		_cbLights = CreateConstantBuffer<CLightBuffer>();
@@ -77,7 +73,7 @@ namespace TEN::Renderer
 		_cbHUD = CreateConstantBuffer<CHUDBuffer>();
 		_stHUD.View = Matrix::CreateLookAt(Vector3::Zero, Vector3(0, 0, 1), Vector3(0, -1, 0));
 		_stHUD.Projection = Matrix::CreateOrthographicOffCenter(0, DISPLAY_SPACE_RES.x, 0, DISPLAY_SPACE_RES.y, 0, 1.0f);
-		UpdateConstantBuffer(_stHUD, _cbHUD);
+		UpdateConstantBuffer(&_stHUD, _cbHUD);
 		_currentCausticsFrame = 0;
 
 		// Preallocate lists.
@@ -94,141 +90,8 @@ namespace TEN::Renderer
 		for (auto& effect : _effects)
 			effect.LightsToDraw = createVector<RendererLight*>(MAX_LIGHTS_PER_ITEM);
 
-		D3D11_BLEND_DESC blendStateDesc{};
-		blendStateDesc.AlphaToCoverageEnable = false;
-		blendStateDesc.IndependentBlendEnable = false;
-		blendStateDesc.RenderTarget[0].BlendEnable = true;
-		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_REV_SUBTRACT;
-		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _subtractiveBlendState.GetAddressOf()));
-
-		blendStateDesc.AlphaToCoverageEnable = false;
-		blendStateDesc.IndependentBlendEnable = false;
-		blendStateDesc.RenderTarget[0].BlendEnable = true;
-		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_COLOR;
-		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _screenBlendState.GetAddressOf()));
-
-		blendStateDesc.AlphaToCoverageEnable = false;
-		blendStateDesc.IndependentBlendEnable = false;
-		blendStateDesc.RenderTarget[0].BlendEnable = true;
-		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_MAX;
-		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_DEST_ALPHA;
-		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _lightenBlendState.GetAddressOf()));
-		 
-		blendStateDesc.AlphaToCoverageEnable = false;
-		blendStateDesc.IndependentBlendEnable = false;
-		blendStateDesc.RenderTarget[0].BlendEnable = true;
-		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_INV_DEST_COLOR;
-		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_COLOR;
-		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _excludeBlendState.GetAddressOf()));
-
-		blendStateDesc.AlphaToCoverageEnable = false;
-		blendStateDesc.IndependentBlendEnable = true;
-		blendStateDesc.RenderTarget[0].BlendEnable = true;
-		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		blendStateDesc.RenderTarget[1].BlendEnable = true;
-		blendStateDesc.RenderTarget[1].SrcBlend = D3D11_BLEND_ZERO;
-		blendStateDesc.RenderTarget[1].DestBlend = D3D11_BLEND_INV_SRC_COLOR;
-		blendStateDesc.RenderTarget[1].BlendOp = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[1].SrcBlendAlpha = D3D11_BLEND_ZERO;
-		blendStateDesc.RenderTarget[1].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendStateDesc.RenderTarget[1].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_RED;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _transparencyBlendState.GetAddressOf()));
-
-		blendStateDesc.AlphaToCoverageEnable = false;
-		blendStateDesc.IndependentBlendEnable = false;
-		blendStateDesc.RenderTarget[0].BlendEnable = true;
-		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _finalTransparencyBlendState.GetAddressOf()));
-
-		D3D11_SAMPLER_DESC shadowSamplerDesc = {};
-		shadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-		shadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-		shadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-		shadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-		shadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-		Utils::throwIfFailed(_device->CreateSamplerState(&shadowSamplerDesc, _shadowSampler.GetAddressOf()));
-		_shadowSampler->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof("ShadowSampler") - 1, "ShadowSampler");
-
-		D3D11_RASTERIZER_DESC rasterizerStateDesc = {};
-
-		rasterizerStateDesc.CullMode = D3D11_CULL_BACK;
-		rasterizerStateDesc.FillMode = D3D11_FILL_SOLID;
-		rasterizerStateDesc.DepthClipEnable = true;
-		rasterizerStateDesc.MultisampleEnable = true;
-		rasterizerStateDesc.AntialiasedLineEnable = true;
-		rasterizerStateDesc.ScissorEnable = true;
-		Utils::throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullCounterClockwiseRasterizerState.GetAddressOf()));
-
-		rasterizerStateDesc.CullMode = D3D11_CULL_FRONT;
-		rasterizerStateDesc.FillMode = D3D11_FILL_SOLID;
-		rasterizerStateDesc.DepthClipEnable = true;
-		rasterizerStateDesc.MultisampleEnable = true;
-		rasterizerStateDesc.AntialiasedLineEnable = true;
-		rasterizerStateDesc.ScissorEnable = true;
-		Utils::throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullClockwiseRasterizerState.GetAddressOf()));
-
-		rasterizerStateDesc.CullMode = D3D11_CULL_NONE;
-		rasterizerStateDesc.FillMode = D3D11_FILL_SOLID;
-		rasterizerStateDesc.DepthClipEnable = true;
-		rasterizerStateDesc.MultisampleEnable = true;
-		rasterizerStateDesc.AntialiasedLineEnable = true;
-		rasterizerStateDesc.ScissorEnable = true;
-		Utils::throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullNoneRasterizerState.GetAddressOf()));
-
-		D3D11_SAMPLER_DESC samplerStateDesc = {};
-		samplerStateDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		samplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerStateDesc.MinLOD = 0;
-		samplerStateDesc.MaxLOD = 0;
-		samplerStateDesc.MipLODBias = 0;
-		samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		samplerStateDesc.MaxAnisotropy = 1;
-		Utils::throwIfFailed(_device->CreateSamplerState(&samplerStateDesc, _pointWrapSamplerState.GetAddressOf()));
-
-		//_tempRoomAmbientRenderTarget1 = RenderTarget2D(_device.Get(), ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		//_tempRoomAmbientRenderTarget2 = RenderTarget2D(_device.Get(), ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		//_tempRoomAmbientRenderTarget3 = RenderTarget2D(_device.Get(), ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		//_tempRoomAmbientRenderTarget4 = RenderTarget2D(_device.Get(), ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		 
-		_SMAAAreaTexture = Texture2D(_device.Get(), AREATEX_WIDTH, AREATEX_HEIGHT, DXGI_FORMAT_R8G8_UNORM, AREATEX_PITCH, areaTexBytes);
-		_SMAASearchTexture = Texture2D(_device.Get(), SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, DXGI_FORMAT_R8_UNORM, SEARCHTEX_PITCH, searchTexBytes);
+		_SMAAAreaTexture = _graphicsDevice->CreateTexture2D(AREATEX_WIDTH, AREATEX_HEIGHT, SurfaceFormat::R8G8_Unorm, AREATEX_PITCH, areaTexBytes);
+		_SMAASearchTexture = _graphicsDevice->CreateTexture2D(SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, SurfaceFormat::R8_Unorm, SEARCHTEX_PITCH, searchTexBytes);
 
 		CreateSSAONoiseTexture();
 		InitializePostProcess();
@@ -236,16 +99,13 @@ namespace TEN::Renderer
 		InitializeSpriteQuad();
 		InitializeSky();
 
-		_roomAmbientMapFront = RenderTarget2D(_device.Get(), ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D32_FLOAT);
-		_roomAmbientMapBack = RenderTarget2D(_device.Get(), ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D32_FLOAT);
-		
 		_sortedPolygonsVertices.reserve(MAX_TRANSPARENT_VERTICES);
 		_sortedPolygonsIndices.reserve(MAX_TRANSPARENT_VERTICES);
-		_sortedPolygonsVertexBuffer = VertexBuffer<Vertex>(_device.Get(), MAX_TRANSPARENT_VERTICES, _sortedPolygonsVertices);
-		_sortedPolygonsIndexBuffer = IndexBuffer(_device.Get(), MAX_TRANSPARENT_VERTICES, _sortedPolygonsIndices);
+		_sortedPolygonsVertexBuffer = _graphicsDevice->CreateVertexBuffer(MAX_TRANSPARENT_VERTICES, sizeof(Vertex), _sortedPolygonsVertices.data());
+		_sortedPolygonsIndexBuffer = _graphicsDevice->CreateIndexBuffer(MAX_TRANSPARENT_VERTICES, _sortedPolygonsIndices.data());
 
-		_spriteVertices.reserve(MAX_SPRITE_VERTICES );
-		_spriteVertexBuffer = VertexBuffer<Vertex>(_device.Get(), MAX_SPRITE_VERTICES , _spriteVertices);
+		_spriteVertices.reserve(MAX_SPRITE_VERTICES);
+		_spriteVertexBuffer = _graphicsDevice->CreateVertexBuffer(MAX_SPRITE_VERTICES, sizeof(Vertex), _spriteVertices.data());
 
 		// Initialize video player.
 		g_VideoPlayer.Initialize(gameDir, _device.Get(), _context.Get());
@@ -263,7 +123,7 @@ namespace TEN::Renderer
 		vertices[1].UV = Vector2(0.0f, -1.0f);
 		vertices[2].UV = Vector2(2.0f, 1.0f);
 
-		_fullscreenTriangleVertexBuffer = VertexBuffer<PostProcessVertex>(_device.Get(), 3, &vertices[0]);
+		_fullscreenTriangleVertexBuffer = _graphicsDevice->CreateVertexBuffer(3, sizeof(PostProcessVertex), vertices);
 
 		D3D11_INPUT_ELEMENT_DESC postProcessInputLayoutItems[] =
 		{
@@ -271,6 +131,10 @@ namespace TEN::Renderer
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
+
+		std::vector<RendererInputLayoutField> fields;
+
+		fields.push_back({ VertexFormat::R32G })
 
 		const auto& ppShader = _shaders.Get(Shader::PostProcess);
 		Utils::throwIfFailed(_device->CreateInputLayout(postProcessInputLayoutItems, 3, 
@@ -311,7 +175,7 @@ namespace TEN::Renderer
 			SSAONoise.push_back(noise);
 		}
 
-		_SSAONoiseTexture = Texture2D(_device.Get(), 4, 4, DXGI_FORMAT_R32G32B32A32_FLOAT, 4 * sizeof(Vector4), SSAONoise.data());
+		_SSAONoiseTexture = _graphicsDevice->CreateTexture2D(4, 4, SurfaceFormat::RGBA32_Float, 4 * sizeof(Vector4), SSAONoise.data());
 	}
 
 	void Renderer::InitializeSpriteQuad()
@@ -354,7 +218,7 @@ namespace TEN::Renderer
 		quadVertices[2].Color = VectorColorToRGBA_TempToVector4(Vector4::One);
 		quadVertices[2].Effects = 2 << INDEX_IN_POLY_VERTEX_SHIFT;
 
-		_quadVertexBuffer = VertexBuffer<Vertex>(_device.Get(), 4, quadVertices.data());
+		_quadVertexBuffer = _graphicsDevice->CreateVertexBuffer(4, sizeof(Vertex), quadVertices.data());
 	}
 
 	void Renderer::InitializeSky()
@@ -418,100 +282,53 @@ namespace TEN::Renderer
 			}
 		}
 
-		_skyVertexBuffer = VertexBuffer<Vertex>(_device.Get(), SKY_VERTICES_COUNT, vertices.data());
-		_skyIndexBuffer = IndexBuffer(_device.Get(), SKY_INDICES_COUNT, indices.data());
+		_skyVertexBuffer = _graphicsDevice->CreateVertexBuffer(SKY_VERTICES_COUNT, sizeof(Vertex), vertices.data());
+		_skyIndexBuffer = _graphicsDevice->CreateIndexBuffer(SKY_INDICES_COUNT, indices.data());
 	}
 
 	void Renderer::InitializeScreen(int w, int h, HWND handle, bool reset)
 	{
-		DXGI_SWAP_CHAIN_DESC sd;
-		sd.BufferDesc.Width = w;
-		sd.BufferDesc.Height = h;
-		if (!g_Configuration.EnableHighFramerate)
-		{
-			_refreshRate = 30;
-
-			sd.BufferDesc.RefreshRate.Numerator = 0;
-			sd.BufferDesc.RefreshRate.Denominator = 0;
-		}
-		else
-		{
-			_refreshRate = GetCurrentScreenRefreshRate();
-			if (_refreshRate == 0)
-			{
-				_refreshRate = 60;
-			}
-			
-			sd.BufferDesc.RefreshRate.Numerator = _refreshRate;
-			sd.BufferDesc.RefreshRate.Denominator = 1;
-		}
-		sd.BufferDesc.RefreshRate.Numerator = 60;
-		sd.BufferDesc.RefreshRate.Denominator = 1;
-		sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		sd.BufferDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
-		sd.Windowed = true;
-		sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-		sd.Flags = 0;
-		sd.OutputWindow = handle;
-		sd.SampleDesc.Count = 1;
-		sd.SampleDesc.Quality = 0;
-		sd.BufferCount = 1;
-		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		ComPtr<IDXGIDevice> dxgiDevice;
-		Utils::throwIfFailed(_device.As(&dxgiDevice));
-
-		ComPtr<IDXGIAdapter> dxgiAdapter;
-		Utils::throwIfFailed(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), &dxgiAdapter));
-
-		ComPtr<IDXGIFactory> dxgiFactory;
-		Utils::throwIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), &dxgiFactory));
-
-		Utils::throwIfFailed(dxgiFactory->CreateSwapChain(_device.Get(), &sd, &_swapChain));
-
-		dxgiFactory->MakeWindowAssociation(handle, DXGI_MWA_NO_ALT_ENTER);
- 
-		// Initialize render targets
-		ID3D11Texture2D* backBufferTexture = NULL;
-		Utils::throwIfFailed(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast <void**>(&backBufferTexture)));
-		_backBuffer = RenderTarget2D(_device.Get(), backBufferTexture, DXGI_FORMAT_D24_UNORM_S8_UINT);
+		_backBuffer = _graphicsDevice->InitializeSwapChain(w, h, handle);
 		                
-		_renderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		_postProcessRenderTarget[0] = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_postProcessRenderTarget[1] = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_dumpScreenRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		_shadowMap = Texture2DArray(_device.Get(), g_Configuration.ShadowMapSize, 6, DXGI_FORMAT_R32_FLOAT, DXGI_FORMAT_D24_UNORM_S8_UINT);
-		_depthRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R32_FLOAT, false, DXGI_FORMAT_UNKNOWN);
-		_normalsAndMaterialIndexRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_emissiveAndRoughnessRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_SSAORenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_SSAOBlurredRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_glowRenderTarget[0] = RenderTarget2D(_device.Get(), w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_glowRenderTarget[1] = RenderTarget2D(_device.Get(), w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_legacyReflectionsRenderTarget = RenderTarget2D(_device.Get(), w / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, h / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_skyboxRenderTarget = Texture2DArray(_device.Get(), ROOM_AMBIENT_MAP_SIZE, 2, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+		_renderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+
+		_postProcessRenderTarget[0] = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_postProcessRenderTarget[1] = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
 		
-		// Initialize sprite and primitive batches
-		_spriteBatch = std::make_unique<SpriteBatch>(_context.Get());
-		_primitiveBatch = std::make_unique<PrimitiveBatch<Vertex>>(_context.Get());
+		_dumpScreenRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false); //D
+		
+		_shadowMap = _graphicsDevice->CreateRenderTarget2D(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, SurfaceFormat::R32_Float);
+		_shadowMapDepth = _graphicsDevice->CreateDepthTarget(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, DepthFormat::Depth32);
+		
+		_depthRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::R32_Float, false);
+		_normalsAndMaterialIndexRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_emissiveAndRoughnessRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		
+		_SSAORenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_SSAOBlurredRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		
+		_glowRenderTarget[0] = _graphicsDevice->CreateRenderTarget2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false);
+		_glowRenderTarget[1] = _graphicsDevice->CreateRenderTarget2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false);
+		
+		_legacyReflectionsRenderTarget = _graphicsDevice->CreateRenderTarget2D(w / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, h / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false);
+		
+		_skyboxRenderTarget = _graphicsDevice->CreateRenderTarget2D(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, SurfaceFormat::RGBA8_Unorm);
+		_skyBoxDepth = _graphicsDevice->CreateDepthTarget(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, DepthFormat::Depth32);
 
 		// Initialize viewport
-		_viewport.TopLeftX = 0;
-		_viewport.TopLeftY = 0;
+		_viewport.X = 0;
+		_viewport.Y = 0;
 		_viewport.Width = w;
 		_viewport.Height = h;
 		_viewport.MinDepth = 0.0f;
 		_viewport.MaxDepth = 1.0f;
 
-		_shadowMapViewport.TopLeftX = 0;
-		_shadowMapViewport.TopLeftY = 0;
+		_shadowMapViewport.X = 0;
+		_shadowMapViewport.Y = 0;
 		_shadowMapViewport.Width = g_Configuration.ShadowMapSize;
 		_shadowMapViewport.Height = g_Configuration.ShadowMapSize;
 		_shadowMapViewport.MinDepth = 0.0f;
 		_shadowMapViewport.MaxDepth = 1.0f;
-
-		_viewportToolkit = Viewport(_viewport.TopLeftX, _viewport.TopLeftY, _viewport.Width, _viewport.Height,
-			_viewport.MinDepth, _viewport.MaxDepth);
 
 		// Low AA is done with FXAA, Medium - High AA are done with SMAA.
 		if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
@@ -527,10 +344,10 @@ namespace TEN::Renderer
 		int w = _screenWidth;
 		int h = _screenHeight;
 
-		_SMAASceneRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, true, DXGI_FORMAT_UNKNOWN);
-		_SMAASceneSRGBRenderTarget = RenderTarget2D(_device.Get(), &_SMAASceneRenderTarget, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
-		_SMAAEdgesRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8_UNORM, false, DXGI_FORMAT_UNKNOWN);
-		_SMAABlendRenderTarget = RenderTarget2D(_device.Get(), w, h, DXGI_FORMAT_R8G8B8A8_UNORM, false, DXGI_FORMAT_UNKNOWN);
+		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, true);
+		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderTarget2D(_SMAASceneRenderTarget); //D
+		_SMAAEdgesRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::R8G8_Unorm, false);
+		_SMAABlendRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
 	}
 
 	void Renderer::InitializeCommonTextures()
@@ -548,38 +365,23 @@ namespace TEN::Renderer
 		SetTextureOrDefault(_loadingBarInner, GetAssetPath(L"Textures/LoadingBarInner.png"));
 		SetTextureOrDefault(_whiteTexture, GetAssetPath(L"Textures/WhiteSprite.png")); 
 
-		_whiteSprite.Height = _whiteTexture.Height;
-		_whiteSprite.Width = _whiteTexture.Width;
+		_whiteSprite.Height = _whiteTexture->Height;
+		_whiteSprite.Width = _whiteTexture->Width;
 		_whiteSprite.UV[0] = Vector2(0.0f, 0.0f);
 		_whiteSprite.UV[1] = Vector2(1.0f, 0.0f);
 		_whiteSprite.UV[2] = Vector2(1.0f, 1.0f);
 		_whiteSprite.UV[3] = Vector2(0.0f, 1.0f);
-		_whiteSprite.Texture = &_whiteTexture;
+		_whiteSprite.Texture = _whiteTexture;
 	}
 
 	void Renderer::Create()
 	{
 		TENLog("Creating DX11 renderer device...", LogLevel::Info);
 
-		D3D_FEATURE_LEVEL levels[] = { D3D_FEATURE_LEVEL_11_0 };
-		D3D_FEATURE_LEVEL featureLevel;
-		HRESULT res; 
-
-		if constexpr (DEBUG_BUILD)
-		{
-			res = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG,
-									levels, 1, D3D11_SDK_VERSION, &_device, &featureLevel, &_context);
-		}
-		else
-		{
-			res = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL,
-									levels, 1, D3D11_SDK_VERSION, &_device, &featureLevel, &_context);
-		}
-
-		Utils::throwIfFailed(res);
+		_graphicsDevice = new TEN::Renderer::Native::DirectX11::DX11GraphicsDevice();
 
 		// Initialize shader manager.
-		_shaders.Initialize(_device, _context);
+		_shaders.Initialize(_graphicsDevice);
 	}
 
 	void Renderer::ToggleFullScreen(bool force)

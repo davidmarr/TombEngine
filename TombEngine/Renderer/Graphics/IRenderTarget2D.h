@@ -6,5 +6,8 @@ namespace TEN::Renderer::Graphics
 {
 	class IRenderTarget2D : public ITextureBase
 	{
+	public:
+		virtual int GetArraySize() = 0;
+		//virtual SurfaceFormat GetColorFormat() = 0;
 	};
 }

@@ -1227,9 +1227,9 @@ namespace TEN::Renderer
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
 
 		const auto& room = _rooms[LaraItem->RoomNumber];
 		auto* itemPtr = &_items[LaraItem->Index];
@@ -1270,7 +1270,7 @@ namespace TEN::Renderer
 				ReflectMatrixOptionally(worldMatrix);
 
 				_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-				UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+				UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 				DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1288,7 +1288,7 @@ namespace TEN::Renderer
 				ReflectMatrixOptionally(worldMatrix);
 
 				_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-				UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+				UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 				DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1307,8 +1307,8 @@ namespace TEN::Renderer
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
 
 		for (auto* rRoomPtr : view.RoomsToDraw)
 		{
@@ -1368,7 +1368,7 @@ namespace TEN::Renderer
 						ReflectMatrixOptionally(worldMatrix);
 
 						_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-						UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+						UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 						DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1410,7 +1410,7 @@ namespace TEN::Renderer
 						ReflectMatrixOptionally(worldMatrix);
 
 						_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-						UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+						UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 						DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1500,7 +1500,7 @@ namespace TEN::Renderer
 		_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = effect->AmbientLight;
 		_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)LightMode::Dynamic;
 		BindInstancedStaticLights(effect->LightsToDraw, 0);
-		UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+		UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 		auto& mesh = *effect->Mesh;
 		
@@ -1540,8 +1540,8 @@ namespace TEN::Renderer
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
 
 		for (auto* roomPtr : view.RoomsToDraw)
 		{
@@ -1622,7 +1622,7 @@ namespace TEN::Renderer
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = _rooms[deb.roomNumber].AmbientLight;
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)deb.lightMode;
 
-					UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+					UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 					auto matrix = Matrix::Lerp(deb.PrevTransform, deb.Transform, GetInterpolationFactor());
 					ReflectMatrixOptionally(matrix);

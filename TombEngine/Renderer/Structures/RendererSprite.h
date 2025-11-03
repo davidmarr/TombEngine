@@ -15,7 +15,7 @@ namespace TEN::Renderer::Structures
 		int Width;
 		int Height;
 		Vector2 UV[4];
-		Texture2D* Texture;
+		ITexture2D* Texture;
 		int X;
 		int Y;
 	};

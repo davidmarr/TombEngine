@@ -311,7 +311,7 @@ namespace TEN::Renderer
 			g_Parallel.AddTasks((int)spriteBucket.SpritesToDraw.size(), prepareSprites).wait();
 
 			BindTexture(TextureRegister::ColorMap, spriteBucket.Sprite->Texture, SamplerStateRegister::LinearClamp);
-			UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+			UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
 
 			// Draw sprites with instancing.
 			DrawInstancedTriangles(4, (int)spriteBucket.SpritesToDraw.size(), 0);
@@ -332,7 +332,7 @@ namespace TEN::Renderer
 
 			if (!wasGpuSet)
 			{
-				_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 
 				BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, &_depthRenderTarget, SamplerStateRegister::PointWrap);
 
@@ -359,7 +359,7 @@ namespace TEN::Renderer
 
 			PackSpriteTextureCoordinates(0, spriteBucket.Sprite);
 
-			UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+			UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
 
 			BindTexture(TextureRegister::ColorMap, spriteBucket.Sprite->Texture, SamplerStateRegister::LinearClamp);
 
@@ -423,7 +423,7 @@ namespace TEN::Renderer
 		}
 
 		// Set up vertex parameters.
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 	}
 
 	void Renderer::DrawSingleSprite(RendererSortableObject* object, RendererObjectType lastObjectType, RenderView& view)
@@ -448,7 +448,7 @@ namespace TEN::Renderer
 
 		PackSpriteTextureCoordinates(0, object->Sprite->Sprite);
 
-		UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+		UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
 
 		BindTexture(TextureRegister::ColorMap, object->Sprite->Sprite->Texture, SamplerStateRegister::LinearClamp);
 		
@@ -503,7 +503,7 @@ namespace TEN::Renderer
 		_numSortedSpritesDrawCalls++;
 		_numSortedTriangles += 2;
 
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 	}
 
 	void Renderer::DrawSpriteSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view)
@@ -516,8 +516,8 @@ namespace TEN::Renderer
 		_sortedPolygonsVertexBuffer.Update(_context.Get(), _sortedPolygonsVertices.data(), 0, (int)_sortedPolygonsVertices.size());
 
 		_context->IASetVertexBuffers(0, 1, _sortedPolygonsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 
 		_stInstancedSpriteBuffer.Sprites[0].World = Matrix::Identity;
 		_stInstancedSpriteBuffer.Sprites[0].PerVertexColor = 1;
@@ -526,7 +526,7 @@ namespace TEN::Renderer
 
 		PackSpriteTextureCoordinates(0, objectInfo->Sprite->Sprite);
 
-		UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+		UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
 
 		SetDepthState(DepthState::Read);
 		SetCullMode(CullMode::None);

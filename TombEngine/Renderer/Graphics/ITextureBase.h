@@ -5,9 +5,8 @@ namespace TEN::Renderer::Graphics
 	class ITextureBase
 	{
 	public:
-		int Width;
-		int Height;
-		PixelFormat ColorFormat;
-		PixelFormat DepthFormat;
+		virtual int GetWidth() = 0;
+		virtual int GetHeight() = 0;
+		virtual SurfaceFormat GetFormat() = 0;
 	};
 }

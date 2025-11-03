@@ -126,9 +126,9 @@ namespace TEN::Renderer
 	
 		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xFF);
 		
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 		_context->IASetVertexBuffers(0, 1, bar.VertexBufferBorder.Buffer.GetAddressOf(), &strides, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetIndexBuffer(bar.IndexBufferBorder.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 		
 		_shaders.Bind(Shader::Hud);
@@ -143,7 +143,7 @@ namespace TEN::Renderer
 		RendererSprite* borderSprite = &_sprites[Objects[ID_BAR_BORDER_GRAPHICS].meshIndex];
 		_stHUDBar.BarStartUV = borderSprite->UV[0];
 		_stHUDBar.BarScale = Vector2(borderSprite->Width / (float)borderSprite->Texture->Width, borderSprite->Height / (float)borderSprite->Texture->Height);
-		UpdateConstantBuffer(_stHUDBar, _cbHUDBar);
+		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar);
 		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		 
@@ -155,9 +155,9 @@ namespace TEN::Renderer
 
 		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xFF);
 		
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 		_context->IASetVertexBuffers(0, 1, bar.InnerVertexBuffer.Buffer.GetAddressOf(), &strides, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetIndexBuffer(bar.InnerIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 		
 		_shaders.Bind(Shader::Hud);
@@ -169,7 +169,7 @@ namespace TEN::Renderer
 		RendererSprite* innerSprite = &_sprites[Objects[textureSlot].meshIndex];
 		_stHUDBar.BarStartUV = innerSprite->UV[0];
 		_stHUDBar.BarScale = Vector2(innerSprite->Width / (float)innerSprite->Texture->Width, innerSprite->Height / (float)innerSprite->Texture->Height);
-		UpdateConstantBuffer(_stHUDBar, _cbHUDBar);
+		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar);
 
 		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
@@ -189,9 +189,9 @@ namespace TEN::Renderer
 		
 		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xFF);
 	
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 		_context->IASetVertexBuffers(0, 1, g_LoadingBar->VertexBufferBorder.Buffer.GetAddressOf(), &strides, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetIndexBuffer(g_LoadingBar->IndexBufferBorder.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	
 		_shaders.Bind(Shader::Hud);
@@ -206,7 +206,7 @@ namespace TEN::Renderer
 
 		_stHUDBar.BarStartUV = Vector2::Zero;
 		_stHUDBar.BarScale = Vector2::One;
-		UpdateConstantBuffer(_stHUDBar, _cbHUDBar);
+		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar);
 		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 
@@ -214,9 +214,9 @@ namespace TEN::Renderer
 
 		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xFF);
 		
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 		_context->IASetVertexBuffers(0, 1, g_LoadingBar->InnerVertexBuffer.Buffer.GetAddressOf(), &strides, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_context->IASetIndexBuffer(g_LoadingBar->InnerIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	
 		_shaders.Bind(Shader::Hud);
@@ -225,7 +225,7 @@ namespace TEN::Renderer
 		_stHUDBar.Percent = percentage / 100.0f;
 		_stHUDBar.Poisoned = false;
 		_stHUDBar.Frame = 0; 
-		UpdateConstantBuffer(_stHUDBar, _cbHUDBar);
+		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar);
 		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
 
@@ -306,8 +306,8 @@ namespace TEN::Renderer
 
 			_shaders.Bind(Shader::FullScreenQuad);
 
-			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			_context->IASetInputLayout(_inputLayout.Get());
+			_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+			_graphicsDevice->SetInputLayout(_vertexInputLayout);
 
 			_primitiveBatch->Begin();
 			_primitiveBatch->DrawQuad(vertices[0], vertices[1], vertices[2], vertices[3]);
@@ -350,8 +350,8 @@ namespace TEN::Renderer
 			{
 				_shaders.Bind(Shader::FullScreenQuad);
 
-				_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				_context->IASetInputLayout(_inputLayout.Get());
+				_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+				_graphicsDevice->SetInputLayout(_vertexInputLayout);
 
 				_primitiveBatch->Begin();
 
@@ -473,8 +473,8 @@ namespace TEN::Renderer
 		auto* sampler = _renderStates->AnisotropicClamp();
 		_context->PSSetSamplers(0, 1, &sampler);
 
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 
 		_primitiveBatch->Begin();
 		_primitiveBatch->DrawQuad(vertices[0], vertices[1], vertices[2], vertices[3]);
@@ -549,8 +549,8 @@ namespace TEN::Renderer
 		auto* sampler = _renderStates->AnisotropicClamp();
 		_context->PSSetSamplers(0, 1, &sampler);
 
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 
 		_primitiveBatch->Begin();
 		_primitiveBatch->DrawQuad(vertices[0], vertices[1], vertices[2], vertices[3]);

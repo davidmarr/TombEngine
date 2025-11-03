@@ -12,7 +12,7 @@
 #include "Renderer/Native/DirectX11/DX11RenderTarget2D.h"
 #include "Renderer/Native/DirectX11/DX11RenderTargetCube.h"
 #include "Renderer/Native/DirectX11/DX11Texture2D.h"
-#include "Renderer/Native/DirectX11/DX11Texture2DArray.h"
+#include "Renderer/Native/DirectX11/DX11DepthTarget.h"
 #include "Renderer/Native/DirectX11/DX11ConstantBuffer.h"
 #include "Renderer/Native/DirectX11/DX11InputLayout.h"
 #include "Renderer/Native/DirectX11/DX11Shader.h"
@@ -51,8 +51,9 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11InputLayout> _inputLayout = nullptr;
 		ComPtr<ID3D11InputLayout> _fullscreenTriangleInputLayout = nullptr;
 		
-		D3D11_VIEWPORT _viewport;
-		D3D11_VIEWPORT _shadowMapViewport;
+		std::unique_ptr<SpriteBatch> _spriteBatch;
+		std::unique_ptr<PrimitiveBatch<Vertex>> _primitiveBatch;
+
 		Viewport _viewportToolkit;
 
 		int _screenWidth;
@@ -60,23 +61,34 @@ namespace TEN::Renderer::Native::DirectX11
 		int _isWindowed;
 		int _refreshRate;
 
-		inline DXGI_FORMAT GetDXGIFormat(PixelFormat format)
+		inline DXGI_FORMAT GetDXGIFormat(SurfaceFormat format)
 		{
 			switch (format)
 			{
-			case PixelFormat::RGBA8_Unorm:
+			case SurfaceFormat::RGBA8_Unorm:
 				return DXGI_FORMAT_R8G8B8A8_UNORM;
-			case PixelFormat::RGBA8_Unorm_Srgb:
+			case SurfaceFormat::RGBA8_Unorm_Srgb:
 				return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-			case PixelFormat::R32_Float:
+			case SurfaceFormat::R32_Float:
 				return DXGI_FORMAT_R32_FLOAT;
-			case PixelFormat::R8G8_Unorm:
+			case SurfaceFormat::R8G8_Unorm:
 				return DXGI_FORMAT_R8G8_UNORM;
-			case PixelFormat::D24_S8:
-				return DXGI_FORMAT_D24_UNORM_S8_UINT;
-			case PixelFormat::Unknown:
+			case SurfaceFormat::Unknown:
 			default:
 				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+
+		inline DXGI_FORMAT GetDXGIFormat(DepthFormat format)
+		{
+			switch (format)
+			{
+			case DepthFormat::Depth24Stencil8:
+				return DXGI_FORMAT_D24_UNORM_S8_UINT;
+			case DepthFormat::Depth32:
+				return DXGI_FORMAT_D32_FLOAT;
+			default:
+				return DXGI_FORMAT_D32_FLOAT;
 			}
 		}
 
@@ -116,15 +128,19 @@ namespace TEN::Renderer::Native::DirectX11
 		void UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data) override;
 		void BindIndexBuffer(IIndexBuffer* indexBuffer) override;
 
-		IRenderTarget2D* CreateRenderTarget2D(int width, int height, PixelFormat colorFormat, bool isTypeless, PixelFormat depthFormat) override;
-		IRenderTarget2D* CreateRenderTarget2DFromAnother(IRenderTarget2D* src, PixelFormat colorFormat) override;
-		IRenderTargetCube* CreateRenderTargetCube(int size, PixelFormat colorFormat, PixelFormat depthFormat) override;
+		IRenderTarget2D* CreateRenderTarget2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless) override;
+		IRenderTarget2D* CreateRenderTarget2D(int width, int height, int arraySize, SurfaceFormat colorFormat) override;
+		IRenderTarget2D* CreateRenderTarget2D(IRenderTarget2D* parentRenderTarget, SurfaceFormat colorFormat) override;
+
+		IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) override;
 
 		ITexture2D* CreateTexture2D(int width, int height, byte* data) override;
-		ITexture2D* CreateTexture2D(int width, int height, PixelFormat format, int pitch, const void* data) override;
+		ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) override;
 		ITexture2D* CreateTexture2D(const std::string fileName) override;
-		ITexture2D* CreateTexture2D(int length, byte* data) override;
-		ITexture2DArray* CreateTexture2DArray(int size, int count, PixelFormat colorFormat, PixelFormat depthFormat) override;
+		ITexture2D* CreateTexture2D(int dataSize, byte* data) override;
+
+		IDepthTarget* CreateDepthTarget(int width, int height, DepthFormat format) override;
+		IDepthTarget* CreateDepthTarget(int width, int height, int arraySize, DepthFormat format) override;
 
 		void SetBlendMode(BlendMode blendMode) override;
 		void SetDepthState(DepthState depthState) override;
@@ -133,7 +149,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) override;
 
-		IConstantBuffer* CreateConstantBuffer(int size, char* name) override;
+		IConstantBuffer* CreateConstantBuffer(int size, std::string name) override;
 		void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) override;
 		void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
 		void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
@@ -144,12 +160,15 @@ namespace TEN::Renderer::Native::DirectX11
 		void DrawTriangles(int count, int baseVertex) override;
 
 		void ClearRenderTarget2D(IRenderTarget2D* renderTarget, XMVECTORF32 clearColor) override;
-		void ClearRenderTarget2DOfArray(ITexture2DArray* textureArray, int index, XMVECTORF32 clearColor) override;
+		void ClearRenderTarget2D(IRenderTarget2D* renderTarget, int arrayIndex, XMVECTORF32 clearColor) override;
 		void ClearRenderTarget2DOfCube(IRenderTargetCube* textureCube, int index, XMVECTORF32 clearColor) override;
 
-		void ClearDepthStencil(IRenderTarget2D* renderTarget, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
-		void ClearDepthStencilOfArray(ITexture2DArray* textureArray, int index, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
-		void ClearDepthStencilOfCube(IRenderTargetCube* textureCube, int index, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
+		void ClearDepthStencil(IDepthTarget* renderTarget, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
+		void ClearDepthStencil(IDepthTarget* renderTarget, int arrayIndex, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
+
+		void BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget) override;
+		void BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, int arrayIndex) override;
+		void BindRenderTargets(std::vector<IRenderTarget2D*> renderTargets, IDepthTarget* depthTarget) override;
 
 		void SetViewport(RendererViewport viewport) override;
 		void SetPrimitiveType(PrimitiveType primitiveType) override;
@@ -159,7 +178,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void CreateDevice() override;
 		void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) override;
-		IRenderTarget2D* InitializeSwapChain(int width, int height, HWND handle) override;
+		IBackBuffer* InitializeSwapChain(int width, int height, HWND handle) override;
 
 		std::string GetDefaultAdapterName() override;
 		void ChangeScreenResolution(int width, int height, bool windowed) override;
@@ -168,6 +187,9 @@ namespace TEN::Renderer::Native::DirectX11
 		void BindVertexShader(IShader* shader, bool forceNull) override;
 		void BindGeometryShader(IShader* shader, bool forceNull) override;
 		void BindPixelShader(IShader* shader, bool forceNull) override;
+
+		void Present() override;
+		void ClearState() override;
 
 		~DX11GraphicsDevice() override = default;
 	};

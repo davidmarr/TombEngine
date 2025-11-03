@@ -12,7 +12,16 @@ namespace TEN::Renderer::Native::DirectX11
 	
 	class DX11TextureBase : public ITextureBase
 	{
+	protected:
+		int _width;
+		int _height;
+
+		ComPtr<ID3D11ShaderResourceView> _shaderResourceView;
+
 	public:
-		ComPtr<ID3D11ShaderResourceView> ShaderResourceView;
+		int GetWidth() override { return _width; }
+		int GetHeight() override { return _height; }
+
+		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 	};
 }

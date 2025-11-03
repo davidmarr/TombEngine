@@ -62,7 +62,7 @@ namespace TEN::Renderer
 		_isLocked = true;
 	}
 
-	void Renderer::UpdateVideoTexture(Texture2D* texture)
+	void Renderer::UpdateVideoTexture(ITexture2D* texture)
 	{
 		_videoSprite.X = _videoSprite.Y = 0;
 		_videoSprite.Width = texture->Width;
@@ -118,7 +118,7 @@ namespace TEN::Renderer
 			                             dest.Resolution, dest.Resolution, Camera.pos.RoomNumber, 10, 20480,
 			                             90 * RADIAN);  
 			//RenderSimpleScene(dest.RenderTargetView[i].Get(), dest.DepthStencilView[i].Get(), renderView);
-			_context->ClearState();
+			//_context->ClearState();
 		}
 	}
 
@@ -145,85 +145,19 @@ namespace TEN::Renderer
 		return fps;
 	}
 
-	void Renderer::BindTexture(TextureRegister registerType, TextureBase* texture, SamplerStateRegister samplerType)
+	void Renderer::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
 	{
-		_context->PSSetShaderResources((UINT)registerType, 1, texture->ShaderResourceView.GetAddressOf());
-
 		if (g_GameFlow->IsPointFilterEnabled() && samplerType != SamplerStateRegister::ShadowMap)
 		{
 			samplerType = SamplerStateRegister::PointWrap;
 		}
 
-		ID3D11SamplerState* samplerState = nullptr;
-		switch (samplerType)
-		{
-		case SamplerStateRegister::AnisotropicClamp:
-			samplerState = _renderStates->AnisotropicClamp();
-			break;
-
-		case SamplerStateRegister::AnisotropicWrap:
-			samplerState = _renderStates->AnisotropicWrap();
-			break;
-
-		case SamplerStateRegister::LinearClamp:
-			samplerState = _renderStates->LinearClamp();
-			break;
-
-		case SamplerStateRegister::LinearWrap:
-			samplerState = _renderStates->LinearWrap();
-			break;
-
-		case SamplerStateRegister::PointWrap:
-			samplerState = _pointWrapSamplerState.Get();
-			break;
-
-		case SamplerStateRegister::ShadowMap:
-			samplerState = _shadowSampler.Get();
-			break;
-
-		default:
-			return;
-		}
-
-		_context->PSSetSamplers((UINT)registerType, 1, &samplerState);
+		_graphicsDevice->BindTexture(registerType, texture, samplerType);
 	}
 
-	void Renderer::BindRenderTargetAsTexture(TextureRegister registerType, RenderTarget2D* target, SamplerStateRegister samplerType)
+	void Renderer::BindRenderTargetAsTexture(TextureRegister registerType, IRenderTarget2D* target, SamplerStateRegister samplerType)
 	{
-		_context->PSSetShaderResources((UINT)registerType, 1, target->ShaderResourceView.GetAddressOf());
-		  
-		ID3D11SamplerState* samplerState = nullptr;
-		switch (samplerType)
-		{
-		case SamplerStateRegister::AnisotropicClamp:
-			samplerState = _renderStates->AnisotropicClamp();
-			break;
-
-		case SamplerStateRegister::AnisotropicWrap:
-			samplerState = _renderStates->AnisotropicWrap();
-			break;
-
-		case SamplerStateRegister::LinearClamp:
-			samplerState = _renderStates->LinearClamp();
-			break;
-
-		case SamplerStateRegister::LinearWrap:
-			samplerState = _renderStates->LinearWrap();
-			break;
-
-		case SamplerStateRegister::PointWrap:
-			samplerState = _pointWrapSamplerState.Get();
-			break;
-
-		case SamplerStateRegister::ShadowMap:
-			samplerState = _shadowSampler.Get();
-			break;
-
-		default:
-			return;
-		}
-
-		_context->PSSetSamplers((UINT)registerType, 1, &samplerState);
+		_graphicsDevice->BindTexture(registerType, target, samplerType);
 	}
 
 	int Renderer::BindLight(RendererLight& light, ShaderLight* lights, int index)
@@ -330,14 +264,14 @@ namespace TEN::Renderer
 		_stRoom.NumRoomDecals = (int)decals.size();
 	}
 
-	void Renderer::BindConstantBufferVS(ConstantBufferRegister constantBufferType, ID3D11Buffer** buffer)
+	void Renderer::BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
 	{
-		_context->VSSetConstantBuffers(static_cast<UINT>(constantBufferType), 1, buffer);
+		_graphicsDevice->BindConstantBufferVS(constantBufferType, buffer);
 	}
 
-	void Renderer::BindConstantBufferPS(ConstantBufferRegister constantBufferType, ID3D11Buffer** buffer)
+	void Renderer::BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
 	{
-		_context->PSSetConstantBuffers(static_cast<UINT>(constantBufferType), 1, buffer);
+		_graphicsDevice->BindConstantBufferPS(constantBufferType, buffer);
 	}
 
 	void Renderer::BindMaterial(int materialIndex, bool force)
@@ -363,7 +297,7 @@ namespace TEN::Renderer
 			_stMaterial.MaterialParameters2 = g_Level.Materials[materialIndex].Parameters2;
 			_stMaterial.MaterialParameters3 = g_Level.Materials[materialIndex].Parameters3;
 
-			UpdateConstantBuffer(_stMaterial, _cbMaterial);
+			UpdateConstantBuffer(&_stMaterial, _cbMaterial);
 
 			_lastMaterialIndex = materialIndex;
 
@@ -371,52 +305,19 @@ namespace TEN::Renderer
 		}
 
 		if (type == MaterialShaderType::Reflective)
-			BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::AnisotropicClamp);
+			BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, _legacyReflectionsRenderTarget, SamplerStateRegister::AnisotropicClamp);
 		else if (type == MaterialShaderType::SkyboxReflective)
-			BindTexture(TextureRegister::SkyboxEnvironmentReflections, &_skyboxRenderTarget, SamplerStateRegister::AnisotropicClamp);
+			BindTexture(TextureRegister::SkyboxEnvironmentReflections, _skyboxRenderTarget, SamplerStateRegister::AnisotropicClamp);
 	}
 
 	void Renderer::SetBlendMode(BlendMode blendMode, bool force)
-	{
+	{	
 		if (blendMode != _lastBlendMode || force)
 		{
-			switch (blendMode)
-			{
-			case BlendMode::AlphaBlend:
-				_context->OMSetBlendState(_renderStates->NonPremultiplied(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::AlphaTest:
-				_context->OMSetBlendState(_renderStates->Opaque(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::Opaque:
-				_context->OMSetBlendState(_renderStates->Opaque(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::Subtractive:
-				_context->OMSetBlendState(_subtractiveBlendState.Get(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::Additive:
-				_context->OMSetBlendState(_renderStates->Additive(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::Screen:
-				_context->OMSetBlendState(_screenBlendState.Get(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::Lighten:
-				_context->OMSetBlendState(_lightenBlendState.Get(), nullptr, 0xFFFFFFFF);
-				break;
-
-			case BlendMode::Exclude:
-				_context->OMSetBlendState(_excludeBlendState.Get(), nullptr, 0xFFFFFFFF);
-				break;
-			}
+			_graphicsDevice->SetBlendMode(blendMode);
 
 			_stBlending.BlendMode = static_cast<unsigned int>(blendMode);
-			UpdateConstantBuffer(_stBlending, _cbBlending);
+			UpdateConstantBuffer(&_stBlending, _cbBlending);
 			
 			_lastBlendMode = blendMode;
 		}
@@ -438,22 +339,7 @@ namespace TEN::Renderer
 	{
 		if (depthState != _lastDepthState || force)
 		{
-			switch (depthState)
-			{
-			case DepthState::Read:
-				_context->OMSetDepthStencilState(_renderStates->DepthRead(), 0xFFFFFFFF);
-				break;
-
-			case DepthState::Write:
-				_context->OMSetDepthStencilState(_renderStates->DepthDefault(), 0xFFFFFFFF);
-				break;
-
-			case DepthState::None:
-				_context->OMSetDepthStencilState(_renderStates->DepthNone(), 0xFFFFFFFF);
-				break;
-
-			}
-
+			_graphicsDevice->SetDepthState(depthState);
 			_lastDepthState = depthState;
 		}
 	}
@@ -464,7 +350,7 @@ namespace TEN::Renderer
 		{
 			if (!_doingFullscreenPass)
 			{
-				_context->RSSetState(_renderStates->Wireframe());
+				_graphicsDevice->SetCullMode(CullMode::Wireframe);
 				return;
 			}
 			else
@@ -475,21 +361,7 @@ namespace TEN::Renderer
 
 		if (cullMode != _lastCullMode || force)
 		{
-			switch (cullMode)
-			{
-			case CullMode::None:
-				_context->RSSetState(_cullNoneRasterizerState.Get());
-				break;
-
-			case CullMode::CounterClockwise:
-				_context->RSSetState(_cullCounterClockwiseRasterizerState.Get());
-				break;
-
-			case CullMode::Clockwise:
-				_context->RSSetState(_cullClockwiseRasterizerState.Get());
-				break;
-			}
-
+			_graphicsDevice->SetCullMode(cullMode);
 			_lastCullMode = cullMode;
 		}
 	}
@@ -502,31 +374,24 @@ namespace TEN::Renderer
 		{
 			_stBlending.AlphaTest = (int)mode;
 			_stBlending.AlphaThreshold = threshold;
-			UpdateConstantBuffer(_stBlending, _cbBlending);
-			BindConstantBufferPS(ConstantBufferRegister::Blending, _cbBlending.get());
+			UpdateConstantBuffer(&_stBlending, _cbBlending);
 		}
 	}
 
 	void Renderer::SetScissor(RendererRectangle s)
 	{
-		D3D11_RECT rects;
-		rects.left = s.Left;
-		rects.top = s.Top;
-		rects.right = s.Right;
-		rects.bottom = s.Bottom;
-
-		_context->RSSetScissorRects(1, &rects);
+		_graphicsDevice->SetScissor(s);
 	}
 
 	void Renderer::ResetScissor()
 	{
-		D3D11_RECT rects[1];
-		rects[0].left = 0;
-		rects[0].right = _screenWidth;
-		rects[0].top = 0;
-		rects[0].bottom = _screenHeight;
+		RendererRectangle s;
+		s.Left = 0;
+		s.Right = _screenWidth;
+		s.Top = 0;
+		s.Bottom = _screenHeight;
 
-		_context->RSSetScissorRects(1, rects);
+		_graphicsDevice->SetScissor(s);
 	}
 
 	void Renderer::SetGraphicsSettingsChanged()

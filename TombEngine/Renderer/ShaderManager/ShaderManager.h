@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/Structures/RendererShader.h"
+#include "Renderer/Graphics/IShader.h"
 
 using namespace TEN::Renderer::Structures;
 
@@ -74,19 +74,18 @@ namespace TEN::Renderer::Utils
 	class ShaderManager
 	{
 	private:
-		ComPtr<ID3D11Device>		_device	 = nullptr;
-		ComPtr<ID3D11DeviceContext> _context = nullptr;
+		IGraphicsDevice* _graphicsDevice							   = nullptr;
 
-		int											   _compileCounter = 0;
-		std::array<RendererShader, (int)Shader::Count> _shaders		   = {};
+		int											_compileCounter	   = 0;
+		std::array<IShader*, (int)Shader::Count>	_shaders		   = {};
 
 	public:
 		ShaderManager() = default;
 		~ShaderManager();
 
-		const RendererShader& Get(Shader shader);
+		const IShader* Get(Shader shader);
 
-		void Initialize(ComPtr<ID3D11Device>& device, ComPtr<ID3D11DeviceContext>& context);
+		void Initialize(IGraphicsDevice* graphicsDevice);
 		void LoadShaders(int width, int height, bool recompileAAShaders = false);
 		void Bind(Shader shader, bool forceNull = false);
 
@@ -95,8 +94,8 @@ namespace TEN::Renderer::Utils
 		void LoadPostprocessShaders();
 		void LoadAAShaders(int width, int height, bool recompile);
 
-		RendererShader LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, const D3D_SHADER_MACRO* defines, bool forceRecompile);
-		void		   Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, const D3D_SHADER_MACRO* defines = nullptr, bool forceRecompile = false);
+		IShader*       LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile);
+		void		   Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile = false);
 		void		   Destroy(Shader shader);
 	};
 }

@@ -339,21 +339,31 @@ enum class MaterialShaderType
 	SkyboxReflective = 2
 };
 
-enum class PixelFormat
+enum class SurfaceFormat
 {
 	Unknown,
 	RGBA8_Unorm,
 	RGBA8_Unorm_Srgb,
 	R8G8_Unorm,
+	R8_Unorm,
 	R32_Float,
-	D24_S8
+	RGBA32_Float
+};
+
+enum class DepthFormat
+{
+	Depth24Stencil8,
+	Depth32
 };
 
 enum class VertexInputFormat
 {
 	RGBA8_Unorm,
+	RGBA8_Snorm,
+	RGBA8_Uint,
 	R8G8_Unorm,
 	R32_Float,
+	R32_Uint,
 	RGB32_Float,
 	RGBA32_Float
 };

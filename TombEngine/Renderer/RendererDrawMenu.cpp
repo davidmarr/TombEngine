@@ -835,10 +835,10 @@ namespace TEN::Renderer
 		auto pos = _viewportToolkit.Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
 
 		// Set vertex buffer.
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
-		_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
 
 		// Set matrices.
 		auto hudCamera = CCameraMatrixBuffer{};
@@ -879,7 +879,7 @@ namespace TEN::Renderer
 			_stItem.Color = Vector4::One;
 			_stItem.AmbientLight = AMBIENT_LIGHT_COLOR;
 
-			UpdateConstantBuffer(_stItem, _cbItem);
+			UpdateConstantBuffer(&_stItem, _cbItem);
 
 			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
 			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
@@ -904,7 +904,7 @@ namespace TEN::Renderer
 					{
 						BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::LinearClamp);
 						_stMaterial.MaterialType = 1;
-						UpdateConstantBuffer(_stMaterial, _cbMaterial);
+						UpdateConstantBuffer(&_stMaterial, _cbMaterial);
 					}
 					else
 #endif
@@ -1038,10 +1038,10 @@ namespace TEN::Renderer
 		unsigned int offset = 0;
 
 		// Set vertex buffer.
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
-		_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout);
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
 
 		// Set shaders.
 		_shaders.Bind(Shader::Inventory);
@@ -1330,24 +1330,6 @@ namespace TEN::Renderer
 				_spriteBatch->Draw(_SMAABlendRenderTarget.ShaderResourceView.Get(), rect);
 				thumbY += thumbWidth / aspectRatio;
 			}
-
-			rect.left = _screenWidth - thumbWidth;
-			rect.top = thumbY;
-			rect.right = rect.left + thumbWidth;
-			rect.bottom = rect.top + thumbWidth;
-
-			_spriteBatch->Draw(_roomAmbientMapFront.ShaderResourceView.Get(), rect);
-			thumbY += thumbWidth;
-
-			rect.left = _screenWidth - thumbWidth;
-			rect.top = thumbY;
-			rect.right = rect.left + thumbWidth;
-			rect.bottom = rect.top + thumbWidth;
-
-			_spriteBatch->Draw(_roomAmbientMapBack.ShaderResourceView.Get(), rect);
-			thumbY += thumbWidth;
-
-			_spriteBatch->End();
 
 			break;
 

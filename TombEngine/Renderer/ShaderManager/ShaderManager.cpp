@@ -3,33 +3,34 @@
 
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Structures/RendererShader.h"
+#include "Renderer/Graphics/IGraphicsDevice.h"
+#include "Renderer/Graphics/IShader.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
 #include "Version.h"
 
 using namespace TEN::Renderer::Structures;
 using namespace TEN::Utils;
+using namespace TEN::Renderer::Graphics;
 
 namespace TEN::Renderer::Utils
 {
 	ShaderManager::~ShaderManager()
 	{
-		_device = nullptr;
-		_context = nullptr;
+		_graphicsDevice = nullptr;
 
 		for (int i = 0; i < (int)Shader::Count; i++)
 			Destroy((Shader)i);
 	}
 
-	const RendererShader& ShaderManager::Get(Shader shader)
+	const IShader* ShaderManager::Get(Shader shader)
 	{
 		return _shaders[(int)shader];
 	}
 
-	void ShaderManager::Initialize(ComPtr<ID3D11Device>& device, ComPtr<ID3D11DeviceContext>& context)
+	void ShaderManager::Initialize(IGraphicsDevice* graphicsDevice)
 	{
-		_device = device;
-		_context = context;
+		_graphicsDevice = graphicsDevice;
 	}
 
 	void ShaderManager::LoadPostprocessShaders()
@@ -53,38 +54,35 @@ namespace TEN::Renderer::Utils
 	void ShaderManager::LoadAAShaders(int width, int height, bool recompile)
 	{
 		auto string = std::stringstream{};
-		auto defines = std::vector<D3D10_SHADER_MACRO>{};
+		auto defines = std::map<std::string, std::string>{};
 
 		// Set up pixel size macro.
 		string << "float4(1.0 / " << width << ", 1.0 / " << height << ", " << width << ", " << height << ")";
 		auto pixelSizeText = string.str();
-		auto renderTargetMetricsMacro = D3D10_SHADER_MACRO{ "SMAA_RT_METRICS", pixelSizeText.c_str() };
-		defines.push_back(renderTargetMetricsMacro);
+		
+		defines["SMAA_RT_METRICS"] = pixelSizeText;
 
 		if (g_Configuration.AntialiasingMode == AntialiasingMode::Medium)
 		{
-			defines.push_back({ "SMAA_PRESET_MEDIUM", nullptr });
+			defines["SMAA_PRESET_MEDIUM"] = "";
 		}
 		else
 		{
-			defines.push_back({ "SMAA_PRESET_ULTRA", nullptr });
+			defines["SMAA_PRESET_ULTRA"] = "";
 		}
 
 		// defines.push_back({ "SMAA_PREDICATION", "1" });
 
 		// Set up target macro.
 		auto dx101Macro = D3D10_SHADER_MACRO{ "SMAA_HLSL_4_1", "1" };
-		defines.push_back(dx101Macro);
+		defines["SMAA_HLSL_4_1"] = "1";
 
-		auto null = D3D10_SHADER_MACRO{ nullptr, nullptr };
-		defines.push_back(null);
-
-		Load(Shader::SmaaEdgeDetection, "SMAA", "EdgeDetection", ShaderType::Vertex, defines.data(), recompile);
-		Load(Shader::SmaaLumaEdgeDetection, "SMAA", "LumaEdgeDetection", ShaderType::Pixel, defines.data(), recompile);
-		Load(Shader::SmaaColorEdgeDetection, "SMAA", "ColorEdgeDetection", ShaderType::Pixel, defines.data(), recompile);
-		Load(Shader::SmaaDepthEdgeDetection, "SMAA", "DepthEdgeDetection", ShaderType::Pixel, defines.data(), recompile);
-		Load(Shader::SmaaBlendingWeightCalculation, "SMAA", "BlendingWeightCalculation", ShaderType::PixelAndVertex, defines.data(), recompile);
-		Load(Shader::SmaaNeighborhoodBlending, "SMAA", "NeighborhoodBlending", ShaderType::PixelAndVertex, defines.data(), recompile);
+		Load(Shader::SmaaEdgeDetection, "SMAA", "EdgeDetection", ShaderType::Vertex, defines, recompile);
+		Load(Shader::SmaaLumaEdgeDetection, "SMAA", "LumaEdgeDetection", ShaderType::Pixel, defines, recompile);
+		Load(Shader::SmaaColorEdgeDetection, "SMAA", "ColorEdgeDetection", ShaderType::Pixel, defines, recompile);
+		Load(Shader::SmaaDepthEdgeDetection, "SMAA", "DepthEdgeDetection", ShaderType::Pixel, defines, recompile);
+		Load(Shader::SmaaBlendingWeightCalculation, "SMAA", "BlendingWeightCalculation", ShaderType::PixelAndVertex, defines, recompile);
+		Load(Shader::SmaaNeighborhoodBlending, "SMAA", "NeighborhoodBlending", ShaderType::PixelAndVertex, defines, recompile);
 
 		Load(Shader::Fxaa, "FXAA", "", ShaderType::Pixel);
 	}
@@ -162,8 +160,10 @@ namespace TEN::Renderer::Utils
 			_context->CSSetShader(shaderObj.Compute.Shader.Get(), nullptr, 0);
 	}
 
-	RendererShader ShaderManager::LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, const D3D_SHADER_MACRO* defines, bool forceRecompile)
+	IShader* ShaderManager::LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)
 	{
+
+
 		auto rendererShader = RendererShader{};
 
 		// Define paths for native (uncompiled) shaders and compiled shaders.
@@ -173,6 +173,11 @@ namespace TEN::Renderer::Utils
 
 		// Ensure the /Bin subdirectory exists.
 		std::filesystem::create_directories(compiledShaderPath);
+
+		ShaderCompileRequest request;
+		request.BinaryDirectory = compiledShaderPath;
+		request.FileName
+		return _graphicsDevice->CreateShader()
 
 		// Helper function to load or compile a shader.
 		auto loadOrCompileShader = [this, type, defines, forceRecompile, shaderPath, compiledShaderPath]
@@ -298,7 +303,7 @@ namespace TEN::Renderer::Utils
 		return rendererShader;
 	}
 
-	void ShaderManager::Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, const D3D_SHADER_MACRO* defines, bool forceRecompile)
+	void ShaderManager::Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)
 	{
 		Destroy(shader);
 		_shaders[(int)shader] = LoadOrCompile(fileName, funcName, type, defines, forceRecompile);
