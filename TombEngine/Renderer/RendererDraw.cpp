@@ -2888,7 +2888,7 @@ namespace TEN::Renderer
 					_stShadowMap.ShadowMapSize = g_Configuration.ShadowMapSize;
 					_stShadowMap.CastShadows = true;
 
-					BindTexture(TextureRegister::ShadowMap, &_shadowMap, SamplerStateRegister::ShadowMap);
+					BindTexture(TextureRegister::ShadowMap, _shadowMap, SamplerStateRegister::ShadowMap);
 				}
 				else
 				{
@@ -2900,7 +2900,7 @@ namespace TEN::Renderer
 
 			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
-				BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
+				BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
 			}
 
 			for (int i = (int)view.RoomsToDraw.size() - 1; i >= 0; i--)
@@ -2936,7 +2936,7 @@ namespace TEN::Renderer
 								}
 
 								_stRoom.Water = (nativeRoom.flags & ENV_FLAG_WATER) != 0 ? 1 : 0;
-								UpdateConstantBuffer(_stRoom, _cbRoom);
+								UpdateConstantBuffer(&_stRoom, _cbRoom);
 
 								SetScissor(room.ClipBounds);
 
@@ -2995,7 +2995,7 @@ namespace TEN::Renderer
 		view.FillConstantBuffer(cameraConstantBuffer);
 		UpdateConstantBuffer(&cameraConstantBuffer, _cbCameraMatrices);
 
-		DrawHorizonAndSky(_skyBoxDepth, view, true);
+		DrawHorizonAndSky(_skyBoxDepth, view, 0, true);
 
 		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget, 1, Colors::Black);
 		_graphicsDevice->ClearDepthStencil(_skyBoxDepth, 1, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
@@ -3006,12 +3006,12 @@ namespace TEN::Renderer
 		cameraConstantBuffer.Hemisphere = 1;
 		UpdateConstantBuffer(&cameraConstantBuffer, _cbCameraMatrices);
 
-		DrawHorizonAndSky(_skyBoxDepth, view, true);
+		DrawHorizonAndSky(_skyBoxDepth, view, 1, true);
 
 		SetCullMode(CullMode::CounterClockwise);
 	}
 
-	void Renderer::DrawHorizonAndSky(IDepthTarget* depthTarget, RenderView& renderView, bool reflectionPass)
+	void Renderer::DrawHorizonAndSky(IDepthTarget* depthTarget, RenderView& renderView, int arrayIndex, bool reflectionPass)
 	{
 		constexpr auto STAR_SIZE = 2;
 		constexpr auto SUN_SIZE	 = 64;
@@ -3072,8 +3072,7 @@ namespace TEN::Renderer
 			}
 		}
 
-		_graphicsDevice->ClearDepthStencil()
-		_context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
+		_graphicsDevice->ClearDepthStencil(depthTarget, arrayIndex, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
 		if (Weather.GetStars().size() > 0 && !reflectionPass)
 		{
@@ -3081,14 +3080,11 @@ namespace TEN::Renderer
 			SetBlendMode(BlendMode::Additive);
 			SetCullMode(CullMode::None);
 
-			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleStrip);
 
 			_shaders.Bind(Shader::InstancedSprites);
 
-			// Set up vertex buffer and parameters.
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
-			_context->IASetVertexBuffers(0, 1, _quadVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer);
 
 			BindTexture(TextureRegister::ColorMap, _sprites[Objects[ID_DEFAULT_SPRITES].meshIndex + SPR_LENS_FLARE_3].Texture, SamplerStateRegister::LinearClamp);
 
@@ -3278,14 +3274,14 @@ namespace TEN::Renderer
 			SetBlendMode(BlendMode::Additive);
 			SetCullMode(CullMode::None);
 
-			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleStrip);
 
 			_shaders.Bind(Shader::InstancedSprites);
 
 			// Set up vertex buffer and parameters.
 			unsigned int stride = sizeof(Vertex);
 			unsigned int offset = 0;
-			_context->IASetVertexBuffers(0, 1, _quadVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer);
 
 			auto rDrawSprite = RendererSpriteToDraw{};
 			rDrawSprite.Sprite = &_sprites[Objects[ID_DEFAULT_SPRITES].meshIndex + renderView.LensFlaresToDraw[0].SpriteID];
@@ -3324,16 +3320,16 @@ namespace TEN::Renderer
 		}
 
 		// Clear just the Z-buffer to start drawing on top of horizon.
-		_context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		_graphicsDevice->ClearDepthStencil(depthTarget, arrayIndex, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 	}
 
 	void Renderer::Render(float interpFactor)
 	{
 		InterpolateCamera(interpFactor);
-		RenderScene(&_backBuffer, _gameCamera);
+		RenderScene(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget(), _gameCamera);
 
-		_context->ClearState();
-		_swapChain->Present(1, 0);
+		_graphicsDevice->ClearState();
+		_graphicsDevice->Present(); // 1 0
 	}
 
 	void Renderer::DrawMesh(RendererItem* itemToDraw, RendererMesh* mesh, RendererObjectType type, int boneIndex, bool skinned, RenderView& view, RendererPass rendererPass)
@@ -3775,8 +3771,8 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Rooms, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->UpdateIndexBuffer(_sortedPolygonsIndexBuffer, (int)_sortedPolygonsIndices.size(), 0, _sortedPolygonsIndices.data());
+		_graphicsDevice->BindIndexBuffer(_sortedPolygonsIndexBuffer);
 
 		DrawIndexedTriangles((int)_sortedPolygonsIndices.size(), 0, 0);
 
@@ -3832,8 +3828,8 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Moveables, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->UpdateIndexBuffer(_sortedPolygonsIndexBuffer, (int)_sortedPolygonsIndices.size(), 0, _sortedPolygonsIndices.data());
+		_graphicsDevice->BindIndexBuffer(_sortedPolygonsIndexBuffer);
 
 		DrawIndexedTriangles((int)_sortedPolygonsIndices.size(), 0, 0);
 
@@ -3868,8 +3864,8 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Statics, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->UpdateIndexBuffer(_sortedPolygonsIndexBuffer, (int)_sortedPolygonsIndices.size(), 0, _sortedPolygonsIndices.data());
+		_graphicsDevice->BindIndexBuffer(_sortedPolygonsIndexBuffer);
 
 		DrawIndexedInstancedTriangles((int)_sortedPolygonsIndices.size(), 1, 0, 0);
 
@@ -3904,8 +3900,8 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Statics, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->UpdateIndexBuffer(_sortedPolygonsIndexBuffer, (int)_sortedPolygonsIndices.size(), 0, _sortedPolygonsIndices.data());
+		_graphicsDevice->BindIndexBuffer(_sortedPolygonsIndexBuffer);
 
 		DrawIndexedInstancedTriangles((int)_sortedPolygonsIndices.size(), 1, 0, 0);
 
@@ -3972,8 +3968,8 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Moveables, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		_graphicsDevice->UpdateIndexBuffer(_sortedPolygonsIndexBuffer, (int)_sortedPolygonsIndices.size(), 0, _sortedPolygonsIndices.data());
+		_graphicsDevice->BindIndexBuffer(_sortedPolygonsIndexBuffer);
 
 		DrawIndexedTriangles((int)_sortedPolygonsIndices.size(), 0, 0);
 
@@ -3995,8 +3991,8 @@ namespace TEN::Renderer
 		// SSAO pixel shader.
 		_shaders.Bind(Shader::Ssao);
 
-		_context->ClearRenderTargetView(_SSAORenderTarget.RenderTargetView.Get(), Colors::White);
-		_context->OMSetRenderTargets(1, _SSAORenderTarget.RenderTargetView.GetAddressOf(), nullptr);
+		_graphicsDevice->ClearRenderTarget2D(_SSAORenderTarget, Colors::White);
+		_graphicsDevice->BindRenderTarget(_SSAORenderTarget, nullptr);
 
 		// Must set correctly viewport because SSAO is done at 1/4 screen resolution.
 		D3D11_VIEWPORT viewport;
@@ -4018,16 +4014,13 @@ namespace TEN::Renderer
 		_context->RSSetScissorRects(1, rects);
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
-
-		unsigned int stride = sizeof(PostProcessVertex);
-		unsigned int offset = 0;
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
 
 		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
-		BindRenderTargetAsTexture(static_cast<TextureRegister>(0), &_depthRenderTarget, SamplerStateRegister::PointWrap);
-		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), &_normalsAndMaterialIndexRenderTarget, SamplerStateRegister::PointWrap);
-		BindTexture(static_cast<TextureRegister>(2), &_SSAONoiseTexture, SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(static_cast<TextureRegister>(0), _depthRenderTarget, SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _normalsAndMaterialIndexRenderTarget, SamplerStateRegister::PointWrap);
+		BindTexture(static_cast<TextureRegister>(2), _SSAONoiseTexture, SamplerStateRegister::PointWrap);
 
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
 		_stPostProcessBuffer.TexelSize = Vector2(1.0f / _screenWidth, 1.0f / _screenHeight);
@@ -4039,10 +4032,10 @@ namespace TEN::Renderer
 		// Blur step.
 		_shaders.Bind(Shader::SsaoBlur);
 
-		_context->ClearRenderTargetView(_SSAOBlurredRenderTarget.RenderTargetView.Get(), Colors::Black);
-		_context->OMSetRenderTargets(1, _SSAOBlurredRenderTarget.RenderTargetView.GetAddressOf(), nullptr);
+		_graphicsDevice->ClearRenderTarget2D(_SSAOBlurredRenderTarget, Colors::Black);
+		_graphicsDevice->BindRenderTarget(_SSAOBlurredRenderTarget, nullptr);
 
-		BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAORenderTarget, SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAORenderTarget, SamplerStateRegister::PointWrap);
  
 		DrawTriangles(3, 0);
 
@@ -4089,7 +4082,7 @@ namespace TEN::Renderer
 		const auto& set = _animatedTextureSets[bucket.Texture];
 
 		// Stream video texture, if video playback is active, otherwise show original texture.
-		if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture->Texture)
+		if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture)
 		{
 			_stAnimated.Type = 0; // Dummy type, should be set to 0 to avoid incorrect UV mapping.
 			_stAnimated.Fps = 1;
@@ -4156,7 +4149,7 @@ namespace TEN::Renderer
 
 			const auto& set = _animatedTextureSets[bucket.Texture];
 				
-			if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture->Texture)
+			if (set.Type == AnimatedTextureType::Video && _videoSprite.Texture && _videoSprite.Texture)
 			{
 				BindTexture(TextureRegister::ColorMap, _videoSprite.Texture, SamplerStateRegister::AnisotropicClamp);
 
@@ -4185,9 +4178,9 @@ namespace TEN::Renderer
 
 		auto& atlas = (*atlasList)[bucket.Texture];
 
-		BindTexture(TextureRegister::ColorMap, &std::get<0>(atlas), SamplerStateRegister::AnisotropicClamp);
-		BindTexture(TextureRegister::NormalMap, &std::get<1>(atlas), SamplerStateRegister::AnisotropicClamp);
-		BindTexture(TextureRegister::ORSHMap, &std::get<2>(atlas), SamplerStateRegister::AnisotropicClamp);
-		BindTexture(TextureRegister::EmissiveMap, &std::get<3>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::ColorMap, std::get<0>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::NormalMap, std::get<1>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::ORSHMap, std::get<2>(atlas), SamplerStateRegister::AnisotropicClamp);
+		BindTexture(TextureRegister::EmissiveMap, std::get<3>(atlas), SamplerStateRegister::AnisotropicClamp);
 	}
 }

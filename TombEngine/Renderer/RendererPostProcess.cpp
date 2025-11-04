@@ -25,7 +25,7 @@ namespace TEN::Renderer
 		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
@@ -160,7 +160,7 @@ namespace TEN::Renderer
 
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
@@ -204,7 +204,7 @@ namespace TEN::Renderer
 
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
@@ -251,7 +251,7 @@ namespace TEN::Renderer
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_context->IASetInputLayout(_fullscreenTriangleInputLayout.Get());
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;

@@ -17,10 +17,10 @@ namespace TEN::Renderer::Structures
 		static constexpr auto COLOR_COUNT = 5;
 		static constexpr auto SIZE_DEFAULT = Vector2(150.0f, 10.0f);
 
-		VertexBuffer<Vertex> VertexBufferBorder;
-		IndexBuffer	 IndexBufferBorder;
-		VertexBuffer<Vertex> InnerVertexBuffer;
-		IndexBuffer	 InnerIndexBuffer;
+		IVertexBuffer* VertexBufferBorder;
+		IIndexBuffer*  IndexBufferBorder;
+		IVertexBuffer* InnerVertexBuffer;
+		IIndexBuffer*  InnerIndexBuffer;
 
 		/*
 			Initializes status bar for rendering. Coordinates are set in screen space.

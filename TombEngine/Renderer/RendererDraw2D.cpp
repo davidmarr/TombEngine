@@ -124,12 +124,12 @@ namespace TEN::Renderer
 		unsigned int strides = sizeof(Vertex);
 		unsigned int offset = 0;
 	
-		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xFF);
+		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 0.0f, 0xFF););
 		
 		_graphicsDevice->SetInputLayout(_vertexInputLayout);
-		_context->IASetVertexBuffers(0, 1, bar.VertexBufferBorder.Buffer.GetAddressOf(), &strides, &offset);
+		_graphicsDevice->BindVertexBuffer(bar.VertexBufferBorder);
+		_graphicsDevice->BindIndexBuffer(bar.IndexBufferBorder);
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_context->IASetIndexBuffer(bar.IndexBufferBorder.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 		
 		_shaders.Bind(Shader::Hud);
 		_shaders.Bind(Shader::HudDTexture);
@@ -138,22 +138,25 @@ namespace TEN::Renderer
 		SetDepthState(DepthState::None);
 		SetCullMode(CullMode::None);
 
-		BindConstantBufferVS(ConstantBufferRegister::Hud, _cbHUD.get());
+		BindConstantBufferVS(ConstantBufferRegister::Hud, _cbHUD);
 
 		RendererSprite* borderSprite = &_sprites[Objects[ID_BAR_BORDER_GRAPHICS].meshIndex];
 		_stHUDBar.BarStartUV = borderSprite->UV[0];
 		_stHUDBar.BarScale = Vector2(borderSprite->Width / (float)borderSprite->Texture->Width, borderSprite->Height / (float)borderSprite->Texture->Height);
 		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar);
-		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
-		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar);
+		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar);
 		 
 		BindTexture(TextureRegister::Hud, borderSprite->Texture, SamplerStateRegister::LinearClamp);
 
 		DrawIndexedTriangles(56, 0, 0);
 
+		BindTexture(static_cast<TextureRegister>(0), _sprites[Objects[textureSlot].meshIndex].Texture, SamplerStateRegister::AnisotropicClamp);
+
 		_context->PSSetShaderResources(0, 1, _sprites[Objects[textureSlot].meshIndex].Texture->ShaderResourceView.GetAddressOf());
 
-		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xFF);
+		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 0.0f, 0xFF);
+
 		
 		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 		_context->IASetVertexBuffers(0, 1, bar.InnerVertexBuffer.Buffer.GetAddressOf(), &strides, &offset);

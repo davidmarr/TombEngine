@@ -791,6 +791,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\ConstantBuffers\SMAABuffer.h" />
     <ClInclude Include="Renderer\Frustum.h" />
     <ClInclude Include="Renderer\Graphics\IBackBuffer.h" />
+    <ClInclude Include="Renderer\Graphics\IDepthStencilView.h" />
     <ClInclude Include="Renderer\Graphics\IDepthTarget.h" />
     <ClInclude Include="Renderer\Graphics\IInputLayout.h" />
     <ClInclude Include="Renderer\Graphics\IndexBuffer.h" />
@@ -800,6 +801,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Graphics\IPrimitiveBatch.h" />
     <ClInclude Include="Renderer\Graphics\IRenderTarget2D.h" />
     <ClInclude Include="Renderer\Graphics\IRenderTargetCube.h" />
+    <ClInclude Include="Renderer\Graphics\IRenderTargetView.h" />
     <ClInclude Include="Renderer\Graphics\IShader.h" />
     <ClInclude Include="Renderer\Graphics\ISpriteBatch.h" />
     <ClInclude Include="Renderer\Graphics\ISpriteFont.h" />
@@ -817,6 +819,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Graphics\Vertices\SpriteVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\Vertex.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11ConstantBuffer.h" />
+    <ClInclude Include="Renderer\Native\DirectX11\DX11DepthStencilView.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11DepthTarget.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11GraphicsDevice.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11IndexBuffer.h" />
@@ -824,6 +827,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Native\DirectX11\DX11PrimitiveBatch.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTarget2D.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTargetCube.h" />
+    <ClInclude Include="Renderer\Native\DirectX11\Dx11RenderTargetView.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11Shader.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11Texture2D.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11TextureBase.h" />

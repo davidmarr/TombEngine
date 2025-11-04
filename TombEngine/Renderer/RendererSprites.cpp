@@ -286,7 +286,7 @@ namespace TEN::Renderer
 				// Set up vertex buffer and parameters.
 				unsigned int stride = sizeof(Vertex);
 				unsigned int offset = 0;
-				_context->IASetVertexBuffers(0, 1, _quadVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+				_graphicsDevice->BindVertexBuffer(_quadVertexBuffer);
 
 				wasGpuSet = true;
 			}
@@ -458,7 +458,7 @@ namespace TEN::Renderer
 
 		if (object->Sprite->Type != SpriteType::ThreeD)
 		{
-			_context->IASetVertexBuffers(0, 1, _quadVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer);
 		}
 		else
 		{
