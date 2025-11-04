@@ -50,6 +50,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed rendering issues with some static meshes if same level file is reused for the title.
 * Fixed intense GPU usage when engine window is minimized.
 * Fixed wrong highlights when sun lights were used in mirror setups.
+* Fixed incorrect specular highlight for spotlights.
 * Fixed SSAO applied multiple times when additive surfaces are present in scene.
 * Fixed vertex effects (glow and move) not being rendered at full framerate.
 * Fixed incorrect roll values in flyby cameras.
