@@ -57,12 +57,13 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
-* Added `Moveable:ShowInteractionHighlight` method.
+* Added `Moveable:GetVisible` and Moveable:ShowInteractionHighlight` methods.
 * Added `DisplaySprite:GetFlags` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
 * Added `Type.IsEnumValue` helper function to determine if particular value belongs to an enumeration.
 * Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
+* Fixed `Moveable:GetMeshVisible` method returning true even if whole moveable is invisible.
 * Fixed errors while spawning climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
