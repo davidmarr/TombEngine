@@ -45,6 +45,10 @@ namespace TEN::Scripting::Types
 
 		ScriptColor PremultiplyAlpha();
 
+		// Utilities
+
+		ScriptColor Lerp(const ScriptColor& color, float alpha) const;
+
 		// Converters
 
 		std::string ToString() const;
@@ -56,5 +60,9 @@ namespace TEN::Scripting::Types
 		operator Vector4() const;
 		operator D3DCOLOR() const;
 		operator RGBAColor8Byte() const;
+		bool operator ==(const ScriptColor& other) const;
+		ScriptColor operator +(const ScriptColor& other) const;
+		ScriptColor operator -(const ScriptColor& other) const;
+
 	};
 }
