@@ -75,7 +75,7 @@ namespace TEN::Scripting
 		void SetFromFormattedString(const std::string& formattedTime);
 		void SetFromTable(const sol::table& hmscTable);
 
-		// Cache per ultimo risultato formattato
+		// Cache for last formatted result
 		mutable int _lastFrameCount = -1;
 		mutable std::string _cachedResult;
 		mutable bool _lastIncludeHours = true;
