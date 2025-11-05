@@ -78,6 +78,9 @@ namespace TEN::Scripting
 		// Cache per ultimo risultato formattato
 		mutable int _lastFrameCount = -1;
 		mutable std::string _cachedResult;
-		mutable uint8_t _lastFormatFlags = 0xFF;
+		mutable bool _lastIncludeHours = true;
+		mutable bool _lastIncludeMinutes = true;
+		mutable bool _lastIncludeSeconds = true;
+		mutable bool _lastIncludeDeciseconds = true;
 	};
 }

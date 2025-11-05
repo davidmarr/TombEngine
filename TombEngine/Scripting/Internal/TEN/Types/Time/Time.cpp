@@ -226,9 +226,6 @@ namespace TEN::Scripting
 	// print(time:GetFormattedString(format)) -- "125"
 	std::string Time::GetFormattedString(sol::object formatObj) const
 	{
-		// Calculate format flags
-		uint8_t formatFlags = 0xFF; // default: all true
-
 		bool includeHours = true;
 		bool includeMinutes = true;
 		bool includeSeconds = true;
@@ -251,25 +248,26 @@ namespace TEN::Scripting
 					includeMinutes = m.value();
 					includeSeconds = s.value();
 					includeDeciseconds = d.value();
-
-					// Encode flags into a byte
-					formatFlags = (includeHours ? 0x08 : 0) |
-								  (includeMinutes ? 0x04 : 0) |
-								  (includeSeconds ? 0x02 : 0) |
-								  (includeDeciseconds ? 0x01 : 0);
 				}
 			}
 		}
 
 		// Check if we can use the cached result
-		if (_lastFrameCount == _frameCount && _lastFormatFlags == formatFlags)
+		if (_lastFrameCount == _frameCount &&
+			_lastIncludeHours == includeHours &&
+			_lastIncludeMinutes == includeMinutes &&
+			_lastIncludeSeconds == includeSeconds &&
+			_lastIncludeDeciseconds == includeDeciseconds)
 		{
 			return _cachedResult;
 		}
 
-		// Update the cache
+		// Update cache
 		_lastFrameCount = _frameCount;
-		_lastFormatFlags = formatFlags;
+		_lastIncludeHours = includeHours;
+		_lastIncludeMinutes = includeMinutes;
+		_lastIncludeSeconds = includeSeconds;
+		_lastIncludeDeciseconds = includeDeciseconds;
 
 		auto hmsc = GetHmsc();
 
@@ -292,24 +290,29 @@ namespace TEN::Scripting
 		auto countDigits = [](int value) -> int {
 			if (value == 0) return 1;
 			int digits = 0;
-			while (value > 0) {
+			while (value > 0) 
+			{
 				value /= 10;
 				digits++;
 			}
 			return digits;
 		};
 
-		char buffer[32]{}; // Increased buffer size to handle larger numbers
+		char buffer[32]{}; // Buffer size to handle larger numbers
 		char* ptr = buffer;
 
 		if (includeHours)
 		{
 			int digits = countDigits(hours);
-			if (digits == 1) {
+			if (digits == 1)
+			{
 				*ptr++ = '0';
 				*ptr++ = '0' + hours;
-			} else {
-				for (int i = digits - 1; i >= 0; --i) {
+			}
+			else
+			{
+				for (int i = digits - 1; i >= 0; --i) 
+				{
 					int divisor = 1;
 					for (int j = 0; j < i; ++j) divisor *= 10;
 					*ptr++ = '0' + (hours / divisor) % 10;
@@ -321,11 +324,15 @@ namespace TEN::Scripting
 		{
 			if (ptr != buffer) *ptr++ = ':';
 			int digits = countDigits(minutes);
-			if (digits == 1) {
+			if (digits == 1)
+			{
 				*ptr++ = '0';
 				*ptr++ = '0' + minutes;
-			} else {
-				for (int i = digits - 1; i >= 0; --i) {
+			}
+			else
+			{
+				for (int i = digits - 1; i >= 0; --i)
+				{
 					int divisor = 1;
 					for (int j = 0; j < i; ++j) divisor *= 10;
 					*ptr++ = '0' + (minutes / divisor) % 10;
@@ -337,11 +344,15 @@ namespace TEN::Scripting
 		{
 			if (ptr != buffer) *ptr++ = ':';
 			int digits = countDigits(seconds);
-			if (digits == 1) {
+			if (digits == 1)
+			{
 				*ptr++ = '0';
 				*ptr++ = '0' + seconds;
-			} else {
-				for (int i = digits - 1; i >= 0; --i) {
+			}
+			else
+			{
+				for (int i = digits - 1; i >= 0; --i)
+				{
 					int divisor = 1;
 					for (int j = 0; j < i; ++j) divisor *= 10;
 					*ptr++ = '0' + (seconds / divisor) % 10;
