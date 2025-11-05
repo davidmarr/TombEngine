@@ -706,7 +706,7 @@ function Timer:SetTextOption(optionsTable)
 				return
 			end
 		end
-		if not LevelFuncs.Engine.Timer.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+		if not Utility.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
 			table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
 		end
 		LevelVars.Engine.Timer.timers[self.name].stringOption = optionsTable
@@ -755,18 +755,6 @@ end
 function Timer:IsTicking()
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	return not thisTimer.paused and thisTimer.hasTicked or false
-end
-
-LevelFuncs.Engine.Timer.TableHasValue = function (tbl, val)
-    if not Type.IsTable(tbl) then
-        return false
-    end
-    for _, value in pairs(tbl) do
-        if value == val then
-            return true
-        end
-    end
-    return false
 end
 
 LevelFuncs.Engine.Timer.Decrease = function ()
