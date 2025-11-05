@@ -72,7 +72,7 @@ LevelVars.Engine.Timer = {timers = {}}
 -- Timer.Create("my_timer", 6.1)
 --
 -- -- Example 2 Timer that executes a function when it expires:
--- local TimeFormat = {minutes = true, seconds = true, deciseconds = true}
+-- local TimerFormat = {minutes = true, seconds = true, deciseconds = true}
 -- LevelFuncs.FinishTimer = function()
 --    TEN.Util.PrintLog("Timer expired", TEN.Util.LogLevel.INFO)
 -- end
@@ -706,7 +706,7 @@ function Timer:SetTextOption(optionsTable)
 				return
 			end
 		end
-		if not Utility.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+		if not LevelFuncs.Engine.Timer.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
 			table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
 		end
 		LevelVars.Engine.Timer.timers[self.name].stringOption = optionsTable
@@ -755,6 +755,18 @@ end
 function Timer:IsTicking()
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	return not thisTimer.paused and thisTimer.hasTicked or false
+end
+
+LevelFuncs.Engine.Timer.TableHasValue = function (tbl, val)
+    if not Type.IsTable(tbl) then
+        return false
+    end
+    for _, value in pairs(tbl) do
+        if value == val then
+            return true
+        end
+    end
+    return false
 end
 
 LevelFuncs.Engine.Timer.Decrease = function ()
