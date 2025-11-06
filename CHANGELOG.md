@@ -59,7 +59,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
-* Added `Moveable:GetVisible` and Moveable:ShowInteractionHighlight` methods.
+* Added `Moveable:GetVisible` and `Moveable:ShowInteractionHighlight` methods.
 * Added `DisplaySprite:GetFlags` method.
 * Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
 * Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
