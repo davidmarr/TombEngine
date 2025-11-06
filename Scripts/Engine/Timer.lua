@@ -72,7 +72,7 @@ LevelVars.Engine.Timer = {timers = {}}
 -- Timer.Create("my_timer", 6.1)
 --
 -- -- Example 2 Timer that executes a function when it expires:
--- local TimeFormat = {minutes = true, seconds = true, deciseconds = true}
+-- local TimerFormat = {minutes = true, seconds = true, deciseconds = true}
 -- LevelFuncs.FinishTimer = function()
 --    TEN.Util.PrintLog("Timer expired", TEN.Util.LogLevel.INFO)
 -- end
