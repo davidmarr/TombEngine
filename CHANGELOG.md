@@ -66,6 +66,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Type.IsEnumValue` helper function to determine if particular value belongs to an enumeration.
 * Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
 * Fixed `Moveable:GetMeshVisible` method returning true even if whole moveable is invisible.
+* Fixed `Moveable:SetOnCollidedWithRoom` callback failing beyond the distance of 32 sectors.
 * Fixed errors while spawning climbable `Moveable` objects.
 * Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
 
