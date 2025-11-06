@@ -97,7 +97,7 @@ end
 -- @tparam mixed reference The second value to compare against.
 -- @tparam number operator The comparison operator<br>(0: equal, 1: not equal, 2: less than, 3: less than or equal, 4: greater than, 5: greater than or equal).
 -- @treturn bool The result of the comparison.
-LuaUtil.CompareValue = function(operand, reference, operator)
+LuaUtil.CompareValues = function(operand, reference, operator)
 	if operator < 0 or operator > 5 then
 		TEN.Util.PrintLog("Invalid operator for comparison", TEN.Util.LogLevel.ERROR)
 		return false
@@ -164,7 +164,7 @@ end
 -- @treturn table A read-only version of the input table.
 -- @usage
 -- local readOnlyTable = LuaUtil.TableReadonly(originalTable)
-LuaUtil.TableReadonly = function(tbl)
+LuaUtil.SetTableReadonly = function(tbl)
     if not Type.IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.TableReadonly: input is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
@@ -211,7 +211,7 @@ end
 -- @tparam float|Color|Rotation|Vec2|Vec3 a The start value (number, Color, Rotation, Vec2, or Vec3).
 -- @tparam float|Color|Rotation|Vec2|Vec3 b The end value (number, Color, Rotation, Vec2, or Vec3).
 -- @tparam float t The interpolation factor (0.0 to 1.0).
--- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value (number, Color, Rotation, Vec2, or Vec3).
+-- @treturn float|Color|Rotation|Vec2|Vec3|nil The interpolated value (number, Color, Rotation, Vec2, or Vec3). Returns nil on error.
 -- @usage
 -- -- Example with numbers:
 -- local interpolated = LuaUtil.Lerp(0, 10, 0.5) -- Result: 5
@@ -285,7 +285,7 @@ LuaUtil.Lerp = function(a, b, t)
 
     else
         TEN.Util.PrintLog("Error in Utility.Lerp: arguments must be either all numbers or a/b must be Colors/Rotations/Vec2/Vec3 with t as number.", TEN.Util.LogLevel.ERROR)
-        return 0
+        return nil
     end
 end
 

@@ -50,19 +50,12 @@
 -- @luautil Timer
 
 local Type = require("Engine.Type")
+local LuaUtil = require("Engine.LuaUtil")
 
 local zero = TEN.Time()
 local validKeys = {hours = true, minutes = true, seconds = true, deciseconds = true}
 local defaultFormat = {false, false, false, false}
 local defaultOptions = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
-local operators = {
-    function(a, b) return a == b end,
-    function(a, b) return a ~= b end,
-    function(a, b) return a < b end,
-    function(a, b) return a <= b end,
-    function(a, b) return a > b end,
-    function(a, b) return a >= b end,
-}
 local Timer = {}
 Timer.__index = Timer
 LevelFuncs.Engine.Timer = {}
@@ -400,7 +393,7 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
 	if LevelVars.Engine.Timer.timers[self.name].hasTicked then
-		return LevelFuncs.Engine.Timer.CompareValues(remainingTime, time, operator)
+		return LuaUtil.CompareValues(remainingTime, time, operator)
 	else
 		return false
 	end
@@ -800,12 +793,6 @@ LevelFuncs.Engine.Timer.CheckTimeFormat = function (timerFormat, errorText)
         TEN.Util.PrintLog(errorText, TEN.Util.LogLevel.WARNING)
     end
     return defaultFormat
-end
-
-LevelFuncs.Engine.Timer.CompareValues = function(operand, reference, operator)
-    operand = operand == true and 1 or operand == false and 0 or operand
-    reference = reference == true and 1 or reference == false and 0 or reference
-    return operators[operator + 1] and operators[operator + 1](operand, reference) or false
 end
 
 LevelFuncs.Engine.Timer.Decrease = function ()
