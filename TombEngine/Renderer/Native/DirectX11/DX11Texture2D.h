@@ -22,6 +22,9 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11Texture2D> _texture;
 
 	public:
+		int GetWidth() override { return _width; }
+		int GetHeight() override { return _height; }
+
 		ID3D11Texture2D* GetTexture() const noexcept { return _texture.Get(); }
 
 		DX11Texture2D() = default;

@@ -274,9 +274,9 @@ namespace TEN::Renderer
 
 			if (!wasGpuSet)
 			{
-				_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+				_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleStrip);
 
-				BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, &_depthRenderTarget, SamplerStateRegister::PointWrap);
+				BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, _depthRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 
 				SetDepthState(DepthState::Read);
 				SetCullMode(CullMode::None);
@@ -334,7 +334,7 @@ namespace TEN::Renderer
 			{
 				_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 
-				BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, &_depthRenderTarget, SamplerStateRegister::PointWrap);
+				BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, _depthRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 
 				SetDepthState(DepthState::Read);
 				SetCullMode(CullMode::None);
@@ -342,9 +342,7 @@ namespace TEN::Renderer
 				_shaders.Bind(Shader::InstancedSprites);
 
 				// Set up vertex buffer and parameters.
-				unsigned int stride = sizeof(Vertex);
-				unsigned int offset = 0;
-				_context->IASetVertexBuffers(0, 1, _spriteVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+				_graphicsDevice->BindVertexBuffer(_spriteVertexBuffer);
 
 				wasGpuSet = true;
 			}
@@ -410,8 +408,8 @@ namespace TEN::Renderer
 
 				if (spritesToDraw == INSTANCED_SPRITES_BUCKET_SIZE || spritesToDraw == spriteBucket.SpritesToDraw.size())
 				{
-					_spriteVertexBuffer.Update(_context.Get(), _spriteVertices.data(), 0, spritesToDraw * 6);
-
+					_graphicsDevice->UpdateVertexBuffer(_spriteVertexBuffer, 0, spritesToDraw * 6, _spriteVertices.data());
+			
 					DrawInstancedTriangles(spritesToDraw * 6, 1, 0);
 
 					_numInstancedSpritesDrawCalls++;
@@ -428,9 +426,9 @@ namespace TEN::Renderer
 
 	void Renderer::DrawSingleSprite(RendererSortableObject* object, RendererObjectType lastObjectType, RenderView& view)
 	{
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleStrip);
 
-		BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, &_depthRenderTarget, SamplerStateRegister::LinearClamp);
+		BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, _depthRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 
 		SetDepthState(DepthState::Read);
 		SetCullMode(CullMode::None);
@@ -492,9 +490,8 @@ namespace TEN::Renderer
 			_spriteVertices.push_back(vertex3);
 			_spriteVertices.push_back(vertex2);
 
-			_spriteVertexBuffer.Update(_context.Get(), _spriteVertices.data(), 0, 4);
-
-			_context->IASetVertexBuffers(0, 1, _spriteVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_graphicsDevice->UpdateVertexBuffer(_spriteVertexBuffer, 0, 4, _spriteVertices.data());
+			_graphicsDevice->BindVertexBuffer(_spriteVertexBuffer);
 		}
 
 		// Draw sprites with instancing.
@@ -513,9 +510,9 @@ namespace TEN::Renderer
 
 		_shaders.Bind(Shader::InstancedSprites);
 
-		_sortedPolygonsVertexBuffer.Update(_context.Get(), _sortedPolygonsVertices.data(), 0, (int)_sortedPolygonsVertices.size());
-
-		_context->IASetVertexBuffers(0, 1, _sortedPolygonsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+		_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer, 0, _sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
+		_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer);
+		
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_vertexInputLayout);
 
@@ -534,7 +531,7 @@ namespace TEN::Renderer
 		SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
 		BindTexture(TextureRegister::ColorMap, objectInfo->Sprite->Sprite->Texture, SamplerStateRegister::LinearClamp);
-		BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, &_depthRenderTarget, SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(TextureRegister::GBufferDepthMap, _depthRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 
 		DrawInstancedTriangles((int)_sortedPolygonsVertices.size(), 1, 0);
 

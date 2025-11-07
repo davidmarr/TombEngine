@@ -2,7 +2,7 @@
 #include <vector>
 #include <d3d11.h>
 #include <wrl/client.h>
-#include "Renderer/Native/DirectX11/DX11Texture2D.h"
+#include "Renderer/Native/DirectX11/DX11TextureBase.h"
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/IRenderTarget2D.h"
 
@@ -17,6 +17,9 @@ namespace TEN::Renderer::Native::DirectX11
 		std::vector<ComPtr<ID3D11RenderTargetView>> _renderTargetViews;
 
 	public:
+		int GetWidth() override { return _width; }
+		int GetHeight() override { return _height; }
+
 		int GetArraySize() override { return _renderTargetViews.size(); }
 
 		ID3D11RenderTargetView* GetRenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }

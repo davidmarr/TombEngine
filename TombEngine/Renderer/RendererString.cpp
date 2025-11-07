@@ -173,7 +173,7 @@ namespace TEN::Renderer
 		SetBlendMode(BlendMode::AlphaBlend);
 
 		float shadowOffset = 1.5f / (REFERENCE_FONT_SIZE / _gameFont->GetLineSpacing());
-		_spriteBatch->Begin();
+		_spriteBatch->Begin(SpriteSortingMode::Immediate, BlendMode::Opaque);
 
 		for (const auto& rString : _stringsToDraw)
 		{
@@ -181,18 +181,21 @@ namespace TEN::Renderer
 			if (rString.Flags & (int)PrintStringFlags::Outline)
 			{
 				_gameFont->DrawString(
-					_spriteBatch.get(), rString.String.c_str(),
+					_spriteBatch,
+					rString.String,
 					Vector2(rString.X + shadowOffset * rString.Scale, rString.Y + shadowOffset * rString.Scale),
 					Vector4(0.0f, 0.0f, 0.0f, rString.Color.w) * ScreenFadeCurrent,
-					0.0f, Vector4::Zero, rString.Scale);
+					0.0f,
+					Vector2::Zero,
+					rString.Scale);
 			}
 
 			// Draw string.
 			_gameFont->DrawString(
-				_spriteBatch.get(), rString.String.c_str(),
+				_spriteBatch, rString.String.c_str(),
 				Vector2(rString.X, rString.Y),
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-				0.0f, Vector4::Zero, rString.Scale);
+				0.0f, Vector2::Zero, rString.Scale);
 		}
 
 		_spriteBatch->End();

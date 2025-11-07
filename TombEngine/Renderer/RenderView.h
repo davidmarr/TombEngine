@@ -16,6 +16,7 @@
 #include "Renderer/Structures/RendererSpriteToDraw.h"
 #include "Renderer/Structures/RendererLensFlare.h"
 #include "Renderer/Structures/RendererMirror.h"
+#include "Renderer/Structures/RendererViewport.h"
 
 namespace TEN::Renderer 
 {

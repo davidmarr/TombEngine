@@ -128,9 +128,9 @@ namespace TEN::Renderer::Native::DirectX11
 		void UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data) override;
 		void BindIndexBuffer(IIndexBuffer* indexBuffer) override;
 
-		IRenderTarget2D* CreateRenderTarget2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless) override;
-		IRenderTarget2D* CreateRenderTarget2D(int width, int height, int arraySize, SurfaceFormat colorFormat) override;
-		IRenderTarget2D* CreateRenderTarget2D(IRenderTarget2D* parentRenderTarget, SurfaceFormat colorFormat) override;
+		IRenderSurface2D* CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat) override;
+		IRenderSurface2D* CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat) override;
+		IRenderSurface2D* CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat) override;
 
 		IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) override;
 
@@ -139,9 +139,6 @@ namespace TEN::Renderer::Native::DirectX11
 		ITexture2D* CreateTexture2D(const std::string fileName) override;
 		ITexture2D* CreateTexture2D(int dataSize, byte* data) override;
 
-		IDepthTarget* CreateDepthTarget(int width, int height, DepthFormat format) override;
-		IDepthTarget* CreateDepthTarget(int width, int height, int arraySize, DepthFormat format) override;
-
 		void SetBlendMode(BlendMode blendMode) override;
 		void SetDepthState(DepthState depthState) override;
 		void SetCullMode(CullMode cullMode) override;
@@ -149,7 +146,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) override;
 
-		IConstantBuffer* CreateConstantBuffer(int size, std::string name) override;
+		IConstantBuffer* CreateConstantBuffer(int size, std::wstring name) override;
 		void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) override;
 		void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
 		void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
@@ -178,7 +175,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void CreateDevice() override;
 		void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) override;
-		IBackBuffer* InitializeSwapChain(int width, int height, HWND handle) override;
+		IRenderSurface2D* InitializeSwapChain(int width, int height, HWND handle) override;
 
 		std::string GetDefaultAdapterName() override;
 		void ChangeScreenResolution(int width, int height, bool windowed) override;

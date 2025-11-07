@@ -10,8 +10,8 @@ namespace TEN::Renderer
 {
 	void Renderer::ChangeScreenResolution(int width, int height, bool windowed) 
 	{
-		ID3D11RenderTargetView* nullViews[] = { nullptr };
 		_context->OMSetRenderTargets(0, nullViews, NULL);
+		ID3D11RenderTargetView* nullViews[] = { nullptr };
 		_context->Flush();
 		_context->ClearState();
 

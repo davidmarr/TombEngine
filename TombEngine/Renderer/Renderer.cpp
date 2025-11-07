@@ -315,7 +315,7 @@ namespace TEN::Renderer
 		if (type == MaterialShaderType::Reflective)
 			BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, _legacyReflectionsRenderTarget, SamplerStateRegister::AnisotropicClamp);
 		else if (type == MaterialShaderType::SkyboxReflective)
-			BindTexture(TextureRegister::SkyboxEnvironmentReflections, _skyboxRenderTarget, SamplerStateRegister::AnisotropicClamp);
+			BindTexture(TextureRegister::SkyboxEnvironmentReflections, _skyboxRenderTarget->GetRenderTarget(), SamplerStateRegister::AnisotropicClamp);
 	}
 
 	void Renderer::SetBlendMode(BlendMode blendMode, bool force)

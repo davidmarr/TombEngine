@@ -96,32 +96,28 @@ namespace TEN::Renderer
 
 		// Render targets
 
-		IRenderTarget2D* _normalsAndMaterialIndexRenderTarget;
-		IRenderTarget2D* _depthRenderTarget;
-		IRenderTarget2D* _emissiveAndRoughnessRenderTarget;
-		IRenderTarget2D* _dumpScreenRenderTarget;
-		IDepthTarget* _dumpScreenRenderDepth;
-		IRenderTarget2D* _renderTarget;
-		IDepthTarget* _renderTargetDepth;
-		IRenderTarget2D* _postProcessRenderTarget[2];
-		IRenderTarget2D* _glowRenderTarget[2];
-		IRenderTarget2D* _tempRoomAmbientRenderTarget1;
-		IRenderTarget2D* _tempRoomAmbientRenderTarget2;
-		IRenderTarget2D* _tempRoomAmbientRenderTarget3;
-		IRenderTarget2D* _tempRoomAmbientRenderTarget4;
-		IRenderTarget2D* _shadowMap;
-		IDepthTarget* _shadowMapDepth;
-		IRenderTarget2D* _legacyReflectionsRenderTarget;
-		IRenderTarget2D* _SSAORenderTarget;
-		IRenderTarget2D* _SSAOBlurredRenderTarget;
-		IRenderTarget2D* _SMAASceneRenderTarget;
-		IRenderTarget2D* _SMAASceneSRGBRenderTarget;
-		IRenderTarget2D* _SMAADepthRenderTarget;
-		IRenderTarget2D* _SMAAEdgesRenderTarget;
-		IRenderTarget2D* _SMAABlendRenderTarget;
-		IRenderTarget2D* _skyboxRenderTarget;
-		IDepthTarget* _skyBoxDepth;
-		IBackBuffer* _backBuffer;
+		IRenderSurface2D* _normalsAndMaterialIndexRenderTarget;
+		IRenderSurface2D* _depthRenderTarget;
+		IRenderSurface2D* _emissiveAndRoughnessRenderTarget;
+		IRenderSurface2D* _dumpScreenRenderTarget;
+		IRenderSurface2D* _renderTarget;
+		IRenderSurface2D* _postProcessRenderTarget[2];
+		IRenderSurface2D* _glowRenderTarget[2];
+		IRenderSurface2D* _tempRoomAmbientRenderTarget1;
+		IRenderSurface2D* _tempRoomAmbientRenderTarget2;
+		IRenderSurface2D* _tempRoomAmbientRenderTarget3;
+		IRenderSurface2D* _tempRoomAmbientRenderTarget4;
+		IRenderSurface2D* _shadowMap;
+		IRenderSurface2D* _legacyReflectionsRenderTarget;
+		IRenderSurface2D* _SSAORenderTarget;
+		IRenderSurface2D* _SSAOBlurredRenderTarget;
+		IRenderSurface2D* _SMAASceneRenderTarget;
+		IRenderSurface2D* _SMAASceneSRGBRenderTarget;
+		IRenderSurface2D* _SMAADepthRenderTarget;
+		IRenderSurface2D* _SMAAEdgesRenderTarget;
+		IRenderSurface2D* _SMAABlendRenderTarget;
+		IRenderSurface2D* _skyboxRenderTarget;
+		IRenderSurface2D* _backBuffer;
 
 		// Constant buffers
 
@@ -356,9 +352,9 @@ namespace TEN::Renderer
 		IPrimitiveBatch<Vertex>* _primitiveBatch;
 		ISpriteBatch* _spriteBatch;
 
-		void ApplySMAA(IRenderTarget2D* renderTarget, RenderView& view);
-		void ApplyFXAA(IRenderTarget2D* renderTarget, RenderView& view);
-		void ApplyAntialiasing(IRenderTarget2D* renderTarget, RenderView& view);
+		void ApplySMAA(IRenderSurface2D* renderTarget, RenderView& view);
+		void ApplyFXAA(IRenderSurface2D* renderTarget, RenderView& view);
+		void ApplyAntialiasing(IRenderSurface2D* renderTarget, RenderView& view);
 		void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType);
 		int  BindLight(RendererLight& light, ShaderLight* lights, int index);
 		void BindRoomLights(std::vector<RendererLight*>& lights);
@@ -448,12 +444,12 @@ namespace TEN::Renderer
 		void DrawStatistics();
 		void DrawExamines();
 		void DrawDebris(RenderView& view, RendererPass rendererPass);
-		void DrawFullScreenImage(ID3D11ShaderResourceView* texture, float fade, ID3D11RenderTargetView* target,
-			ID3D11DepthStencilView* depthTarget);
+		void DrawFullScreenImage(ITextureBase* texture, float fade, IRenderTarget2D* target,
+			IDepthTarget* depthTarget);
 		void PrepareShockwaves(RenderView& view);
 		void PrepareRipples(RenderView& view);
 		void PrepareUnderwaterBloodParticles(RenderView& view);
-		void DrawFullScreenQuad(ID3D11ShaderResourceView* texture, Vector3 color, bool fit = true, float customAspect = 0.0f);
+		void DrawFullScreenQuad(ITextureBase* texture, Vector3 color, bool fit = true, float customAspect = 0.0f);
 		void DrawFullScreenSprite(RendererSprite* sprite, DirectX::SimpleMath::Vector3 color, bool fit = true);
 		void PrepareSmokeParticles(RenderView& view);
 		void PrepareSparkParticles(RenderView& view);
@@ -466,8 +462,8 @@ namespace TEN::Renderer
 		void PrepareStreamers(RenderView& view);
 		void PrepareFootprints(RenderView& view);
 		void DrawLoadingBar(float percent);
-		void DrawPostprocess(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, RenderView& view, SceneRenderMode renderMode);
-		void RenderInventoryScene(IRenderTarget2D* renderTarget, TextureBase* background, float backgroundFade);
+		void DrawPostprocess(IRenderSurface2D* renderTarget, RenderView& view, SceneRenderMode renderMode);
+		void RenderInventoryScene(IRenderSurface2D* renderTarget, ITextureBase* background, float backgroundFade);
 		void RenderTitleMenu(Menu menu);
 		void RenderPauseMenu(Menu menu);
 		void RenderLoadSaveMenu();
@@ -490,12 +486,12 @@ namespace TEN::Renderer
 		void ResetDebugVariables();
 		float CalculateFrameRate();
 		void InterpolateCamera(float interpFactor);
-		void CopyRenderTarget(IRenderTarget2D* source, IRenderTarget2D* dest, RenderView& view);
-		void CopyRenderTargetAndDownscale(IRenderTarget2D* source, IRenderTarget2D* dest, float factor, RenderView& view);
+		void CopyRenderTarget(IRenderSurface2D* source, IRenderSurface2D* dest, RenderView& view);
+		void CopyRenderTargetAndDownscale(IRenderSurface2D* source, IRenderSurface2D* dest, float factor, RenderView& view);
 		void BindBucketTextures(const RendererBucket& bucket, TextureSource textureSource, bool animated);
 		void BindAtlasTextures(const RendererBucket& bucket, TextureSource textureSource);
 		void PackSpriteTextureCoordinates(int instanceId, RendererSprite* sprite);
-		void ApplyGlow(IRenderTarget2D* renderTarget, RenderView& view);
+		void ApplyGlow(IRenderSurface2D* renderTarget, RenderView& view);
 
 		void AddSpriteBillboard(RendererSprite* sprite, const Vector3& pos, const Vector4& color, float orient2D, float scale,
 			Vector2 size, BlendMode blendMode, bool isSoftParticle, RenderView& view, SpriteRenderType renderType = SpriteRenderType::Default);
@@ -694,7 +690,7 @@ namespace TEN::Renderer
 		void RenderSimpleSceneToParaboloid(IRenderTarget2D* renderTarget, Vector3 position, int hemisphere);
 		void DumpGameScene(SceneRenderMode renderMode = SceneRenderMode::Full);
 		void RenderInventory();
-		void RenderScene(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, RenderView& view, SceneRenderMode renderMode = SceneRenderMode::Full);
+		void RenderScene(IRenderSurface2D* renderTarget, RenderView& view, SceneRenderMode renderMode = SceneRenderMode::Full);
 		void PrepareScene();
 		void ClearScene();
 		void SaveScreenshot();
@@ -710,7 +706,7 @@ namespace TEN::Renderer
 		void AddDynamicSpotLight(const Vector3& pos, const Vector3& dir, float radius, float falloff, float distance, const Color& color, bool castShadows, int hash = 0);
 		void RenderLoadingScreen(float percentage);
 		void RenderFreezeMode(float interpFactor, bool staticBackground);
-		void RenderFullScreenTexture(ID3D11ShaderResourceView* texture, float aspect);
+		void RenderFullScreenTexture(ITextureBase* texture, float aspect);
 		void UpdateVideoTexture(ITexture2D* texture);
 		void UpdateProgress(float value);
 		void ToggleFullScreen(bool force = false);

@@ -290,45 +290,32 @@ namespace TEN::Renderer
 	{
 		_backBuffer = _graphicsDevice->InitializeSwapChain(w, h, handle);
 		                
-		_renderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_renderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::Depth32);
 
-		_postProcessRenderTarget[0] = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
-		_postProcessRenderTarget[1] = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_postProcessRenderTarget[0] = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_postProcessRenderTarget[1] = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
 		
-		_dumpScreenRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false); //D
+		_dumpScreenRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::Depth32);  
 		
-		_shadowMap = _graphicsDevice->CreateRenderTarget2D(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, SurfaceFormat::R32_Float);
-		_shadowMapDepth = _graphicsDevice->CreateDepthTarget(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, DepthFormat::Depth32);
+		_shadowMap = _graphicsDevice->CreateRenderSurface2D(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, SurfaceFormat::R32_Float, DepthFormat::Depth32);
 		
-		_depthRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::R32_Float, false);
-		_normalsAndMaterialIndexRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
-		_emissiveAndRoughnessRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_depthRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::R32_Float, false, DepthFormat::None);
+		_normalsAndMaterialIndexRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_emissiveAndRoughnessRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
 		
-		_SSAORenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
-		_SSAOBlurredRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_SSAORenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_SSAOBlurredRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
 		
-		_glowRenderTarget[0] = _graphicsDevice->CreateRenderTarget2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false);
-		_glowRenderTarget[1] = _graphicsDevice->CreateRenderTarget2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false);
+		_glowRenderTarget[0] = _graphicsDevice->CreateRenderSurface2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_glowRenderTarget[1] = _graphicsDevice->CreateRenderSurface2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
 		
-		_legacyReflectionsRenderTarget = _graphicsDevice->CreateRenderTarget2D(w / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, h / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false);
+		_legacyReflectionsRenderTarget = _graphicsDevice->CreateRenderSurface2D(w / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, h / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
 		
-		_skyboxRenderTarget = _graphicsDevice->CreateRenderTarget2D(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, SurfaceFormat::RGBA8_Unorm);
-		_skyBoxDepth = _graphicsDevice->CreateDepthTarget(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, DepthFormat::Depth32);
+		_skyboxRenderTarget = _graphicsDevice->CreateRenderSurface2D(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, SurfaceFormat::RGBA8_Unorm, DepthFormat::Depth32);
 
 		// Initialize viewport
-		_viewport.X = 0;
-		_viewport.Y = 0;
-		_viewport.Width = w;
-		_viewport.Height = h;
-		_viewport.MinDepth = 0.0f;
-		_viewport.MaxDepth = 1.0f;
-
-		_shadowMapViewport.X = 0;
-		_shadowMapViewport.Y = 0;
-		_shadowMapViewport.Width = g_Configuration.ShadowMapSize;
-		_shadowMapViewport.Height = g_Configuration.ShadowMapSize;
-		_shadowMapViewport.MinDepth = 0.0f;
-		_shadowMapViewport.MaxDepth = 1.0f;
+		_viewport = _graphicsDevice->CreateViewport(0, 0, w, h, 0.0f, 1.0f);
+		_shadowMapViewport = _graphicsDevice->CreateViewport(0, 0, g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 0.0f, 1.0f);
 
 		// Low AA is done with FXAA, Medium - High AA are done with SMAA.
 		if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
@@ -344,10 +331,10 @@ namespace TEN::Renderer
 		int w = _screenWidth;
 		int h = _screenHeight;
 
-		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, true);
-		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderTarget2D(_SMAASceneRenderTarget); //D
-		_SMAAEdgesRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::R8G8_Unorm, false);
-		_SMAABlendRenderTarget = _graphicsDevice->CreateRenderTarget2D(w, h, SurfaceFormat::RGBA8_Unorm, false);
+		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, true, DepthFormat::None);
+		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderSurface2D(_SMAASceneRenderTarget->GetRenderTarget(), SurfaceFormat::RGBA8_Unorm_Srgb);
+		_SMAAEdgesRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::R8G8_Unorm, false, DepthFormat::None);
+		_SMAABlendRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
 	}
 
 	void Renderer::InitializeCommonTextures()

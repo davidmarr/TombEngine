@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer/Graphics/Texture2D.h"
+#include "Renderer/Graphics/IVideoPlayer.h"
 #include "Sound/sound.h"
 
 using namespace TEN::Math;
@@ -42,11 +43,11 @@ namespace TEN::Video
 		// Renderer Resources
 
 		std::vector<char>		  _frameBuffer	= {};
-		Texture2D				  _texture		= {};
-		ID3D11Texture2D*		  _videoTexture = nullptr;
-		ID3D11Device*			  _d3dDevice	= nullptr;
-		ID3D11DeviceContext*	  _d3dContext	= nullptr;
-		ID3D11ShaderResourceView* _textureView	= nullptr;
+		ITexture2D*				  _texture		= nullptr;
+		ITexture2D*				  _videoTexture = nullptr;
+		IGraphicsDevice*		  _device		= nullptr;
+		ITextureBase*			  _textureView	= nullptr;
+		IVideoPlayer* _videoPlayer = nullptr;
 
 	public:
 		// Constructors
@@ -74,7 +75,7 @@ namespace TEN::Video
 
 		// Utilties
 
-		void Initialize(const std::string& gameDir, ID3D11Device* device, ID3D11DeviceContext* context);
+		void Initialize(const std::string& gameDir, IGraphicsDevice* device);
 		void DeInitialize();
 		bool Play(const std::string& filename, VideoPlaybackMode mode = VideoPlaybackMode::Exclusive, bool silent = false, bool looped = false);
 		bool Pause();
@@ -93,8 +94,8 @@ namespace TEN::Video
 		// Helpers
 
 		bool HandleError();
-		bool InitializeD3DTexture();
-		void DeinitializeD3DTexture();
+		bool InitializeVideoTexture();
+		void DeinitializeVideoTexture();
 		void DeinitializePlayer();
 
 		// VLC callbacks

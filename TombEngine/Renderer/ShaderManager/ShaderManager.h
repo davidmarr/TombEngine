@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/Graphics/IShader.h"
+#include "Renderer/Graphics/IGraphicsDevice.h"
 
 using namespace TEN::Renderer::Structures;
 

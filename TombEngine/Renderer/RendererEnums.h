@@ -353,6 +353,7 @@ enum class SurfaceFormat
 
 enum class DepthFormat
 {
+	None,
 	Depth24Stencil8,
 	Depth32
 };
@@ -387,4 +388,13 @@ enum class DepthStencilClearFlags
 	Depth,
 	Stencil,
 	DepthAndStencil
+};
+
+enum class SpriteSortingMode
+{
+	BackToFront,
+	FrontToBack,
+	Deferred,
+	Immediate,
+	Texture
 };

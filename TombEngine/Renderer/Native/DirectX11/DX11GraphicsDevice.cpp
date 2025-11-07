@@ -48,24 +48,39 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->IASetIndexBuffer(ib->Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	}
 
-	IRenderTarget2D* DX11GraphicsDevice::CreateRenderTarget2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless)
+	IRenderSurface2D* DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat)
 	{
-		return new DX11RenderTarget2D(width, height, GetDXGIFormat(colorFormat), isTypeless);
+		IRenderTarget2D* renderTarget = new DX11RenderTarget2D(_device.Get(), width, height, GetDXGIFormat(colorFormat), isTypeless);
+		
+		IDepthTarget* depthTarget = nullptr;
+		if (depthFormat != DepthFormat::None)
+			depthTarget = new DX11DepthTarget(_device.Get(), width, height, GetDXGIFormat(depthFormat));
+	
+		return new IRenderSurface2D(renderTarget, depthTarget);
 	}
 
-	IRenderTarget2D* DX11GraphicsDevice::CreateRenderTarget2D(int width, int height, int arraySize, SurfaceFormat colorFormat)
+	IRenderSurface2D* DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat)
 	{
-		return new DX11RenderTarget2D(width, height, arraySize, GetDXGIFormat(colorFormat));
+		IRenderTarget2D* renderTarget = new DX11RenderTarget2D(_device.Get(), width, height, arraySize, GetDXGIFormat(colorFormat));
+
+		IDepthTarget* depthTarget = nullptr;
+		if (depthFormat != DepthFormat::None)
+			depthTarget = new DX11DepthTarget(_device.Get(), width, height, arraySize, GetDXGIFormat(depthFormat));
+
+		return new IRenderSurface2D(renderTarget, depthTarget);
 	}
 
-	IRenderTarget2D* DX11GraphicsDevice::CreateRenderTarget2D(IRenderTarget2D* parentRenderTarget, SurfaceFormat colorFormat)
+	IRenderSurface2D* DX11GraphicsDevice::CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat)
 	{
-		return new DX11RenderTarget2D(static_cast<DX11RenderTarget2D*>(parentRenderTarget), GetDXGIFormat(colorFormat));
+		return new IRenderSurface2D(
+			new DX11RenderTarget2D(_device.Get(), static_cast<DX11RenderTarget2D*>(parentRenderTarget->GetRenderTarget()), GetDXGIFormat(colorFormat)),
+			parentRenderTarget->GetDepthTarget()
+		);
 	}
 
 	IRenderTargetCube* DX11GraphicsDevice::CreateRenderTargetCube(int size, SurfaceFormat colorFormat)
 	{
-		return new DX11RenderTargetCube(_device.Get(), size, GetDXGIFormat(colorFormat), GetDXGIFormat(depthFormat));
+		return nullptr; // new DX11RenderTargetCube(_device.Get(), size, GetDXGIFormat(colorFormat), GetDXGIFormat(depthFormat));
 	}
 
 	ITexture2D* DX11GraphicsDevice::CreateTexture2D(int width, int height, byte* data)
@@ -86,16 +101,6 @@ namespace TEN::Renderer::Native::DirectX11
 	ITexture2D* DX11GraphicsDevice::CreateTexture2D(int dataSize, byte* data)
 	{
 		return new DX11Texture2D(_device.Get(), data, dataSize);
-	}
-
-	IDepthTarget* DX11GraphicsDevice::CreateDepthTarget(int width, int height, DepthFormat format)
-	{
-		return new DX11DepthTarget(_device.Get(), width, height, GetDXGIFormat(format));
-	}
-
-	IDepthTarget* DX11GraphicsDevice::CreateDepthTarget(int width, int height, int arraySize, DepthFormat format)
-	{
-		return new DX11DepthTarget(_device.Get(), width, height, arraySize, GetDXGIFormat(format));
 	}
 
 	void DX11GraphicsDevice::SetBlendMode(BlendMode blendMode)
@@ -192,8 +197,9 @@ namespace TEN::Renderer::Native::DirectX11
 	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
 	{
 		auto nativeTexture = static_cast<DX11TextureBase*>(texture);
+		auto dxTexture = nativeTexture->GetShaderResourceView();
 
-		_context->PSSetShaderResources((unsigned int)registerType, 1, nativeTexture->ShaderResourceView.GetAddressOf());
+		_context->PSSetShaderResources((unsigned int)registerType, 1, &dxTexture);
 
 		ID3D11SamplerState* samplerState = nullptr;
 		switch (samplerType)
@@ -241,7 +247,7 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->PSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, nativeBuffer->Get());
 	}
 
-	IConstantBuffer* DX11GraphicsDevice::CreateConstantBuffer(int size, std::string name)
+	IConstantBuffer* DX11GraphicsDevice::CreateConstantBuffer(int size, std::wstring name)
 	{
 		return new DX11ConstantBuffer(_device.Get(), size, name);
 	}
@@ -542,7 +548,7 @@ namespace TEN::Renderer::Native::DirectX11
 		_viewportToolkit = Viewport(0, 0, w, h, 0.0f, 1.0f);
 	}
 
-	IBackBuffer* DX11GraphicsDevice::InitializeSwapChain(int width, int height, HWND handle)
+	IRenderSurface2D* DX11GraphicsDevice::InitializeSwapChain(int width, int height, HWND handle)
 	{
 		DXGI_SWAP_CHAIN_DESC sd;
 		sd.BufferDesc.Width = width;
@@ -595,9 +601,9 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11Texture2D* backBufferTexture = NULL;
 		Utils::throwIfFailed(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast <void**>(&backBufferTexture)));
 
-		return new IBackBuffer(
-			new DX11RenderTarget2D(backBufferTexture),
-			new DX11DepthTarget(_device.Get(), width, height, DXGI_FORMAT_D24_UNORM_S8_UINT));
+		return new IRenderSurface2D(
+			new DX11RenderTarget2D(_device.Get(), backBufferTexture),
+			new DX11DepthTarget(_device.Get(), width, height, DXGI_FORMAT_D32_FLOAT));
 	}
 
 	void DX11GraphicsDevice::CreateDevice()

@@ -110,9 +110,9 @@ namespace TEN::Renderer
 
 		int shift = MenuVerticalLineSpacing / 2;
 
-		g_MusicVolumeBar = new RendererHudBar(_device.Get(), Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
+		g_MusicVolumeBar = new RendererHudBar(_graphicsDevice, Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
 		GetNextLinePosition(&y);
-		g_SFXVolumeBar = new RendererHudBar(_device.Get(), Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
+		g_SFXVolumeBar = new RendererHudBar(_graphicsDevice, Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
 	}
 
 	void Renderer::RenderOptionsMenu(Menu menu, int initialY)
@@ -832,7 +832,7 @@ namespace TEN::Renderer
 			UpdateAnimation(nullptr, *moveableObject, frameData, UINT_MAX);
 		}
 
-		auto pos = _viewportToolkit.Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
+		auto pos = _graphicsDevice->Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
 
 		// Set vertex buffer.
 		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
@@ -846,8 +846,8 @@ namespace TEN::Renderer
 		hudCamera.ViewProjection = viewMatrix * projMatrix;
 		hudCamera.Frame = GlobalCounter;
 		hudCamera.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
-		UpdateConstantBuffer(hudCamera, _cbCameraMatrices);
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices);
+		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices);
 
 		for (int i = 0; i < moveableObject->ObjectMeshes.size(); i++)
 		{
@@ -881,8 +881,8 @@ namespace TEN::Renderer
 
 			UpdateConstantBuffer(&_stItem, _cbItem);
 
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem);
+			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem);
 
 			const auto& mesh = *moveableObject->ObjectMeshes[i];
 
@@ -914,11 +914,11 @@ namespace TEN::Renderer
 
 	void Renderer::RenderTitleImage()
 	{
-		Texture2D texture;
+		ITexture2D* texture;
 		SetTextureOrDefault(texture, TEN::Utils::ToWString(g_GameFlow->GetGameDir() + g_GameFlow->IntroImagePath.c_str()));
 
-		if (!texture.Texture)
-			return;
+		//if (!texture.Texture)
+		//	return;
 
 		int timeout = 20;
 		float currentFade = FADE_FACTOR;
@@ -937,10 +937,11 @@ namespace TEN::Renderer
 				currentFade = std::clamp(currentFade -= FADE_FACTOR, 0.0f, 1.0f);
 			}
 
-			DrawFullScreenImage(texture.ShaderResourceView.Get(), Smoothstep(currentFade), _backBuffer.RenderTargetView.Get(), _backBuffer.DepthStencilView.Get());
+			DrawFullScreenImage(texture, Smoothstep(currentFade), _backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 			Synchronize();
-			_swapChain->Present(1, 0);
-			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+			_graphicsDevice->Present();
+			_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 		}
 	}
 
@@ -999,7 +1000,7 @@ namespace TEN::Renderer
 		DrawAllStrings();
 	}
 
-	void Renderer::RenderInventoryScene(RenderTarget2D* renderTarget, TextureBase* background, float backgroundFade)
+	void Renderer::RenderInventoryScene(IRenderSurface2D* renderTarget, ITextureBase* background, float backgroundFade)
 	{
 		// Set basic render states
 		SetBlendMode(BlendMode::Opaque, true);
@@ -1007,22 +1008,22 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 
 		// Bind and clear render target
-		ID3D11RenderTargetView* pRenderViewPtrs[2];
-		pRenderViewPtrs[0] = _renderTarget.RenderTargetView.Get();
-		pRenderViewPtrs[1] = _emissiveAndRoughnessRenderTarget.RenderTargetView.Get();
+		std::vector<IRenderTarget2D*> renderTargets;
+		renderTargets.push_back(_renderTarget->GetRenderTarget());
+		renderTargets.push_back(_emissiveAndRoughnessRenderTarget->GetRenderTarget());
 
-		_context->RSSetViewports(1, &_viewport);
+		_graphicsDevice->SetViewport(_viewport);
 		ResetScissor();
 
-		_context->ClearDepthStencilView(_renderTarget.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
-		_context->ClearRenderTargetView(_renderTarget.RenderTargetView.Get(), Colors::Black);
-		_context->ClearRenderTargetView(_emissiveAndRoughnessRenderTarget.RenderTargetView.Get(), Colors::Transparent);
-
+		_graphicsDevice->ClearRenderTarget2D(_renderTarget->GetRenderTarget(), Colors::Black);
+		_graphicsDevice->ClearRenderTarget2D(_emissiveAndRoughnessRenderTarget->GetRenderTarget(), Colors::Transparent);
+		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+		
 		if (background != nullptr)
-			DrawFullScreenImage(background->ShaderResourceView.Get(), backgroundFade, _renderTarget.RenderTargetView.Get(), _renderTarget.DepthStencilView.Get());
+			DrawFullScreenImage(background, backgroundFade, _renderTarget->GetRenderTarget(), _renderTarget->GetDepthTarget());
 
-		_context->OMSetRenderTargets(2, &pRenderViewPtrs[0], _renderTarget.DepthStencilView.Get());
-		_context->ClearDepthStencilView(_renderTarget.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		_graphicsDevice->BindRenderTargets(renderTargets, _renderTarget->GetDepthTarget());
+		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
@@ -1041,7 +1042,7 @@ namespace TEN::Renderer
 			auto titleMenu = g_Gui.GetMenuToDisplay();
 			bool drawLogo = (titleMenu == Menu::Title || titleMenu == Menu::Options);
 
-			if (drawLogo && _logo.Texture != nullptr)
+			if (drawLogo && _logo != nullptr)
 			{
 				float factorX = (float)_screenWidth / DISPLAY_SPACE_RES.x;
 				float factorY = (float)_screenHeight / DISPLAY_SPACE_RES.y;
@@ -1051,14 +1052,14 @@ namespace TEN::Renderer
 				int logoRight  = (DISPLAY_SPACE_RES.x / 2) + (LogoWidth / 2);
 				int logoBottom = LogoTop + LogoHeight;
 
-				RECT rect;
-				rect.left   = logoLeft   * scale;
-				rect.right  = logoRight  * scale;
-				rect.top    = LogoTop    * scale;
-				rect.bottom = logoBottom * scale;
+				RendererRectangle rect;
+				rect.Left   = logoLeft   * scale;
+				rect.Right  = logoRight  * scale;
+				rect.Top    = LogoTop    * scale;
+				rect.Bottom = logoBottom * scale;
 
-				_spriteBatch->Begin(SpriteSortMode_BackToFront, _renderStates->NonPremultiplied());
-				_spriteBatch->Draw(_logo.ShaderResourceView.Get(), rect, Vector4::One * ScreenFadeCurrent);
+				_spriteBatch->Begin(SpriteSortingMode::BackToFront, BlendMode::AlphaBlend);
+				_spriteBatch->Draw(_logo, rect, Vector4::One * ScreenFadeCurrent);
 				_spriteBatch->End();
 			}
 
@@ -1091,12 +1092,12 @@ namespace TEN::Renderer
 			}
 		}
 
-		_context->ClearDepthStencilView(_renderTarget.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
+		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
-		ApplyGlow(&_renderTarget, _gameCamera);
-		ApplyAntialiasing(&_renderTarget, _gameCamera);
+		ApplyGlow(_renderTarget, _gameCamera);
+		ApplyAntialiasing(_renderTarget, _gameCamera);
 
-		CopyRenderTarget(&_renderTarget, renderTarget, _gameCamera);
+		CopyRenderTarget(_renderTarget, renderTarget, _gameCamera);
 	}
 
 	void Renderer::SetLoadingScreen(std::wstring& fileName)
@@ -1113,21 +1114,21 @@ namespace TEN::Renderer
 			SetCullMode(CullMode::CounterClockwise);
 
 			// Clear screen
-			_context->ClearRenderTargetView(_backBuffer.RenderTargetView.Get(), Colors::Black);
-			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
+			_graphicsDevice->ClearRenderTarget2D(_backBuffer->GetRenderTarget(), Colors::Black);
+			_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+		
 			// Bind back buffer.
-			_context->OMSetRenderTargets(1, _backBuffer.RenderTargetView.GetAddressOf(), _backBuffer.DepthStencilView.Get());
-			_context->RSSetViewports(1, &_viewport);
+			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
+			_graphicsDevice->SetViewport(_viewport);
 			ResetScissor();
 
 			// Draw full screen background.
-			DrawFullScreenQuad(_dumpScreenRenderTarget.ShaderResourceView.Get(), Vector3::One);
+			DrawFullScreenQuad(_dumpScreenRenderTarget->GetRenderTarget(), Vector3::One);
 		}
 		else
 		{
 			InterpolateCamera(interpFactor);
-			RenderScene(&_backBuffer, _gameCamera, SceneRenderMode::NoHud);
+			RenderScene(_backBuffer, _gameCamera, SceneRenderMode::NoHud);
 		}
 
 		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
@@ -1141,8 +1142,8 @@ namespace TEN::Renderer
 
 		ClearScene();
 
-		_context->ClearState();
-		_swapChain->Present(1, 0);
+		_graphicsDevice->ClearState();
+		_graphicsDevice->Present();
 	}
 
 	void Renderer::RenderLoadingScreen(float percentage)
@@ -1154,29 +1155,29 @@ namespace TEN::Renderer
 		do
 		{
 			// Clear screen.
-			_context->ClearRenderTargetView(_backBuffer.RenderTargetView.Get(), Colors::Black);
-			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+			_graphicsDevice->ClearRenderTarget2D(_backBuffer->GetRenderTarget(), Colors::Black);
+			_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
 			// Bind back buffer.
-			_context->OMSetRenderTargets(1, _backBuffer.RenderTargetView.GetAddressOf(), _backBuffer.DepthStencilView.Get());
-			_context->RSSetViewports(1, &_viewport);
+			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
+			_graphicsDevice->SetViewport(_viewport);
 			ResetScissor();
 
 			// Draw fullscreen background. If unavailable, draw last dumped game scene.
-			if (_loadingScreenTexture.Texture)
+			if (_loadingScreenTexture)
 			{
-				DrawFullScreenQuad(_loadingScreenTexture.ShaderResourceView.Get(), Vector3(ScreenFadeCurrent, ScreenFadeCurrent, ScreenFadeCurrent));
+				DrawFullScreenQuad(_loadingScreenTexture, Vector3(ScreenFadeCurrent, ScreenFadeCurrent, ScreenFadeCurrent));
 			}
-			else if (_dumpScreenRenderTarget.Texture)
+			else if (_dumpScreenRenderTarget)
 			{
-				DrawFullScreenQuad(_dumpScreenRenderTarget.ShaderResourceView.Get(), Vector3(ScreenFadeCurrent, ScreenFadeCurrent, ScreenFadeCurrent));
+				DrawFullScreenQuad(_dumpScreenRenderTarget->GetRenderTarget(), Vector3(ScreenFadeCurrent, ScreenFadeCurrent, ScreenFadeCurrent));
 			}
 
 			if (ScreenFadeCurrent && percentage > 0.0f && percentage < 100.0f)
 				DrawLoadingBar(percentage);
 
-			_swapChain->Present(1, 0);
-			_context->ClearState();
+			_graphicsDevice->Present();
+			_graphicsDevice->ClearState();
 
 			Synchronize();
 			UpdateFadeScreenAndCinematicBars();
@@ -1194,17 +1195,17 @@ namespace TEN::Renderer
 			_graphicsSettingsChanged = false;
 		}
 
-		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
-		_context->ClearRenderTargetView(_backBuffer.RenderTargetView.Get(), Colors::Black);
+		_graphicsDevice->ClearRenderTarget2D(_backBuffer->GetRenderTarget(), Colors::Black);
+		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
 		// Reset GPU state.
 		SetBlendMode(BlendMode::Opaque, true);
 		SetDepthState(DepthState::Write, true);
 		SetCullMode(CullMode::CounterClockwise, true);
 
-		RenderInventoryScene(&_backBuffer, &_dumpScreenRenderTarget, 0.5f);
+		RenderInventoryScene(_backBuffer, _dumpScreenRenderTarget->GetRenderTarget(), 0.5f);
 
-		_swapChain->Present(1, 0);
+		_graphicsDevice->Present();
 	}
 
 	void Renderer::RenderTitle(float interpFactor)
@@ -1215,12 +1216,12 @@ namespace TEN::Renderer
 		InterpolateCamera(interpFactor);
 		DumpGameScene();
 
-		_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
-		_context->ClearRenderTargetView(_backBuffer.RenderTargetView.Get(), Colors::Black);
+		_graphicsDevice->ClearRenderTarget2D(_backBuffer->GetRenderTarget(), Colors::Black);
+		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
-		RenderInventoryScene(&_backBuffer, &_dumpScreenRenderTarget, 1.0f);
+		RenderInventoryScene(_backBuffer, _dumpScreenRenderTarget->GetRenderTarget(), 1.0f);
 		
-		_swapChain->Present(1, 0);
+		_graphicsDevice->Present();
 
 		_isLocked = true;
 	}
@@ -1244,7 +1245,7 @@ namespace TEN::Renderer
 
 		float aspectRatio = _screenWidth / (float)_screenHeight;
 		int thumbWidth = _screenWidth / 8;
-		auto rect = RECT{};
+		auto rect = RendererRectangle{};
 		int thumbY = 0;
 
 		switch (_debugPage)
@@ -1279,45 +1280,45 @@ namespace TEN::Renderer
 			PrintDebugMessage("Constant buffers updates: %d", _numConstantBufferUpdates);
 			PrintDebugMessage("Material updates: %d requested, %d executed", _numRequestedMaterialsUpdates, _numExecutedMaterialsUpdates);
 
-			_spriteBatch->Begin(SpriteSortMode_Deferred, _renderStates->Opaque());
+			_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::Opaque);
 
-			rect.left = _screenWidth - thumbWidth;
-			rect.top = thumbY;
-			rect.right = rect.left+ thumbWidth;
-			rect.bottom = rect.top+thumbWidth / aspectRatio;
+			rect.Left = _screenWidth - thumbWidth;
+			rect.Top = thumbY;
+			rect.Right = rect.Left+ thumbWidth;
+			rect.Bottom = rect.Top+thumbWidth / aspectRatio;
 
-			_spriteBatch->Draw(_normalsAndMaterialIndexRenderTarget.ShaderResourceView.Get(), rect);
+			_spriteBatch->Draw(_normalsAndMaterialIndexRenderTarget->GetRenderTarget(), rect, Vector4::One);
 			thumbY += thumbWidth / aspectRatio;
 
-			rect.left = _screenWidth - thumbWidth;
-			rect.top = thumbY;
-			rect.right = rect.left + thumbWidth;
-			rect.bottom = rect.top + thumbWidth / aspectRatio;
+			rect.Left = _screenWidth - thumbWidth;
+			rect.Top = thumbY;
+			rect.Right = rect.Left + thumbWidth;
+			rect.Bottom = rect.Top + thumbWidth / aspectRatio;
 
-			rect.left = _screenWidth - thumbWidth;
-			rect.top = thumbY;
-			rect.right = rect.left + thumbWidth;
-			rect.bottom = rect.top + thumbWidth / aspectRatio;
+			rect.Left = _screenWidth - thumbWidth;
+			rect.Top = thumbY;
+			rect.Right = rect.Left + thumbWidth;
+			rect.Bottom = rect.Top + thumbWidth / aspectRatio;
 
-			_spriteBatch->Draw(_SSAOBlurredRenderTarget.ShaderResourceView.Get(), rect);
+			_spriteBatch->Draw(_SSAOBlurredRenderTarget->GetRenderTarget(), rect, Vector4::One);
 			thumbY += thumbWidth / aspectRatio;
 
 			if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
 			{
-				rect.left = _screenWidth - thumbWidth;
-				rect.top = thumbY;
-				rect.right = rect.left + thumbWidth;
-				rect.bottom = rect.top + thumbWidth / aspectRatio;
+				rect.Left = _screenWidth - thumbWidth;
+				rect.Top = thumbY;
+				rect.Right = rect.Left + thumbWidth;
+				rect.Bottom = rect.Top + thumbWidth / aspectRatio;
 
-				_spriteBatch->Draw(_SMAAEdgesRenderTarget.ShaderResourceView.Get(), rect);
+				_spriteBatch->Draw(_SMAAEdgesRenderTarget->GetRenderTarget(), rect, Vector4::One);
 				thumbY += thumbWidth / aspectRatio;
 
-				rect.left = _screenWidth - thumbWidth;
-				rect.top = thumbY;
-				rect.right = rect.left + thumbWidth;
-				rect.bottom = rect.top + thumbWidth / aspectRatio;
+				rect.Left = _screenWidth - thumbWidth;
+				rect.Top = thumbY;
+				rect.Right = rect.Left + thumbWidth;
+				rect.Bottom = rect.Top + thumbWidth / aspectRatio;
 
-				_spriteBatch->Draw(_SMAABlendRenderTarget.ShaderResourceView.Get(), rect);
+				_spriteBatch->Draw(_SMAABlendRenderTarget->GetRenderTarget(), rect, Vector4::One);
 				thumbY += thumbWidth / aspectRatio;
 			}
 

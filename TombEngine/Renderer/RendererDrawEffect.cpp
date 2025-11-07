@@ -574,7 +574,7 @@ namespace TEN::Renderer
 				}
 				
 				// If sprite is a video texture, bypass it if texture is inactive.
-				if (particle.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr || _videoSprite.Texture->Texture == nullptr))
+				if (particle.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr))
 					continue;
 
 				// Disallow sprites out of bounds.
@@ -1351,7 +1351,7 @@ namespace TEN::Renderer
 						if (flashBucket.Polygons.size() == 0)
 							continue;
 
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 
 						auto tMatrix = Matrix::CreateTranslation(creature.MuzzleFlash[0].Bite.Position);
 						auto rotMatrixX = Matrix::CreateRotationX(TO_RAD(ANGLE(270.0f)));
@@ -1393,7 +1393,7 @@ namespace TEN::Renderer
 						if (flashBucket.Polygons.size() == 0)
 							continue;
 
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
 
 						auto tMatrix = Matrix::CreateTranslation(creature.MuzzleFlash[1].Bite.Position);
 						auto rotMatrixX = Matrix::CreateRotationX(TO_RAD(ANGLE(270.0f)));
@@ -1607,15 +1607,15 @@ namespace TEN::Renderer
 
 					if (deb.mesh.Animated)
 					{
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_animatedTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
 					}
 					else if (deb.isStatic)
 					{
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_staticTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_staticTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
 					}
 					else
 					{
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
 					}
 
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].World = Matrix::Identity;
@@ -1777,8 +1777,8 @@ namespace TEN::Renderer
 		}
 	}
 
-	Texture2D Renderer::CreateDefaultTexture(std::vector<unsigned char> color)
+	ITexture2D* Renderer::CreateDefaultTexture(std::vector<unsigned char> color)
 	{
-		return Texture2D(_device.Get(), 1, 1, color.data());
+		return _graphicsDevice->CreateTexture2D(1, 1, color.data());
 	}
 }

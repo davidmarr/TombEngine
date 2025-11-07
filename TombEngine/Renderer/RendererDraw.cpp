@@ -117,10 +117,10 @@ namespace TEN::Renderer
 
 	void Renderer::ClearShadowMap()
 	{
-		for (int step = 0; step < _shadowMap->GetArraySize(); step++)
+		for (int step = 0; step < _shadowMap->GetRenderTarget()->GetArraySize(); step++)
 		{
-			_graphicsDevice->ClearRenderTarget2D(_shadowMap, step, Colors::White);
-			_graphicsDevice->ClearDepthStencil(_shadowMapDepth, step, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+			_graphicsDevice->ClearRenderTarget2D(_shadowMap->GetRenderTarget(), step, Colors::White);
+			_graphicsDevice->ClearDepthStencil(_shadowMap->GetDepthTarget(), step, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 		}
 	}
 
@@ -153,7 +153,7 @@ namespace TEN::Renderer
 		for (int step = 0; step < 6; step++)
 		{
 			// Bind render target.
-			_graphicsDevice->BindRenderTarget(_shadowMap, _shadowMapDepth, step);
+			_graphicsDevice->BindRenderTarget(_shadowMap->GetRenderTarget(), _shadowMap->GetDepthTarget(), step);
 			_graphicsDevice->SetViewport(_shadowMapViewport);
 			ResetScissor();
 
@@ -1776,7 +1776,7 @@ namespace TEN::Renderer
 		ClearShadowMap();
 	}
 
-	void Renderer::RenderScene(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, RenderView& view, SceneRenderMode renderMode)
+	void Renderer::RenderScene(IRenderSurface2D* renderTarget, RenderView& view, SceneRenderMode renderMode)
 	{
 		using ns = std::chrono::nanoseconds;
 		using get_time = std::chrono::steady_clock;
@@ -1880,10 +1880,10 @@ namespace TEN::Renderer
 		UpdateConstantBuffer(&_stAnimated, _cbAnimated);
 
 		// Bind and clear render target.
-		_graphicsDevice->BindRenderTarget(_renderTarget, _renderTargetDepth);
+		_graphicsDevice->BindRenderTarget(_renderTarget->GetRenderTarget(), _renderTarget->GetDepthTarget());
 
-		_graphicsDevice->ClearRenderTarget2D(_renderTarget, _debugPage == RendererDebugPage::WireframeMode ? Colors::DimGray : Colors::Black);
-		_graphicsDevice->ClearDepthStencil(_renderTargetDepth, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+		_graphicsDevice->ClearRenderTarget2D(_renderTarget->GetRenderTarget(), _debugPage == RendererDebugPage::WireframeMode ? Colors::DimGray : Colors::Black);
+		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
 		// Reset viewport and scissor.
 		_graphicsDevice->SetViewport(view.Viewport);
@@ -1933,19 +1933,19 @@ namespace TEN::Renderer
 		ID3D11RenderTargetView* pRenderViewPtrs[3];
 
 		// Draw horizon and sky.
-		DrawHorizonAndSky(_renderTargetDepth, view);
+		DrawHorizonAndSky(_renderTarget->GetDepthTarget(), view);
 
 		// Build G-Buffer (normals + depth).
-		_graphicsDevice->ClearRenderTarget2D(_normalsAndMaterialIndexRenderTarget, Colors::Transparent);
-		_graphicsDevice->ClearRenderTarget2D(_depthRenderTarget, Colors::White);
-		_graphicsDevice->ClearRenderTarget2D(_emissiveAndRoughnessRenderTarget, Colors::Transparent);
+		_graphicsDevice->ClearRenderTarget2D(_normalsAndMaterialIndexRenderTarget->GetRenderTarget(), Colors::Transparent);
+		_graphicsDevice->ClearRenderTarget2D(_depthRenderTarget->GetRenderTarget(), Colors::White);
+		_graphicsDevice->ClearRenderTarget2D(_emissiveAndRoughnessRenderTarget->GetRenderTarget(), Colors::Transparent);
 		
 		std::vector<IRenderTarget2D*> gbuffer;
-		gbuffer.push_back(_normalsAndMaterialIndexRenderTarget);
-		gbuffer.push_back(_depthRenderTarget);
-		gbuffer.push_back(_emissiveAndRoughnessRenderTarget);
+		gbuffer.push_back(_normalsAndMaterialIndexRenderTarget->GetRenderTarget());
+		gbuffer.push_back(_depthRenderTarget->GetRenderTarget());
+		gbuffer.push_back(_emissiveAndRoughnessRenderTarget->GetRenderTarget());
 
-		_graphicsDevice->BindRenderTargets(gbuffer, _renderTargetDepth);
+		_graphicsDevice->BindRenderTargets(gbuffer, _renderTarget->GetDepthTarget());
 
 		// Render G-Buffer pass.
 		DoRenderPass(RendererPass::GBuffer, view, true);
@@ -1961,7 +1961,7 @@ namespace TEN::Renderer
 		ResetScissor();
 
 		// Bind main render target again. Main depth buffer is already filled and avoids overdraw in following steps.
-		_graphicsDevice->BindRenderTarget(_renderTarget, _renderTargetDepth);
+		_graphicsDevice->BindRenderTarget(_renderTarget->GetRenderTarget(), _renderTarget->GetDepthTarget());
 
 		DoRenderPass(RendererPass::Opaque, view, true);
 		DoRenderPass(RendererPass::Additive, view, true);
@@ -1978,10 +1978,10 @@ namespace TEN::Renderer
 		// Copy current scene to the reflections render target for the next frame
 		// RT -> LRRT
 		CopyRenderTargetAndDownscale(_renderTarget, _legacyReflectionsRenderTarget, LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, view);
-		_graphicsDevice->BindRenderTarget(_renderTarget, _renderTargetDepth);
+		_graphicsDevice->BindRenderTarget(_renderTarget->GetRenderTarget(), _renderTarget->GetDepthTarget());
 
 		// Clear the depth buffer for drawing HUD on top
-		_graphicsDevice->ClearDepthStencil(_renderTargetDepth, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
 		// Draw 3D HUD elements separately here because objects may use emissive materials and require glow.
 		if (renderMode == SceneRenderMode::Full && g_GameFlow->LastGameStatus == GameStatus::Normal)
@@ -2005,7 +2005,7 @@ namespace TEN::Renderer
 
 		// Now we can apply the color grade, lens flare, cinematic bars and post process effects
 		// RT -> PPRT0, [PPRT0 -> PPRT1], PPRT1 -> PPRT0, PPRT0 -> RT
-		DrawPostprocess(renderTarget, depthTarget, view, renderMode);
+		DrawPostprocess(renderTarget, view, renderMode);
 
 		_doingFullscreenPass = false;
 
@@ -2290,7 +2290,7 @@ namespace TEN::Renderer
 #endif
 	}
 
-	void Renderer::RenderFullScreenTexture(ID3D11ShaderResourceView* texture, float aspect)
+	void Renderer::RenderFullScreenTexture(ITextureBase* texture, float aspect)
 	{
 		if (texture == nullptr)
 			return;
@@ -2305,8 +2305,8 @@ namespace TEN::Renderer
 
 		// Bind back buffer.
 		_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
-		_graphicsDevice->SetViewport(viewport);
-
+		
+		_graphicsDevice->SetViewport(_viewport);
 		ResetScissor();
 
 		// Draw full screen background.
@@ -2320,7 +2320,7 @@ namespace TEN::Renderer
 
 	void Renderer::DumpGameScene(SceneRenderMode renderMode)
 	{
-		RenderScene(_dumpScreenRenderTarget, _dumpScreenRenderDepth, _gameCamera, renderMode);
+		RenderScene(_dumpScreenRenderTarget, _gameCamera, renderMode);
 	}
 
 	void Renderer::DoRenderPass(RendererPass pass, RenderView& view, bool drawMirrors)
@@ -2418,7 +2418,7 @@ namespace TEN::Renderer
 
 		if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 		{
-			BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
+			BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 		}
 
 		for (auto room : view.RoomsToDraw)
@@ -2672,7 +2672,7 @@ namespace TEN::Renderer
 			
 			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
-				BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
+				BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 			}
 
 			for (auto it = view.SortedStaticsToDraw.begin(); it != view.SortedStaticsToDraw.end(); it++)
@@ -2888,7 +2888,7 @@ namespace TEN::Renderer
 					_stShadowMap.ShadowMapSize = g_Configuration.ShadowMapSize;
 					_stShadowMap.CastShadows = true;
 
-					BindTexture(TextureRegister::ShadowMap, _shadowMap, SamplerStateRegister::ShadowMap);
+					BindTexture(TextureRegister::ShadowMap, _shadowMap->GetRenderTarget(), SamplerStateRegister::ShadowMap);
 				}
 				else
 				{
@@ -2900,7 +2900,7 @@ namespace TEN::Renderer
 
 			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
-				BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
+				BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAOBlurredRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 			}
 
 			for (int i = (int)view.RoomsToDraw.size() - 1; i >= 0; i--)
@@ -2967,9 +2967,9 @@ namespace TEN::Renderer
 	
 	void Renderer::DrawHorizonAndSkyForReflections(RenderView& renderView)
 	{
-		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget, 0, Colors::Black);
-		_graphicsDevice->ClearDepthStencil(_skyBoxDepth, 0, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-		_graphicsDevice->BindRenderTarget(_skyboxRenderTarget, _skyBoxDepth, 0);
+		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget->GetRenderTarget(), 0, Colors::Black);
+		_graphicsDevice->ClearDepthStencil(_skyboxRenderTarget->GetDepthTarget(), 0, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+		_graphicsDevice->BindRenderTarget(_skyboxRenderTarget->GetRenderTarget(), _skyboxRenderTarget->GetDepthTarget(), 0);
 
 		RendererViewport viewport;
 		viewport.X = 0;
@@ -2995,18 +2995,18 @@ namespace TEN::Renderer
 		view.FillConstantBuffer(cameraConstantBuffer);
 		UpdateConstantBuffer(&cameraConstantBuffer, _cbCameraMatrices);
 
-		DrawHorizonAndSky(_skyBoxDepth, view, 0, true);
+		DrawHorizonAndSky(_skyboxRenderTarget->GetDepthTarget(), view, 0, true);
 
-		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget, 1, Colors::Black);
-		_graphicsDevice->ClearDepthStencil(_skyBoxDepth, 1, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-		_graphicsDevice->BindRenderTarget(_skyboxRenderTarget, _skyBoxDepth, 1);
+		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget->GetRenderTarget(), 1, Colors::Black);
+		_graphicsDevice->ClearDepthStencil(_skyboxRenderTarget->GetDepthTarget(), 1, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
+		_graphicsDevice->BindRenderTarget(_skyboxRenderTarget->GetRenderTarget(), _skyboxRenderTarget->GetDepthTarget(), 1);
 
 		SetCullMode(CullMode::Clockwise);
 
 		cameraConstantBuffer.Hemisphere = 1;
 		UpdateConstantBuffer(&cameraConstantBuffer, _cbCameraMatrices);
 
-		DrawHorizonAndSky(_skyBoxDepth, view, 1, true);
+		DrawHorizonAndSky(_skyboxRenderTarget->GetDepthTarget(), view, 1, true);
 
 		SetCullMode(CullMode::CounterClockwise);
 	}
@@ -3326,7 +3326,7 @@ namespace TEN::Renderer
 	void Renderer::Render(float interpFactor)
 	{
 		InterpolateCamera(interpFactor);
-		RenderScene(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget(), _gameCamera);
+		RenderScene(_backBuffer, _gameCamera);
 
 		_graphicsDevice->ClearState();
 		_graphicsDevice->Present(); // 1 0
@@ -3991,8 +3991,8 @@ namespace TEN::Renderer
 		// SSAO pixel shader.
 		_shaders.Bind(Shader::Ssao);
 
-		_graphicsDevice->ClearRenderTarget2D(_SSAORenderTarget, Colors::White);
-		_graphicsDevice->BindRenderTarget(_SSAORenderTarget, nullptr);
+		_graphicsDevice->ClearRenderTarget2D(_SSAORenderTarget->GetRenderTarget(), Colors::White);
+		_graphicsDevice->BindRenderTarget(_SSAORenderTarget->GetRenderTarget(), nullptr);
 
 		// Must set correctly viewport because SSAO is done at 1/4 screen resolution.
 		D3D11_VIEWPORT viewport;
@@ -4018,8 +4018,8 @@ namespace TEN::Renderer
 
 		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
-		BindRenderTargetAsTexture(static_cast<TextureRegister>(0), _depthRenderTarget, SamplerStateRegister::PointWrap);
-		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _normalsAndMaterialIndexRenderTarget, SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(static_cast<TextureRegister>(0), _depthRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _normalsAndMaterialIndexRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 		BindTexture(static_cast<TextureRegister>(2), _SSAONoiseTexture, SamplerStateRegister::PointWrap);
 
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
@@ -4032,10 +4032,10 @@ namespace TEN::Renderer
 		// Blur step.
 		_shaders.Bind(Shader::SsaoBlur);
 
-		_graphicsDevice->ClearRenderTarget2D(_SSAOBlurredRenderTarget, Colors::Black);
-		_graphicsDevice->BindRenderTarget(_SSAOBlurredRenderTarget, nullptr);
+		_graphicsDevice->ClearRenderTarget2D(_SSAOBlurredRenderTarget->GetRenderTarget(), Colors::Black);
+		_graphicsDevice->BindRenderTarget(_SSAOBlurredRenderTarget->GetRenderTarget(), nullptr);
 
-		BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAORenderTarget, SamplerStateRegister::PointWrap);
+		BindRenderTargetAsTexture(TextureRegister::SSAO, _SSAORenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
  
 		DrawTriangles(3, 0);
 

@@ -15,13 +15,9 @@ namespace TEN::Renderer::Native::DirectX11
 	protected:
 		int _width;
 		int _height;
-
 		ComPtr<ID3D11ShaderResourceView> _shaderResourceView;
 
 	public:
-		int GetWidth() override { return _width; }
-		int GetHeight() override { return _height; }
-
 		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 	};
 }

@@ -164,7 +164,7 @@ namespace TEN::Video
 		return true;
 	}
 
-	void VideoHandler::Initialize(const std::string& gameDir, ID3D11Device* device, ID3D11DeviceContext* context)
+	void VideoHandler::Initialize(const std::string& gameDir, IGraphicsDevice* device)
 	{
 		TENLog("Initializing video player...", LogLevel::Info);
 
@@ -194,8 +194,7 @@ namespace TEN::Video
 
 		HandleError();
 
-		_d3dDevice = device;
-		_d3dContext = context;
+		_device = device;
 
 		_videoDirectory = gameDir + VIDEO_PATH;
 		_size = Vector2i::Zero;
@@ -361,9 +360,9 @@ namespace TEN::Video
 	void VideoHandler::Stop()
 	{
 		DeinitializePlayer();
-		DeinitializeD3DTexture();
+		_videoPlayer->DeinitializeVideoTexture();
 
-		// Don't unset this flag until D3D texture is released, otherwise it may crash when trying to render the texture.
+		// Don't unset this flag until the native texture is released, otherwise it may crash when trying to render the texture.
 		_needRender = false;
 
 		HandleError();
@@ -378,7 +377,19 @@ namespace TEN::Video
 		if (_needRender)
 		{
 			auto mappedResource = D3D11_MAPPED_SUBRESOURCE{};
-			if (_videoTexture && SUCCEEDED(_d3dContext->Map(_videoTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
+			
+			_videoPlayer->UpdateVideoTexture(_videoTexture, _frameBuffer.data());
+
+			if (_playbackMode == VideoPlaybackMode::Exclusive)
+			{
+				RenderExclusive();
+			}
+			else if (_playbackMode == VideoPlaybackMode::Background)
+			{
+				RenderBackground();
+			}
+
+			/*if (_videoTexture && SUCCEEDED(_d3dContext->Map(_videoTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
 				// Copy framebuffer row by row, otherwise skewing may occur.
 				unsigned char* pData = reinterpret_cast<unsigned char*>(mappedResource.pData);
@@ -398,7 +409,7 @@ namespace TEN::Video
 			else
 			{
 				TENLog("Failed to render video texture", LogLevel::Error);
-			}
+			}*/
 
 			_needRender = false;
 		}
@@ -479,12 +490,12 @@ namespace TEN::Video
 
 	void VideoHandler::RenderBackground()
 	{
-		_texture.Width = _size.x;
+		/*_texture.Width = _size.x;
 		_texture.Height = _size.y;
 		_texture.Texture = _videoTexture;
-		_texture.ShaderResourceView = _textureView;
+		_texture.ShaderResourceView = _textureView;*/
 
-		g_Renderer.UpdateVideoTexture(&_texture);
+		g_Renderer.UpdateVideoTexture(_texture);
 	}
 
 	bool VideoHandler::HandleError()
@@ -502,17 +513,19 @@ namespace TEN::Video
 		return true;
 	}
 
-	bool VideoHandler::InitializeD3DTexture()
+	bool VideoHandler::InitializeVideoTexture()
 	{
 		if (_videoTexture != nullptr || _textureView != nullptr)
 		{
 			TENLog("Video texture already exists", LogLevel::Error);
 			return false;
 		}
-
+		
 		_frameBuffer.resize(_size.x * _size.y * 4);
 
-		auto texDesc = D3D11_TEXTURE2D_DESC{};
+		_videoPlayer->CreateVideoTexture(_size.x, _size.y);
+
+		/*auto texDesc = D3D11_TEXTURE2D_DESC{};
 		texDesc.Width = _size.x;
 		texDesc.Height = _size.y;
 		texDesc.MipLevels = 1;
@@ -534,14 +547,16 @@ namespace TEN::Video
 		{
 			TENLog("Failed to create shader resource view", LogLevel::Error);
 			return false;
-		}
+		}*/
 
 		return true;
 	}
 
-	void VideoHandler::DeinitializeD3DTexture()
+	void VideoHandler::DeinitializeVideoTexture()
 	{
-		if (_videoTexture != nullptr)
+		_videoPlayer->DeinitializeVideoTexture();
+
+		/*if (_videoTexture != nullptr)
 		{
 			_videoTexture->Release();
 			_videoTexture = nullptr;
@@ -551,7 +566,7 @@ namespace TEN::Video
 		{
 			_textureView->Release();
 			_textureView = nullptr;
-		}
+		}*/
 
 		_texture = {};
 		_frameBuffer.clear();
@@ -564,7 +579,7 @@ namespace TEN::Video
 		if (_deInitializing || _player == nullptr)
 			return;
 
-		DeinitializeD3DTexture();
+		DeinitializeVideoTexture();
 
 		libvlc_media_player_stop_async(_player);
 		libvlc_media_player_release(_player);
@@ -646,7 +661,7 @@ namespace TEN::Video
 		if (player->_size == Vector2i::Zero)
 		{
 			player->_size = Vector2i(*width, *height);
-			player->InitializeD3DTexture();
+			player->InitializeVideoTexture();
 		}
 
 		return 1;
