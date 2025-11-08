@@ -1036,8 +1036,8 @@ short GetNearestLedgeAngle(ItemInfo* item, CollisionInfo* coll, float& distance)
 	{
 		if (floor(finalDistance[0]) == floor(finalDistance[1]))
 		{
-			auto itr = std::find(finalDistance, finalDistance + 2, coll->Setup.ForwardAngle);
-			usedProbe = (itr != std::end(finalDistance)) ? std::distance(finalDistance, itr) : 0;
+			auto itr = std::find(finalResult, finalResult + 2, coll->Setup.ForwardAngle);
+			usedProbe = (itr != std::end(finalResult)) ? std::distance(finalResult, itr) : 0;
 		}
 		else if (finalDistance[1] < finalDistance[0])
 			usedProbe = 1;
