@@ -75,13 +75,6 @@ float3 DoSpecularSpot(float3 pos, float3 n, ShaderLight light, float strength, f
     float3 lightDir = normalize(lightPos - pos);
     float3 reflectDir = reflect(lightDir, n);
 
-    float3 spotDir = normalize(-light.Direction.xyz);
-    float spotCos = dot(lightDir, spotDir);
-    float inCos = cos(radians(light.In));
-    float outCos = cos(radians(light.Out));
-    float coneAtten = saturate((spotCos - outCos) / max(inCos - outCos, EPSILON));
-    coneAtten *= coneAtten; // Soften edge.
-
     float3 color = light.Color.xyz;
     float intenSpec = lerp(saturate(specularIntensity), 1.0, m) * light.Intensity;
 			
@@ -93,8 +86,12 @@ float3 DoSpecularSpot(float3 pos, float3 n, ShaderLight light, float strength, f
 	
     float vr = saturate(dot(CamDirectionWS.xyz, reflectDir));
     float spec = pow(vr, max(expVal, 1.0));
+	
+    float cosine = dot(-lightDir, light.Direction.xyz);
+    float angleAttenuation = saturate((cosine - light.OutRange) / (light.InRange - light.OutRange));
+    float distanceAttenuation = saturate((light.Out - dist) / (light.Out - light.In));
 
-    return attenuation * coneAtten * spec * color * intenSpec;
+    return angleAttenuation * distanceAttenuation * spec * color * intenSpec;
 }
 
 float3 DoPointLight(float3 pos, float3 normal, ShaderLight light)
