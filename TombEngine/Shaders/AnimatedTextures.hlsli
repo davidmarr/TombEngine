@@ -83,39 +83,49 @@ float2 GetFrame(unsigned int index, unsigned int offset)
 	return result;
 }
 
-float2 GetUVPossiblyAnimated(float2 uv, int index, int frame)
+float2 GetUVPossiblyAnimated(float2 input, int index, int frame)
 {
+    float2 output = input;
+
     if (Animated && Type != ANIM_TYPE_UVROTATE)
-        return GetFrame(index, frame);
+        output = GetFrame(index, frame);
 		
-    return uv;
+    return output;
 }
 
 float2 ConvertAnimUV(float2 input)
 {
-    if (!Animated || Type != ANIM_TYPE_UVROTATE)
-        return input;
-		
-    if (IsWaterfall)
-        return CalculateUVRotateForLegacyWaterfalls(input, 0);
-    else
-        return CalculateUVRotate(input, 0);
+    float2 output = input;
+
+    if (Animated && Type == ANIM_TYPE_UVROTATE)
+    {
+        if (IsWaterfall)
+            output = CalculateUVRotateForLegacyWaterfalls(input, 0);
+        else
+            output = CalculateUVRotate(input, 0);
+    }
+
+    return output;
 }
 
 float3 ConvertAnimNormal(float3 input)
 {
-    if (!Animated || Type != ANIM_TYPE_VIDEO)
-        return input;
-
-    return float3(0.5f, 0.5f, 1.0f);
+    float3 output = input;
+	
+    if (Animated && Type == ANIM_TYPE_VIDEO)
+        output = float3(0.5f, 0.5f, 1.0f);
+	
+    return output;
 }
 
 float4 ConvertAnimOSRH(float4 input)
 {
-    if (!Animated || Type != ANIM_TYPE_VIDEO)
-        return input;
+    float4 output = input;
 
-    return float4(1.0f, 0.0f, 0.0f, 1.0f);
+    if (Animated && Type == ANIM_TYPE_VIDEO)
+        output = float4(1.0f, 0.0f, 0.0f, 1.0f);
+	
+    return output;
 }
 
 #endif
