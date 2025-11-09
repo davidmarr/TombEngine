@@ -2,7 +2,7 @@
 #include "Specific/level.h"
 
 #include <process.h>
-#include <zlib.h>
+#include <lz4.h>
 
 #include "Game/animation.h"
 #include "Game/animation.h"
@@ -17,9 +17,9 @@
 #include "Game/pickup/pickup.h"
 #include "Game/savegame.h"
 #include "Game/Setup.h"
+#include "Game/Sink.h"
 #include "Game/spotcam.h"
 #include "Objects/Generic/Doors/generic_doors.h"
-#include "Objects/Sink.h"
 #include "Physics/Physics.h"
 #include "Renderer/Renderer.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
@@ -326,7 +326,9 @@ void LoadObjects()
 
 			bucket.texture = ReadInt32();
 			bucket.blendMode = (BlendMode)ReadUInt8();
+			bucket.materialIndex = ReadInt32();
 			bucket.animated = ReadBool();
+
 			bucket.numQuads = 0;
 			bucket.numTriangles = 0;
 
@@ -340,6 +342,7 @@ void LoadObjects()
 				poly.animatedSequence = ReadInt32();
 				poly.animatedFrame = ReadInt32();
 				poly.shineStrength = ReadFloat();
+				poly.normal = ReadVector3();
 				int count = (poly.shape == 0 ? 4 : 3);
 				poly.indices.resize(count);
 				poly.textureCoordinates.resize(count);
@@ -571,6 +574,22 @@ void LoadTextures()
 			ReadBytes(texture.normalMapData.data(), size);
 		}
 
+		bool hasORSHMap = ReadBool();
+		if (hasORSHMap)
+		{
+			size = ReadInt32();
+			texture.ORSHMapData.resize(size);
+			ReadBytes(texture.ORSHMapData.data(), size);
+		}
+
+		bool hasEmissiveMap = ReadBool();
+		if (hasEmissiveMap)
+		{
+			size = ReadInt32();
+			texture.emissiveMapData.resize(size);
+			ReadBytes(texture.emissiveMapData.data(), size);
+		}
+
 		g_Level.RoomTextures.push_back(texture);
 	}
 
@@ -595,6 +614,22 @@ void LoadTextures()
 			size = ReadInt32();
 			texture.normalMapData.resize(size);
 			ReadBytes(texture.normalMapData.data(), size);
+		}
+
+		bool hasORSHMap = ReadBool();
+		if (hasORSHMap)
+		{
+			size = ReadInt32();
+			texture.ORSHMapData.resize(size);
+			ReadBytes(texture.ORSHMapData.data(), size);
+		}
+
+		bool hasEmissiveMap = ReadBool();
+		if (hasEmissiveMap)
+		{
+			size = ReadInt32();
+			texture.emissiveMapData.resize(size);
+			ReadBytes(texture.emissiveMapData.data(), size);
 		}
 
 		g_Level.MoveablesTextures.push_back(texture);
@@ -623,6 +658,22 @@ void LoadTextures()
 			ReadBytes(texture.normalMapData.data(), size);
 		}
 
+		bool hasORSHMap = ReadBool();
+		if (hasORSHMap)
+		{
+			size = ReadInt32();
+			texture.ORSHMapData.resize(size);
+			ReadBytes(texture.ORSHMapData.data(), size);
+		}
+
+		bool hasEmissiveMap = ReadBool();
+		if (hasEmissiveMap)
+		{
+			size = ReadInt32();
+			texture.emissiveMapData.resize(size);
+			ReadBytes(texture.emissiveMapData.data(), size);
+		}
+
 		g_Level.StaticsTextures.push_back(texture);
 	}
 
@@ -647,6 +698,22 @@ void LoadTextures()
 			size = ReadInt32();
 			texture.normalMapData.resize(size);
 			ReadBytes(texture.normalMapData.data(), size);
+		}
+
+		bool hasORSHMap = ReadBool();
+		if (hasORSHMap)
+		{
+			size = ReadInt32();
+			texture.ORSHMapData.resize(size);
+			ReadBytes(texture.ORSHMapData.data(), size);
+		}
+
+		bool hasEmissiveMap = ReadBool();
+		if (hasEmissiveMap)
+		{
+			size = ReadInt32();
+			texture.emissiveMapData.resize(size);
+			ReadBytes(texture.emissiveMapData.data(), size);
 		}
 
 		g_Level.AnimatedTextures.push_back(texture);
@@ -826,7 +893,9 @@ void LoadStaticRoomData()
 
 			bucket.texture = ReadInt32();
 			bucket.blendMode = (BlendMode)ReadUInt8();
+			bucket.materialIndex = ReadInt32();
 			bucket.animated = ReadBool();
+
 			bucket.numQuads = 0;
 			bucket.numTriangles = 0;
 
@@ -839,6 +908,7 @@ void LoadStaticRoomData()
 				poly.shape = ReadInt32();
 				poly.animatedSequence = ReadInt32();
 				poly.animatedFrame = ReadInt32();
+				poly.normal = ReadVector3();
 
 				int count = (poly.shape == 0 ? 4 : 3);
 				poly.indices.resize(count);
@@ -999,7 +1069,7 @@ void LoadStaticRoomData()
 			room.lights.push_back(light);
 		}
 
-		room.RoomNumber = i;
+		room.originalRoom = i;
 	}
 
 	// Generate room collision meshes.
@@ -1076,6 +1146,7 @@ void FreeLevel(bool partial)
 	g_Level.SoundDetails.resize(0);
 	g_Level.SoundMap.resize(0);
 	g_Level.FloorData.resize(0);
+	g_Level.Materials.resize(0);
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -1126,7 +1197,8 @@ void LoadAnimatedTextures()
 		sequence.Atlas = ReadInt32();
 		sequence.Fps   = ReadUInt8();
 		sequence.Type  = ReadUInt8();
-		ReadUInt16(); // Unused.
+		sequence.UVRotateDirection = ReadFloat();
+		sequence.UVRotateSpeed = ReadFloat();
 		sequence.NumFrames = ReadCount();
 
 		for (int j = 0; j < sequence.NumFrames; j++)
@@ -1249,23 +1321,14 @@ void FileClose(FILE* ptr)
 
 bool Decompress(byte* dest, byte* src, unsigned long compressedSize, unsigned long uncompressedSize)
 {
-	z_stream strm;
-	ZeroMemory(&strm, sizeof(z_stream));
-	strm.avail_in = compressedSize;
-	strm.avail_out = uncompressedSize;
-	strm.next_out = (BYTE*)dest;
-	strm.next_in = (BYTE*)src;
+	int decompressedSize = LZ4_decompress_safe(
+		reinterpret_cast<const char*>(src),
+		reinterpret_cast<char*>(dest),
+		static_cast<int>(compressedSize),
+		static_cast<int>(uncompressedSize)
+	);
 
-	inflateInit(&strm);
-	inflate(&strm, Z_FULL_FLUSH);
-
-	if (strm.total_out == uncompressedSize)
-	{
-		inflateEnd(&strm);
-		return true;
-	}
-
-	return false;
+	return decompressedSize == static_cast<int>(uncompressedSize);
 }
 
 long GetRemainingSize(FILE* filePtr)
@@ -1438,6 +1501,8 @@ bool LoadLevel(const std::string& path, bool partial)
 			LoadBoxes();
 			LoadMirrors();
 			LoadAnimatedTextures();
+			LoadMaterials();
+
 			UpdateProgress(70);
 
 			FinalizeBlock();
@@ -1614,6 +1679,31 @@ void LoadMirrors()
 		mirror.Enabled = true;
 
 		mirror.ReflectionMatrix = Matrix::CreateReflection(mirror.Plane);
+	}
+}
+
+void LoadMaterials()
+{
+	int materialCount = ReadCount();
+	TENLog("Materials count: " + std::to_string(materialCount), LogLevel::Info);
+	g_Level.Materials.reserve(materialCount);
+
+	for (int i = 0; i < materialCount; i++)
+	{
+		auto& material = g_Level.Materials.emplace_back();
+
+		material.Name = ReadString();
+		material.Type = (MaterialShaderType)ReadInt32();
+		material.Parameters0 = ReadVector4();
+		material.Parameters1 = ReadVector4();
+		material.Parameters2 = ReadVector4();
+		material.Parameters3 = ReadVector4();
+		material.HasNormalMap = ReadBool();
+		material.HasHeightMap = ReadBool();
+		material.HasAmbientOcclusionMap = ReadBool();
+		material.HasRoughnessMap = ReadBool();
+		material.HasSpecularMap = ReadBool();
+		material.HasEmissiveMap = ReadBool();
 	}
 }
 

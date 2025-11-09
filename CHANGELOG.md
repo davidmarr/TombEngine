@@ -3,6 +3,73 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 1.10]
+
+### New features
+* Added material system with support for normal, specular, roughness, emissive, parallax and ambient occlusion maps.
+* Added animated textures support for moveables and static meshes.
+* Added UVRotate support with arbitrary texture rotation direction.
+* Added interaction highlighter.
+* Added bullet hole and explosion decals for room geometry.
+* Added ability to colorize FLAME_EMITTER and FLAME_EMITTER2 objects and fade them on activation or deactivation.
+* Added ability to colorize ROPE objects.
+* Added ability to antitrigger FISH_EMITTER.
+* Reworked thumbstick camera to act like in FLEP patch.
+* Increased renderer performance and reduced GPU memory usage.
+* Increased level loading speed by switching to LZ4 compression format.
+
+### Bug fixes
+* Fixed FIRE_PENDULUM light being overblown when explosive weapons are used.
+* Fixed POLEROPE object occasionally not being grabbable when placed on bridges.
+* Fixed GRENADE object not being activated by triggers and heavy triggers under shatters.
+* Fixed FISH_EMITTER fish escape direction when player is nearby.
+* Fixed EXPANDING_PLATFORM and RAISING_BLOCK rendering issues in flat state.
+* Fixed LOCUST_EMITTER object.
+* Fixed SNOWMOBILE not displaying moving tracks (SNOWMOBILE_TRACKS object required).
+  [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Vehicles/TEN_Skidoo.wad2).
+* Fixed several collision issues for TRAIN object.
+* Fixed OCB 4 not working for FLAME_EMITTER2.
+* Fixed wall embeddings after jumping on top of hard static meshes aligned to walls.
+* Fixed occasional problems with grabbing ledges after doing backjump onto slopes.
+* Fixed dying while landing into shallow water after freefall.
+* Fixed rapids drowning animation not triggering after freefall.
+* Fixed firearm targeting alignment biased to the left side.
+* Fixed shotgun wideshot ammo having same accuracy as normal ammo.
+* Fixed projectiles sometimes flying through narrow room geometry corners.
+* Fixed shatters not activating heavy triggers in rare occasions.
+* Fixed room flickering after activating a flipmap in specific portal setups.
+* Fixed original game issue with multiple burning torches not working correctly.
+* Fixed original game issue where enemies could shoot and be targeted through objects and static meshes.
+* Fixed original game issues with vehicle collision near crawlspaces and stacked rooms.
+* Fixed motorbike sound going silent while doing jumps.
+* Fixed ability to draw weapons on a tightrope.
+* Fixed incorrect ladder dismounts onto sloped floors and death sectors.
+* Fixed dynamic lights disappearing for a single frame after exiting game menus.
+* Fixed controls being stuck when engine window is out of focus.
+* Fixed missing "No" sound when player attempts to interact without particular items in the inventory.
+* Fixed incorrect draw order of alpha-blended room geometry.
+* Fixed rendering issues with some static meshes if same level file is reused for the title.
+* Fixed intense GPU usage when engine window is minimized.
+* Fixed wrong highlights when sun lights were used in mirror setups.
+* Fixed incorrect specular highlight for spotlights.
+* Fixed SSAO applied multiple times when additive surfaces are present in scene.
+* Fixed vertex effects (glow and move) not being rendered at full framerate.
+* Fixed incorrect roll values in flyby cameras.
+* Fixed HUD elements being drawn during cinematic flybys or in title level.
+
+### Lua API changes
+* Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
+* Added `Moveable:GetVisible` and `Moveable:ShowInteractionHighlight` methods.
+* Added `DisplaySprite:GetFlags` method.
+* Added alpha value premultiplication for color argument in effect functions, such as `Effects.EmitLight` and others.
+* Added holster mesh update for `Lara:SetWeaponType` method and make `activate` parameter false by default.
+* Added `Type.IsEnumValue` helper function to determine if particular value belongs to an enumeration.
+* Added `DisplayStringOption.VERTICAL_CENTER` flag for timer labels.
+* Fixed `Moveable:GetMeshVisible` method returning true even if whole moveable is invisible.
+* Fixed `Moveable:SetOnCollidedWithRoom` callback failing beyond the distance of 32 sectors.
+* Fixed errors while spawning climbable `Moveable` objects.
+* Renamed `ObjID.MESHSWAP_HITMAN` to `ObjID.MESHSWAP_CYBORG`.
+
 ## [Version 1.9.2](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.2) - 2025-08-17
 
 ## New features
@@ -51,7 +118,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added ability to open doors with draw weapon key in dozy mode.
 * Added headlight for UPV.
 * Use spotlight with shadow casting for motorbike headlight.
-* Added turning wall blade: SLOT ID: 456, turning ceiling blade: SLOT ID: 457.
 
 ### Bug fixes
 * Fixed WATERFALL_EMITTER performance and occasional game freezes, and make it work with OCB 0.

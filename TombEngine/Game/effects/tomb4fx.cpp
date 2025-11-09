@@ -378,11 +378,17 @@ void UpdateFireProgress()
 
 void AddFire(int x, int y, int z, short roomNum, float size, short fade)
 {
+	AddFire(Vector3i(x, y, z), roomNum, Vector4::One, size, fade);
+}
+
+void AddFire(Vector3i& pos, int roomNumber, Vector4 color, float size, short fade)
+{
 	FIRE_LIST newFire;
 	
 	newFire.fade = (fade == 0 ? 1 : (unsigned char)fade);
-	newFire.position = Vector3i(x, y, z);
-	newFire.roomNumber = roomNum;
+	newFire.position = pos;
+	newFire.roomNumber = roomNumber;
+	newFire.color = color;
 	newFire.size = size;
 	newFire.StoreInterpolationData();
 	
@@ -1071,12 +1077,12 @@ void AddWaterSparks(int x, int y, int z, int num)
 		auto* spark = GetFreeParticle();
 
 		spark->on = 1;
-		spark->sR = 127;
-		spark->sG = 127;
-		spark->sB = 127;
-		spark->dR = 48;
-		spark->dG = 48;
-		spark->dB = 48;
+		spark->sR = 227;
+		spark->sG = 227;
+		spark->sB = 227;
+		spark->dR = 148;
+		spark->dG = 148;
+		spark->dB = 148;
 		spark->colFadeSpeed = 4;
 		spark->fadeToBlack = 8;
 		spark->life = 10;
@@ -1145,13 +1151,13 @@ void TriggerUnderwaterExplosion(Vector3 position, bool splash, const Vector3& ma
 
 	if (splash)
 	{
-		TriggerExplosionBubble(position.x, position.y, position.z, room.RoomNumber, mainColor, secondColor);
-		TriggerExplosionSparks(position.x, position.y, position.z, 2, -2, 1, room.RoomNumber, mainColor, secondColor);
+		TriggerExplosionBubble(position.x, position.y, position.z, roomNumber, mainColor, secondColor);
+		TriggerExplosionSparks(position.x, position.y, position.z, 2, -2, 1, roomNumber, mainColor, secondColor);
 
 		for (int i = 0; i < 3; i++)
-			TriggerExplosionSparks(position.x, position.y, position.z, 2, -1, 1, room.RoomNumber, mainColor, secondColor);
+			TriggerExplosionSparks(position.x, position.y, position.z, 2, -1, 1, roomNumber, mainColor, secondColor);
 
-		int waterHeight = GetPointCollision(position, room.RoomNumber).GetWaterTopHeight();
+		int waterHeight = GetPointCollision(position, roomNumber).GetWaterTopHeight();
 		if (waterHeight != NO_HEIGHT)
 		{
 			int dy = position.y - waterHeight;
@@ -1161,7 +1167,7 @@ void TriggerUnderwaterExplosion(Vector3 position, bool splash, const Vector3& ma
 				SplashSetup.InnerRadius = 160;
 				SplashSetup.SplashPower = 2048 - dy;
 
-				SetupSplash(&SplashSetup, room.RoomNumber);
+				SetupSplash(&SplashSetup, roomNumber);
 			}
 		}
 	}
@@ -1171,10 +1177,10 @@ void TriggerUnderwaterExplosion(Vector3 position, bool splash, const Vector3& ma
 		int y = position.y;
 		int z = (GetRandomControl() & 0x1FF) + position.z - CLICK(1);
 
-		TriggerExplosionBubbles(x, y, z, room.RoomNumber, mainColor, secondColor);
-		TriggerExplosionSparks(x, y, z, 2, -1, 1, room.RoomNumber, mainColor, secondColor);
+		TriggerExplosionBubbles(x, y, z, roomNumber, mainColor, secondColor);
+		TriggerExplosionSparks(x, y, z, 2, -1, 1, roomNumber, mainColor, secondColor);
 
-		int waterHeight = GetPointCollision(Vector3i(x, y, z), room.RoomNumber).GetWaterTopHeight();
+		int waterHeight = GetPointCollision(Vector3i(x, y, z), roomNumber).GetWaterTopHeight();
 		if (waterHeight != NO_HEIGHT)
 			SomeSparkEffect(x, waterHeight, z, 8);
 	}

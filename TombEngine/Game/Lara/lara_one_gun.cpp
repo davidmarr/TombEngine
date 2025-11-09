@@ -4,6 +4,7 @@
 #include "Game/animation.h"
 #include "Game/camera.h"
 #include "Game/collision/collide_item.h"
+#include "Game/collision/Los.h"
 #include "Game/collision/Point.h"
 #include "Game/control/box.h"
 #include "Game/control/control.h"
@@ -34,6 +35,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Collision::Los;
 using namespace TEN::Collision::Point;
 using namespace TEN::Effects::Bubble;
 using namespace TEN::Effects::Drip;
@@ -380,13 +382,13 @@ bool FireShotgun(ItemInfo& laraItem)
 
 	bool hasFired = false;
 	int scatter = Weapons[(int)LaraWeaponType::Shotgun].ShotAccuracy * 
-		(player.Weapons[(int)LaraWeaponType::Shotgun].SelectedAmmo == WeaponAmmoType::Ammo1) ? 1 : 3;
+		(player.Weapons[(int)LaraWeaponType::Shotgun].SelectedAmmo == WeaponAmmoType::Ammo1) ? 1 : 25;
 
 	for (int i = 0; i < SHOTGUN_PELLET_COUNT; i++)
 	{
 		auto wobbledArmOrient = EulerAngles(
-			armOrient.x + scatter * (GetRandomControl() - ANGLE(90.0f)) / 65536,
-			armOrient.y + scatter * (GetRandomControl() - ANGLE(90.0f)) / 65536,
+			armOrient.x + (GetRandomControl() - ANGLE(90.0f)) / (USHRT_MAX / ANGLE(scatter)),
+			armOrient.y + (GetRandomControl() - ANGLE(90.0f)) / (USHRT_MAX / ANGLE(scatter)),
 			0);
 
 		if (FireWeapon(LaraWeaponType::Shotgun, player.TargetEntity, laraItem, wobbledArmOrient) != FireWeaponType::NoAmmo)
@@ -762,6 +764,13 @@ void GrenadeControl(short itemNumber)
 
 	grenadeItem.Model.Color = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
 
+	// Force grenade to explode if it was activated externally.
+	if ((grenadeItem.Flags & CODE_BITS) == CODE_BITS)
+	{
+		grenadeItem.HitPoints = 0;
+		grenadeItem.ItemFlags[0] = (int)ProjectileType::Explosive;
+	}
+	
 	// Check if above water and update Y and Z velocities.
 	bool aboveWater = false;
 	if (TestEnvironment(ENV_FLAG_WATER, grenadeItem.RoomNumber) ||
@@ -1465,11 +1474,14 @@ void ExplodeProjectile(ItemInfo& item, const Vector3i& prevPos)
 
 	SoundEffect(SFX_TR4_EXPLOSION1, &item.Pose, SoundEnvironment::Land, 0.7f, 0.5f);
 	SoundEffect(SFX_TR4_EXPLOSION2, &item.Pose);
+
+	auto decalPos = Vector3i::Lerp(prevPos, item.Pose.Position, 0.5f);
+	SpawnDecal(decalPos.ToVector3(), item.RoomNumber, DecalType::Explosion);
 }
 
 void HandleProjectile(ItemInfo& projectile, ItemInfo& emitter, const Vector3i& prevPos, ProjectileType type, int damage)
 {
-	auto pointColl = GetPointCollision(projectile);
+	auto pointColl  = GetPointCollision(projectile);
 
 	bool hasHit = false;
 	bool hasHitNotByEmitter = false;
@@ -1479,11 +1491,13 @@ void HandleProjectile(ItemInfo& projectile, ItemInfo& emitter, const Vector3i& p
 	// For non-grenade projectiles, check for room collision.
 	if (type < ProjectileType::Grenade)
 	{
-		if (pointColl.GetFloorHeight() < projectile.Pose.Position.y ||
-			pointColl.GetCeilingHeight() > projectile.Pose.Position.y)
-		{
+		auto moveVec = (projectile.Pose.Position - prevPos).ToVector3();
+		auto dist = moveVec.Length();
+		moveVec.Normalize();
+		auto losColl = GetRoomLosCollision(prevPos.ToVector3(), projectile.RoomNumber, moveVec, dist);
+
+		if (pointColl.GetFloorHeight() < projectile.Pose.Position.y || pointColl.GetCeilingHeight() > projectile.Pose.Position.y || losColl.IsIntersected)
 			hasHit = hasHitNotByEmitter = true;
-		}
 	}
 	// If projectile is timed grenade, try to emit from it according to flags.
 	else if (EmitFromProjectile(projectile, type))

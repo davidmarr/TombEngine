@@ -1,14 +1,15 @@
 #pragma once
-#include <d3d11.h>
 #include <SimpleMath.h>
 
 namespace TEN::Renderer::ConstantBuffers
 {
 	using namespace DirectX::SimpleMath;
 
-	struct alignas(16) CSpriteBuffer
+	struct alignas(16) ShaderDecal
 	{
-		float IsSoftParticle;
-		int RenderType;
+		Vector3 Position;
+		int Pattern;
+		float Radius;
+		float Opacity;
 	};
 }

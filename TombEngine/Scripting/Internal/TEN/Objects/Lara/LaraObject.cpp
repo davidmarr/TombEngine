@@ -8,6 +8,8 @@
 #include "Game/Lara/lara_fire.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_struct.h"
+#include "Game/Lara/lara_one_gun.h"
+#include "Game/Lara/lara_two_guns.h"
 #include "Objects/Generic/Object/burning_torch.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/TEN/Input/ActionIDs.h"
@@ -26,6 +28,7 @@ using namespace TEN::Input;
 // LaraObject inherits all the functions of @{Objects.Moveable|Moveable}.
 //
 // @tenclass Objects.LaraObject
+// @inherits Objects.Moveable
 // @pragma nostrip
 
 constexpr auto LUA_CLASS_NAME{ ScriptReserved_LaraObject };
@@ -212,8 +215,8 @@ LaraWeaponType LaraObject::GetWeaponType() const
 // @usage
 // Lara:SetWeaponType(WeaponType.PISTOLS, false)
 // @tparam Objects.WeaponType weaponType New weapon type to set.
-// @tparam bool activate If `true`, also draw the weapons or set torch lit. If `false`, keep weapons holstered or leave torch unlit.
-void LaraObject::SetWeaponType(LaraWeaponType weaponType, bool activate)
+// @tparam[opt=false] bool activate If `true`, also draw the weapons or set torch lit. If `false`, keep weapons holstered or leave torch unlit.
+void LaraObject::SetWeaponType(LaraWeaponType weaponType, sol::optional<bool> activate)
 {
 	auto* lara = GetLaraInfo(_moveable);
 
@@ -225,14 +228,39 @@ void LaraObject::SetWeaponType(LaraWeaponType weaponType, bool activate)
 
 	case LaraWeaponType::Torch:
 		GetFlameTorch();
-		lara->Torch.IsLit = activate;
+		lara->Torch.IsLit = activate.value_or(false);
 		break;
 
 	default:
-		if (activate == false)
-			lara->Control.Weapon.LastGunType = weaponType;
-		else
+		if (!lara->Weapons[(int)weaponType].Present)
+		{
+			TENLog("SetWeaponType: no such weapon is present in the inventory.", LogLevel::Warning, LogConfig::All);
+			break;
+		}
+
+		bool weaponInHands = !activate.value_or(false) && (lara->Control.HandStatus == HandStatus::WeaponReady || lara->Control.HandStatus == HandStatus::WeaponDraw);
+
+		if (activate.value_or(false) || weaponInHands)
+		{
 			lara->Control.Weapon.RequestGunType = weaponType;
+
+			if (weaponInHands)
+				TENLog("SetWeaponType: can't switch weapon without activation because another weapon is drawn.", LogLevel::Warning, LogConfig::All);
+		}
+		else
+		{
+			lara->Control.Weapon.LastGunType = weaponType;
+
+			if (weaponType < LaraWeaponType::Shotgun)
+			{
+				UndrawPistolMesh(*_moveable, lara->Control.Weapon.LastGunType, true);
+				UndrawPistolMesh(*_moveable, lara->Control.Weapon.LastGunType, false);
+			}
+			else
+			{
+				UndrawShotgunMeshes(*_moveable, lara->Control.Weapon.LastGunType);
+			}
+		}
 		break;
 	}
 }
@@ -323,7 +351,7 @@ int LaraObject::GetAmmoType() const
 
 	if (!ammoType.has_value())
 	{
-		TENLog("GetAmmoType() error; no ammo type.", LogLevel::Warning, LogConfig::All);
+		TENLog("GetAmmoType error; no ammo type.", LogLevel::Warning, LogConfig::All);
 		ammoType = PlayerAmmoType::None;
 	}
 

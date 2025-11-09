@@ -16,6 +16,7 @@
 #include "Objects/Generic/Object/polerope.h"
 #include "Objects/Generic/Object/Pushable/PushableObject.h"
 #include "Objects/Generic/Object/rope.h"
+#include "Objects/Generic/Object/ZipLine.h"
 
 // Switches
 #include "Objects/Generic/Switches/cog_switch.h"
@@ -126,6 +127,15 @@ static void StartObject(ObjectInfo* object)
 	{
 		object->Initialize = InitializeBridge;
 		object->control = ControlBridge;
+	}
+
+	object = &Objects[ID_ZIPLINE_HANDLE];
+	if (object->loaded)
+	{
+		object->Initialize = InitializeZipLine;
+		object->collision = CollideZipLine;
+		object->control = ControlZipLine;
+		object->SetHitEffect(true);
 	}
 }
 
@@ -381,8 +391,7 @@ void StartTraps(ObjectInfo* object)
 	{
 		object->Initialize = InitializeDartEmitter;
 		object->control = ControlDartEmitter;
-		object->drawRoutine = nullptr;
-		object->usingDrawAnimatingItem = false;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_HOMING_DART_EMITTER];
@@ -390,8 +399,7 @@ void StartTraps(ObjectInfo* object)
 	{
 		object->Initialize = InitializeDartEmitter;
 		object->control = ControlDartEmitter;
-		object->drawRoutine = nullptr;
-		object->usingDrawAnimatingItem = false;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_ROPE];
@@ -400,8 +408,7 @@ void StartTraps(ObjectInfo* object)
 		object->Initialize = InitializeRope;
 		object->control = RopeControl;
 		object->collision = RopeCollision;
-		object->drawRoutine = nullptr;
-		object->usingDrawAnimatingItem = false;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_POLEROPE];
@@ -416,7 +423,6 @@ void StartTraps(ObjectInfo* object)
 	{
 		object->control = TorchControl;
 		object->collision = PickupCollision;
-		object->usingDrawAnimatingItem = true;
 		object->isPickup = true;
 	}
 
@@ -454,8 +460,7 @@ void StartServiceObjects(ObjectInfo* object)
 	object = &Objects[ID_CAMERA_TARGET];
 	if (object->loaded)
 	{
-		object->drawRoutine = nullptr;
-		object->usingDrawAnimatingItem = false;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_TIGHT_ROPE];
@@ -463,38 +468,33 @@ void StartServiceObjects(ObjectInfo* object)
 	{
 		object->Initialize = InitializeTightrope;
 		object->collision = TightropeCollision;
-		object->drawRoutine = nullptr;
-
-		object->usingDrawAnimatingItem = false;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_EARTHQUAKE];
 	if (object->loaded)
-		object->drawRoutine = nullptr;
+		object->Hidden = true;
 
 	object = &Objects[ID_KILL_ALL_TRIGGERS];
 	if (object->loaded)
 	{
 		object->control = KillAllCurrentItems;
-		object->drawRoutine = nullptr;
+		object->Hidden = true;
 		object->HitPoints = 0;
-		object->usingDrawAnimatingItem = false;
 	}
 
 	object = &Objects[ID_TRIGGER_TRIGGERER];
 	if (object->loaded)
 	{
 		object->control = ControlTriggerTriggerer;
-		object->drawRoutine = nullptr;
-
-		object->usingDrawAnimatingItem = false;
+		object->Hidden = true;
 	}
 
 	object = &Objects[ID_WATERFALLMIST];
 	if (object->loaded)
 	{
 		object->control = ControlWaterfallMist;
-		object->drawRoutine = nullptr;
+		object->Hidden = true;
 	}
 
 	for (int objectID = ID_ANIMATING1; objectID <= ID_ANIMATING128; objectID++)
