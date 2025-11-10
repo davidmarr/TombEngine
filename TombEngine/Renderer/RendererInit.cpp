@@ -39,19 +39,19 @@ namespace TEN::Renderer
 
 		// Initialize input layout using first vertex shader.
 		std::vector<RendererInputLayoutField> inputLayoutItems;
-		inputLayoutItems.push_back({ VertexInputFormat::RGB32_Float, 0, "POSITION" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Snorm, 0, "NORMAL" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGB32_Float, 0, "TEXCOORD" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGBA32_Float, 0, "COLOR" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Snorm, 0, "TANGENT" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Snorm, 1, "NORMAL" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Uint, 0, "BONEINDICES" });
-		inputLayoutItems.push_back({ VertexInputFormat::RGBA8_Uint, 0, "BONEWEIGHTS" });
-		inputLayoutItems.push_back({ VertexInputFormat::R32_Uint, 0, "EFFECTS" });
-		inputLayoutItems.push_back({ VertexInputFormat::R32_Uint, 1, "EFFECTS" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGB32_Float, 0, "POSITION" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Snorm, 0, "NORMAL" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RG32_Float, 0, "TEXCOORD" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA32_Float, 0, "COLOR" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Snorm, 0, "TANGENT" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Snorm, 1, "NORMAL" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Uint, 0, "BONEINDICES" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Uint, 0, "BONEWEIGHTS" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_R32_Uint, 0, "EFFECTS" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_R32_Uint, 1, "EFFECTS" });
 
-		const auto& roomShader = _shaders.Get(Shader::Rooms);
-		_graphicsDevice->CreateInputLayout(inputLayoutItems);
+		auto roomShader = _shaders.Get(Shader::Rooms);
+		_graphicsDevice->CreateInputLayout(inputLayoutItems, (IShader*)roomShader);
 		
 		// Initialize constant buffers.
 		_cbCameraMatrices = CreateConstantBuffer<CItemBuffer>();
@@ -90,7 +90,7 @@ namespace TEN::Renderer
 		for (auto& effect : _effects)
 			effect.LightsToDraw = createVector<RendererLight*>(MAX_LIGHTS_PER_ITEM);
 
-		_SMAAAreaTexture = _graphicsDevice->CreateTexture2D(AREATEX_WIDTH, AREATEX_HEIGHT, SurfaceFormat::R8G8_Unorm, AREATEX_PITCH, areaTexBytes);
+		_SMAAAreaTexture = _graphicsDevice->CreateTexture2D(AREATEX_WIDTH, AREATEX_HEIGHT, SurfaceFormat::SF_RG8_Unorm, AREATEX_PITCH, areaTexBytes);
 		_SMAASearchTexture = _graphicsDevice->CreateTexture2D(SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, SurfaceFormat::R8_Unorm, SEARCHTEX_PITCH, searchTexBytes);
 
 		CreateSSAONoiseTexture();
@@ -108,7 +108,7 @@ namespace TEN::Renderer
 		_spriteVertexBuffer = _graphicsDevice->CreateVertexBuffer(MAX_SPRITE_VERTICES, sizeof(Vertex), _spriteVertices.data());
 
 		// Initialize video player.
-		g_VideoPlayer.Initialize(gameDir, _device.Get(), _context.Get());
+		g_VideoPlayer.Initialize(gameDir, _graphicsDevice);
 	}
 
 	void Renderer::InitializePostProcess()
@@ -134,11 +134,13 @@ namespace TEN::Renderer
 
 		std::vector<RendererInputLayoutField> fields;
 
-		fields.push_back({ VertexFormat::R32G })
+		fields.push_back({ VertexInputFormat::VI_RGB32_Float, 0, "POSITION" });
+		fields.push_back({ VertexInputFormat::VI_RG32_Float, 0, "TEXCOORD" });
+		fields.push_back({ VertexInputFormat::VI_RGBA32_Float, 0, "COLOR" });
 
-		const auto& ppShader = _shaders.Get(Shader::PostProcess);
-		Utils::throwIfFailed(_device->CreateInputLayout(postProcessInputLayoutItems, 3, 
-							 ppShader.Vertex.Blob->GetBufferPointer(), ppShader.Vertex.Blob->GetBufferSize(), &_fullscreenTriangleInputLayout));
+		auto ppShader = _shaders.Get(Shader::PostProcess);
+
+		_fullScreenVertexInputLayout = _graphicsDevice->CreateInputLayout(fields, (IShader*)ppShader);
 	}
 
 	void Renderer::CreateSSAONoiseTexture()
@@ -290,32 +292,32 @@ namespace TEN::Renderer
 	{
 		_backBuffer = _graphicsDevice->InitializeSwapChain(w, h, handle);
 		                
-		_renderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::Depth32);
+		_renderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::Depth32);
 
-		_postProcessRenderTarget[0] = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
-		_postProcessRenderTarget[1] = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_postProcessRenderTarget[0] = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
+		_postProcessRenderTarget[1] = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 		
-		_dumpScreenRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::Depth32);  
+		_dumpScreenRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::Depth32);  
 		
-		_shadowMap = _graphicsDevice->CreateRenderSurface2D(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, SurfaceFormat::R32_Float, DepthFormat::Depth32);
+		_shadowMap = _graphicsDevice->CreateRenderSurface2D(g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 6, SurfaceFormat::SF_R32_Float, DepthFormat::Depth32);
 		
-		_depthRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::R32_Float, false, DepthFormat::None);
-		_normalsAndMaterialIndexRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
-		_emissiveAndRoughnessRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_depthRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_R32_Float, false, DepthFormat::None);
+		_normalsAndMaterialIndexRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
+		_emissiveAndRoughnessRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 		
-		_SSAORenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
-		_SSAOBlurredRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_SSAORenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
+		_SSAOBlurredRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 		
-		_glowRenderTarget[0] = _graphicsDevice->CreateRenderSurface2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
-		_glowRenderTarget[1] = _graphicsDevice->CreateRenderSurface2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_glowRenderTarget[0] = _graphicsDevice->CreateRenderSurface2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
+		_glowRenderTarget[1] = _graphicsDevice->CreateRenderSurface2D(w / GLOW_DOWNSCALE_FACTOR, h / GLOW_DOWNSCALE_FACTOR, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 		
-		_legacyReflectionsRenderTarget = _graphicsDevice->CreateRenderSurface2D(w / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, h / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_legacyReflectionsRenderTarget = _graphicsDevice->CreateRenderSurface2D(w / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, h / LEGACY_REFLECTIONS_DOWNSCALE_FACTOR, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 		
-		_skyboxRenderTarget = _graphicsDevice->CreateRenderSurface2D(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, SurfaceFormat::RGBA8_Unorm, DepthFormat::Depth32);
+		_skyboxRenderTarget = _graphicsDevice->CreateRenderSurface2D(ROOM_AMBIENT_MAP_SIZE, ROOM_AMBIENT_MAP_SIZE, 2, SurfaceFormat::SF_RGBA8_Unorm, DepthFormat::Depth32);
 
 		// Initialize viewport
-		_viewport = _graphicsDevice->CreateViewport(0, 0, w, h, 0.0f, 1.0f);
-		_shadowMapViewport = _graphicsDevice->CreateViewport(0, 0, g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 0.0f, 1.0f);
+		_viewport = { 0, 0, w, h, 0.0f, 1.0f };
+		_shadowMapViewport = { 0, 0, g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 0.0f, 1.0f };
 
 		// Low AA is done with FXAA, Medium - High AA are done with SMAA.
 		if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
@@ -331,10 +333,10 @@ namespace TEN::Renderer
 		int w = _screenWidth;
 		int h = _screenHeight;
 
-		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, true, DepthFormat::None);
-		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderSurface2D(_SMAASceneRenderTarget->GetRenderTarget(), SurfaceFormat::RGBA8_Unorm_Srgb);
-		_SMAAEdgesRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::R8G8_Unorm, false, DepthFormat::None);
-		_SMAABlendRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::RGBA8_Unorm, false, DepthFormat::None);
+		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, true, DepthFormat::None);
+		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderSurface2D(_SMAASceneRenderTarget, SurfaceFormat::SF_RGBA8_Unorm_Srgb);
+		_SMAAEdgesRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RG8_Unorm, false, DepthFormat::None);
+		_SMAABlendRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 	}
 
 	void Renderer::InitializeCommonTextures()
@@ -344,7 +346,7 @@ namespace TEN::Renderer
 		if (!std::filesystem::is_regular_file(fontPath))
 			throw std::runtime_error("Font not found; path " + TEN::Utils::ToString(fontPath) + " is missing.");
 		     
-		_gameFont = std::make_unique<SpriteFont>(_device.Get(), fontPath.c_str());
+		_gameFont = _graphicsDevice->InitializeSpriteFont(fontPath);
 
 		// Initialize common textures.
 		SetTextureOrDefault(_logo, GetAssetPath(L"Textures/Logo.png"));
@@ -352,8 +354,8 @@ namespace TEN::Renderer
 		SetTextureOrDefault(_loadingBarInner, GetAssetPath(L"Textures/LoadingBarInner.png"));
 		SetTextureOrDefault(_whiteTexture, GetAssetPath(L"Textures/WhiteSprite.png")); 
 
-		_whiteSprite.Height = _whiteTexture->Height;
-		_whiteSprite.Width = _whiteTexture->Width;
+		_whiteSprite.Height = _whiteTexture->GetHeight();
+		_whiteSprite.Width = _whiteTexture->GetWidth();
 		_whiteSprite.UV[0] = Vector2(0.0f, 0.0f);
 		_whiteSprite.UV[1] = Vector2(1.0f, 0.0f);
 		_whiteSprite.UV[2] = Vector2(1.0f, 1.0f);

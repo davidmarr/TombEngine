@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/Graphics/ITextureBase.h"
+#include "Renderer/Graphics/ITexture2D.h"
 
 namespace TEN::Renderer::Graphics
 {

@@ -343,11 +343,11 @@ enum class MaterialShaderType
 enum class SurfaceFormat
 {
 	Unknown,
-	RGBA8_Unorm,
-	RGBA8_Unorm_Srgb,
-	R8G8_Unorm,
+	SF_RGBA8_Unorm,
+	SF_RGBA8_Unorm_Srgb,
+	SF_RG8_Unorm,
 	R8_Unorm,
-	R32_Float,
+	SF_R32_Float,
 	RGBA32_Float
 };
 
@@ -360,14 +360,15 @@ enum class DepthFormat
 
 enum class VertexInputFormat
 {
-	RGBA8_Unorm,
-	RGBA8_Snorm,
-	RGBA8_Uint,
-	R8G8_Unorm,
-	R32_Float,
-	R32_Uint,
-	RGB32_Float,
-	RGBA32_Float
+	VI_RGBA8_Unorm,
+	VI_RGBA8_Snorm,
+	VI_RGBA8_Uint,
+	VI_RG8_Unorm,
+	VI_R32_Float,
+	VI_R32_Uint,
+	VI_RG32_Float,
+	VI_RGB32_Float,
+	VI_RGBA32_Float
 };
 
 enum class InputLayout
@@ -397,4 +398,10 @@ enum class SpriteSortingMode
 	Deferred,
 	Immediate,
 	Texture
+};
+
+enum class VertexType
+{
+	Vertex,
+	PostProcessVertex
 };

@@ -3995,24 +3995,12 @@ namespace TEN::Renderer
 		_graphicsDevice->BindRenderTarget(_SSAORenderTarget->GetRenderTarget(), nullptr);
 
 		// Must set correctly viewport because SSAO is done at 1/4 screen resolution.
-		D3D11_VIEWPORT viewport;
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.Width = _screenWidth;
-		viewport.Height = _screenHeight;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
+		RendererViewport viewport = { 0,0,_screenWidth, _screenHeight, 0.0f, 1.0f };
+		_graphicsDevice->SetViewport(viewport);
 
-		_context->RSSetViewports(1, &viewport);
+		RendererRectangle scissor = { 0,0,_screenWidth, _screenHeight };
+		_graphicsDevice->SetScissor(scissor);
 	
-		D3D11_RECT rects[1];
-		rects[0].left = 0;
-		rects[0].right = viewport.Width;
-		rects[0].top = 0;
-		rects[0].bottom = viewport.Height;
-
-		_context->RSSetScissorRects(1, rects);
-
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
 

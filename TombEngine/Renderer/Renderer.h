@@ -63,7 +63,6 @@
 #include "Renderer/Structures/RendererRoomAmbientMap.h"
 #include "Renderer/Structures/RendererObject.h"
 #include "Renderer/Structures/RendererStar.h"
-#include "Structures/RendererShader.h"
 #include "Renderer/Graphics/IGraphicsDevice.h"
 
 enum GAME_OBJECT_ID : short;
@@ -88,7 +87,6 @@ namespace TEN::Renderer
 	class Renderer
 	{
 	private:
-		// Core DX11 objects
 		IGraphicsDevice* _graphicsDevice;
 
 		IInputLayout* _vertexInputLayout;
@@ -349,7 +347,7 @@ namespace TEN::Renderer
 
 		ShaderManager _shaders;
 
-		IPrimitiveBatch<Vertex>* _primitiveBatch;
+		IPrimitiveBatch* _primitiveBatch;
 		ISpriteBatch* _spriteBatch;
 
 		void ApplySMAA(IRenderSurface2D* renderTarget, RenderView& view);
@@ -743,7 +741,7 @@ namespace TEN::Renderer
 		SkinningMode GetSkinningMode(const RendererObject& obj, int skinIndex);
 		void DrawObjectIn2DSpace(int objectNumber, Vector2 pos2D, EulerAngles orient, float scale1, float opacity = 1.0f, int meshBits = NO_JOINT_BITS);
 		void SetLoadingScreen(std::wstring& fileName);
-		void SetTextureOrDefault(ITexture2D*& texture, std::wstring path);
+		void SetTextureOrDefault(ITexture2D* texture, std::wstring path);
 		std::string GetDefaultAdapterName();
 		void SaveOldState();
 

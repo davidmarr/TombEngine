@@ -791,6 +791,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\ConstantBuffers\SMAABuffer.h" />
     <ClInclude Include="Renderer\Frustum.h" />
     <ClInclude Include="Renderer\Graphics\IRenderSurface2D.h" />
+    <ClInclude Include="Renderer\Graphics\IRenderSurface2D.h" />
     <ClInclude Include="Renderer\Graphics\IDepthTarget.h" />
     <ClInclude Include="Renderer\Graphics\IInputLayout.h" />
     <ClInclude Include="Renderer\Graphics\IndexBuffer.h" />
@@ -827,6 +828,8 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTarget2D.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11RenderTargetCube.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11Shader.h" />
+    <ClInclude Include="Renderer\Native\DirectX11\DX11SpriteBatch.h" />
+    <ClInclude Include="Renderer\Native\DirectX11\DX11SpriteFont.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11Texture2D.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11TextureBase.h" />
     <ClInclude Include="Renderer\Native\DirectX11\DX11VertexBuffer.h" />
@@ -867,7 +870,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Structures\RendererRoom.h" />
     <ClInclude Include="Renderer\Structures\RendererRoomAmbientMap.h" />
     <ClInclude Include="Renderer\Structures\RendererRoomNode.h" />
-    <ClInclude Include="Renderer\Structures\RendererShader.h" />
     <ClInclude Include="Renderer\Structures\RendererSortableObject.h" />
     <ClInclude Include="Renderer\Structures\RendererSprite.h" />
     <ClInclude Include="Renderer\Structures\RendererSprite2D.h" />

@@ -65,8 +65,8 @@ namespace TEN::Renderer
 	void Renderer::UpdateVideoTexture(ITexture2D* texture)
 	{
 		_videoSprite.X = _videoSprite.Y = 0;
-		_videoSprite.Width = texture->Width;
-		_videoSprite.Height = texture->Height;
+		_videoSprite.Width = texture->GetWidth();
+		_videoSprite.Height = texture->GetHeight();
 		_videoSprite.UV[0] = Vector2(0,0);
 		_videoSprite.UV[1] = Vector2(1,0);
 		_videoSprite.UV[2] = Vector2(1,1);
@@ -313,7 +313,7 @@ namespace TEN::Renderer
 		}
 
 		if (type == MaterialShaderType::Reflective)
-			BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, _legacyReflectionsRenderTarget, SamplerStateRegister::AnisotropicClamp);
+			BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, _legacyReflectionsRenderTarget->GetRenderTarget(), SamplerStateRegister::AnisotropicClamp);
 		else if (type == MaterialShaderType::SkyboxReflective)
 			BindTexture(TextureRegister::SkyboxEnvironmentReflections, _skyboxRenderTarget->GetRenderTarget(), SamplerStateRegister::AnisotropicClamp);
 	}

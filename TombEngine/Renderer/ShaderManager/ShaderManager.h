@@ -1,11 +1,21 @@
 #pragma once
 
 #include "Renderer/Graphics/IGraphicsDevice.h"
+#include <map>
 
-using namespace TEN::Renderer::Structures;
+using namespace TEN::Renderer::Graphics;
 
 namespace TEN::Renderer::Utils
 {
+	enum class ShaderType
+	{
+		Pixel,
+		Vertex,
+		PixelAndVertex,
+		Compute,
+		Geometry
+	};
+
 	enum class Shader
 	{
 		// General

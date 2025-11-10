@@ -578,8 +578,8 @@ namespace TEN::Renderer
 
 	std::pair<Vector3, Vector3> Renderer::GetRay(const Vector2& pos) const
 	{
-		auto nearPoint = _viewportToolkit.Unproject(Vector3(pos.x, pos.y, 0.0f), _gameCamera.Camera.Projection, _gameCamera.Camera.View, Matrix::Identity);
-		auto farPoint  = _viewportToolkit.Unproject(Vector3(pos.x, pos.y, 1.0f), _gameCamera.Camera.Projection, _gameCamera.Camera.View, Matrix::Identity);
+		auto nearPoint = _graphicsDevice->Unproject(Vector3(pos.x, pos.y, 0.0f), _gameCamera.Camera.Projection, _gameCamera.Camera.View, Matrix::Identity);
+		auto farPoint  = _graphicsDevice->Unproject(Vector3(pos.x, pos.y, 1.0f), _gameCamera.Camera.Projection, _gameCamera.Camera.View, Matrix::Identity);
 
 		return std::pair<Vector3, Vector3>(nearPoint, farPoint);
 	}
@@ -646,7 +646,7 @@ namespace TEN::Renderer
 			std::filesystem::create_directory(screenPath);
 
 		screenPath += buffer;
-		SaveWICTextureToFile(_context.Get(), _backBuffer.Texture.Get(), GUID_ContainerFormatPng, TEN::Utils::ToWString(screenPath).c_str(),
-			&GUID_WICPixelFormat24bppBGR, nullptr, true);
+		
+		_graphicsDevice->SaveScreenshot(_backBuffer->GetRenderTarget(), TEN::Utils::ToWString(screenPath));
 	}
 }

@@ -3,6 +3,11 @@
 #include "Specific/winmain.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
+#include <wincodec.h>
+#include <ScreenGrab.h>
+#include <algorithm>
+#include <ctime>
+#include <filesystem>
 
 extern GameConfiguration g_Configuration;
 
@@ -290,12 +295,6 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->ClearRenderTargetView(nativeRenderTarget->GetRenderTargetView(arrayIndex), clearColor);
 	}
 
-	void DX11GraphicsDevice::ClearRenderTarget2DOfCube(IRenderTargetCube* renderTarget, int index, XMVECTORF32 clearColor)
-	{
-		auto nativeRenderTarget = static_cast<DX11RenderTargetCube*>(renderTarget);
-		_context->ClearRenderTargetView(nativeRenderTarget->RenderTargetView[index].Get(), clearColor);
-	}
-
 	void DX11GraphicsDevice::ClearDepthStencil(IDepthTarget* renderTarget, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil)
 	{
 		auto nativeRenderTarget = static_cast<DX11DepthTarget*>(renderTarget);
@@ -386,9 +385,10 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->IASetInputLayout(dxInputLayout->InputLayout.Get());
 	}
 
-	IInputLayout* DX11GraphicsDevice::CreateInputLayout(std::vector<RendererInputLayoutField> fields)
+	IInputLayout* DX11GraphicsDevice::CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader)
 	{
-		return new DX11InputLayout(_device.Get(), fields);
+		auto dxShader = static_cast<DX11Shader*>(shader);
+		return new DX11InputLayout(_device.Get(), fields, dxShader);
 	}
 
 	void DX11GraphicsDevice::SetPrimitiveType(PrimitiveType primitiveType)
@@ -879,5 +879,43 @@ namespace TEN::Renderer::Native::DirectX11
 	void DX11GraphicsDevice::ClearState()
 	{
 		_context->ClearState();
+	}
+
+	ISpriteFont* DX11GraphicsDevice::InitializeSpriteFont(std::wstring fontPath)
+	{
+		return new DX11SpriteFont(_device.Get(), fontPath);
+	}
+
+	ISpriteBatch* DX11GraphicsDevice::InitializeSpriteBatch()
+	{
+		return new DX11SpriteBatch(_device.Get(), _context.Get());
+	}
+
+	IPrimitiveBatch* DX11GraphicsDevice::InitializePrimitiveBatch()
+	{
+		return new DX11PrimitiveBatch(_context.Get());
+	}
+
+	void DX11GraphicsDevice::SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path)
+	{
+		auto dxRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+		SaveWICTextureToFile(_context.Get(), dxRenderTarget->GetTexture(), GUID_ContainerFormatPng, path.c_str(), 
+			&GUID_WICPixelFormat24bppBGR, nullptr, true);
+	}
+
+	Vector4 DX11GraphicsDevice::Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world)
+	{
+		return _viewportToolkit.Unproject(position, projection, view, world);
+	}
+
+	void DX11GraphicsDevice::Flush()
+	{
+		_context->Flush();
+	}
+
+	void DX11GraphicsDevice::UnbindAllRenderTargets()
+	{
+		ID3D11RenderTargetView* nullViews[] = { nullptr };
+		_context->OMSetRenderTargets(0, nullViews, NULL);
 	}
 }

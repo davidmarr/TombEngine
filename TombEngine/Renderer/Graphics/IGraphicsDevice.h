@@ -50,6 +50,7 @@ namespace TEN::Renderer::Graphics
 		virtual ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) = 0;
 		virtual ITexture2D* CreateTexture2D(const std::string fileName) = 0;
 		virtual ITexture2D* CreateTexture2D(int dataSize, byte* data) = 0;
+		virtual ITexture2D* CreateTexture2D() = 0;
 
 		virtual void SetBlendMode(BlendMode blendMode) = 0;
 		virtual void SetDepthState(DepthState depthState) = 0;
@@ -70,7 +71,7 @@ namespace TEN::Renderer::Graphics
 
 		virtual void ClearRenderTarget2D(IRenderTarget2D* renderTarget, XMVECTORF32 clearColor) = 0;
 		virtual void ClearRenderTarget2D(IRenderTarget2D* renderTarget, int arrayIndex, XMVECTORF32 clearColor) = 0;
-		virtual void ClearRenderTargetCube(IRenderTargetCube* textureCube, int faceIndex, XMVECTORF32 clearColor) = 0;
+		//virtual void ClearRenderTargetCube(IRenderTargetCube* textureCube, int faceIndex, XMVECTORF32 clearColor) = 0;
 		
 		virtual void ClearDepthStencil(IDepthTarget* depthTarget, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) = 0;
 		virtual void ClearDepthStencil(IDepthTarget* depthTarget, int arrayIndex, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) = 0;
@@ -82,7 +83,7 @@ namespace TEN::Renderer::Graphics
 		virtual void SetPrimitiveType(PrimitiveType primitiveType) = 0;
 
 		virtual void SetInputLayout(IInputLayout* inputLayout) = 0;
-		virtual IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields) = 0;
+		virtual IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) = 0;
 
 		virtual void CreateDevice() = 0;
 		virtual void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) = 0;
@@ -99,8 +100,17 @@ namespace TEN::Renderer::Graphics
 		virtual void Present() = 0;
 		virtual void ClearState() = 0;
 
+		virtual ISpriteFont* InitializeSpriteFont(std::wstring fontPath) = 0;
+		virtual ISpriteBatch* InitializeSpriteBatch() = 0;
+		virtual IPrimitiveBatch* InitializePrimitiveBatch() = 0;
+
 		virtual void SetViewport(RendererViewport viewport) = 0;
 		virtual Vector4 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) = 0;
+
+		virtual void SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path);
+
+		virtual void Flush() = 0;
+		virtual void UnbindAllRenderTargets() = 0;
 
 		virtual ~IGraphicsDevice() = default;
 	};

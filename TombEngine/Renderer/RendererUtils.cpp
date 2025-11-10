@@ -8,7 +8,6 @@
 #include <wrl/client.h>
 
 #include "Renderer/Renderer.h"
-#include "Renderer/Structures/RendererShader.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/trutils.h"
 

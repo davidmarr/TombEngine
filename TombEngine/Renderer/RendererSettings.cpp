@@ -10,30 +10,10 @@ namespace TEN::Renderer
 {
 	void Renderer::ChangeScreenResolution(int width, int height, bool windowed) 
 	{
-		_context->OMSetRenderTargets(0, nullViews, NULL);
-		ID3D11RenderTargetView* nullViews[] = { nullptr };
-		_context->Flush();
-		_context->ClearState();
-
-		IDXGIOutput* output;
-		Utils::throwIfFailed(_swapChain->GetContainingOutput(&output));
-
-		DXGI_SWAP_CHAIN_DESC scd;
-		Utils::throwIfFailed(_swapChain->GetDesc(&scd));
-
-		unsigned int numModes = 1024;
-		DXGI_MODE_DESC modes[1024];
-		Utils::throwIfFailed(output->GetDisplayModeList(scd.BufferDesc.Format, 0, &numModes, modes));
-
-		DXGI_MODE_DESC* mode = &modes[0];
-		for (unsigned int i = 0; i < numModes; i++)
-		{
-			mode = &modes[i];
-			if (mode->Width == width && mode->Height == height)
-				break;
-		}
-
-		Utils::throwIfFailed( _swapChain->ResizeTarget(mode));
+		_graphicsDevice->UnbindAllRenderTargets();
+		_graphicsDevice->Flush();
+		_graphicsDevice->ClearState();
+		_graphicsDevice->ChangeScreenResolution(width, height, windowed);
 
 		_screenWidth = width;
 		_screenHeight = height;
@@ -44,33 +24,24 @@ namespace TEN::Renderer
 
 	std::string Renderer::GetDefaultAdapterName()
 	{
-		IDXGIFactory* dxgiFactory = NULL;
-		Utils::throwIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
-
-		IDXGIAdapter* dxgiAdapter = NULL;
-
-		dxgiFactory->EnumAdapters(0, &dxgiAdapter);
-
-		DXGI_ADAPTER_DESC adapterDesc = {};
-
-		dxgiAdapter->GetDesc(&adapterDesc);
-		dxgiFactory->Release();
-		
-		return TEN::Utils::ToString(adapterDesc.Description);
+		return _graphicsDevice->GetDefaultAdapterName();
 	}
 
-	void Renderer::SetTextureOrDefault(Texture2D& texture, std::wstring path)
+	void Renderer::SetTextureOrDefault(ITexture2D* texture, std::wstring path)
 	{
-		texture = Texture2D();
-
 		if (std::filesystem::is_regular_file(path))
 		{
-			texture = Texture2D(_device.Get(), path);
+			texture = _graphicsDevice->CreateTexture2D(TEN::Utils::ToString(path));
 		}
 		else if (!path.empty()) // Loading default texture without path may be intentional.
 		{
+			texture = _graphicsDevice->CreateTexture2D();
 			std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 			TENLog("Texture file not found: " + converter.to_bytes(path), LogLevel::Warning);
+		}
+		else
+		{
+			texture = _graphicsDevice->CreateTexture2D();
 		}
 	}
 }

@@ -16,8 +16,10 @@
 #include "Renderer/Native/DirectX11/DX11ConstantBuffer.h"
 #include "Renderer/Native/DirectX11/DX11InputLayout.h"
 #include "Renderer/Native/DirectX11/DX11Shader.h"
+#include "Renderer/Native/DirectX11/DX11SpriteBatch.h"
+#include "Renderer/Native/DirectX11/DX11PrimitiveBatch.h"
+#include "Renderer/Native/DirectX11/DX11SpriteFont.h"
 
-using namespace TEN::Renderer::Graphics;
 using namespace TEN::Renderer::Graphics;
 using namespace TEN::Renderer::Structures;
 using namespace DirectX::SimpleMath;
@@ -61,17 +63,19 @@ namespace TEN::Renderer::Native::DirectX11
 		int _isWindowed;
 		int _refreshRate;
 
+		inline ID3D11DeviceContext* GetDeviceContext() { return _context.Get(); }
+
 		inline DXGI_FORMAT GetDXGIFormat(SurfaceFormat format)
 		{
 			switch (format)
 			{
-			case SurfaceFormat::RGBA8_Unorm:
+			case SurfaceFormat::SF_RGBA8_Unorm:
 				return DXGI_FORMAT_R8G8B8A8_UNORM;
-			case SurfaceFormat::RGBA8_Unorm_Srgb:
+			case SurfaceFormat::SF_RGBA8_Unorm_Srgb:
 				return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-			case SurfaceFormat::R32_Float:
+			case SurfaceFormat::SF_R32_Float:
 				return DXGI_FORMAT_R32_FLOAT;
-			case SurfaceFormat::R8G8_Unorm:
+			case SurfaceFormat::SF_RG8_Unorm:
 				return DXGI_FORMAT_R8G8_UNORM;
 			case SurfaceFormat::Unknown:
 			default:
@@ -158,7 +162,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void ClearRenderTarget2D(IRenderTarget2D* renderTarget, XMVECTORF32 clearColor) override;
 		void ClearRenderTarget2D(IRenderTarget2D* renderTarget, int arrayIndex, XMVECTORF32 clearColor) override;
-		void ClearRenderTarget2DOfCube(IRenderTargetCube* textureCube, int index, XMVECTORF32 clearColor) override;
+		//void ClearRenderTarget2DOfCube(IRenderTargetCube* textureCube, int index, XMVECTORF32 clearColor) override;
 
 		void ClearDepthStencil(IDepthTarget* renderTarget, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
 		void ClearDepthStencil(IDepthTarget* renderTarget, int arrayIndex, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
@@ -171,7 +175,7 @@ namespace TEN::Renderer::Native::DirectX11
 		void SetPrimitiveType(PrimitiveType primitiveType) override;
 
 		void SetInputLayout(IInputLayout* inputLayout) override;
-		IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields) override;
+		IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) override;
 
 		void CreateDevice() override;
 		void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) override;
@@ -187,6 +191,17 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void Present() override;
 		void ClearState() override;
+
+		ISpriteFont* InitializeSpriteFont(std::wstring fontPath) override;
+		ISpriteBatch* InitializeSpriteBatch() override;
+		IPrimitiveBatch* InitializePrimitiveBatch() override;
+
+		Vector4 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) override;
+
+		void SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path) override;
+
+		void Flush() override;
+		void UnbindAllRenderTargets() override;
 
 		~DX11GraphicsDevice() override = default;
 	};

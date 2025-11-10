@@ -11,7 +11,7 @@ namespace TEN::Renderer::Native::DirectX11
 	using namespace TEN::Renderer::Utils;
 	using Microsoft::WRL::ComPtr;
 
-	class DX11RenderTarget2D : public IRenderTarget2D, protected DX11Texture2D
+	class DX11RenderTarget2D : public IRenderTarget2D, public DX11Texture2D
 	{
 	private:
 		std::vector<ComPtr<ID3D11RenderTargetView>> _renderTargetViews;

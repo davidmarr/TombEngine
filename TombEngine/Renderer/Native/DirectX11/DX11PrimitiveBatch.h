@@ -16,22 +16,21 @@ namespace TEN::Renderer::Native::DirectX11
 
 	using Microsoft::WRL::ComPtr;
 
-	template <typename TVertex>
-	class DX11PrimitiveBatch : public IPrimitiveBatch<TVertex>
+	class DX11PrimitiveBatch : public IPrimitiveBatch
 	{
 	private:
-		std::unique_ptr<PrimitiveBatch<TVertex>> _primitiveBatch;
+		std::unique_ptr<PrimitiveBatch<Vertex>> _primitiveBatch;
 
 	public:
-		DX11PrimitiveBatch(ID3D11DeviceContext context)
+		DX11PrimitiveBatch(ID3D11DeviceContext* context)
 		{
-			_primitiveBatch = std::make_unique<PrimitiveBatch<TVertex>>(context);
+			_primitiveBatch = std::make_unique<PrimitiveBatch<Vertex>>(context);
 		}
 
 		void Begin() override { _primitiveBatch->Begin(); }
 		void End() override { _primitiveBatch->End(); }
-		void DrawLine(TVertex const& v1, TVertex const& v2) override { _primitiveBatch->DrawLine(v1, v2); }
-		void DrawTriangle(TVertex const& v1, TVertex const& v2, TVertex const& v3) override { _primitiveBatch->DrawTriangle(v1, v2, v3); }
-		void DrawQuad(TVertex const& v1, TVertex const& v2, TVertex const& v3, TVertex const& v4) override { _primitiveBatch->DrawQuad(v1, v2, v3, v4); }
+		void DrawLine(Vertex const& v1, Vertex const& v2) override { _primitiveBatch->DrawLine(v1, v2); }
+		void DrawTriangle(Vertex const& v1, Vertex const& v2, Vertex const& v3) override { _primitiveBatch->DrawTriangle(v1, v2, v3); }
+		void DrawQuad(Vertex const& v1, Vertex const& v2, Vertex const& v3, Vertex const& v4) override { _primitiveBatch->DrawQuad(v1, v2, v3, v4); }
 	}; 
 }

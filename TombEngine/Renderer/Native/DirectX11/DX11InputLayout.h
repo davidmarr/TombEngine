@@ -24,7 +24,7 @@ namespace TEN::Renderer::Native::DirectX11
 		{
 		};
 
-		DX11InputLayout(ID3D11Device* device, std::vector<RendererInputLayoutField> fields)
+		DX11InputLayout(ID3D11Device* device, std::vector<RendererInputLayoutField> fields, DX11Shader* shader)
 		{
 			std::vector<D3D11_INPUT_ELEMENT_DESC> elements;
 
@@ -41,24 +41,40 @@ namespace TEN::Renderer::Native::DirectX11
 
 				switch (field.Format)
 				{
-				case VertexInputFormat::RGBA8_Unorm:
+				case VertexInputFormat::VI_RGBA8_Unorm:
 					element.Format = DXGI_FORMAT_R8G8B8A8_UINT;
 					break;
 					
-				case VertexInputFormat::R8G8_Unorm:
+				case VertexInputFormat::VI_RG8_Unorm:
 					element.Format = DXGI_FORMAT_R8G8_UINT;
 					break;
 
-				case VertexInputFormat::RGB32_Float:
+				case VertexInputFormat::VI_RGB32_Float:
 					element.Format = DXGI_FORMAT_R32G32B32_FLOAT;
 					break;
 
-				case VertexInputFormat::RGBA32_Float:
+				case VertexInputFormat::VI_RGBA32_Float:
 					element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 					break;
 
-				case VertexInputFormat::R32_Float:
+				case VertexInputFormat::VI_R32_Float:
 					element.Format = DXGI_FORMAT_R32_FLOAT;
+					break;
+
+				case VertexInputFormat::VI_R32_Uint:
+					element.Format = DXGI_FORMAT_R32_UINT;
+					break;
+
+				case VertexInputFormat::VI_RG32_Float:
+					element.Format = DXGI_FORMAT_R32G32_FLOAT;
+					break;
+
+				case VertexInputFormat::VI_RGBA8_Snorm:
+					element.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
+					break;
+
+				case VertexInputFormat::VI_RGBA8_Uint:
+					element.Format = DXGI_FORMAT_R8G8B8A8_UINT;
 					break;
 
 				default:
@@ -69,8 +85,7 @@ namespace TEN::Renderer::Native::DirectX11
 				elements.push_back(element);
 			}
 
-			//const auto& roomShader = _shaders.Get(Shader::Rooms);
-			//Utils::throwIfFailed(device->CreateInputLayout(elements.data(), elements.size(), roomShader.Vertex.Blob->GetBufferPointer(), roomShader.Vertex.Blob->GetBufferSize(), &InputLayout));
+			Utils::throwIfFailed(device->CreateInputLayout(elements.data(), elements.size(), shader->Blob->GetBufferPointer(), shader->Blob->GetBufferSize(), &InputLayout));
 		}
 	};
 }

@@ -1,6 +1,10 @@
 #pragma once
 
+#include "Renderer/RendererEnums.h"
 #include "Renderer/ShaderManager/ShaderManager.h"
+
+using namespace TEN::Renderer;
+using namespace TEN::Renderer::Utils;
 
 namespace TEN::Renderer::Graphics
 {

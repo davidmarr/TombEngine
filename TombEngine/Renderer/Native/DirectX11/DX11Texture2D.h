@@ -16,7 +16,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	using Microsoft::WRL::ComPtr;
 
-	class DX11Texture2D : public ITexture2D, protected DX11TextureBase
+	class DX11Texture2D : public ITexture2D, public DX11TextureBase
 	{
 	protected:
 		ComPtr<ID3D11Texture2D> _texture;
