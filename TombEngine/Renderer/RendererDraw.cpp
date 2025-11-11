@@ -2405,26 +2405,29 @@ namespace TEN::Renderer
 
 	void Renderer::DrawItems(RenderView& view, RendererPass rendererPass, bool onlyPlayer)
 	{
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-		// Set shaders.
-		if (rendererPass == RendererPass::GBuffer)
+		if (rendererPass != RendererPass::CollectTransparentFaces)
 		{
-			_shaders.Bind(Shader::GBuffer);
-			_shaders.Bind(Shader::GBufferItems);
-		}
-		else
-		{
-			_shaders.Bind(Shader::Items);
-		}
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
 
-		if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
-		{
-			BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
+			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+			// Set shaders.
+			if (rendererPass == RendererPass::GBuffer)
+			{
+				_shaders.Bind(Shader::GBuffer);
+				_shaders.Bind(Shader::GBufferItems);
+			}
+			else
+			{
+				_shaders.Bind(Shader::Items);
+			}
+
+			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
+			{
+				BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
+			}
 		}
 
 		for (auto room : view.RoomsToDraw)
@@ -2530,31 +2533,35 @@ namespace TEN::Renderer
 
 		auto skinMode = GetSkinningMode(moveableObj, item->SkinIndex);
 
-		// Bind item main properties
-		_stItem.World = item->InterpolatedWorld;
-		ReflectMatrixOptionally(_stItem.World);
-
-		_stItem.Color = item->Color;
-		_stItem.AmbientLight = item->AmbientLight;
-		_stItem.Skinned = (int)skinMode;
-
-		for (int k = 0; k < item->MeshIndex.size(); k++)
-			_stItem.BoneLightModes[k] = (int)GetMesh(item->MeshIndex[k])->LightMode;
-
-		bool acceptsShadows = moveableObj.ShadowType == ShadowMode::None;
-		BindMoveableLights(item->LightsToDraw, item->RoomNumber, item->PrevRoomNumber, item->LightFade, acceptsShadows);
-
-		if (skinMode == SkinningMode::Full)
+		if (rendererPass != RendererPass::CollectTransparentFaces)
 		{
-			for (int m = 0; m < moveableObj.AnimationTransforms.size(); m++)
-				_stItem.BonesMatrices[m] = moveableObj.BindPoseTransforms[m] * item->InterpolatedAnimTransforms[m];
+			// Bind item main properties
+			_stItem.World = item->InterpolatedWorld;
+			ReflectMatrixOptionally(_stItem.World);
+
+			_stItem.Color = item->Color;
+			_stItem.AmbientLight = item->AmbientLight;
+			_stItem.Skinned = (int)skinMode;
+
+			for (int k = 0; k < item->MeshIndex.size(); k++)
+				_stItem.BoneLightModes[k] = (int)GetMesh(item->MeshIndex[k])->LightMode;
+
+			bool acceptsShadows = moveableObj.ShadowType == ShadowMode::None;
+			BindMoveableLights(item->LightsToDraw, item->RoomNumber, item->PrevRoomNumber, item->LightFade, acceptsShadows);
+
+
+			if (skinMode == SkinningMode::Full)
+			{
+				for (int m = 0; m < moveableObj.AnimationTransforms.size(); m++)
+					_stItem.BonesMatrices[m] = moveableObj.BindPoseTransforms[m] * item->InterpolatedAnimTransforms[m];
+				UpdateConstantBuffer(_stItem, _cbItem);
+
+				DrawMesh(item, GetMesh(item->SkinIndex), RendererObjectType::Moveable, 0, true, view, rendererPass);
+			}
+
+			memcpy(_stItem.BonesMatrices, item->InterpolatedAnimTransforms, moveableObj.AnimationTransforms.size() * sizeof(Matrix));
 			UpdateConstantBuffer(_stItem, _cbItem);
-
-			DrawMesh(item, GetMesh(item->SkinIndex), RendererObjectType::Moveable, 0, true, view, rendererPass);
 		}
-
-		memcpy(_stItem.BonesMatrices, item->InterpolatedAnimTransforms, moveableObj.AnimationTransforms.size() * sizeof(Matrix));
-		UpdateConstantBuffer(_stItem, _cbItem);
 
 		for (int k = 0; k < item->MeshIndex.size(); k++)
 		{
@@ -3768,18 +3775,24 @@ namespace TEN::Renderer
 
 	void Renderer::DrawRoomSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view)
 	{
-		SetDepthState(DepthState::Read);
-		SetCullMode(CullMode::CounterClockwise);
+		if (lastObjectType != objectInfo->ObjectType)
+		{
+			SetDepthState(DepthState::Read);
+			SetCullMode(CullMode::CounterClockwise);
 
+			_shaders.Bind(Shader::Rooms);
+
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
+			_context->IASetVertexBuffers(0, 1, _roomsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_context->IASetInputLayout(_inputLayout.Get());	
+		}
+		
+		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
+		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		
 		RoomData* nativeRoom = &g_Level.Rooms[objectInfo->Room->RoomNumber];
-
-		_shaders.Bind(Shader::Rooms);
-
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-		_context->IASetVertexBuffers(0, 1, _roomsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
 
 		_stRoom.Caustics = (int)(g_Configuration.EnableCaustics && (nativeRoom->flags & ENV_FLAG_WATER));
 		_stRoom.AmbientColor = Vector3(objectInfo->Room->AmbientLight.x, objectInfo->Room->AmbientLight.y, objectInfo->Room->AmbientLight.z);
@@ -3796,9 +3809,6 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Rooms, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
 		DrawIndexedTriangles((int)_sortedPolygonsIndices.size(), 0, 0);
 
 		_numSortedRoomsDrawCalls++;
@@ -3809,19 +3819,25 @@ namespace TEN::Renderer
 
 	void Renderer::DrawItemSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view)
 	{
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		if (lastObjectType != objectInfo->ObjectType)
+		{
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
+			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_context->IASetInputLayout(_inputLayout.Get());
 
-		SetDepthState(DepthState::Read);
-		SetCullMode(CullMode::CounterClockwise);
-		SetBlendMode(objectInfo->BlendMode);
-		SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+			SetDepthState(DepthState::Read);
+			SetCullMode(CullMode::CounterClockwise);
+			SetBlendMode(objectInfo->BlendMode);
+			SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
-		_shaders.Bind(Shader::Items);
+			_shaders.Bind(Shader::Items);
+		}
 		
+		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
+		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
 		// Bind main item properties.
 		Matrix world = objectInfo->Item->InterpolatedWorld;
 		_stItem.World = world;
@@ -3853,9 +3869,6 @@ namespace TEN::Renderer
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Moveables, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
 
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
 		DrawIndexedTriangles((int)_sortedPolygonsIndices.size(), 0, 0);
 
 		_numSortedMoveablesDrawCalls++;
@@ -3864,14 +3877,25 @@ namespace TEN::Renderer
 
 	void Renderer::DrawStaticSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view)
 	{
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-		_context->IASetVertexBuffers(0, 1, _staticsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		if (lastObjectType != objectInfo->ObjectType)
+		{
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
+			_context->IASetVertexBuffers(0, 1, _staticsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_context->IASetInputLayout(_inputLayout.Get());
 
-		_shaders.Bind(Shader::InstancedStatics);
+			SetDepthState(DepthState::Read);
+			SetCullMode(CullMode::CounterClockwise);
+			SetBlendMode(objectInfo->BlendMode);
+			SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+
+			_shaders.Bind(Shader::InstancedStatics);
+		}
 		
+		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
+		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
 		auto world = objectInfo->Static->World;
 		_stInstancedStaticMeshBuffer.StaticMeshes[0].World = world;
 
@@ -3881,16 +3905,8 @@ namespace TEN::Renderer
 		BindInstancedStaticLights(objectInfo->Static->LightsToDraw, 0);
 		UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
-		SetDepthState(DepthState::Read);
-		SetCullMode(CullMode::CounterClockwise);
-		SetBlendMode(objectInfo->BlendMode);
-		SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
-
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Statics, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
-
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 		DrawIndexedInstancedTriangles((int)_sortedPolygonsIndices.size(), 1, 0, 0);
 
@@ -3900,14 +3916,25 @@ namespace TEN::Renderer
 
 	void Renderer::DrawMoveableAsStaticSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view)
 	{
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		if (lastObjectType != objectInfo->ObjectType)
+		{
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
+			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_context->IASetInputLayout(_inputLayout.Get());
 
-		_shaders.Bind(Shader::InstancedStatics);
+			_shaders.Bind(Shader::InstancedStatics);
 		
+			SetDepthState(DepthState::Read);
+			SetCullMode(CullMode::CounterClockwise);
+			SetBlendMode(objectInfo->BlendMode);
+			SetAlphaTest(AlphaTestMode::GreatherThan, ALPHA_TEST_THRESHOLD);		
+		}
+
+		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
+		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	
 		auto world = objectInfo->World;
 		_stInstancedStaticMeshBuffer.StaticMeshes[0].World = world;
 
@@ -3917,16 +3944,8 @@ namespace TEN::Renderer
 		BindInstancedStaticLights(objectInfo->Room->LightsToDraw, 0);
 		UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
-		SetDepthState(DepthState::Read);
-		SetCullMode(CullMode::CounterClockwise);
-		SetBlendMode(objectInfo->BlendMode);
-		SetAlphaTest(AlphaTestMode::GreatherThan, ALPHA_TEST_THRESHOLD);
-
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Statics, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
-
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 		DrawIndexedInstancedTriangles((int)_sortedPolygonsIndices.size(), 1, 0, 0);
 
@@ -3942,19 +3961,25 @@ namespace TEN::Renderer
 			return;
 		}
 
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		_context->IASetInputLayout(_inputLayout.Get());
+		if (lastObjectType != objectInfo->ObjectType)
+		{
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
+			_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
+			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_context->IASetInputLayout(_inputLayout.Get());
 
-		SetDepthState(DepthState::Read);
-		SetCullMode(CullMode::CounterClockwise);
-		SetBlendMode(objectInfo->BlendMode);
-		SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+			SetDepthState(DepthState::Read);
+			SetCullMode(CullMode::CounterClockwise);
+			SetBlendMode(objectInfo->BlendMode);
+			SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
-		_shaders.Bind(Shader::Items);
-		
+			_shaders.Bind(Shader::Items);
+		}
+
+		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
+		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
 		// Bind main item properties.
 		Matrix world = objectInfo->Item->InterpolatedWorld;
 		_stItem.World = world;
@@ -3992,9 +4017,6 @@ namespace TEN::Renderer
 
 		BindBucketTextures(*objectInfo->Bucket, TextureSource::Moveables, objectInfo->Bucket->Animated);
 		BindMaterial(objectInfo->Bucket->MaterialIndex, false);
-
-		_sortedPolygonsIndexBuffer.Update(_context.Get(), _sortedPolygonsIndices, 0, (int)_sortedPolygonsIndices.size());
-		_context->IASetIndexBuffer(_sortedPolygonsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 		DrawIndexedTriangles((int)_sortedPolygonsIndices.size(), 0, 0);
 
