@@ -773,7 +773,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\ConstantBuffers\AnimatedBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\BlendingBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\CameraMatrixBuffer.h" />
-    <ClInclude Include="Renderer\ConstantBuffers\ConstantBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\HUDBarBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\HUDBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\InstancedSpriteBuffer.h" />
@@ -791,10 +790,8 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\ConstantBuffers\SMAABuffer.h" />
     <ClInclude Include="Renderer\Frustum.h" />
     <ClInclude Include="Renderer\Graphics\IRenderSurface2D.h" />
-    <ClInclude Include="Renderer\Graphics\IRenderSurface2D.h" />
     <ClInclude Include="Renderer\Graphics\IDepthTarget.h" />
     <ClInclude Include="Renderer\Graphics\IInputLayout.h" />
-    <ClInclude Include="Renderer\Graphics\IndexBuffer.h" />
     <ClInclude Include="Renderer\Graphics\IConstantBuffer.h" />
     <ClInclude Include="Renderer\Graphics\IGraphicsDevice.h" />
     <ClInclude Include="Renderer\Graphics\IIndexBuffer.h" />
@@ -809,12 +806,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Graphics\ITextureBase.h" />
     <ClInclude Include="Renderer\Graphics\IVertexBuffer.h" />
     <ClInclude Include="Renderer\Graphics\IVideoPlayer.h" />
-    <ClInclude Include="Renderer\Graphics\RenderTarget2D.h" />
-    <ClInclude Include="Renderer\Graphics\RenderTargetCube.h" />
-    <ClInclude Include="Renderer\Graphics\Texture2D.h" />
-    <ClInclude Include="Renderer\Graphics\Texture2DArray.h" />
-    <ClInclude Include="Renderer\Graphics\TextureBase.h" />
-    <ClInclude Include="Renderer\Graphics\VertexBuffer.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\PostProcessVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\SpriteVertex.h" />
     <ClInclude Include="Renderer\Graphics\Vertices\Vertex.h" />

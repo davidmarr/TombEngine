@@ -150,6 +150,32 @@ namespace TEN::Renderer
 			_shadowLight->Position :
 			Vector3::Lerp(_shadowLight->PrevPosition, _shadowLight->Position, GetInterpolationFactor());
 
+		static constexpr Vector3 forwardVectors[6] =
+		{
+			//+X (right)
+			Vector3(-1,0,0),
+			//-X (left)
+			Vector3(1,0,0),
+			//-Y (up)
+			Vector3(0,-1,0),
+			//+Y (down)
+			Vector3(0,1,0),
+			//+Z (forward)
+			Vector3(0,0,1),
+			//-Z (backward)
+			Vector3(0,0,-1),
+		};
+
+		static constexpr Vector3 upVectors[6] =
+		{
+			Vector3(0,-1,0),
+			Vector3(0,-1,0),
+			Vector3(0,0,-1),
+			Vector3(0,0,1),
+			Vector3(0,-1,0),
+			Vector3(0,-1,0),
+		};
+
 		for (int step = 0; step < 6; step++)
 		{
 			// Bind render target.
@@ -177,8 +203,8 @@ namespace TEN::Renderer
 
 			// Set camera matrices.
 			auto view = Matrix::CreateLookAt(shadowLightPos, shadowLightPos +
-				RenderTargetCube::forwardVectors[step] * BLOCK(10),
-				RenderTargetCube::upVectors[step]);
+				forwardVectors[step] * BLOCK(10),
+				upVectors[step]);
 
 			auto projection = Matrix::CreatePerspectiveFieldOfView(90.0f * PI / 180.0f, 1.0f, 16.0f, _shadowLight->Out);
 

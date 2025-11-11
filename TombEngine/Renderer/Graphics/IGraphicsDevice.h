@@ -48,9 +48,11 @@ namespace TEN::Renderer::Graphics
 
 		virtual ITexture2D* CreateTexture2D(int width, int height, byte* data) = 0;
 		virtual ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) = 0;
+		virtual ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format) = 0;
 		virtual ITexture2D* CreateTexture2D(const std::string fileName) = 0;
 		virtual ITexture2D* CreateTexture2D(int dataSize, byte* data) = 0;
 		virtual ITexture2D* CreateTexture2D() = 0;
+		virtual void UpdateTexture2D(ITexture2D* texture, byte* data) = 0;
 
 		virtual void SetBlendMode(BlendMode blendMode) = 0;
 		virtual void SetDepthState(DepthState depthState) = 0;

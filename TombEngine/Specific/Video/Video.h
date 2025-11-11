@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Renderer/Graphics/Texture2D.h"
-#include "Renderer/Graphics/IVideoPlayer.h"
 #include "Sound/sound.h"
 
 using namespace TEN::Math;
@@ -46,8 +44,6 @@ namespace TEN::Video
 		ITexture2D*				  _texture		= nullptr;
 		ITexture2D*				  _videoTexture = nullptr;
 		IGraphicsDevice*		  _device		= nullptr;
-		ITextureBase*			  _textureView	= nullptr;
-		IVideoPlayer* _videoPlayer = nullptr;
 
 	public:
 		// Constructors

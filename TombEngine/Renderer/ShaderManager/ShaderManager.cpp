@@ -1,10 +1,7 @@
 #include "framework.h"
 #include "Renderer/ShaderManager/ShaderManager.h"
-
 #include "Renderer/RendererUtils.h"
-#include "Renderer/Structures/RendererShader.h"
 #include "Renderer/Graphics/IGraphicsDevice.h"
-#include "Renderer/Graphics/IShader.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
 #include "Version.h"
@@ -35,20 +32,20 @@ namespace TEN::Renderer::Utils
 
 	void ShaderManager::LoadPostprocessShaders()
 	{
-		Load(Shader::PostProcess, "PostProcess", "", ShaderType::PixelAndVertex);
+		Load(Shader::PostProcess, "PostProcess", "", ShaderType::PixelAndVertex, {});
 
-		Load(Shader::PostProcessMonochrome, "PostProcess", "Monochrome", ShaderType::Pixel);
-		Load(Shader::PostProcessNegative, "PostProcess", "Negative", ShaderType::Pixel);
-		Load(Shader::PostProcessExclusion, "PostProcess", "Exclusion", ShaderType::Pixel);
-		Load(Shader::PostProcessFinalPass, "PostProcess", "FinalPass", ShaderType::Pixel);
-		Load(Shader::PostProcessLensFlare, "PostProcess", "LensFlare", ShaderType::Pixel);
+		Load(Shader::PostProcessMonochrome, "PostProcess", "Monochrome", ShaderType::Pixel, {});
+		Load(Shader::PostProcessNegative, "PostProcess", "Negative", ShaderType::Pixel, {});
+		Load(Shader::PostProcessExclusion, "PostProcess", "Exclusion", ShaderType::Pixel, {});
+		Load(Shader::PostProcessFinalPass, "PostProcess", "FinalPass", ShaderType::Pixel, {});
+		Load(Shader::PostProcessLensFlare, "PostProcess", "LensFlare", ShaderType::Pixel, {});
 
-		Load(Shader::Ssao, "SSAO", "", ShaderType::Pixel);
-		Load(Shader::SsaoBlur, "SSAO", "Blur", ShaderType::Pixel);
+		Load(Shader::Ssao, "SSAO", "", ShaderType::Pixel, {});
+		Load(Shader::SsaoBlur, "SSAO", "Blur", ShaderType::Pixel, {});
 
-		Load(Shader::Downscale, "PostProcess", "Downscale", ShaderType::Pixel);
-		Load(Shader::Blur, "PostProcess", "Blur", ShaderType::Pixel);
-		Load(Shader::GlowCombine, "PostProcess", "GlowCombine", ShaderType::Pixel);
+		Load(Shader::Downscale, "PostProcess", "Downscale", ShaderType::Pixel, {});
+		Load(Shader::Blur, "PostProcess", "Blur", ShaderType::Pixel, {});
+		Load(Shader::GlowCombine, "PostProcess", "GlowCombine", ShaderType::Pixel, {});
 	}
 
 	void ShaderManager::LoadAAShaders(int width, int height, bool recompile)
@@ -74,7 +71,6 @@ namespace TEN::Renderer::Utils
 		// defines.push_back({ "SMAA_PREDICATION", "1" });
 
 		// Set up target macro.
-		auto dx101Macro = D3D10_SHADER_MACRO{ "SMAA_HLSL_4_1", "1" };
 		defines["SMAA_HLSL_4_1"] = "1";
 
 		Load(Shader::SmaaEdgeDetection, "SMAA", "EdgeDetection", ShaderType::Vertex, defines, recompile);
@@ -84,40 +80,45 @@ namespace TEN::Renderer::Utils
 		Load(Shader::SmaaBlendingWeightCalculation, "SMAA", "BlendingWeightCalculation", ShaderType::PixelAndVertex, defines, recompile);
 		Load(Shader::SmaaNeighborhoodBlending, "SMAA", "NeighborhoodBlending", ShaderType::PixelAndVertex, defines, recompile);
 
-		Load(Shader::Fxaa, "FXAA", "", ShaderType::Pixel);
+		Load(Shader::Fxaa, "FXAA", "", ShaderType::Pixel, {});
 	}
 
 	void ShaderManager::LoadCommonShaders()
 	{
-		D3D_SHADER_MACRO animated[] = { "ANIMATED", "", nullptr, nullptr };
-		D3D_SHADER_MACRO roomTransparent[] = { "TRANSPARENT", "", nullptr, nullptr };
-		D3D_SHADER_MACRO shadowMap[] = { "SHADOW_MAP", "", nullptr, nullptr };
-		
-		Load(Shader::Rooms, "Rooms", "", ShaderType::PixelAndVertex);
-		Load(Shader::RoomsTransparent, "Rooms", "", ShaderType::Pixel, roomTransparent);
-		Load(Shader::RoomAmbient, "RoomAmbient", "", ShaderType::PixelAndVertex);
-		Load(Shader::RoomAmbientSky, "RoomAmbient", "Sky", ShaderType::PixelAndVertex);
-		Load(Shader::Items, "Items", "", ShaderType::PixelAndVertex);
-		Load(Shader::Sky, "Sky", "", ShaderType::PixelAndVertex);
-		Load(Shader::Solid, "Solid", "", ShaderType::PixelAndVertex);
-		Load(Shader::Inventory, "Inventory", "", ShaderType::PixelAndVertex);
+		auto animated = std::map<std::string, std::string>{};
+		animated["ANIMATED"] = "";
 
-		Load(Shader::FullScreenQuad, "FullScreenQuad", "", ShaderType::PixelAndVertex);
+		auto roomTransparent = std::map<std::string, std::string>{};
+		roomTransparent["TRANSPARENT"] = "";
+
+		auto shadowMap = std::map<std::string, std::string>{};
+		shadowMap["SHADOW_MAP"] = "";
+
+		Load(Shader::Rooms, "Rooms", "", ShaderType::PixelAndVertex, {});
+		Load(Shader::RoomsTransparent, "Rooms", "", ShaderType::Pixel, roomTransparent);
+		Load(Shader::RoomAmbient, "RoomAmbient", "", ShaderType::PixelAndVertex, {});
+		Load(Shader::RoomAmbientSky, "RoomAmbient", "Sky", ShaderType::PixelAndVertex, {});
+		Load(Shader::Items, "Items", "", ShaderType::PixelAndVertex, {});
+		Load(Shader::Sky, "Sky", "", ShaderType::PixelAndVertex, {});
+		Load(Shader::Solid, "Solid", "", ShaderType::PixelAndVertex, {});
+		Load(Shader::Inventory, "Inventory", "", ShaderType::PixelAndVertex, {});
+
+		Load(Shader::FullScreenQuad, "FullScreenQuad", "", ShaderType::PixelAndVertex, {});
 
 		Load(Shader::ShadowMap, "ShadowMap", "", ShaderType::PixelAndVertex, shadowMap);
 
 		Load(Shader::Hud, "HUD", "", ShaderType::Vertex);
-		Load(Shader::HudColor, "HUD", "ColoredHUD", ShaderType::Pixel);
-		Load(Shader::HudDTexture, "HUD", "TexturedHUD", ShaderType::Pixel);
-		Load(Shader::HudBarColor, "HUD", "TexturedHUDBar", ShaderType::Pixel);
+		Load(Shader::HudColor, "HUD", "ColoredHUD", ShaderType::Pixel, {});
+		Load(Shader::HudDTexture, "HUD", "TexturedHUD", ShaderType::Pixel, {});
+		Load(Shader::HudBarColor, "HUD", "TexturedHUDBar", ShaderType::Pixel, {});
 
-		Load(Shader::InstancedStatics, "InstancedStatics", "", ShaderType::PixelAndVertex);
-		Load(Shader::InstancedSprites, "InstancedSprites", "", ShaderType::PixelAndVertex);
+		Load(Shader::InstancedStatics, "InstancedStatics", "", ShaderType::PixelAndVertex, {});
+		Load(Shader::InstancedSprites, "InstancedSprites", "", ShaderType::PixelAndVertex, {});
 
-		Load(Shader::GBuffer, "GBuffer", "", ShaderType::Pixel);
-		Load(Shader::GBufferRooms, "GBuffer", "Rooms", ShaderType::Vertex);
-		Load(Shader::GBufferItems, "GBuffer", "Items", ShaderType::Vertex);
-		Load(Shader::GBufferInstancedStatics, "GBuffer", "InstancedStatics", ShaderType::Vertex);
+		Load(Shader::GBuffer, "GBuffer", "", ShaderType::Pixel, {});
+		Load(Shader::GBufferRooms, "GBuffer", "Rooms", ShaderType::Vertex, {});
+		Load(Shader::GBufferItems, "GBuffer", "Items", ShaderType::Vertex, {});
+		Load(Shader::GBufferInstancedStatics, "GBuffer", "InstancedStatics", ShaderType::Vertex, {});
 	}
 
 	void ShaderManager::LoadShaders(int width, int height, bool recompileAAShaders)
@@ -150,22 +151,13 @@ namespace TEN::Renderer::Utils
 
 		const auto& shaderObj = _shaders[shaderIndex];
 
-		if (shaderObj.Vertex.Shader != nullptr || forceNull)
-			_context->VSSetShader(shaderObj.Vertex.Shader.Get(), nullptr, 0);
-
-		if (shaderObj.Pixel.Shader != nullptr || forceNull)
-			_context->PSSetShader(shaderObj.Pixel.Shader.Get(), nullptr, 0);
-
-		if (shaderObj.Compute.Shader != nullptr || forceNull)
-			_context->CSSetShader(shaderObj.Compute.Shader.Get(), nullptr, 0);
+		_graphicsDevice->BindVertexShader(shaderObj, forceNull);
+		_graphicsDevice->BindGeometryShader(shaderObj, forceNull);
+		_graphicsDevice->BindPixelShader(shaderObj, forceNull);
 	}
 
 	IShader* ShaderManager::LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)
 	{
-
-
-		auto rendererShader = RendererShader{};
-
 		// Define paths for native (uncompiled) shaders and compiled shaders.
 		auto shaderPath = GetAssetPath(L"Shaders\\");
 		auto compiledShaderPath = shaderPath + L"Bin\\" + ToWString(TEN_VERSION_STRING) + L"\\";

@@ -77,6 +77,12 @@ namespace TEN::Renderer::Native::DirectX11
 				return DXGI_FORMAT_R32_FLOAT;
 			case SurfaceFormat::SF_RG8_Unorm:
 				return DXGI_FORMAT_R8G8_UNORM;
+			case SurfaceFormat::SF_R8_Unorm:
+				return DXGI_FORMAT_R8_UNORM;
+			case SurfaceFormat::SF_RGBA32_Float:
+				return DXGI_FORMAT_R32G32B32A32_FLOAT;
+			case SurfaceFormat::SF_BGRA8_Unorm:
+				return DXGI_FORMAT_B8G8R8A8_UNORM;
 			case SurfaceFormat::Unknown:
 			default:
 				return DXGI_FORMAT_UNKNOWN;
@@ -142,6 +148,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) override;
 		ITexture2D* CreateTexture2D(const std::string fileName) override;
 		ITexture2D* CreateTexture2D(int dataSize, byte* data) override;
+		ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format) override;
 
 		void SetBlendMode(BlendMode blendMode) override;
 		void SetDepthState(DepthState depthState) override;

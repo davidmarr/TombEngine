@@ -35,7 +35,6 @@
 #include "Renderer/ConstantBuffers/MaterialBuffer.h"
 #include "Renderer/ConstantBuffers/InstancedStaticBuffer.h"
 #include "Renderer/ConstantBuffers/InstancedSpriteBuffer.h"
-#include "Renderer/ConstantBuffers/ConstantBuffer.h"
 #include "Renderer/ConstantBuffers/PostProcessBuffer.h"
 #include "Renderer/ConstantBuffers/SMAABuffer.h"
 #include "Renderer/ConstantBuffers/SkyBuffer.h"
@@ -46,9 +45,6 @@
 #include "Renderer/Structures/RendererSprite.h"
 #include "Renderer/Structures/RendererAnimatedTexture.h"
 #include "Renderer/Structures/RendererAnimatedTextureSet.h"
-#include "Renderer/Graphics/IndexBuffer.h"
-#include "Renderer/Graphics/RenderTargetCube.h"
-#include "Renderer/Graphics/VertexBuffer.h"
 #include "Renderer/Graphics/Vertices/PostProcessVertex.h"
 #include "Renderer/ShaderManager/ShaderManager.h"
 #include "Renderer/Structures/RendererItem.h"
@@ -467,7 +463,6 @@ namespace TEN::Renderer
 		void RenderLoadSaveMenu();
 		void RenderOptionsMenu(Menu menu, int initialY);
 		void RenderNewInventory();
-		void RenderToCubemap(const RenderTargetCube& dest, const Vector3& pos, int roomNumber);
 		void RenderBlobShadows(RenderView& renderView);
 		void RenderShadowMap(RendererItem* item, RenderView& view);
 		void RenderItemShadows(RenderView& renderView);

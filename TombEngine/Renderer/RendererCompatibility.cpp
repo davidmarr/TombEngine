@@ -1,10 +1,8 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
-
 #include <execution>
 #include <stack>
 #include <tuple>
-
 #include "Game/control/control.h"
 #include "Game/effects/Decal.h"
 #include "Game/effects/Hair.h"
@@ -22,8 +20,6 @@ using namespace TEN::Renderer::Graphics;
 
 namespace TEN::Renderer
 {
-	template class VertexBuffer<Vertex>;
-
 	bool Renderer::PrepareDataForTheRenderer()
 	{
 		TENLog("Preparing renderer...", LogLevel::Info);

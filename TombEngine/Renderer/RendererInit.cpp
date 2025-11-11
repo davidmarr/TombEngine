@@ -91,7 +91,7 @@ namespace TEN::Renderer
 			effect.LightsToDraw = createVector<RendererLight*>(MAX_LIGHTS_PER_ITEM);
 
 		_SMAAAreaTexture = _graphicsDevice->CreateTexture2D(AREATEX_WIDTH, AREATEX_HEIGHT, SurfaceFormat::SF_RG8_Unorm, AREATEX_PITCH, areaTexBytes);
-		_SMAASearchTexture = _graphicsDevice->CreateTexture2D(SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, SurfaceFormat::R8_Unorm, SEARCHTEX_PITCH, searchTexBytes);
+		_SMAASearchTexture = _graphicsDevice->CreateTexture2D(SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, SurfaceFormat::SF_R8_Unorm, SEARCHTEX_PITCH, searchTexBytes);
 
 		CreateSSAONoiseTexture();
 		InitializePostProcess();
@@ -177,7 +177,7 @@ namespace TEN::Renderer
 			SSAONoise.push_back(noise);
 		}
 
-		_SSAONoiseTexture = _graphicsDevice->CreateTexture2D(4, 4, SurfaceFormat::RGBA32_Float, 4 * sizeof(Vector4), SSAONoise.data());
+		_SSAONoiseTexture = _graphicsDevice->CreateTexture2D(4, 4, SurfaceFormat::SF_RGBA32_Float, 4 * sizeof(Vector4), SSAONoise.data());
 	}
 
 	void Renderer::InitializeSpriteQuad()

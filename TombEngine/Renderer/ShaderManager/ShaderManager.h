@@ -2,85 +2,14 @@
 
 #include "Renderer/Graphics/IGraphicsDevice.h"
 #include <map>
+#include <array>
+#include <string>
+#include <vector>
 
 using namespace TEN::Renderer::Graphics;
 
 namespace TEN::Renderer::Utils
 {
-	enum class ShaderType
-	{
-		Pixel,
-		Vertex,
-		PixelAndVertex,
-		Compute,
-		Geometry
-	};
-
-	enum class Shader
-	{
-		// General
-
-		None,
-		Rooms,
-		RoomsTransparent,
-		RoomAmbient,
-		RoomAmbientSky,
-		Items,
-		InstancedStatics,
-		InstancedSprites,
-		Sky,
-		Solid,
-		Inventory,
-		FullScreenQuad,
-		ShadowMap,
-
-		// HUD
-
-		Hud,
-		HudColor,
-		HudDTexture,
-		HudBarColor,
-
-		// GBuffer
-
-		GBuffer,
-		GBufferRooms,
-		GBufferItems,
-		GBufferInstancedStatics,
-
-		// SMAA
-
-		SmaaEdgeDetection,
-		SmaaLumaEdgeDetection,
-		SmaaColorEdgeDetection,
-		SmaaDepthEdgeDetection,
-		SmaaBlendingWeightCalculation,
-		SmaaNeighborhoodBlending,
-		Fxaa,
-
-		// Post-process
-
-		PostProcess,
-		PostProcessMonochrome,
-		PostProcessNegative,
-		PostProcessExclusion,
-		PostProcessFinalPass,
-		PostProcessLensFlare,
-
-		// SSAO
-
-		Ssao,
-		SsaoBlur,
-
-		// Fullscreen effects
-
-		Blur,
-		Downscale,
-		GlowCombine,
-
-		Count
-	};
-
 	class ShaderManager
 	{
 	private:

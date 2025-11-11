@@ -108,6 +108,11 @@ namespace TEN::Renderer::Native::DirectX11
 		return new DX11Texture2D(_device.Get(), data, dataSize);
 	}
 
+	ITexture2D* DX11GraphicsDevice::CreateTexture2D(int width, int height, SurfaceFormat format)
+	{
+		return new DX11Texture2D(_device.Get(), width, height, GetDXGIFormat(format));
+	}
+
 	void DX11GraphicsDevice::SetBlendMode(BlendMode blendMode)
 	{
 		switch (blendMode)

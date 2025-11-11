@@ -360,7 +360,7 @@ namespace TEN::Video
 	void VideoHandler::Stop()
 	{
 		DeinitializePlayer();
-		_videoPlayer->DeinitializeVideoTexture();
+		delete _videoTexture;
 
 		// Don't unset this flag until the native texture is released, otherwise it may crash when trying to render the texture.
 		_needRender = false;
@@ -376,9 +376,7 @@ namespace TEN::Video
 		// Attempt to map and render texture only if callback has set frame to be rendered.
 		if (_needRender)
 		{
-			auto mappedResource = D3D11_MAPPED_SUBRESOURCE{};
-			
-			_videoPlayer->UpdateVideoTexture(_videoTexture, _frameBuffer.data());
+			_device->UpdateTexture2D(_videoTexture, (byte*)(_frameBuffer.data()));
 
 			if (_playbackMode == VideoPlaybackMode::Exclusive)
 			{
@@ -464,7 +462,7 @@ namespace TEN::Video
 
 	void VideoHandler::RenderExclusive()
 	{
-		g_Renderer.RenderFullScreenTexture(_textureView, (float)_size.x / (float)_size.y);
+		g_Renderer.RenderFullScreenTexture(_videoTexture, (float)_size.x / (float)_size.y);
 	}
 
 	void VideoHandler::UpdateBackground()
@@ -495,7 +493,7 @@ namespace TEN::Video
 		_texture.Texture = _videoTexture;
 		_texture.ShaderResourceView = _textureView;*/
 
-		g_Renderer.UpdateVideoTexture(_texture);
+		g_Renderer.UpdateVideoTexture(_videoTexture);
 	}
 
 	bool VideoHandler::HandleError()
@@ -515,7 +513,7 @@ namespace TEN::Video
 
 	bool VideoHandler::InitializeVideoTexture()
 	{
-		if (_videoTexture != nullptr || _textureView != nullptr)
+		if (_videoTexture != nullptr)
 		{
 			TENLog("Video texture already exists", LogLevel::Error);
 			return false;
@@ -523,7 +521,7 @@ namespace TEN::Video
 		
 		_frameBuffer.resize(_size.x * _size.y * 4);
 
-		_videoPlayer->CreateVideoTexture(_size.x, _size.y);
+		_videoTexture = _device->CreateTexture2D(_size.x, _size.y, SurfaceFormat::SF_BGRA8_Unorm);
 
 		/*auto texDesc = D3D11_TEXTURE2D_DESC{};
 		texDesc.Width = _size.x;
@@ -554,7 +552,7 @@ namespace TEN::Video
 
 	void VideoHandler::DeinitializeVideoTexture()
 	{
-		_videoPlayer->DeinitializeVideoTexture();
+		delete _videoTexture;
 
 		/*if (_videoTexture != nullptr)
 		{

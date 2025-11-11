@@ -346,9 +346,10 @@ enum class SurfaceFormat
 	SF_RGBA8_Unorm,
 	SF_RGBA8_Unorm_Srgb,
 	SF_RG8_Unorm,
-	R8_Unorm,
+	SF_R8_Unorm,
 	SF_R32_Float,
-	RGBA32_Float
+	SF_RGBA32_Float,
+	SF_BGRA8_Unorm
 };
 
 enum class DepthFormat
@@ -404,4 +405,78 @@ enum class VertexType
 {
 	Vertex,
 	PostProcessVertex
+};
+
+enum class ShaderType
+{
+	Pixel,
+	Vertex,
+	PixelAndVertex,
+	Compute,
+	Geometry
+};
+
+enum class Shader
+{
+	// General
+
+	None,
+	Rooms,
+	RoomsTransparent,
+	RoomAmbient,
+	RoomAmbientSky,
+	Items,
+	InstancedStatics,
+	InstancedSprites,
+	Sky,
+	Solid,
+	Inventory,
+	FullScreenQuad,
+	ShadowMap,
+
+	// HUD
+
+	Hud,
+	HudColor,
+	HudDTexture,
+	HudBarColor,
+
+	// GBuffer
+
+	GBuffer,
+	GBufferRooms,
+	GBufferItems,
+	GBufferInstancedStatics,
+
+	// SMAA
+
+	SmaaEdgeDetection,
+	SmaaLumaEdgeDetection,
+	SmaaColorEdgeDetection,
+	SmaaDepthEdgeDetection,
+	SmaaBlendingWeightCalculation,
+	SmaaNeighborhoodBlending,
+	Fxaa,
+
+	// Post-process
+
+	PostProcess,
+	PostProcessMonochrome,
+	PostProcessNegative,
+	PostProcessExclusion,
+	PostProcessFinalPass,
+	PostProcessLensFlare,
+
+	// SSAO
+
+	Ssao,
+	SsaoBlur,
+
+	// Fullscreen effects
+
+	Blur,
+	Downscale,
+	GlowCombine,
+
+	Count
 };

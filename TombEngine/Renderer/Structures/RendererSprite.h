@@ -1,6 +1,6 @@
 #pragma once
 #include <SimpleMath.h>
-#include "Renderer/Graphics/Texture2D.h"
+#include "Renderer/Graphics/ITexture2D.h"
 
 namespace TEN::Renderer::Structures
 {

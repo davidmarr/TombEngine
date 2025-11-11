@@ -68,6 +68,37 @@ namespace TEN::Renderer::Native::DirectX11
 			throwIfFailed(res);
 		}
 
+		DX11Texture2D(ID3D11Device* device, int width, int height, DXGI_FORMAT format)
+		{
+			HRESULT res;
+
+			_width = width;
+			_height = height;
+
+			// Texture
+			auto desc = D3D11_TEXTURE2D_DESC{};
+			desc.Width = width;
+			desc.Height = height;
+			desc.Format = format;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			desc.MiscFlags = 0;
+			desc.MipLevels = 1;
+			desc.ArraySize = 1;
+			desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+			desc.SampleDesc.Count = 1;
+			desc.SampleDesc.Quality = 0;
+			desc.Usage = D3D11_USAGE_DYNAMIC;
+
+			// SRV
+			auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
+			shaderDesc.Format = desc.Format;
+			shaderDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			shaderDesc.Texture2D.MostDetailedMip = 0;
+			shaderDesc.Texture2D.MipLevels = 1;
+			res = device->CreateShaderResourceView(_texture.Get(), &shaderDesc, _shaderResourceView.GetAddressOf());
+			throwIfFailed(res);
+		}
+
 		DX11Texture2D(ID3D11Device* device, int width, int height, DXGI_FORMAT format, int pitch, const void* data)
 		{
 			HRESULT res;

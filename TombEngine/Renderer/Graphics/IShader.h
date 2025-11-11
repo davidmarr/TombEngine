@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Renderer/RendererEnums.h"
-#include "Renderer/ShaderManager/ShaderManager.h"
+#include "Renderer/RendererUtils.h"
+#include <string>
+#include <map>
 
 using namespace TEN::Renderer;
 using namespace TEN::Renderer::Utils;
