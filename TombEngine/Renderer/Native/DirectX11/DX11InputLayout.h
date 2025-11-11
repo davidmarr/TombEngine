@@ -4,6 +4,7 @@
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/IInputLayout.h"
 #include "Renderer/Structures/RendererInputLayout.h"
+#include "Renderer/Native/DirectX11/DX11Shader.h"
 #include <wrl/client.h>
 #include <vector>
 
@@ -85,7 +86,7 @@ namespace TEN::Renderer::Native::DirectX11
 				elements.push_back(element);
 			}
 
-			Utils::throwIfFailed(device->CreateInputLayout(elements.data(), elements.size(), shader->Blob->GetBufferPointer(), shader->Blob->GetBufferSize(), &InputLayout));
+			Utils::throwIfFailed(device->CreateInputLayout(elements.data(), (int)elements.size(), shader->Blob->GetBufferPointer(), shader->Blob->GetBufferSize(), &InputLayout));
 		}
 	};
 }

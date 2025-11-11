@@ -129,6 +129,22 @@ namespace TEN::Renderer::Native::DirectX11
 			return out;
 		}
 
+		inline ID3D11ShaderResourceView* GetShaderResourceView(ITextureBase* texture)
+		{
+			ID3D11ShaderResourceView* srv = nullptr;
+
+			if (auto tex2D = dynamic_cast<DX11Texture2D*>(texture))
+			{
+				srv = tex2D->GetShaderResourceView();
+			}
+			else if (auto rt2D = dynamic_cast<DX11RenderTarget2D*>(texture))
+			{
+				srv = rt2D->GetShaderResourceView();
+			}
+
+			return srv;
+		}
+
 	public:
 		IVertexBuffer* CreateVertexBuffer(int numVertices, int vertexSize, void* data) override;
 		void UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) override;
@@ -203,12 +219,15 @@ namespace TEN::Renderer::Native::DirectX11
 		ISpriteBatch* InitializeSpriteBatch() override;
 		IPrimitiveBatch* InitializePrimitiveBatch() override;
 
-		Vector4 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) override;
+		Vector3 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) override;
 
 		void SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path) override;
 
 		void Flush() override;
 		void UnbindAllRenderTargets() override;
+
+		ITexture2D* CreateTexture2D() override;
+		void UpdateTexture2D(ITexture2D* texture, byte* data) override;
 
 		~DX11GraphicsDevice() override = default;
 	};

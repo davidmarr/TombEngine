@@ -16,15 +16,18 @@ namespace TEN::Renderer::Native::DirectX11
 
 	using Microsoft::WRL::ComPtr;
 
-	class DX11Texture2D : public ITexture2D, public DX11TextureBase
+	class DX11Texture2D : public ITexture2D
 	{
 	protected:
+		int _width;
+		int _height;
 		ComPtr<ID3D11Texture2D> _texture;
+		ComPtr<ID3D11ShaderResourceView> _shaderResourceView;
 
 	public:
 		int GetWidth() override { return _width; }
 		int GetHeight() override { return _height; }
-
+		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 		ID3D11Texture2D* GetTexture() const noexcept { return _texture.Get(); }
 
 		DX11Texture2D() = default;

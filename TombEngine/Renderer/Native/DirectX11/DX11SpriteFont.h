@@ -20,7 +20,7 @@ namespace TEN::Renderer::Native::DirectX11
 		std::unique_ptr<SpriteFont> _gameFont;
 
 	public:
-		public DX11SpriteFont(ID3D11Device* device, std::wstring fontPath)
+		DX11SpriteFont(ID3D11Device* device, std::wstring fontPath)
 		{
 			_gameFont = std::make_unique<SpriteFont>(device, fontPath.c_str());
 		}

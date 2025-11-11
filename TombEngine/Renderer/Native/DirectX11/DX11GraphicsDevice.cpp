@@ -206,10 +206,12 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
 	{
-		auto nativeTexture = static_cast<DX11TextureBase*>(texture);
-		auto dxTexture = nativeTexture->GetShaderResourceView();
+		//auto nativeTexture = static_cast<DX11TextureBase*>(texture);
+		//auto dxTexture = nativeTexture->GetShaderResourceView();
 
-		_context->PSSetShaderResources((unsigned int)registerType, 1, &dxTexture);
+		ID3D11ShaderResourceView* srv = GetShaderResourceView(texture);
+
+		_context->PSSetShaderResources((unsigned int)registerType, 1, &srv);
 
 		ID3D11SamplerState* samplerState = nullptr;
 		switch (samplerType)
@@ -349,7 +351,7 @@ namespace TEN::Renderer::Native::DirectX11
 		{
 			auto rt = renderTargets[i];
 			auto dxRt = static_cast<DX11RenderTarget2D*>(rt);
-			auto rtv = dxRt->GetRenderTargetView(i);
+			auto rtv = dxRt->GetRenderTargetView(0);
 			rtvList.push_back(rtv);
 		}
 
@@ -360,7 +362,7 @@ namespace TEN::Renderer::Native::DirectX11
 			dsv = dxRt->GetDepthStencilView();
 		}
 
-		_context->OMSetRenderTargets(rtvList.size(), rtvList.data(), dsv);
+		_context->OMSetRenderTargets((int)rtvList.size(), rtvList.data(), dsv);
 	}
 
 	void DX11GraphicsDevice::SetViewport(RendererViewport viewport)
@@ -546,10 +548,6 @@ namespace TEN::Renderer::Native::DirectX11
 		samplerStateDesc.MaxAnisotropy = 1;
 		Utils::throwIfFailed(_device->CreateSamplerState(&samplerStateDesc, _pointWrapSamplerState.GetAddressOf()));
 
-		// TODO: it was in initializescreen maybe move them
-		_spriteBatch = std::make_unique<SpriteBatch>(_context.Get());
-		_primitiveBatch = std::make_unique<PrimitiveBatch<Vertex>>(_context.Get());
-
 		_viewportToolkit = Viewport(0, 0, w, h, 0.0f, 1.0f);
 	}
 
@@ -687,19 +685,19 @@ namespace TEN::Renderer::Native::DirectX11
 		auto shader = new DX11Shader();
 
 		// come nel tuo ShaderManager attuale
-		auto baseFileName = TEN::Utils::ToWString(req.SourceDirectory + req.FileName);
+		auto baseFileName = req.SourceDirectory + req.FileName;
 		auto prefix = ((req.CompileIndex < 10) ? L"0" : L"") + std::to_wstring(req.CompileIndex) + L"_";
 
 		// VS
 		auto makeCsoName = [&](const std::string& shaderType) {
-			return TEN::Utils::ToWString(req.BinaryDirectory) + prefix + TEN::Utils::ToWString(req.FileName) + L"." +
+			return req.BinaryDirectory + prefix + req.FileName + L"." +
 				std::wstring(shaderType.begin(), shaderType.end()) + L".cso";
 			};
 
 		auto macros = ToD3DMacros(req.Macros);
 
 		auto compileOne = [&](const std::string& shaderType,
-			const std::string& entry,
+			const std::wstring& entry,
 			const char* model,
 			ComPtr<ID3D10Blob>& outBlob)
 			{
@@ -744,7 +742,7 @@ namespace TEN::Renderer::Native::DirectX11
 #endif
 
 					ComPtr<ID3D10Blob> errors;
-					auto target = shaderType + entry;
+					auto target = shaderType + TEN::Utils::ToString(entry);
 					auto hr = D3DCompileFromFile(
 						srcFileNameWithExt.c_str(),
 						macros.data(),
@@ -908,7 +906,7 @@ namespace TEN::Renderer::Native::DirectX11
 			&GUID_WICPixelFormat24bppBGR, nullptr, true);
 	}
 
-	Vector4 DX11GraphicsDevice::Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world)
+	Vector3 DX11GraphicsDevice::Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world)
 	{
 		return _viewportToolkit.Unproject(position, projection, view, world);
 	}
@@ -922,5 +920,15 @@ namespace TEN::Renderer::Native::DirectX11
 	{
 		ID3D11RenderTargetView* nullViews[] = { nullptr };
 		_context->OMSetRenderTargets(0, nullViews, NULL);
+	}
+
+	ITexture2D* DX11GraphicsDevice::CreateTexture2D()
+	{
+		return new DX11Texture2D();
+	}
+
+	void DX11GraphicsDevice::UpdateTexture2D(ITexture2D* texture, byte* data)
+	{
+
 	}
 }

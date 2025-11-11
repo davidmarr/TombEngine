@@ -45,7 +45,7 @@ namespace TEN::Renderer::Native::DirectX11
 			if (SUCCEEDED(res))
 			{
 				void* dataPtr = (mappedResource.pData);
-				memcpy(dataPtr, &data, Size);
+				memcpy(dataPtr, data, Size);
 				ctx->Unmap(buffer.Get(), 0);
 			}
 			else

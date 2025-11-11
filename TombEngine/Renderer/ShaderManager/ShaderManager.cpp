@@ -1,7 +1,6 @@
 #include "framework.h"
 #include "Renderer/ShaderManager/ShaderManager.h"
 #include "Renderer/RendererUtils.h"
-#include "Renderer/Graphics/IGraphicsDevice.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
 #include "Version.h"
@@ -107,7 +106,7 @@ namespace TEN::Renderer::Utils
 
 		Load(Shader::ShadowMap, "ShadowMap", "", ShaderType::PixelAndVertex, shadowMap);
 
-		Load(Shader::Hud, "HUD", "", ShaderType::Vertex);
+		Load(Shader::Hud, "HUD", "", ShaderType::Vertex, {});
 		Load(Shader::HudColor, "HUD", "ColoredHUD", ShaderType::Pixel, {});
 		Load(Shader::HudDTexture, "HUD", "TexturedHUD", ShaderType::Pixel, {});
 		Load(Shader::HudBarColor, "HUD", "TexturedHUDBar", ShaderType::Pixel, {});
@@ -168,11 +167,22 @@ namespace TEN::Renderer::Utils
 
 		ShaderCompileRequest request;
 		request.BinaryDirectory = compiledShaderPath;
-		request.FileName
-		return _graphicsDevice->CreateShader()
+		request.FileName = wideFileName;
+		request.CompileIndex = _compileCounter;
+		request.EntryPoint = TEN::Utils::ToWString(funcName);
+		request.ForceRecompile = forceRecompile;
+		request.Macros = defines;
+		request.SourceDirectory = shaderPath;
+		request.Type = type;
+
+		auto shader = _graphicsDevice->CreateShader(request);
+
+		_compileCounter++;
+
+		return shader;
 
 		// Helper function to load or compile a shader.
-		auto loadOrCompileShader = [this, type, defines, forceRecompile, shaderPath, compiledShaderPath]
+		/*auto loadOrCompileShader = [this, type, defines, forceRecompile, shaderPath, compiledShaderPath]
 			(const std::wstring& baseFileName, const std::string& shaderType, const std::string& functionName, const char* model, ComPtr<ID3D10Blob>& bytecode)
 		{
 			// Construct full paths using GetAssetPath.
@@ -292,7 +302,7 @@ namespace TEN::Renderer::Utils
 		// Increment compile counter.
 		_compileCounter++;
 
-		return rendererShader;
+		return rendererShader;*/
 	}
 
 	void ShaderManager::Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)
@@ -303,24 +313,6 @@ namespace TEN::Renderer::Utils
 
 	void ShaderManager::Destroy(Shader shader)
 	{
-		auto& shaderData = _shaders[(int)shader];
-
-		if (shaderData.Vertex.Shader != nullptr)
-		{
-			shaderData.Vertex.Shader.Reset();
-			shaderData.Vertex.Blob.Reset();
-		}
-
-		if (shaderData.Pixel.Shader != nullptr)
-		{
-			shaderData.Pixel.Shader.Reset();
-			shaderData.Pixel.Blob.Reset();
-		}
-
-		if (shaderData.Compute.Shader != nullptr)
-		{
-			shaderData.Compute.Shader.Reset();
-			shaderData.Compute.Blob.Reset();
-		}
+		delete _shaders[(int)shader];
 	}
 }

@@ -1956,8 +1956,6 @@ namespace TEN::Renderer
 
 		UpdateConstantBuffer(&cameraConstantBuffer, _cbCameraMatrices);
 
-		ID3D11RenderTargetView* pRenderViewPtrs[3];
-
 		// Draw horizon and sky.
 		DrawHorizonAndSky(_renderTarget->GetDepthTarget(), view);
 
@@ -2762,7 +2760,7 @@ namespace TEN::Renderer
 								{
 									continue;
 								}
-
+								 
 								int passes = rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest ? 2 : 1;
 								for (int p = 0; p < passes; p++)
 								{

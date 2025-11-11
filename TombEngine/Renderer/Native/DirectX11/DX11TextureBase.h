@@ -10,7 +10,7 @@ namespace TEN::Renderer::Native::DirectX11
 	
 	using Microsoft::WRL::ComPtr;
 	
-	class DX11TextureBase : public ITextureBase
+	class DX11TextureBase : public virtual ITextureBase
 	{
 	protected:
 		int _width;

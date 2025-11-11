@@ -22,7 +22,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11Texture2D>	_depthStencilTexture;
 
 	public:
-		int GetArraySize() override { return _depthStencilViews.size(); }
+		int GetArraySize() override { return (int)_depthStencilViews.size(); }
 
 		ID3D11DepthStencilView* GetDepthStencilView(int arrayIndex) const noexcept { return _depthStencilViews[arrayIndex].Get(); }
 		ID3D11DepthStencilView* GetDepthStencilView()               const noexcept { return GetDepthStencilView(0); }

@@ -94,7 +94,7 @@ namespace TEN::Renderer::Native::DirectX11
 			shaderDesc.Texture2DArray.MipLevels = 1;
 			shaderDesc.Texture2DArray.ArraySize = 6;
 			shaderDesc.Texture2DArray.FirstArraySlice = 0;
-			res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf());
+			res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, _shaderResourceView.GetAddressOf());
 			throwIfFailed(res);
 
 			D3D11_TEXTURE2D_DESC depthTexDesc = {};

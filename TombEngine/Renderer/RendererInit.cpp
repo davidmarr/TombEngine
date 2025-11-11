@@ -32,6 +32,7 @@ namespace TEN::Renderer
 		_isWindowed = windowed;
 
 		_graphicsDevice->Initialize(gameDir, w, h, windowed, handle);
+		InitializeScreen(w, h, handle, false);
 		InitializeCommonTextures();
 
 		// Load shaders.
@@ -51,7 +52,7 @@ namespace TEN::Renderer
 		inputLayoutItems.push_back({ VertexInputFormat::VI_R32_Uint, 1, "EFFECTS" });
 
 		auto roomShader = _shaders.Get(Shader::Rooms);
-		_graphicsDevice->CreateInputLayout(inputLayoutItems, (IShader*)roomShader);
+		_vertexInputLayout = _graphicsDevice->CreateInputLayout(inputLayoutItems, (IShader*)roomShader);
 		
 		// Initialize constant buffers.
 		_cbCameraMatrices = CreateConstantBuffer<CItemBuffer>();
@@ -109,6 +110,9 @@ namespace TEN::Renderer
 
 		// Initialize video player.
 		g_VideoPlayer.Initialize(gameDir, _graphicsDevice);
+
+		_primitiveBatch = _graphicsDevice->InitializePrimitiveBatch();
+		_spriteBatch = _graphicsDevice->InitializeSpriteBatch();
 	}
 
 	void Renderer::InitializePostProcess()
@@ -368,6 +372,7 @@ namespace TEN::Renderer
 		TENLog("Creating DX11 renderer device...", LogLevel::Info);
 
 		_graphicsDevice = new TEN::Renderer::Native::DirectX11::DX11GraphicsDevice();
+		_graphicsDevice->CreateDevice();
 
 		// Initialize shader manager.
 		_shaders.Initialize(_graphicsDevice);

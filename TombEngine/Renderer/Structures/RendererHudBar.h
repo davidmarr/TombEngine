@@ -158,8 +158,8 @@ namespace TEN::Renderer::Structures
 				vertices[i].UV = barUVs[i];
 			}
 
-			InnerVertexBuffer = devicePtr->CreateVertexBuffer(vertices.size(), sizeof(Vertex), vertices.data());
-			InnerIndexBuffer = devicePtr->CreateIndexBuffer(barIndices.size(), barIndices.data());
+			InnerVertexBuffer = devicePtr->CreateVertexBuffer((int)vertices.size(), sizeof(Vertex), vertices.data());
+			InnerIndexBuffer = devicePtr->CreateIndexBuffer((int)barIndices.size(), barIndices.data());
 
 			auto borderVertices = std::array<Vertex, barBorderVertices.size()>{};
 			for (int i = 0; i < barBorderVertices.size(); i++)
@@ -169,8 +169,8 @@ namespace TEN::Renderer::Structures
 				borderVertices[i].UV = barBorderUVs[i];
 			}
 
-			VertexBufferBorder = devicePtr->CreateVertexBuffer(borderVertices.size(), sizeof(Vertex), borderVertices.data());
-			IndexBufferBorder = devicePtr->CreateIndexBuffer(barBorderIndices.size(), barBorderIndices.data());
+			VertexBufferBorder = devicePtr->CreateVertexBuffer((int)borderVertices.size(), sizeof(Vertex), borderVertices.data());
+			IndexBufferBorder = devicePtr->CreateIndexBuffer((int)barBorderIndices.size(), barBorderIndices.data());
 		}
 	};
 }

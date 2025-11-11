@@ -3,6 +3,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include "Renderer/Native/DirectX11/DX11TextureBase.h"
+#include "Renderer/Native/DirectX11/DX11Texture2D.h"
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/IRenderTarget2D.h"
 
@@ -11,19 +12,25 @@ namespace TEN::Renderer::Native::DirectX11
 	using namespace TEN::Renderer::Utils;
 	using Microsoft::WRL::ComPtr;
 
-	class DX11RenderTarget2D : public IRenderTarget2D, public DX11Texture2D
+	class DX11RenderTarget2D : public IRenderTarget2D
 	{
 	private:
+		int _width;
+		int _height;
+		ComPtr<ID3D11Texture2D> _texture;
+		ComPtr<ID3D11ShaderResourceView> _shaderResourceView;
 		std::vector<ComPtr<ID3D11RenderTargetView>> _renderTargetViews;
 
 	public:
 		int GetWidth() override { return _width; }
 		int GetHeight() override { return _height; }
 
-		int GetArraySize() override { return _renderTargetViews.size(); }
+		int GetArraySize() override { return (int)_renderTargetViews.size(); }
 
 		ID3D11RenderTargetView* GetRenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }
 		ID3D11RenderTargetView* GetRenderTargetView()               const noexcept { return GetRenderTargetView(0); }
+		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
+		ID3D11Texture2D* GetTexture() const noexcept { return _texture.Get(); }
 
 		DX11RenderTarget2D() = default;
 

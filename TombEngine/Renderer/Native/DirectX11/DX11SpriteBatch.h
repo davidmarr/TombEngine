@@ -31,7 +31,23 @@ namespace TEN::Renderer::Native::DirectX11
 			_renderStates = std::make_unique<CommonStates>(device);
 		}
 
-		public SpriteBatch* GetNativeSpriteBatch() { return _spriteBatch.get(); }
+		SpriteBatch* GetNativeSpriteBatch() { return _spriteBatch.get(); }
+
+		ID3D11ShaderResourceView* GetShaderResourceView(ITextureBase* texture)
+		{
+			ID3D11ShaderResourceView* srv = nullptr;
+
+			if (auto tex2D = dynamic_cast<DX11Texture2D*>(texture))
+			{
+				srv = tex2D->GetShaderResourceView();
+			}
+			else if (auto rt2D = dynamic_cast<DX11RenderTarget2D*>(texture))
+			{
+				srv = rt2D->GetShaderResourceView();
+			}
+
+			return srv;
+		}
 
 		void Begin(SpriteSortingMode sortingMode, BlendMode blendMode) override
 		{
@@ -85,7 +101,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void Draw(ITextureBase* texture, RendererRectangle area, Vector4 color) override
 		{
-			auto dxTexture = static_cast<DX11TextureBase*>(texture);
+			auto dxTexture = GetShaderResourceView(texture);
 
 			RECT rect;
 			rect.left = area.Left;
@@ -93,7 +109,7 @@ namespace TEN::Renderer::Native::DirectX11
 			rect.bottom = area.Bottom;
 			rect.right = area.Right;
 
-			_spriteBatch->Draw(dxTexture->GetShaderResourceView(), rect, color);
+			_spriteBatch->Draw(dxTexture, rect, color);
 		}
 	};
 }

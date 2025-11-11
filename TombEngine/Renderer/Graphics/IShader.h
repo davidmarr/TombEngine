@@ -12,10 +12,10 @@ namespace TEN::Renderer::Graphics
 {
     struct ShaderCompileRequest
     {
-        std::string SourceDirectory;
-        std::string BinaryDirectory;
-        std::string FileName;
-        std::string EntryPoint;
+        std::wstring SourceDirectory;
+        std::wstring BinaryDirectory;
+        std::wstring FileName;
+        std::wstring EntryPoint;
         ShaderType Type;
         std::map<std::string, std::string> Macros;
         bool ForceRecompile = false;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sound/sound.h"
+#include "Renderer/Graphics/IGraphicsDevice.h"
 
 using namespace TEN::Math;
 using namespace TEN::Renderer::Graphics;

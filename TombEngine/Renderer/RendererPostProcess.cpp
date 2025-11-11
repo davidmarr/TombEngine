@@ -176,7 +176,7 @@ namespace TEN::Renderer
 
 	void Renderer::CopyRenderTargetAndDownscale(IRenderSurface2D* source, IRenderSurface2D* dest, float factor, RenderView& view)
 	{
-		RendererViewport viewport = { 0, 0, _screenWidth / factor, _screenWidth / factor, 0.0f, 1.0f };
+		RendererViewport viewport = { 0, 0, (int)(_screenWidth / factor), (int)(_screenHeight / factor), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
 
 		RendererRectangle scissor = { 0, 0, viewport.Width , viewport.Height };
@@ -214,7 +214,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 		SetDepthState(DepthState::Write, true);
 
-		RendererViewport viewport = { 0, 0, _screenWidth / GLOW_DOWNSCALE_FACTOR, _screenWidth / GLOW_DOWNSCALE_FACTOR, 0.0f, 1.0f };
+		RendererViewport viewport = { 0, 0, (int)(_screenWidth / GLOW_DOWNSCALE_FACTOR), (int)(_screenHeight / GLOW_DOWNSCALE_FACTOR), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
 
 		RendererRectangle scissor = { 0, 0, viewport.Width , viewport.Height };

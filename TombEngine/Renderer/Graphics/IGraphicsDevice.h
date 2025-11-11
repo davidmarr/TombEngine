@@ -21,7 +21,6 @@
 #include "Renderer/Structures/RendererRectangle.h"
 #include "Renderer/Structures/RendererInputLayout.h"
 #include "Renderer/Structures/RendererViewport.h"
-#include "Renderer/ShaderManager/ShaderManager.h"
 
 using namespace TEN::Renderer::Structures;
 using namespace DirectX;
@@ -107,9 +106,9 @@ namespace TEN::Renderer::Graphics
 		virtual IPrimitiveBatch* InitializePrimitiveBatch() = 0;
 
 		virtual void SetViewport(RendererViewport viewport) = 0;
-		virtual Vector4 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) = 0;
+		virtual Vector3 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) = 0;
 
-		virtual void SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path);
+		virtual void SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path) = 0;
 
 		virtual void Flush() = 0;
 		virtual void UnbindAllRenderTargets() = 0;

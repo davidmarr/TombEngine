@@ -115,7 +115,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 	// Ambient occlusion
     float occlusion = CalculateOcclusion(GetSamplePosition(input.PositionCopy), output.Color.w);
     occlusion *= ambientOcclusion;
-
+    occlusion = 1;
 	float3 lighting = input.Color.xyz;
 	
 	// Shadows

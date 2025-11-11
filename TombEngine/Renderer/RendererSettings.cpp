@@ -27,7 +27,7 @@ namespace TEN::Renderer
 		return _graphicsDevice->GetDefaultAdapterName();
 	}
 
-	void Renderer::SetTextureOrDefault(ITexture2D* texture, std::wstring path)
+	void Renderer::SetTextureOrDefault(ITexture2D*& texture, std::wstring path)
 	{
 		if (std::filesystem::is_regular_file(path))
 		{

@@ -4,7 +4,7 @@
 
 namespace TEN::Renderer::Graphics
 {
-	class ITexture2D : public ITextureBase
+	class ITexture2D : public virtual ITextureBase
 	{
 	};
 }

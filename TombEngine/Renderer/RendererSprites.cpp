@@ -510,7 +510,7 @@ namespace TEN::Renderer
 
 		_shaders.Bind(Shader::InstancedSprites);
 
-		_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer, 0, _sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
+		_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer, 0, (int)_sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
 		_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer);
 		
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);

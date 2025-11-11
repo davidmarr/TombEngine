@@ -6,8 +6,6 @@
 #include "Renderer/Structures/RendererRectangle.h"
 #include "Renderer/RenderView.h"
 #include "Renderer/RendererUtils.h"
-#include "Renderer/Graphics/RenderTargetCube.h"
-#include "Renderer/Graphics/VertexBuffer.h"
 #include "Renderer/Structures/RendererHudBar.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/clock.h"
@@ -108,18 +106,6 @@ namespace TEN::Renderer
 	void Renderer::UpdateProgress(float value)
 	{
 		RenderLoadingScreen(value);
-	}
-
-	void Renderer::RenderToCubemap(const RenderTargetCube& dest, const Vector3& pos, int roomNumer)
-	{
-		for (int i = 0; i < 6; i++)
-		{
-			auto renderView = RenderView(pos, RenderTargetCube::forwardVectors[i], RenderTargetCube::upVectors[i],
-			                             dest.Resolution, dest.Resolution, Camera.pos.RoomNumber, 10, 20480,
-			                             90 * RADIAN);  
-			//RenderSimpleScene(dest.RenderTargetView[i].Get(), dest.DepthStencilView[i].Get(), renderView);
-			//_context->ClearState();
-		}
 	}
 
 	float Renderer::CalculateFrameRate()

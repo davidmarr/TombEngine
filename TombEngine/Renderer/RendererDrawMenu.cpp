@@ -914,7 +914,7 @@ namespace TEN::Renderer
 
 	void Renderer::RenderTitleImage()
 	{
-		ITexture2D* texture;
+		ITexture2D* texture = _graphicsDevice->CreateTexture2D();
 		SetTextureOrDefault(texture, TEN::Utils::ToWString(g_GameFlow->GetGameDir() + g_GameFlow->IntroImagePath.c_str()));
 
 		//if (!texture.Texture)
