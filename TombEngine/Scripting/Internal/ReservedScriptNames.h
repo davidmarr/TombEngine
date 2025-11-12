@@ -113,6 +113,7 @@ static constexpr char ScriptReserved_Disable[]				= "Disable";
 static constexpr char ScriptReserved_GetCollidable[]		= "GetCollidable";
 static constexpr char ScriptReserved_SetCollidable[]		= "SetCollidable";
 static constexpr char ScriptReserved_MakeInvisible[]		= "MakeInvisible";
+static constexpr char ScriptReserved_GetVisible[]			= "GetVisible";
 static constexpr char ScriptReserved_SetVisible[]			= "SetVisible";
 static constexpr char ScriptReserved_Explode[]				= "Explode";
 static constexpr char ScriptReserved_Shatter[]				= "Shatter";

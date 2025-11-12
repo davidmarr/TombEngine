@@ -93,7 +93,7 @@ float3 CalculateLegacyReflections(float3 worldPosition, float3 normal, float spe
 }
 
 
-float3 CalculateReflections(float3 position, float3 color, float3 normal, float3 specular)
+float3 CalculateReflections(float3 position, float3 color, float3 normal, float specular)
 {
     int materialType = MaterialTypeAndFlags & MATERIAL_FLAG_MASK;
 	

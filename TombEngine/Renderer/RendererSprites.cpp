@@ -504,16 +504,19 @@ namespace TEN::Renderer
 
 	void Renderer::DrawSpriteSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view)
 	{
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
+		if (lastObjectType != objectInfo->ObjectType)
+		{
+			unsigned int stride = sizeof(Vertex);
+			unsigned int offset = 0;
 
-		_shaders.Bind(Shader::InstancedSprites);
+			_shaders.Bind(Shader::InstancedSprites);
 
-		_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer, 0, (int)_sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
-		_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer);
-		
-		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_vertexInputLayout);
+			_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer, 0, (int)_sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
+			_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer);
+
+			_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+			_graphicsDevice->SetInputLayout(_vertexInputLayout);
+		}
 
 		_stInstancedSpriteBuffer.Sprites[0].World = Matrix::Identity;
 		_stInstancedSpriteBuffer.Sprites[0].PerVertexColor = 1;
