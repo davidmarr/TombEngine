@@ -1,12 +1,8 @@
 #include "framework.h"
-
 #include <codecvt>
-#include <d3dcompiler.h>
 #include <locale>
 #include <iostream>
-#include <winerror.h>
 #include <wrl/client.h>
-
 #include "Renderer/Renderer.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/trutils.h"

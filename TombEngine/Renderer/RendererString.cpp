@@ -1,6 +1,5 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
-
 #include "Specific/trutils.h"
 
 namespace TEN::Renderer
@@ -18,7 +17,7 @@ namespace TEN::Renderer
 		AddString(string, pos, color, scale, FLAGS);
 	}
 
-	void Renderer::AddString(int x, int y, const std::string& string, D3DCOLOR color, int flags)
+	void Renderer::AddString(int x, int y, const std::string& string, unsigned int color, int flags)
 	{
 		AddString(string, Vector2(x, y), Color(color), 1.0f, flags);
 	}

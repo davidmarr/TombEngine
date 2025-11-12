@@ -1,9 +1,5 @@
 #include "framework.h"
-
-// TODO: To framework.
 #include <random>
-#include <d3dcompiler.h>
-
 #include "Renderer/Renderer.h"
 #include "Renderer/RendererUtils.h"
 #include "Renderer/SMAA/AreaTex.h"

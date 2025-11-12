@@ -1,12 +1,6 @@
 #pragma once
 #include <wrl/client.h>
-#include <CommonStates.h>
-#include <SpriteFont.h>
-#include <PrimitiveBatch.h>
-#include <d3d9types.h>
 #include <SimpleMath.h>
-#include <PostProcess.h>
-
 #include "Math/Math.h"
 #include "Game/control/box.h"
 #include "Game/items.h"
@@ -689,7 +683,7 @@ namespace TEN::Renderer
 		void SaveScreenshot();
 		void DrawDisplayPickup(const DisplayPickup& pickup);
 		int  Synchronize();
-		void AddString(int x, int y, const std::string& string, D3DCOLOR color, int flags);
+		void AddString(int x, int y, const std::string& string, unsigned int color, int flags);
 		void AddString(const std::string& string, const Vector2& pos, const Color& color, float scale, int flags);
 		void AddString(const std::string& string, const Vector2& pos, const Vector2& area, const Color& color, float scale, int flags);
 		void AddDebugString(const std::string& string, const Vector2& pos, const Color& color, float scale, RendererDebugPage page = RendererDebugPage::None);

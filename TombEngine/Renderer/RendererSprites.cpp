@@ -1,6 +1,5 @@
 #include "framework.h"
 #include "Renderer/Structures/RendererSprite.h"
-
 #include "Renderer/Structures/RendererSpriteBucket.h"
 #include "Renderer/Renderer.h"
 #include "Specific/Parallel.h"

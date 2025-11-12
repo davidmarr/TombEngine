@@ -1,6 +1,5 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
-
 #include "Game/animation.h"
 #include "Game/effects/Hair.h"
 #include "Game/items.h"

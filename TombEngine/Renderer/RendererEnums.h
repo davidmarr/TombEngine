@@ -1,6 +1,5 @@
 #pragma once
 #include <SimpleMath.h>
-
 #include "Math/Math.h"
 
 using namespace DirectX::SimpleMath;
@@ -8,10 +7,10 @@ using namespace DirectX::SimpleMath;
 #define SHAPE_RECTANGLE 0
 #define SHAPE_TRIANGLE	1
 
-#define PRINTSTRING_COLOR_ORANGE D3DCOLOR_ARGB(255, 216, 117, 49)
-#define PRINTSTRING_COLOR_WHITE D3DCOLOR_ARGB(255, 255, 255, 255)
-#define PRINTSTRING_COLOR_BLACK D3DCOLOR_ARGB(255, 0, 0, 0)
-#define PRINTSTRING_COLOR_YELLOW D3DCOLOR_ARGB(255, 240, 220, 32)
+#define PRINTSTRING_COLOR_ORANGE 0xFFD87531u
+#define PRINTSTRING_COLOR_WHITE  0xFFFFFFFFu
+#define PRINTSTRING_COLOR_BLACK  0xFF000000u
+#define PRINTSTRING_COLOR_YELLOW 0xFFF0DC20u
 
 constexpr auto MAX_LINES_2D		= 256;
 constexpr auto MAX_LINES_3D		= 16384;
@@ -480,3 +479,11 @@ enum class Shader
 
 	Count
 };
+
+namespace TEN::Renderer::Colors
+{
+	XMGLOBALCONST XMVECTORF32 Transparent = { { { 0.f, 0.f, 0.f, 0.f } } };
+	XMGLOBALCONST XMVECTORF32 Black = { { { 0.f, 0.f, 0.f, 1.f } } };
+	XMGLOBALCONST XMVECTORF32 White = { { { 1.f, 1.f, 1.f, 1.f } } };
+	XMGLOBALCONST XMVECTORF32 DimGray = { { { 0.412f, 0.412f, 0.412f, 1.f } } };
+}
