@@ -541,7 +541,7 @@ namespace TEN::Renderer
 
 	int Renderer::GetScreenRefreshRate() const
 	{
-		return _refreshRate;
+		return _graphicsDevice->GetRefreshRate();
 	}
 
 	std::optional<Vector2> Renderer::Get2DPosition(const Vector3& pos) const

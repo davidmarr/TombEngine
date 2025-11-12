@@ -230,6 +230,8 @@ namespace TEN::Renderer::Native::DirectX11
 		ITexture2D* CreateTexture2D() override;
 		void UpdateTexture2D(ITexture2D* texture, byte* data) override;
 
+		int GetRefreshRate() override;
+
 		~DX11GraphicsDevice() override = default;
 	};
 }

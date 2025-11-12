@@ -114,6 +114,8 @@ namespace TEN::Renderer::Graphics
 		virtual void Flush() = 0;
 		virtual void UnbindAllRenderTargets() = 0;
 
+		virtual int GetRefreshRate() = 0;
+
 		virtual ~IGraphicsDevice() = default;
 	};
 }

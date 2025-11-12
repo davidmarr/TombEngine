@@ -949,4 +949,9 @@ namespace TEN::Renderer::Native::DirectX11
 	{
 
 	}
+
+	int DX11GraphicsDevice::GetRefreshRate()
+	{
+		return _refreshRate;
+	}
 }
