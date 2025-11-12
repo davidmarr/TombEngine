@@ -173,7 +173,7 @@ namespace TEN::Renderer
 		SetBlendMode(BlendMode::AlphaBlend);
 
 		float shadowOffset = 1.5f / (REFERENCE_FONT_SIZE / _gameFont->GetLineSpacing());
-		_spriteBatch->Begin(SpriteSortingMode::Immediate, BlendMode::Opaque);
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::AlphaBlend);
 
 		for (const auto& rString : _stringsToDraw)
 		{

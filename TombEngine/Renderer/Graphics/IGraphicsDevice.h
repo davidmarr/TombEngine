@@ -78,8 +78,9 @@ namespace TEN::Renderer::Graphics
 		virtual void ClearDepthStencil(IDepthTarget* depthTarget, int arrayIndex, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) = 0;
 
 		virtual void BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget) = 0;
-		virtual void BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, int arrayIndex) = 0;
+		virtual void BindRenderTarget(IRenderTargetBinding renderTarget, IDepthTargetBinding depthTarget) = 0;
 		virtual void BindRenderTargets(std::vector<IRenderTarget2D*> renderTargets, IDepthTarget* depthTarget) = 0;
+		virtual void BindRenderTargets(std::vector<IRenderTargetBinding> renderTargets, IDepthTargetBinding depthTarget) = 0;
 
 		virtual void SetPrimitiveType(PrimitiveType primitiveType) = 0;
 

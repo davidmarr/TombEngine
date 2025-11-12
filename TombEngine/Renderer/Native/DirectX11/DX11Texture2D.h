@@ -58,7 +58,7 @@ namespace TEN::Renderer::Native::DirectX11
 			subresourceData.SysMemPitch = width * 4;
 			subresourceData.SysMemSlicePitch = 0;
 
-			res = device->CreateTexture2D(&desc, nullptr, _texture.GetAddressOf());
+			res = device->CreateTexture2D(&desc, &subresourceData, _texture.GetAddressOf());
 			throwIfFailed(res);
 
 			// SRV

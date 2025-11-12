@@ -9,4 +9,16 @@ namespace TEN::Renderer::Graphics
 	public:
 		virtual int GetArraySize() = 0;
 	};
+
+	struct IRenderTargetBinding
+	{
+		IRenderTarget2D* RenderTarget;
+		int ArrayIndex;
+
+		IRenderTargetBinding(IRenderTarget2D* renderTarget, int arrayIndex)
+		{
+			RenderTarget = renderTarget;
+			ArrayIndex = arrayIndex;
+		}
+	};
 }

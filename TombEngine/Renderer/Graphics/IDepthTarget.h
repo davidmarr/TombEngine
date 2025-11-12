@@ -6,4 +6,16 @@ namespace TEN::Renderer::Graphics
 	{
 		virtual int GetArraySize() = 0;
 	};
+
+	struct IDepthTargetBinding
+	{
+		IDepthTarget* DepthTarget;
+		int ArrayIndex;
+
+		IDepthTargetBinding(IDepthTarget* depthTarget, int arrayIndex)
+		{
+			DepthTarget = depthTarget;
+			ArrayIndex = arrayIndex;
+		}
+	};
 }

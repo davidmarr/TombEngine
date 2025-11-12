@@ -179,7 +179,9 @@ namespace TEN::Renderer
 		for (int step = 0; step < 6; step++)
 		{
 			// Bind render target.
-			_graphicsDevice->BindRenderTarget(_shadowMap->GetRenderTarget(), _shadowMap->GetDepthTarget(), step);
+			_graphicsDevice->BindRenderTarget(
+				IRenderTargetBinding(_shadowMap->GetRenderTarget(), step),
+				IDepthTargetBinding(_shadowMap->GetDepthTarget(), step));
 			_graphicsDevice->SetViewport(_shadowMapViewport);
 			ResetScissor();
 
@@ -2993,7 +2995,10 @@ namespace TEN::Renderer
 	{
 		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget->GetRenderTarget(), 0, Colors::Black);
 		_graphicsDevice->ClearDepthStencil(_skyboxRenderTarget->GetDepthTarget(), 0, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-		_graphicsDevice->BindRenderTarget(_skyboxRenderTarget->GetRenderTarget(), _skyboxRenderTarget->GetDepthTarget(), 0);
+		_graphicsDevice->BindRenderTarget(
+			IRenderTargetBinding(_skyboxRenderTarget->GetRenderTarget(), 0),
+			IDepthTargetBinding(_skyboxRenderTarget->GetDepthTarget(), 0)
+		);
 
 		RendererViewport viewport;
 		viewport.X = 0;
@@ -3023,8 +3028,10 @@ namespace TEN::Renderer
 
 		_graphicsDevice->ClearRenderTarget2D(_skyboxRenderTarget->GetRenderTarget(), 1, Colors::Black);
 		_graphicsDevice->ClearDepthStencil(_skyboxRenderTarget->GetDepthTarget(), 1, DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-		_graphicsDevice->BindRenderTarget(_skyboxRenderTarget->GetRenderTarget(), _skyboxRenderTarget->GetDepthTarget(), 1);
-
+		_graphicsDevice->BindRenderTarget(
+			IRenderTargetBinding(_skyboxRenderTarget->GetRenderTarget(), 1),
+			IDepthTargetBinding(_skyboxRenderTarget->GetDepthTarget(), 1)
+		);
 		SetCullMode(CullMode::Clockwise);
 
 		cameraConstantBuffer.Hemisphere = 1;

@@ -206,9 +206,6 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
 	{
-		//auto nativeTexture = static_cast<DX11TextureBase*>(texture);
-		//auto dxTexture = nativeTexture->GetShaderResourceView();
-
 		ID3D11ShaderResourceView* srv = GetShaderResourceView(texture);
 
 		_context->PSSetShaderResources((unsigned int)registerType, 1, &srv);
@@ -329,16 +326,16 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->OMSetRenderTargets(1, &rtv, dsv);
 	}
 
-	void DX11GraphicsDevice::BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, int arrayIndex)
+	void DX11GraphicsDevice::BindRenderTarget(IRenderTargetBinding renderTarget, IDepthTargetBinding depthTarget)
 	{
-		auto dxRt = static_cast<DX11RenderTarget2D*>(renderTarget);
-		auto rtv = dxRt->GetRenderTargetView(arrayIndex);
+		auto dxRt = static_cast<DX11RenderTarget2D*>(renderTarget.RenderTarget);
+		auto rtv = dxRt->GetRenderTargetView(renderTarget.ArrayIndex);
 
 		ID3D11DepthStencilView* dsv = nullptr;
-		if (depthTarget != nullptr)
+		if (depthTarget.DepthTarget != nullptr)
 		{
-			auto dxDsvRt = static_cast<DX11DepthTarget*>(depthTarget);
-			dsv = dxDsvRt->GetDepthStencilView(arrayIndex);
+			auto dxDsvRt = static_cast<DX11DepthTarget*>(depthTarget.DepthTarget);
+			dsv = dxDsvRt->GetDepthStencilView(depthTarget.ArrayIndex);
 		}
 
 		_context->OMSetRenderTargets(1, &rtv, dsv);
@@ -360,6 +357,27 @@ namespace TEN::Renderer::Native::DirectX11
 		{
 			auto dxRt = static_cast<DX11DepthTarget*>(depthTarget);
 			dsv = dxRt->GetDepthStencilView();
+		}
+
+		_context->OMSetRenderTargets((int)rtvList.size(), rtvList.data(), dsv);
+	}
+
+	void DX11GraphicsDevice::BindRenderTargets(std::vector<IRenderTargetBinding> renderTargets, IDepthTargetBinding depthTarget)
+	{
+		std::vector<ID3D11RenderTargetView*> rtvList;
+		for (int i = 0; i < renderTargets.size(); i++)
+		{
+			auto rt = renderTargets[i].RenderTarget;
+			auto dxRt = static_cast<DX11RenderTarget2D*>(rt);
+			auto rtv = dxRt->GetRenderTargetView(renderTargets[i].ArrayIndex);
+			rtvList.push_back(rtv);
+		}
+
+		ID3D11DepthStencilView* dsv = nullptr;
+		if (depthTarget.DepthTarget != nullptr)
+		{
+			auto dxRt = static_cast<DX11DepthTarget*>(depthTarget.DepthTarget);
+			dsv = dxRt->GetDepthStencilView(depthTarget.ArrayIndex);
 		}
 
 		_context->OMSetRenderTargets((int)rtvList.size(), rtvList.data(), dsv);

@@ -192,10 +192,6 @@ namespace TEN::Renderer
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
-
-		unsigned int stride = sizeof(PostProcessVertex);
-		unsigned int offset = 0;
-
 		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
 
 		_graphicsDevice->ClearRenderTarget2D(dest->GetRenderTarget(), Colors::Transparent);

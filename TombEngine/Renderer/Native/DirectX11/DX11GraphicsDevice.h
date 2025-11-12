@@ -191,8 +191,9 @@ namespace TEN::Renderer::Native::DirectX11
 		void ClearDepthStencil(IDepthTarget* renderTarget, int arrayIndex, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil) override;
 
 		void BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget) override;
-		void BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget, int arrayIndex) override;
+		void BindRenderTarget(IRenderTargetBinding renderTarget, IDepthTargetBinding depthTarget) override;
 		void BindRenderTargets(std::vector<IRenderTarget2D*> renderTargets, IDepthTarget* depthTarget) override;
+		void BindRenderTargets(std::vector<IRenderTargetBinding> renderTargets, IDepthTargetBinding depthTarget) override;
 
 		void SetViewport(RendererViewport viewport) override;
 		void SetPrimitiveType(PrimitiveType primitiveType) override;

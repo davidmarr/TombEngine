@@ -48,7 +48,7 @@ namespace TEN::Renderer
 
 		// 1) Edge detection using color method (also depth and luma available).
 		_graphicsDevice->ClearRenderTarget2D(_SMAAEdgesRenderTarget->GetRenderTarget(), Colors::Transparent);
-		_graphicsDevice->ClearRenderTarget2D(_SMAASceneRenderTarget->GetRenderTarget(), Colors::Transparent);
+		_graphicsDevice->ClearRenderTarget2D(_SMAABlendRenderTarget->GetRenderTarget(), Colors::Transparent);
 
 		SetCullMode(CullMode::CounterClockwise);
 		_graphicsDevice->BindRenderTarget(_SMAAEdgesRenderTarget->GetRenderTarget(), nullptr);
