@@ -428,8 +428,6 @@ void ClassicRollingBallControl(short itemNum)
 		int oldx = item->Pose.Position.x;
 		int oldz = item->Pose.Position.z;
 
-		AnimateItem(item);
-
 		auto pointColl = GetPointCollision(*item);
 
 		item->Floor = pointColl.GetFloorHeight();
@@ -442,10 +440,6 @@ void ClassicRollingBallControl(short itemNum)
 			item->Animation.IsAirborne = false;
 			item->Animation.Velocity.y = 0;
 			item->Pose.Position.y = item->Floor;
-			SoundEffect(SFX_TR4_ROLLING_BALL, &item->Pose);
-			dist = Vector3i::Distance(Camera.pos.ToVector3i(), item->Pose.Position);
-			if (dist < BLOCK(10))
-				Camera.bounce = -40 * (BLOCK(10) - dist) / BLOCK(10);
 		}
 
 		if (item->ObjectNumber == ID_CLASSIC_ROLLING_BALL)
@@ -480,6 +474,17 @@ void ClassicRollingBallControl(short itemNum)
 			item->Animation.Velocity.z = 0;
 			item->Animation.Velocity.y = 0;
 			item->TouchBits = NO_JOINT_BITS;
+		}
+		else
+		{
+			AnimateItem(item);
+
+			if (!item->Animation.IsAirborne)
+			{
+				SoundEffect(SFX_TR4_ROLLING_BALL, &item->Pose);
+				if (Vector3i::Distance(Camera.pos.ToVector3i(), item->Pose.Position) < BLOCK(10))
+					Camera.bounce = -40 * (BLOCK(10) - dist) / BLOCK(10);
+			}
 		}
 	}
 	else if (item->Status == ITEM_DEACTIVATED)
