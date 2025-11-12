@@ -72,7 +72,11 @@ namespace TEN::Renderer
 	using namespace TEN::Renderer::Utils;
 	using namespace DirectX::SimpleMath;
 
-	using AtlasTexturesSet = std::tuple<ITexture2D*, ITexture2D*, ITexture2D*, ITexture2D*>;
+	using AtlasTexturesSet = std::tuple<
+		std::unique_ptr<ITexture2D>, 
+		std::unique_ptr<ITexture2D>, 
+		std::unique_ptr<ITexture2D>, 
+		std::unique_ptr<ITexture2D>>;
 
 	class Renderer
 	{
@@ -510,7 +514,7 @@ namespace TEN::Renderer
 		void CreateSSAONoiseTexture();
 		void InitializeSMAA();
 		void SetupAnimatedTextures(const RendererBucket& bucket);
-		ITexture2D* CreateDefaultTexture(std::vector<unsigned char> color);
+		std::unique_ptr<ITexture2D> CreateDefaultTexture(std::vector<unsigned char> color);
 
 		bool IsRoomReflected(RenderView& renderView, int roomNumber);
 

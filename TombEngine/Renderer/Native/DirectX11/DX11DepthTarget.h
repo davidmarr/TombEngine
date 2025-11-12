@@ -1,4 +1,5 @@
 #pragma once
+
 #include <d3d11.h>
 #include <string>
 #include <vector>
@@ -24,8 +25,9 @@ namespace TEN::Renderer::Native::DirectX11
 	public:
 		int GetArraySize() override { return (int)_depthStencilViews.size(); }
 
-		ID3D11DepthStencilView* GetDepthStencilView(int arrayIndex) const noexcept { return _depthStencilViews[arrayIndex].Get(); }
-		ID3D11DepthStencilView* GetDepthStencilView()               const noexcept { return GetDepthStencilView(0); }
+		ID3D11DepthStencilView* GetD3D11DepthStencilView(int arrayIndex) const noexcept { return _depthStencilViews[arrayIndex].Get(); }
+		ID3D11DepthStencilView* GetD3D11DepthStencilView()               const noexcept { return GetD3D11DepthStencilView(0); }
+		ID3D11Texture2D*	    GetD3D11Texture()						 const noexcept { return _depthStencilTexture.Get(); }
 
 		DX11DepthTarget(ID3D11Device* device, int width, int height, DXGI_FORMAT depthFormat)
 		{

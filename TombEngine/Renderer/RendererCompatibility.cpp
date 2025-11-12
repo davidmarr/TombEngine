@@ -58,7 +58,10 @@ namespace TEN::Renderer
 		{
 			TEXTURE* texture = &g_Level.AnimatedTextures[i];
 			
-			ITexture2D* normal;
+			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
+				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+
+			std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
 			{
 				normal = CreateDefaultTexture(emptyNormalMap);
@@ -68,7 +71,7 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* ORSH;
+			std::unique_ptr<ITexture2D> ORSH;
 			if (texture->ORSHMapData.size() < 1)
 			{
 				ORSH = CreateDefaultTexture(emptyORSHMap);
@@ -78,8 +81,7 @@ namespace TEN::Renderer
 				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
-			ITexture2D* emissive;
-
+			std::unique_ptr<ITexture2D> emissive;
 			if (texture->emissiveMapData.size() < 1)
 			{
 				emissive = CreateDefaultTexture(emptyEmissiveMap);
@@ -90,12 +92,12 @@ namespace TEN::Renderer
 			}
 
 			AtlasTexturesSet tex = std::make_tuple(
-				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
-				normal,
-				ORSH,
-				emissive);
+				std::move(color),
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
 
-			_animatedTextures[i] = tex;
+			_animatedTextures[i] = std::move(tex);
 		}
 
 		std::transform(g_Level.AnimatedTexturesSequences.begin(), g_Level.AnimatedTexturesSequences.end(), std::back_inserter(_animatedTextureSets), [](ANIMATED_TEXTURES_SEQUENCE& sequence)
@@ -144,9 +146,12 @@ namespace TEN::Renderer
 		_roomTextures.resize(g_Level.RoomTextures.size());
 		for (int i = 0; i < g_Level.RoomTextures.size(); i++)
 		{
-			TEXTURE *texture = &g_Level.RoomTextures[i];
-			
-			ITexture2D* normal;
+			TEXTURE* texture = &g_Level.AnimatedTextures[i];
+
+			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
+				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+
+				std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
 			{
 				normal = CreateDefaultTexture(emptyNormalMap);
@@ -156,7 +161,7 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* ORSH;
+			std::unique_ptr<ITexture2D> ORSH;
 			if (texture->ORSHMapData.size() < 1)
 			{
 				ORSH = CreateDefaultTexture(emptyORSHMap);
@@ -166,8 +171,7 @@ namespace TEN::Renderer
 				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
-			ITexture2D* emissive;
-
+			std::unique_ptr<ITexture2D> emissive;
 			if (texture->emissiveMapData.size() < 1)
 			{
 				emissive = CreateDefaultTexture(emptyEmissiveMap);
@@ -178,12 +182,12 @@ namespace TEN::Renderer
 			}
 
 			AtlasTexturesSet tex = std::make_tuple(
-				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
-				normal,
-				ORSH,
-				emissive); 
+				std::move(color),
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
 			
-			_roomTextures[i] = tex;
+			_roomTextures[i] = std::move(tex);
 
 #ifdef DUMP_TEXTURES
 			char filename[255];
@@ -200,9 +204,12 @@ namespace TEN::Renderer
 		_moveablesTextures.resize(g_Level.MoveablesTextures.size());
 		for (int i = 0; i < g_Level.MoveablesTextures.size(); i++)
 		{
-			TEXTURE *texture = &g_Level.MoveablesTextures[i];
-			
-			ITexture2D* normal;
+			TEXTURE* texture = &g_Level.AnimatedTextures[i];
+
+			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
+				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+
+				std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
 			{
 				normal = CreateDefaultTexture(emptyNormalMap);
@@ -212,7 +219,7 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* ORSH;
+			std::unique_ptr<ITexture2D> ORSH;
 			if (texture->ORSHMapData.size() < 1)
 			{
 				ORSH = CreateDefaultTexture(emptyORSHMap);
@@ -222,8 +229,7 @@ namespace TEN::Renderer
 				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
-			ITexture2D* emissive;
-
+			std::unique_ptr<ITexture2D> emissive;
 			if (texture->emissiveMapData.size() < 1)
 			{
 				emissive = CreateDefaultTexture(emptyEmissiveMap);
@@ -234,12 +240,12 @@ namespace TEN::Renderer
 			}
 
 			AtlasTexturesSet tex = std::make_tuple(
-				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
-				normal,
-				ORSH,
-				emissive); 
+				std::move(color),
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
 
-			_moveablesTextures[i] = tex;
+			_moveablesTextures[i] = std::move(tex);
 
 #ifdef DUMP_TEXTURES
 			char filename[255];
@@ -256,9 +262,12 @@ namespace TEN::Renderer
 		_staticTextures.resize(g_Level.StaticsTextures.size());
 		for (int i = 0; i < g_Level.StaticsTextures.size(); i++)
 		{
-			TEXTURE *texture = &g_Level.StaticsTextures[i];
-			
-			ITexture2D* normal;
+			TEXTURE* texture = &g_Level.AnimatedTextures[i];
+
+			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
+				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+
+				std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
 			{
 				normal = CreateDefaultTexture(emptyNormalMap);
@@ -268,7 +277,7 @@ namespace TEN::Renderer
 				normal = _graphicsDevice->CreateTexture2D((int)texture->normalMapData.size(), texture->normalMapData.data());
 			}
 
-			ITexture2D* ORSH;
+			std::unique_ptr<ITexture2D> ORSH;
 			if (texture->ORSHMapData.size() < 1)
 			{
 				ORSH = CreateDefaultTexture(emptyORSHMap);
@@ -278,8 +287,7 @@ namespace TEN::Renderer
 				ORSH = _graphicsDevice->CreateTexture2D((int)texture->ORSHMapData.size(), texture->ORSHMapData.data());
 			}
 
-			ITexture2D* emissive;
-
+			std::unique_ptr<ITexture2D> emissive;
 			if (texture->emissiveMapData.size() < 1)
 			{
 				emissive = CreateDefaultTexture(emptyEmissiveMap);
@@ -290,12 +298,12 @@ namespace TEN::Renderer
 			}
 
 			AtlasTexturesSet tex = std::make_tuple(
-				_graphicsDevice->CreateTexture2D((int)texture->colorMapData.size(), texture->colorMapData.data()),
-				normal,
-				ORSH,
-				emissive); 
+				std::move(color),
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
 			
-			_staticTextures[i] = tex;
+			_staticTextures[i] = std::move(tex);
 
 #ifdef DUMP_TEXTURES
 			char filename[255];

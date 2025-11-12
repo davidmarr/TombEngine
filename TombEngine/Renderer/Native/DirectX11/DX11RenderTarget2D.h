@@ -27,10 +27,10 @@ namespace TEN::Renderer::Native::DirectX11
 
 		int GetArraySize() override { return (int)_renderTargetViews.size(); }
 
-		ID3D11RenderTargetView* GetRenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }
-		ID3D11RenderTargetView* GetRenderTargetView()               const noexcept { return GetRenderTargetView(0); }
+		ID3D11RenderTargetView* GetD3D11RenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }
+		ID3D11RenderTargetView* GetD3D11RenderTargetView()               const noexcept { return GetD3D11RenderTargetView(0); }
 		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
-		ID3D11Texture2D* GetTexture() const noexcept { return _texture.Get(); }
+		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
 
 		DX11RenderTarget2D() = default;
 
@@ -83,12 +83,11 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 
 		// Used by SMAA because it needs to have two render targets with same texture
-		DX11RenderTarget2D(ID3D11Device* device, DX11RenderTarget2D* parent, DXGI_FORMAT colorFormat)
+		DX11RenderTarget2D(ID3D11Device* device, ID3D11Texture2D* texture, DXGI_FORMAT colorFormat)
 		{
 			HRESULT res;
 
 			// Copy ComPtr from parent
-			ID3D11Texture2D* texture = parent->GetTexture();
 			texture->AddRef();
 			_texture.Attach(texture);
 
@@ -120,8 +119,8 @@ namespace TEN::Renderer::Native::DirectX11
 		{
 			HRESULT res;
 
-			// Prendiamo ownership della nostra ref
-			textureRaw->AddRef();   // Increment COM ref 
+			// Copy ComPtr from parent
+			textureRaw->AddRef();
 			_texture.Attach(textureRaw);
 
 			// RTV

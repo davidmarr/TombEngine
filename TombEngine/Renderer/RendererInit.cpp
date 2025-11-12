@@ -290,6 +290,27 @@ namespace TEN::Renderer
 
 	void Renderer::InitializeScreen(int w, int h, HWND handle, bool reset)
 	{
+		// Cleanup resources
+		SAFE_DELETE(_backBuffer);
+		SAFE_DELETE(_renderTarget);
+		SAFE_DELETE(_postProcessRenderTarget[0]);
+		SAFE_DELETE(_postProcessRenderTarget[1]);
+		SAFE_DELETE(_dumpScreenRenderTarget);
+		SAFE_DELETE(_shadowMap);
+		SAFE_DELETE(_depthRenderTarget);
+		SAFE_DELETE(_normalsAndMaterialIndexRenderTarget);
+		SAFE_DELETE(_emissiveAndRoughnessRenderTarget);
+		SAFE_DELETE(_SSAORenderTarget);
+		SAFE_DELETE(_SSAOBlurredRenderTarget);
+		SAFE_DELETE(_glowRenderTarget[0]);
+		SAFE_DELETE(_glowRenderTarget[1]);
+		SAFE_DELETE(_legacyReflectionsRenderTarget);
+		SAFE_DELETE(_skyboxRenderTarget);
+		SAFE_DELETE(_SMAASceneRenderTarget);
+		SAFE_DELETE(_SMAASceneSRGBRenderTarget);
+		SAFE_DELETE(_SMAAEdgesRenderTarget);
+		SAFE_DELETE(_SMAABlendRenderTarget);
+		
 		_backBuffer = _graphicsDevice->InitializeSwapChain(w, h, handle);
 		                
 		_renderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::Depth32);

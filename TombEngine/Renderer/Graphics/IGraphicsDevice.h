@@ -45,12 +45,12 @@ namespace TEN::Renderer::Graphics
 
 		virtual IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) = 0;
 
-		virtual ITexture2D* CreateTexture2D(int width, int height, byte* data) = 0;
-		virtual ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) = 0;
-		virtual ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format) = 0;
-		virtual ITexture2D* CreateTexture2D(const std::string fileName) = 0;
-		virtual ITexture2D* CreateTexture2D(int dataSize, byte* data) = 0;
-		virtual ITexture2D* CreateTexture2D() = 0;
+		virtual std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, byte* data) = 0;
+		virtual std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) = 0;
+		virtual std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format) = 0;
+		virtual std::unique_ptr<ITexture2D> CreateTexture2D(const std::string fileName) = 0;
+		virtual std::unique_ptr<ITexture2D> CreateTexture2D(int dataSize, byte* data) = 0;
+		virtual std::unique_ptr<ITexture2D> CreateTexture2D() = 0;
 		virtual void UpdateTexture2D(ITexture2D* texture, byte* data) = 0;
 
 		virtual void SetBlendMode(BlendMode blendMode) = 0;
@@ -63,6 +63,7 @@ namespace TEN::Renderer::Graphics
 		virtual IConstantBuffer* CreateConstantBuffer(int size, std::wstring name) = 0;
 		virtual void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) = 0;
 		virtual void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
+		virtual void BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
 		virtual void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
 
 		virtual void DrawIndexedTriangles(int count, int baseIndex, int baseVertex) = 0;

@@ -160,11 +160,11 @@ namespace TEN::Renderer::Native::DirectX11
 
 		IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) override;
 
-		ITexture2D* CreateTexture2D(int width, int height, byte* data) override;
-		ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) override;
-		ITexture2D* CreateTexture2D(const std::string fileName) override;
-		ITexture2D* CreateTexture2D(int dataSize, byte* data) override;
-		ITexture2D* CreateTexture2D(int width, int height, SurfaceFormat format) override;
+		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, byte* data) override;
+		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) override;
+		std::unique_ptr<ITexture2D> CreateTexture2D(const std::string fileName) override;
+		std::unique_ptr<ITexture2D> CreateTexture2D(int dataSize, byte* data) override;
+		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format) override;
 
 		void SetBlendMode(BlendMode blendMode) override;
 		void SetDepthState(DepthState depthState) override;
@@ -176,6 +176,7 @@ namespace TEN::Renderer::Native::DirectX11
 		IConstantBuffer* CreateConstantBuffer(int size, std::wstring name) override;
 		void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) override;
 		void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
+		void BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
 		void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
 
 		void DrawIndexedTriangles(int count, int baseIndex, int baseVertex) override;
@@ -227,7 +228,7 @@ namespace TEN::Renderer::Native::DirectX11
 		void Flush() override;
 		void UnbindAllRenderTargets() override;
 
-		ITexture2D* CreateTexture2D() override;
+		std::unique_ptr<ITexture2D> CreateTexture2D() override;
 		void UpdateTexture2D(ITexture2D* texture, byte* data) override;
 
 		int GetRefreshRate() override;

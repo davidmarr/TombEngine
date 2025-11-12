@@ -1776,7 +1776,7 @@ namespace TEN::Renderer
 		}
 	}
 
-	ITexture2D* Renderer::CreateDefaultTexture(std::vector<unsigned char> color)
+	std::unique_ptr<ITexture2D> Renderer::CreateDefaultTexture(std::vector<unsigned char> color)
 	{
 		return _graphicsDevice->CreateTexture2D(1, 1, color.data());
 	}

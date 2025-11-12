@@ -53,6 +53,16 @@ namespace TEN::Renderer
 		for (auto& mesh : _meshes)
 			delete mesh;
 		_meshes.resize(0);
+
+		SAFE_DELETE(_roomsVertexBuffer);
+		SAFE_DELETE(_roomsIndexBuffer);
+		SAFE_DELETE(_moveablesVertexBuffer);
+		SAFE_DELETE(_moveablesIndexBuffer);
+		SAFE_DELETE(_staticsVertexBuffer);
+		SAFE_DELETE(_staticsIndexBuffer);
+
+		for (int i =0;i< _roomTextures.size();i++)
+			SAFE_DELETE(_roomTextures[i].)
 	}
 
 	void Renderer::Lock()
