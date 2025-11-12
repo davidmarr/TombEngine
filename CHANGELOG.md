@@ -5,6 +5,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10.1]
 
+* Added silent mode for CLASSIC_ROLLINGBALL (OCB 1).
+
 ### Bug fixes
 * Fixed FIRE_PENDULUM crashing the game.
 * Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
