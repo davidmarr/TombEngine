@@ -1,4 +1,5 @@
 #pragma once
+#include "Scripting/Internal/ScriptUtil.h"
 
 namespace TEN::Scripting
 {
@@ -40,7 +41,7 @@ namespace TEN::Scripting
 		// Utilities
 
 		std::string ToString() const;
-		std::string Time::GetFormattedString(sol::object formatObj) const;
+		std::string GetFormattedString(sol::object formatObj, TypeOrNil<bool> useCentiseconds) const;
 
 		// Operators
 
@@ -82,5 +83,6 @@ namespace TEN::Scripting
 		mutable bool _lastIncludeMinutes = true;
 		mutable bool _lastIncludeSeconds = true;
 		mutable bool _lastIncludeDeciseconds = true;
+		mutable bool _lastUseCentiseconds = true;
 	};
 }

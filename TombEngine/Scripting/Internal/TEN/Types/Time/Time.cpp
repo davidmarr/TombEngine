@@ -211,11 +211,12 @@ namespace TEN::Scripting
 	/// Get a time string formatted with a custom format. If the format is incorrect, the default value will be used.
 	// @function Time:GetFormattedString
 	// @tparam[opt={true&#44; true&#44; true&#44; true}] table format Boolean table {includeHours, includeMinutes, includeSeconds, includeDeciseconds}.<br>
-	// @treturn string A formatted time string (e.g., "12:34:56.7" or custom format based on the provided table).
+	// @tparam[opt=true] bool useCentiseconds Whether to use centiseconds (1/100th of a second) or deciseconds (1/10th of a second) for the fractional part.
+	// @treturn string A formatted time string (e.g., "12:34:56.73" or custom format based on the provided table).
 	// @usage
 	// -- Get full formatted time string
 	// local time = Time(3750) -- 2 minutes, 5 seconds
-	// print(time:GetFormattedString()) -- "00:02:05.0"
+	// print(time:GetFormattedString()) -- "00:02:05.00"
 	//
 	// -- Get formatted time string without hours and deciseconds
 	// local format = {false, true, true, false}
@@ -224,7 +225,11 @@ namespace TEN::Scripting
 	// -- Get formatted time string with only total seconds
 	// local format = {false, false, true, false}
 	// print(time:GetFormattedString(format)) -- "125"
-	std::string Time::GetFormattedString(sol::object formatObj) const
+	//
+	// -- Get formatted time string using deciseconds
+	// local format = {true, true, true, true}
+	// print(time:GetFormattedString(format, false)) -- "00:02:05.0"
+	std::string Time::GetFormattedString(sol::object formatObj, TypeOrNil<bool> useCentiseconds) const
 	{
 		bool includeHours = true;
 		bool includeMinutes = true;
@@ -252,12 +257,15 @@ namespace TEN::Scripting
 			}
 		}
 
+		bool convertedUseCentiseconds = ValueOr<bool>(useCentiseconds, true);
+
 		// Check if we can use the cached result
 		if (_lastFrameCount == _frameCount &&
 			_lastIncludeHours == includeHours &&
 			_lastIncludeMinutes == includeMinutes &&
 			_lastIncludeSeconds == includeSeconds &&
-			_lastIncludeDeciseconds == includeDeciseconds)
+			_lastIncludeDeciseconds == includeDeciseconds &&
+			_lastUseCentiseconds == convertedUseCentiseconds)
 		{
 			return _cachedResult;
 		}
@@ -268,13 +276,14 @@ namespace TEN::Scripting
 		_lastIncludeMinutes = includeMinutes;
 		_lastIncludeSeconds = includeSeconds;
 		_lastIncludeDeciseconds = includeDeciseconds;
+		_lastUseCentiseconds = convertedUseCentiseconds;
 
 		auto hmsc = GetHmsc();
 
 		int hours = hmsc.Hours;
 		int minutes = hmsc.Minutes;
 		int seconds = hmsc.Seconds;
-		int deciseconds = hmsc.Centiseconds / 10;
+		int deciseconds = convertedUseCentiseconds ? hmsc.Centiseconds : (hmsc.Centiseconds / 10);
 
 		if (!includeHours && includeMinutes)
 		{
@@ -363,7 +372,18 @@ namespace TEN::Scripting
 		if (includeDeciseconds)
 		{
 			if (ptr != buffer) *ptr++ = '.';
-			*ptr++ = '0' + deciseconds; // Single digit (0-9)
+			
+			if (convertedUseCentiseconds)
+			{
+				// Two digits for centiseconds (00-99)
+				*ptr++ = '0' + (deciseconds / 10);
+				*ptr++ = '0' + (deciseconds % 10);
+			}
+			else
+			{
+				// Single digit for deciseconds (0-9)
+				*ptr++ = '0' + deciseconds;
+			}
 		}
 
 		*ptr = '\0';
