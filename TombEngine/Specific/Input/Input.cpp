@@ -10,6 +10,7 @@
 #include "Sound/sound.h"
 #include "Specific/clock.h"
 #include "Specific/trutils.h"
+#include "Specific/winmain.h"
 
 using namespace TEN::Gui;
 using namespace TEN::Math;
@@ -62,7 +63,7 @@ namespace TEN::Input
 		pConstForce.envelope.fadeLevel = 0;
 	}
 
-	void InitializeInput(HWND handle)
+	void InitializeInput()
 	{
 		TENLog("Initializing input system...", LogLevel::Info);
 
@@ -86,6 +87,9 @@ namespace TEN::Input
 			auto axisID = (AxisID)i;
 			AxisMap[axisID] = Vector2::Zero;
 		}
+
+		SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
+		HWND handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
 
 		try
 		{

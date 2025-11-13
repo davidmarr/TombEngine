@@ -1,9 +1,6 @@
 #include "framework.h"
 #include "Specific/winmain.h"
 #include <SDL3/SDL.h>
-//#include <SDL3/SDL_main.h>
-#include <CommCtrl.h>
-#include <DbgHelp.h>
 #include <process.h>
 #include <iostream>
 #include <codecvt>
@@ -29,8 +26,17 @@ using namespace TEN::Utils;
 using namespace TEN::Video;
 
 WINAPP App;
-unsigned int ThreadID, ConsoleThreadID, ThreadSuspendCount;
-uintptr_t ThreadHandle, ConsoleThreadHandle;
+
+// SDL threads
+SDL_Thread* GameThread = nullptr;
+SDL_Thread* ConsoleThread = nullptr;
+unsigned int ThreadSuspendCount = 0;
+
+// Cooperative pause
+SDL_Mutex* GamePauseMutex = nullptr;
+SDL_Condition* GamePauseCond = nullptr;
+bool       GamePaused = false;
+
 HACCEL hAccTable;
 HWND WindowsHandle;
 std::unique_ptr<ISubsystem> g_Platform;
@@ -46,70 +52,6 @@ bool ArgEquals(wchar_t* incomingArg, std::string name)
 {
 	auto lowerArg = TEN::Utils::ToLower(TEN::Utils::ToString(incomingArg));
 	return (lowerArg == "-" + name) || (lowerArg == "/" + name);
-}
-
-void CheckIfRedistInstalled()
-{
-	// Before doing any actions, check if VC redist is installed, because otherwise it can
-	// silently crash at any moment. Still allows to run the game in any case, even if user
-	// decides not to install redistributables.
-
-	const char* redistKey =
-#ifdef _WIN64
-		R"(SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64)";
-#else
-		R"(SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86)";
-#endif
-
-	HKEY hKey;
-	LSTATUS result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, redistKey, 0, KEY_READ, &hKey);
-	if (result == ERROR_SUCCESS)
-	{
-		DWORD majorVersion = 0;
-		DWORD minorVersion = 0;
-		DWORD dataSize = sizeof(DWORD);
-
-		if (RegQueryValueExA(hKey, "Major", NULL, NULL, (LPBYTE)&majorVersion, &dataSize) == ERROR_SUCCESS &&
-			RegQueryValueExA(hKey, "Minor", NULL, NULL, (LPBYTE)&minorVersion, &dataSize) == ERROR_SUCCESS)
-		{
-			RegCloseKey(hKey);
-
-			if (majorVersion >= 14 && minorVersion >= 40)
-			{
-				HMODULE hModule = LoadLibraryW(L"vcruntime140.dll");
-				if (hModule != NULL)
-				{
-					FreeLibrary(hModule);
-					return;
-				}
-			}
-		}
-		else
-		{
-			RegCloseKey(hKey);
-		}
-	}
-
-	const char* redistUrl =
-#ifdef _WIN64
-		R"(https://aka.ms/vs/17/release/vc_redist.x64.exe)";
-#else
-		R"(https://aka.ms/vs/17/release/vc_redist.x86.exe)";
-#endif
-
-	const char* message = "TombEngine requires Visual C++ 2015-2022 Redistributable to be installed. Would you like to download it now?";
-	int msgBoxResult = MessageBoxA(NULL, message, "Missing libraries", MB_ICONWARNING | MB_OKCANCEL);
-
-	if (msgBoxResult == IDOK)
-	{
-		HINSTANCE hResult = ShellExecuteA(NULL, "open", redistUrl, NULL, NULL, SW_SHOWNORMAL);
-
-		if ((intptr_t)hResult <= 32)
-		{
-			MessageBoxA(NULL, (LPCSTR)("Failed to start browser to download runtimes. Error code: " +
-				std::to_string((long)(intptr_t)hResult)).c_str(), "Error", MB_ICONERROR | MB_OK);
-		}
-	}
 }
 
 Vector2i GetScreenResolution()
@@ -221,7 +163,7 @@ bool GenerateDummyLevel(const std::string& levelPath)
 	return true;
 }
 
-unsigned CALLBACK ConsoleInput(void*)
+int SDLCALL ConsoleInput(void*)
 {
 	auto input = std::string();
 	while (!ThreadEnded)
@@ -243,280 +185,6 @@ unsigned CALLBACK ConsoleInput(void*)
 		}
 	}
 
-	return true;
-}
-
-void ShowExternalMessageBox(const std::string& text)
-{
-	// Try to locate error message utility resource.
-	HRSRC res = FindResource(NULL, MAKEINTRESOURCE(IDR_CRASHMSG), "EXE");
-	if (!res)
-		return;
-
-	// Load executable, if found.
-	HGLOBAL resData = LoadResource(NULL, res);
-	if (!resData)
-		return;
-
-	// Lock executable resource to get pointer to data.
-	void* resPtr = LockResource(resData);
-	if (!resPtr)
-		return;
-
-	const auto exePath = std::string("crashmsg.exe");
-
-	// Write executable to a disk.
-	HANDLE hFile = CreateFileA(exePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
-		return;
-
-	DWORD written;
-	WriteFile(hFile, resPtr, SizeofResource(NULL, res), &written, NULL);
-	CloseHandle(hFile);
-
-	STARTUPINFOA si = { sizeof(si) };
-	PROCESS_INFORMATION pi;
-
-	// Execute the error message utility with the provided text.
-	std::string cmdLine = "\"" + exePath + "\" " + "\"" + text + "\"";
-	if (CreateProcessA(NULL, cmdLine.data(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-	{
-		WaitForSingleObject(pi.hProcess, INFINITE);
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-	}
-
-	// Clean up error message utility afterwards.
-	DeleteFileA(exePath.c_str());
-}
-
-LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
-{
-	DWORD code = exceptionInfo->ExceptionRecord->ExceptionCode;
-	const char* codeName = "Unknown exception";
-
-	// Map exception codes to strings.
-	switch (code)
-	{
-		case EXCEPTION_ACCESS_VIOLATION:         codeName = "Access violation"; break;
-		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    codeName = "Array out of bounds"; break;
-		case EXCEPTION_BREAKPOINT:               codeName = "Breakpoint encountered"; break;
-		case EXCEPTION_DATATYPE_MISALIGNMENT:    codeName = "Data type misalignment"; break;
-		case EXCEPTION_FLT_DIVIDE_BY_ZERO:       codeName = "Floating-point division by zero"; break;
-		case EXCEPTION_FLT_OVERFLOW:             codeName = "Floating-point overflow"; break;
-		case EXCEPTION_ILLEGAL_INSTRUCTION:      codeName = "Illegal instruction"; break;
-		case EXCEPTION_IN_PAGE_ERROR:            codeName = "Exception in page error"; break;
-		case EXCEPTION_INT_DIVIDE_BY_ZERO:       codeName = "Integer division by zero"; break;
-		case EXCEPTION_INT_OVERFLOW:             codeName = "Integer overflow"; break;
-		case EXCEPTION_INVALID_DISPOSITION:      codeName = "Invalid disposition"; break;
-		case EXCEPTION_NONCONTINUABLE_EXCEPTION: codeName = "Non-continuable exception"; break;
-		case EXCEPTION_PRIV_INSTRUCTION:         codeName = "Private instruction exception"; break;
-		case EXCEPTION_SINGLE_STEP:              codeName = "Single-step exception"; break;
-		case EXCEPTION_STACK_OVERFLOW:           codeName = "Stack overflow"; break;
-	}
-
-	// Try to resolve symbol name from address.
-	HANDLE process = GetCurrentProcess();
-	SymInitialize(process, NULL, TRUE);
-
-	DWORD64 address = (DWORD64)exceptionInfo->ExceptionRecord->ExceptionAddress;
-	char symbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
-	PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
-	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-	symbol->MaxNameLen = MAX_SYM_NAME;
-
-	// Display function name, if debug symbols are available, otherwise display address only.
-	std::ostringstream oss;
-	if (SymFromAddr(process, address, 0, symbol))
-	{
-		oss << "address " << symbol->Name << " (0x" << std::hex << address << ")";
-	}
-	else
-	{
-		oss << "address 0x" << std::hex << address;
-	}
-
-	auto errorMessage = "Unhandled exception: " + std::string(codeName) + " at " + oss.str() + ".";
-
-	// Log the exception and show error message.
-	TENLog(errorMessage, LogLevel::Error);
-
-	// Optionally print stack trace, if engine is in debug mode.
-	if (DebugMode)
-	{
-		oss = std::ostringstream{};
-		oss << "Stack trace:\n";
-
-		CONTEXT ctx = *exceptionInfo->ContextRecord;
-		STACKFRAME64 stack = {};
-
-		stack.AddrPC.Mode =
-		stack.AddrFrame.Mode =
-		stack.AddrStack.Mode = AddrModeFlat;
-
-#ifdef _M_IX86
-		DWORD machineType = IMAGE_FILE_MACHINE_I386;
-		stack.AddrPC.Offset = ctx.Eip;
-		stack.AddrFrame.Offset = ctx.Ebp;
-		stack.AddrStack.Offset = ctx.Esp;
-#elif _M_X64
-		DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
-		stack.AddrPC.Offset = ctx.Rip;
-		stack.AddrFrame.Offset = ctx.Rsp;
-		stack.AddrStack.Offset = ctx.Rsp;
-#endif
-
-		HANDLE thread = GetCurrentThread();
-
-		constexpr int STACK_DEPTH = 32;
-		for (int frame = 0; frame < STACK_DEPTH; ++frame)
-		{
-			if (!StackWalk64(machineType, process, thread, &stack, &ctx, NULL,
-				SymFunctionTableAccess64, SymGetModuleBase64, NULL))
-				break;
-
-			if (stack.AddrPC.Offset == 0)
-				break;
-
-			if (SymFromAddr(process, stack.AddrPC.Offset, 0, symbol))
-				oss << "  [" << frame << "] " << symbol->Name << " (0x" << std::hex << stack.AddrPC.Offset << ")\n";
-			else
-				oss << "  [" << frame << "] " << "0x" << std::hex << stack.AddrPC.Offset << "\n";
-		}
-
-		TENLog(oss.str(), LogLevel::Error);
-	}
-
-	// Set engine to debug mode to prevent losing focus in fullscreen mode and show error message.
-	DebugMode = true;
-	ShowExternalMessageBox(errorMessage);
-
-	return EXCEPTION_EXECUTE_HANDLER;
-}
-
-void WinProcMsg()
-{
-	MSG msg;
-
-	do
-	{
-		GetMessage(&msg, 0, 0, 0);
-		if (!TranslateAccelerator(WindowsHandle, hAccTable, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-	while (!ThreadEnded && msg.message != WM_QUIT);
-}
-
-void CALLBACK HandleWmCommand(unsigned short wParam)
-{
-	if (wParam == WM_KILLFOCUS)
-	{
-		// make sure we suspend the game (if focus is removed) only if the level is not being loaded
-		
-		if (!LevelLoadTask.valid())
-		{
-			SuspendThread((HANDLE)ThreadHandle);
-			g_Renderer.ToggleFullScreen();
-			ResumeThread((HANDLE)ThreadHandle);
-		}
-	}
-}
-
-LRESULT CALLBACK WinAppProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	static bool receivedWmClose = false;
-
-	// Disables ALT + SPACE
-	if (msg == WM_SYSCOMMAND && wParam == SC_KEYMENU)
-	{
-		return 0;
-	}
-	
-	if (msg == WM_SETCURSOR)
-	{
-		if (LOWORD(lParam) == HTCLIENT)
-		{
-			SetCursor(g_Renderer.IsFullsScreen() ? nullptr : App.WindowClass.hCursor);
-			return 1;
-		}
-	}
-
-	if (msg == WM_ACTIVATEAPP)
-	{
-		App.ResetClock = true;
-		return DefWindowProcA(hWnd, msg, wParam, (LPARAM)lParam);
-	}
-
-	if (msg > WM_CLOSE)
-	{
-		if (msg == WM_COMMAND)
-			HandleWmCommand((unsigned short)wParam);
-
-		return DefWindowProcA(hWnd, msg, wParam, (LPARAM)lParam);
-	}
-
-	if (msg == WM_CLOSE)
-	{
-		receivedWmClose = true;
-		PostQuitMessage(0);
-		DoTheGame = false;
-
-		return DefWindowProcA(hWnd, 0x10u, wParam, (LPARAM)lParam);
-	}
-
-	if (msg != WM_ACTIVATE)
-		return DefWindowProcA(hWnd, msg, wParam, (LPARAM)lParam);
-
-	if (receivedWmClose)
-	{
-		return DefWindowProcA(hWnd, msg, wParam, (LPARAM)lParam);
-	}
-
-	if ((short)wParam)
-	{
-		if ((signed int)(unsigned short)wParam > 0 && (signed int)(unsigned short)wParam <= 2)
-		{
-			SetInputLockState(false);
-
-			if (!g_Configuration.EnableWindowedMode)
-				g_Renderer.ToggleFullScreen(true);
-
-			if (ThreadHandle > 0 && ThreadSuspendCount > 0)
-			{
-				TENLog("Resuming game thread", LogLevel::Info);
-
-				if (!g_VideoPlayer.Resume())
-					ResumeAllSounds(SoundPauseMode::Global);
-
-				ResumeThread((HANDLE)ThreadHandle);
-				ThreadSuspendCount--;
-			}
-
-			return 0;
-		}
-	}
-	else
-	{
-		SetInputLockState(true);
-
-		if (!g_Configuration.EnableWindowedMode)
-			ShowWindow(hWnd, SW_MINIMIZE);
-
-		if ((!DebugMode || IsIconic(hWnd)) && ThreadSuspendCount == 0)
-		{
-			TENLog("Suspending game thread", LogLevel::Info);
-
-			if (!g_VideoPlayer.Pause())
-				PauseAllSounds(SoundPauseMode::Global);
-
-			SuspendThread((HANDLE)ThreadHandle);
-			ThreadSuspendCount++;
-		}
-	}
-
 	return 0;
 }
 
@@ -533,29 +201,23 @@ static void HandleWindowFocusGained(SDL_Window* window)
 		g_Renderer.ToggleFullScreen(true);
 	}
 
-	if (ThreadHandle > 0 && ThreadSuspendCount > 0)
+	if (ThreadSuspendCount > 0)
 	{
 		TENLog("Resuming game thread", LogLevel::Info);
 
 		if (!g_VideoPlayer.Resume())
 			ResumeAllSounds(SoundPauseMode::Global);
 
-		ResumeThread((HANDLE)ThreadHandle);
-		ThreadSuspendCount--;
+		ResumeGameThread();
 	}
 }
 
 static void HandleWindowFocusLost(SDL_Window* window)
 {
-	// Equivalent of the old WM_ACTIVATE "lose focus" branch
 	SetInputLockState(true);
 
 	if (!g_Configuration.EnableWindowedMode)
-	{
-		// Prima facevi ShowWindow(hWnd, SW_MINIMIZE).
-		// Con SDL3 usiamo la sua API.
 		SDL_MinimizeWindow(window);
-	}
 
 	bool isMinimized =
 		(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0;
@@ -567,9 +229,44 @@ static void HandleWindowFocusLost(SDL_Window* window)
 		if (!g_VideoPlayer.Pause())
 			PauseAllSounds(SoundPauseMode::Global);
 
-		SuspendThread((HANDLE)ThreadHandle);
-		ThreadSuspendCount++;
+		PauseGameThread();
 	}
+}
+
+void PauseGameThread()
+{
+	SDL_LockMutex(GamePauseMutex);
+
+	ThreadSuspendCount++;
+	GamePaused = true;
+
+	SDL_UnlockMutex(GamePauseMutex);
+}
+
+void ResumeGameThread()
+{
+	SDL_LockMutex(GamePauseMutex);
+
+	if (ThreadSuspendCount > 0)
+		ThreadSuspendCount--;
+
+	if (ThreadSuspendCount == 0)
+	{
+		GamePaused = false;
+		SDL_BroadcastCondition(GamePauseCond); // sveglia il game thread
+	}
+
+	SDL_UnlockMutex(GamePauseMutex);
+}
+
+void WaitIfGamePaused()
+{
+	SDL_LockMutex(GamePauseMutex);
+	while (GamePaused && !ThreadEnded && DoTheGame)
+	{
+		SDL_WaitCondition(GamePauseCond, GamePauseMutex);
+	}
+	SDL_UnlockMutex(GamePauseMutex);
 }
 
 int main(int argc, char* argv[])
@@ -631,7 +328,9 @@ int main(int argc, char* argv[])
 	else
 #endif
 	{
-		ConsoleThreadHandle = BeginThread(ConsoleInput, ConsoleThreadID);
+		ConsoleThread = SDL_CreateThread(ConsoleInput, "ConsoleInput", nullptr);
+		if (ConsoleThread)
+			SDL_DetachThread(ConsoleThread);
 	}
 
 	// Clear application structure.
@@ -733,16 +432,14 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	g_Platform->SetSDL3Window(sdlWindow);
+
 	HWND hwnd = nullptr;
 #if defined(SDL_PLATFORM_WIN32)
 	SDL_PropertiesID props = SDL_GetWindowProperties(sdlWindow);
 	hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
 #endif
 
-	App.WindowHandle = hwnd;
-	WindowsHandle = hwnd;
-	//App.hInstance = hInstance;
-	
 	// Create renderer and enumerate adapters and video modes.
 	g_Renderer.Create();
 
@@ -765,16 +462,19 @@ int main(int argc, char* argv[])
 	try
 	{
 		// Unlike CoInitialize(), this line prevents event spamming if a .dll fails.
-		CoInitializeEx(NULL, COINIT_MULTITHREADED);
+		g_Platform->ComInitialize();
 
 		// Initialize audio (should be called prior to initializing renderer, because video handler needs it).
 		Sound_Init(gameDir);
 
+		SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
+		HWND handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+
 		// Initialize renderer.
-		g_Renderer.Initialize(gameDir, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode, App.WindowHandle);
+		g_Renderer.Initialize(gameDir, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode, handle);
 
 		// Initialize input.
-		InitializeInput(App.WindowHandle);
+		InitializeInput();
 
 		// Load level if specified in command line.
 		CurrentLevel = g_GameFlow->GetLevelNumber(levelFile);
@@ -800,7 +500,16 @@ int main(int argc, char* argv[])
 	g_Parallel.Initialize();
 	ThreadEnded = false;
 	ThreadSuspendCount = 0;
-	ThreadHandle = BeginThread(GameMain, ThreadID);
+
+	GamePauseMutex = SDL_CreateMutex();
+	GamePauseCond = SDL_CreateCondition();
+
+	GameThread = SDL_CreateThread(GameMain, "GameMain", nullptr);
+	if (!GameThread)
+	{
+		TENLog(std::string("Failed to create game thread: ") + SDL_GetError(), LogLevel::Error);
+		DoTheGame = false;
+	}
 
 	// The game window likes to steal input anyway, so let's put it at the
 	// foreground so the user at least expects it.
@@ -856,11 +565,36 @@ int main(int argc, char* argv[])
 
 void WinClose()
 {
-	if (ConsoleThreadHandle)
-		CloseHandle((HANDLE)ConsoleThreadHandle);
+	// Ferma il game thread
+	if (GameThread)
+	{
+		int status = 0;
+		SDL_LockMutex(GamePauseMutex);
+		GamePaused = false;
+		SDL_BroadcastCondition(GamePauseCond);
+		SDL_UnlockMutex(GamePauseMutex);
 
-	WaitForSingleObject((HANDLE)ThreadHandle, 5000);
+		SDL_WaitThread(GameThread, &status);
+		GameThread = nullptr;
+	}
+
+	// Distruggi sincronizzazione
+	if (GamePauseCond)
+	{
+		SDL_DestroyCondition(GamePauseCond);
+		GamePauseCond = nullptr;
+	}
+	if (GamePauseMutex)
+	{
+		SDL_DestroyMutex(GamePauseMutex);
+		GamePauseMutex = nullptr;
+	}
+
+	// Il thread della console è stato detachato, non c'è nulla da chiudere.
+	// Se invece preferisci aspettarlo:
+	// if (ConsoleThread) { int s; SDL_WaitThread(ConsoleThread, &s); }
+
 	DestroyAcceleratorTable(hAccTable);
 	ShutdownTENLog();
-	CoUninitialize();
+	g_Platform->ComUninitialize();
 }

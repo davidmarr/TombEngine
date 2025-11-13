@@ -2,6 +2,7 @@
 #include "framework.h"
 #include <memory>
 #include <string>
+#include <SDL3/SDL.h>
 
 namespace TEN::Platform
 {
@@ -17,32 +18,18 @@ namespace TEN::Platform
     public:
         virtual ~ISubsystem() = default;
 
-        // Called very early (soon after startup).
-        // Use it to check OS-level prerequisites, like VC++ Redistributable.
         virtual void CheckPrerequisites() = 0;
-
-        // Installs the platform-specific crash handler.
-        // On Windows this can install an unhandled exception filter, symbol loading, etc.
         virtual void InstallCrashHandler() = 0;
-
-        // Shows an error or info dialog to the user.
-        // Implementation depends on the platform (MessageBox on Windows, something else elsewhere).
-        virtual void ShowErrorMessage(const std::string& text,
-            MessageBoxIcon icon = MessageBoxIcon::Error) = 0;
-
-        // Optional per-frame/platform tick.
-        // Useful if the platform needs periodic polling (e.g., console input, background tasks).
+        virtual void ShowErrorMessage(const std::string& text, MessageBoxIcon icon = MessageBoxIcon::Error) = 0;
         virtual void Tick() = 0;
-
-        // Called before shutdown.
-        // Use this to clean up platform-specific resources if needed.
         virtual void Shutdown() = 0;
-
         virtual std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) = 0;
-
         virtual bool Is64Bit() = 0;
-
         virtual void DisableDpiAwareness() = 0;
+        virtual void ComInitialize() = 0;
+        virtual void ComUninitialize() = 0;
+        virtual void SetSDL3Window(SDL_Window* window) = 0;
+        virtual SDL_Window* GetSDL3Window() = 0;
     };
 
 

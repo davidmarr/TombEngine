@@ -350,6 +350,26 @@ namespace TEN::Platform
         return std::make_unique<WindowsSubsystem>();
     }
 
+    void WindowsSubsystem::ComInitialize()
+    {
+        CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    }
+
+    void WindowsSubsystem::ComUninitialize()
+    {
+        CoUninitialize();
+    }
+
+    void WindowsSubsystem::SetSDL3Window(SDL_Window* window)
+    {
+        _window = window;
+    }
+
+    SDL_Window* WindowsSubsystem::GetSDL3Window()
+    {
+        return _window;
+    }
+
 } // namespace TEN::Platform
 
 #endif

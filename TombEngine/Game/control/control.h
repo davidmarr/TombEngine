@@ -1,4 +1,5 @@
 #pragma once
+#include <sdl3/SDL.h>
 #include "Game/animation.h"
 #include "Game/control/trigger.h"
 #include "Game/items.h"
@@ -105,4 +106,4 @@ void DeInitializeScripting(int levelIndex, GameStatus reason);
 
 void SetupInterpolation();
 
-unsigned CALLBACK GameMain(void*);
+int SDLCALL GameMain(void*);

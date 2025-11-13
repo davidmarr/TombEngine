@@ -1,7 +1,14 @@
-// WindowsSubsystem.h
 #pragma once
 
 #ifdef _WIN32
+
+#pragma comment(linker,"/manifestdependency:\"" \
+    "type='win32' " \
+    "name='Microsoft.Windows.Common-Controls' " \
+    "version='6.0.0.0' " \
+    "processorArchitecture='*' "  \
+    "publicKeyToken='6595b64144ccf1df' " \
+    "language='*'\"")
 
 #include <Windows.h>
 #include <string>
@@ -19,6 +26,9 @@ namespace TEN::Platform
     /// </summary>
     class WindowsSubsystem final : public ISubsystem
     {
+    private:
+        SDL_Window* _window;
+
     public:
         WindowsSubsystem();
         ~WindowsSubsystem() override;
@@ -62,6 +72,12 @@ namespace TEN::Platform
         bool Is64Bit() override;
 
         void DisableDpiAwareness() override;
+
+        void ComInitialize() override;
+        void ComUninitialize() override;
+
+        void SetSDL3Window(SDL_Window* window);
+        SDL_Window* GetSDL3Window();
 
     private:
         HINSTANCE _hInstance = nullptr;

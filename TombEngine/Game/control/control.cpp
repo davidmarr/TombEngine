@@ -355,7 +355,7 @@ GameStatus ControlPhase(bool insideMenu)
 	}
 }
 
-unsigned CALLBACK GameMain(void *)
+int SDLCALL GameMain(void *)
 {
 	TENLog("Starting GameMain()...", LogLevel::Info);
 
