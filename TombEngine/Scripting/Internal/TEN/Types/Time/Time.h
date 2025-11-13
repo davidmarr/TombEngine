@@ -1,4 +1,5 @@
 #pragma once
+#include "Scripting/Internal/ScriptUtil.h"
 
 namespace TEN::Scripting
 {
@@ -40,6 +41,7 @@ namespace TEN::Scripting
 		// Utilities
 
 		std::string ToString() const;
+		std::string GetFormattedString(sol::object formatObj, TypeOrNil<bool> useCentiseconds) const;
 
 		// Operators
 
@@ -73,5 +75,14 @@ namespace TEN::Scripting
 		void SetFromHMSC(int hours, int minutes = 0, int seconds = 0, int cents = 0);
 		void SetFromFormattedString(const std::string& formattedTime);
 		void SetFromTable(const sol::table& hmscTable);
+
+		// Cache for last formatted result
+		mutable int _lastFrameCount = -1;
+		mutable std::string _cachedResult;
+		mutable bool _lastIncludeHours = true;
+		mutable bool _lastIncludeMinutes = true;
+		mutable bool _lastIncludeSeconds = true;
+		mutable bool _lastIncludeDeciseconds = true;
+		mutable bool _lastUseCentiseconds = true;
 	};
 }
