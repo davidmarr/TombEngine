@@ -778,7 +778,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\ConstantBuffers\InstancedSpriteBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\InstancedStaticBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\ItemBuffer.h" />
-    <ClInclude Include="Renderer\ConstantBuffers\LightBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\MaterialBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\PostProcessBuffer.h" />
     <ClInclude Include="Renderer\ConstantBuffers\RoomBuffer.h" />

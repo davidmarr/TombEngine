@@ -17,7 +17,6 @@
 #include "Renderer/RendererEnums.h"
 #include "Renderer/RenderView.h"
 #include "Renderer/Structures/RendererLight.h"
-#include "Renderer/ConstantBuffers/LightBuffer.h"
 #include "Renderer/ConstantBuffers/HUDBarBuffer.h"
 #include "Renderer/ConstantBuffers/HUDBuffer.h"
 #include "Renderer/ConstantBuffers/ShadowLightBuffer.h"
@@ -119,8 +118,6 @@ namespace TEN::Renderer
 		std::unique_ptr<IConstantBuffer> _cbCameraMatrices;
 		CItemBuffer _stItem;
 		std::unique_ptr<IConstantBuffer> _cbItem;
-		CLightBuffer _stLights;
-		std::unique_ptr<IConstantBuffer> _cbLights;
 		CRoomBuffer _stRoom;
 		std::unique_ptr<IConstantBuffer> _cbRoom;
 		CAnimatedBuffer _stAnimated;
