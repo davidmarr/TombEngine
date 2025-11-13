@@ -544,7 +544,9 @@ int main()
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	CheckIfRedistInstalled();
+	auto platform = CreatePlatformSubsystem();
+
+	platform->CheckPrerequisites();
 
 	// Process command line arguments.
 	bool setup = false;
@@ -600,7 +602,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	// Initialize logging.
 	InitTENLog(gameDir);
-	SetUnhandledExceptionFilter(HandleException);
+	platform->InstallCrashHandler();
 
 	auto windowName = std::string("Starting TombEngine");
 
@@ -655,8 +657,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		auto errorMessage = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
 		TENLog(errorMessage, LogLevel::Error, LogConfig::All);
-		ShowExternalMessageBox(errorMessage);
+		platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
 		ShutdownTENLog();
+		platform->Shutdown();
 		return 0;
 	}
 

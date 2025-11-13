@@ -12,6 +12,12 @@
 
 #include "Math/Math.h"
 
+#include "Platform/ISubsystem.h"
+
+using TEN::Platform::ISubsystem;
+using TEN::Platform::CreatePlatformSubsystem;
+using TEN::Platform::MessageBoxIcon;
+
 using namespace TEN::Math;
 
 struct WINAPP
