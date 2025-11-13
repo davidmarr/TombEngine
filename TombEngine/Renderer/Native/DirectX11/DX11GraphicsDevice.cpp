@@ -30,10 +30,12 @@ namespace TEN::Renderer::Native::DirectX11
 	{
 		auto vb = static_cast<DX11VertexBuffer*>(vertexBuffer);
 
-		unsigned int stride = vb->Stride;
+		unsigned int stride = vb->GetStride();
 		unsigned int offset = 0;
 
-		_context->IASetVertexBuffers(0, 1, vb->Buffer.GetAddressOf(), &stride, &offset);
+		auto dxBuffer = vb->GetD3D11Buffer();
+
+		_context->IASetVertexBuffers(0, 1, &dxBuffer, &stride, &offset);
 	}
 
 	std::unique_ptr<IIndexBuffer> DX11GraphicsDevice::CreateIndexBuffer(int numIndices, int* indices)
@@ -50,7 +52,9 @@ namespace TEN::Renderer::Native::DirectX11
 	void DX11GraphicsDevice::BindIndexBuffer(IIndexBuffer* indexBuffer)
 	{
 		auto ib = static_cast<DX11IndexBuffer*>(indexBuffer);
-		_context->IASetIndexBuffer(ib->Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		auto dxBuffer = ib->GetD3D11Buffer();
+
+		_context->IASetIndexBuffer(dxBuffer, DXGI_FORMAT_R32_UINT, 0);
 	}
 
 	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat)
@@ -422,7 +426,7 @@ namespace TEN::Renderer::Native::DirectX11
 	void DX11GraphicsDevice::SetInputLayout(IInputLayout* inputLayout)
 	{
 		auto dxInputLayout = static_cast<DX11InputLayout*>(inputLayout);
-		_context->IASetInputLayout(dxInputLayout->InputLayout.Get());
+		_context->IASetInputLayout(dxInputLayout->GetD3D11InputLayout());
 	}
 
 	std::unique_ptr<IInputLayout> DX11GraphicsDevice::CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader)
@@ -731,7 +735,7 @@ namespace TEN::Renderer::Native::DirectX11
 		auto compileOne = [&](const std::string& shaderType,
 			const std::wstring& entry,
 			const char* model,
-			ComPtr<ID3D10Blob>& outBlob)
+			ID3D10Blob** outBlob)
 			{
 				auto csoFileName = makeCsoName(shaderType);
 				auto srcFileName = baseFileName;
@@ -757,8 +761,8 @@ namespace TEN::Renderer::Native::DirectX11
 							ifs.seekg(0, std::ios::beg);
 							std::vector<char> buf(size);
 							ifs.read(buf.data(), size);
-							D3DCreateBlob((SIZE_T)size, &outBlob);
-							memcpy(outBlob->GetBufferPointer(), buf.data(), size);
+							D3DCreateBlob((SIZE_T)size, outBlob);
+							memcpy((*outBlob)->GetBufferPointer(), buf.data(), size);
 							loadedFromDisk = true;
 						}
 					}
@@ -783,7 +787,7 @@ namespace TEN::Renderer::Native::DirectX11
 						model,
 						flags,
 						0,
-						&outBlob,
+						outBlob,
 						&errors
 					);
 					if (FAILED(hr))
@@ -798,57 +802,47 @@ namespace TEN::Renderer::Native::DirectX11
 					std::ofstream ofs(csoFileName, std::ios::binary);
 					if (ofs)
 					{
-						ofs.write((const char*)outBlob->GetBufferPointer(), outBlob->GetBufferSize());
+						ofs.write((const char*)(*outBlob)->GetBufferPointer(), (*outBlob)->GetBufferSize());
 					}
 				}
 			};
 
 		if (req.Type == ShaderType::Pixel || req.Type == ShaderType::PixelAndVertex)
 		{
-			compileOne("PS", req.EntryPoint, "ps_5_0", shader->Blob);
+			auto blob = shader->GetD3D10Blob();
+			compileOne("PS", req.EntryPoint, "ps_5_0", &blob);
 			ComPtr<ID3D11PixelShader> ps;
-			throwIfFailed(_device->CreatePixelShader(shader->Blob->GetBufferPointer(),
-				shader->Blob->GetBufferSize(),
+			throwIfFailed(_device->CreatePixelShader(blob->GetBufferPointer(),
+				blob->GetBufferSize(),
 				nullptr,
 				&ps));
-			shader->PixelShader = ps;
+			shader->SetD3D11PixelShader(ps);
 		}
 
 		if (req.Type == ShaderType::Vertex || req.Type == ShaderType::PixelAndVertex)
 		{
 			ComPtr<ID3D10Blob> vsBlob;
-			compileOne("VS", req.EntryPoint, "vs_5_0", vsBlob);
+			compileOne("VS", req.EntryPoint, "vs_5_0", vsBlob.GetAddressOf());
 			ComPtr<ID3D11VertexShader> vs;
 			throwIfFailed(_device->CreateVertexShader(vsBlob->GetBufferPointer(),
 				vsBlob->GetBufferSize(),
 				nullptr,
 				&vs));
-			shader->VertexShader = vs;
-			shader->Blob = vsBlob;
-		}
-
-		if (req.Type == ShaderType::Compute)
-		{
-			ComPtr<ID3D10Blob> csBlob;
-			compileOne("CS", req.EntryPoint, "cs_5_0", csBlob);
-			ComPtr<ID3D11ComputeShader> cs;
-			throwIfFailed(_device->CreateComputeShader(csBlob->GetBufferPointer(),
-				csBlob->GetBufferSize(),
-				nullptr,
-				&cs));
+			shader->SetD3D11VertexShader(vs);
+			shader->SetD3D10Blob(vsBlob);
 		}
 
 		if (req.Type == ShaderType::Geometry)
 		{
 			ComPtr<ID3D10Blob> gsBlob;
-			compileOne("GS", req.EntryPoint, "gs_5_0", gsBlob);
+			compileOne("GS", req.EntryPoint, "gs_5_0", gsBlob.GetAddressOf());
 			ComPtr<ID3D11GeometryShader> gs;
 			throwIfFailed(_device->CreateGeometryShader(gsBlob->GetBufferPointer(),
 				gsBlob->GetBufferSize(),
 				nullptr,
 				&gs));
-			shader->GeometryShader = gs;
-			shader->Blob = gsBlob;
+			shader->SetD3D11GeometryShader(gs);
+			shader->SetD3D10Blob(gsBlob);
 		}
 
 		return shader;
@@ -868,8 +862,8 @@ namespace TEN::Renderer::Native::DirectX11
 			return;
 		}
 
-		if (dx->VertexShader || forceNull)
-			_context->VSSetShader(dx->VertexShader.Get(), nullptr, 0);
+		if (dx->GetD3D11VertexShader() || forceNull)
+			_context->VSSetShader(dx->GetD3D11VertexShader(), nullptr, 0);
 	}
 
 	void DX11GraphicsDevice::BindGeometryShader(IShader* shader, bool forceNull)
@@ -885,8 +879,8 @@ namespace TEN::Renderer::Native::DirectX11
 			return;
 		}
 
-		if (dx->GeometryShader || forceNull)
-			_context->GSSetShader(dx->GeometryShader.Get(), nullptr, 0);
+		if (dx->GetD3D11GeometryShader() || forceNull)
+			_context->GSSetShader(dx->GetD3D11GeometryShader(), nullptr, 0);
 	}
 
 	void DX11GraphicsDevice::BindPixelShader(IShader* shader, bool forceNull)
@@ -902,8 +896,8 @@ namespace TEN::Renderer::Native::DirectX11
 			return;
 		}
 
-		if (dx->PixelShader || forceNull)
-			_context->PSSetShader(dx->PixelShader.Get(), nullptr, 0);
+		if (dx->GetD3D11PixelShader() || forceNull)
+			_context->PSSetShader(dx->GetD3D11PixelShader(), nullptr, 0);
 	}
 
 	void DX11GraphicsDevice::Present()

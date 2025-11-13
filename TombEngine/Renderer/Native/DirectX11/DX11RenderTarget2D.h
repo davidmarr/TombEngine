@@ -22,18 +22,16 @@ namespace TEN::Renderer::Native::DirectX11
 		std::vector<ComPtr<ID3D11RenderTargetView>> _renderTargetViews;
 
 	public:
-		int GetWidth() override { return _width; }
-		int GetHeight() override { return _height; }
-
-		int GetArraySize() override { return (int)_renderTargetViews.size(); }
-
-		ID3D11RenderTargetView* GetD3D11RenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }
-		ID3D11RenderTargetView* GetD3D11RenderTargetView()               const noexcept { return GetD3D11RenderTargetView(0); }
-		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
-		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
-
 		DX11RenderTarget2D() = default;
 		~DX11RenderTarget2D() = default;
+		
+		int GetWidth() override { return _width; }
+		int GetHeight() override { return _height; }
+		int GetArraySize() override { return (int)_renderTargetViews.size(); }
+		ID3D11RenderTargetView* GetD3D11RenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }
+		ID3D11RenderTargetView* GetD3D11RenderTargetView() const noexcept { return GetD3D11RenderTargetView(0); }
+		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
+		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
 
 		// Default constructor
 		DX11RenderTarget2D(ID3D11Device* device, int width, int height, DXGI_FORMAT colorFormat, bool isTypeless)

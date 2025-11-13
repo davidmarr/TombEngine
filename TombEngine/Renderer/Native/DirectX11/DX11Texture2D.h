@@ -25,14 +25,14 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11ShaderResourceView> _shaderResourceView;
 
 	public:
+		DX11Texture2D() = default;
+		~DX11Texture2D() = default;
+		
 		int GetWidth() override { return _width; }
 		int GetHeight() override { return _height; }
 		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
 
-		DX11Texture2D() = default;
-		~DX11Texture2D() = default;
-		
 		DX11Texture2D(ID3D11Device* device, int width, int height, byte* data)
 		{
 			HRESULT res;

@@ -23,6 +23,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11Texture2D>	_depthStencilTexture;
 
 	public:
+		DX11DepthTarget() = default;
 		~DX11DepthTarget() = default;
 
 		int GetArraySize() override { return (int)_depthStencilViews.size(); }

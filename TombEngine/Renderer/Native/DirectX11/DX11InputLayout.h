@@ -18,11 +18,14 @@ namespace TEN::Renderer::Native::DirectX11
 
 	class DX11InputLayout final : public IInputLayout
 	{
-	public:
-		ComPtr<ID3D11InputLayout> InputLayout;
+	private:
+		ComPtr<ID3D11InputLayout> _inputLayout;
 
+	public:
 		DX11InputLayout() = default;
 		~DX11InputLayout() = default;
+
+		ID3D11InputLayout* GetD3D11InputLayout() const { return _inputLayout.Get(); }
 
 		DX11InputLayout(ID3D11Device* device, std::vector<RendererInputLayoutField> fields, DX11Shader* shader)
 		{
@@ -85,7 +88,7 @@ namespace TEN::Renderer::Native::DirectX11
 				elements.push_back(element);
 			}
 
-			Utils::throwIfFailed(device->CreateInputLayout(elements.data(), (int)elements.size(), shader->Blob->GetBufferPointer(), shader->Blob->GetBufferSize(), &InputLayout));
+			Utils::throwIfFailed(device->CreateInputLayout(elements.data(), (int)elements.size(), shader->GetD3D10Blob()->GetBufferPointer(), shader->GetD3D10Blob()->GetBufferSize(), &_inputLayout));
 		}
 	};
 }

@@ -19,11 +19,13 @@ namespace TEN::Renderer::Native::DirectX11
 	{
 	private:
 		int _numIndices = 0;
+		ComPtr<ID3D11Buffer> _buffer;
 
 	public:
-		ComPtr<ID3D11Buffer> Buffer;
-
+		DX11IndexBuffer() = default;
 		~DX11IndexBuffer() = default;
+
+		ID3D11Buffer* GetD3D11Buffer() const { return _buffer.Get(); }
 
 		DX11IndexBuffer(ID3D11Device* device, int numIndices, int* indices)
 		{
@@ -39,11 +41,11 @@ namespace TEN::Renderer::Native::DirectX11
 				initData.pSysMem = indices;
 				initData.SysMemPitch = sizeof(int) * numIndices;
 
-				throwIfFailed(device->CreateBuffer(&desc, &initData, &Buffer));
+				throwIfFailed(device->CreateBuffer(&desc, &initData, &_buffer));
 			}
 			else
 			{
-				throwIfFailed(device->CreateBuffer(&desc, nullptr, &Buffer));
+				throwIfFailed(device->CreateBuffer(&desc, nullptr, &_buffer));
 			}
 
 			_numIndices = numIndices;
@@ -52,12 +54,12 @@ namespace TEN::Renderer::Native::DirectX11
 		bool Update(ID3D11DeviceContext* context, int* data, int startIndex, int count)
 		{
 			D3D11_MAPPED_SUBRESOURCE mappedResource;
-			HRESULT res = context->Map(Buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+			HRESULT res = context->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 			if (SUCCEEDED(res))
 			{
 				void* dataPtr = mappedResource.pData;
 				std::memcpy(dataPtr, &data[startIndex], count * sizeof(int));
-				context->Unmap(Buffer.Get(), 0);
+				context->Unmap(_buffer.Get(), 0);
 				return true;
 			}
 			else
