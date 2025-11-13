@@ -447,8 +447,10 @@ void ClassicRollingBallControl(short itemNum)
 		if (!item->Animation.IsAirborne && (item->TriggerFlags & 1) != 1) // Flag 1 = silent.
 		{
 			SoundEffect(SFX_TR4_ROLLING_BALL, &item->Pose);
-			if (Vector3i::Distance(Camera.pos.ToVector3i(), item->Pose.Position) < BLOCK(10))
-				Camera.bounce = -40 * (BLOCK(10) - dist) / BLOCK(10);
+
+			float distance = Vector3i::Distance(Camera.pos.ToVector3i(), item->Pose.Position);
+			if (distance < BLOCK(10))
+				Camera.bounce = -40 * (BLOCK(10) - distance) / BLOCK(10);
 		}
 
 		if (item->ObjectNumber == ID_CLASSIC_ROLLING_BALL)
