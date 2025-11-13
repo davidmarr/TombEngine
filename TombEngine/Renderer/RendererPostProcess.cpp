@@ -22,15 +22,15 @@ namespace TEN::Renderer
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
 		_stPostProcessBuffer.EffectStrength = _postProcessStrength;
 		_stPostProcessBuffer.Tint = _postProcessTint;
-		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		_shaders.Bind(Shader::PostProcess);
 
@@ -63,7 +63,7 @@ namespace TEN::Renderer
 				_stPostProcessBuffer.LensFlares[i].Color = view.LensFlaresToDraw[i].Color.ToVector3();
 			}
 			_stPostProcessBuffer.NumLensFlares = (int)view.LensFlaresToDraw.size();
-			UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+			UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 
 			BindRenderTargetAsTexture(TextureRegister::ColorMap, _postProcessRenderTarget[currentRenderTarget]->GetRenderTarget(), SamplerStateRegister::PointWrap);
 			DrawTriangles(3, 0);
@@ -159,12 +159,12 @@ namespace TEN::Renderer
 
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		_graphicsDevice->ClearRenderTarget2D(dest->GetRenderTarget(), Colors::Black);
@@ -191,8 +191,8 @@ namespace TEN::Renderer
 
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
-		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		_graphicsDevice->ClearRenderTarget2D(dest->GetRenderTarget(), Colors::Transparent);
 		_graphicsDevice->BindRenderTarget(dest->GetRenderTarget(), nullptr);
@@ -222,18 +222,18 @@ namespace TEN::Renderer
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
 
 		unsigned int stride = sizeof(PostProcessVertex);
 		unsigned int offset = 0;
 
-		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		// Downscale 
 		_shaders.Bind(Shader::Downscale);
 
 		_stPostProcessBuffer.DownscaleFactor = GLOW_DOWNSCALE_FACTOR;
-		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 
 		_graphicsDevice->ClearRenderTarget2D(_glowRenderTarget[0]->GetRenderTarget(), Colors::Transparent);
 		_graphicsDevice->BindRenderTarget(_glowRenderTarget[0]->GetRenderTarget(), nullptr);
@@ -253,14 +253,14 @@ namespace TEN::Renderer
 		_graphicsDevice->BindRenderTarget(_glowRenderTarget[1]->GetRenderTarget(), nullptr);
 
 		_stPostProcessBuffer.BlurDirection = Vector2(1.0f, 0.0f);
-		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 
 		BindRenderTargetAsTexture(TextureRegister::ColorMap, _glowRenderTarget[0]->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		DrawTriangles(3, 0);
 
 		// Vertical blur
 		_stPostProcessBuffer.BlurDirection = Vector2(0.0f, 1.0f);
-		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 
 		_graphicsDevice->ClearRenderTarget2D(_glowRenderTarget[0]->GetRenderTarget(), Colors::Transparent);
 		_graphicsDevice->BindRenderTarget(_glowRenderTarget[0]->GetRenderTarget(), nullptr);
@@ -273,14 +273,14 @@ namespace TEN::Renderer
 		ResetScissor();
 
 		// Copy render target to temp render target
-		CopyRenderTarget(renderTarget, _postProcessRenderTarget[0], view);
+		CopyRenderTarget(renderTarget, _postProcessRenderTarget[0].get(), view);
 
 		// Combine glow
 		_shaders.Bind(Shader::GlowCombine);
 
 		_stPostProcessBuffer.GlowSoftAdd = 1;
 		_stPostProcessBuffer.GlowIntensity = 1.0f;
-		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 
 		_graphicsDevice->ClearRenderTarget2D(renderTarget->GetRenderTarget(), Colors::Transparent);
 		_graphicsDevice->BindRenderTarget(renderTarget->GetRenderTarget(), nullptr);

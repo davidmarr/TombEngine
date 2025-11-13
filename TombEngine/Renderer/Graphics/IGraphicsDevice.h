@@ -8,7 +8,6 @@
 #include "Renderer/Graphics/IRenderTarget2D.h"
 #include "Renderer/Graphics/IRenderTargetCube.h"
 #include "Renderer/Graphics/ITexture2D.h"
-#include "Renderer/Graphics/ITexture2DArray.h"
 #include "Renderer/Graphics/IConstantBuffer.h"
 #include "Renderer/Graphics/IInputLayout.h"
 #include "Renderer/Graphics/IShader.h"
@@ -31,17 +30,17 @@ namespace TEN::Renderer::Graphics
 	class IGraphicsDevice
 	{
 	public:
-		virtual IVertexBuffer* CreateVertexBuffer(int numVertices, int vertexSize, void* data) = 0;
+		virtual std::unique_ptr<IVertexBuffer> CreateVertexBuffer(int numVertices, int vertexSize, void* data) = 0;
 		virtual void UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) = 0;
 		virtual void BindVertexBuffer(IVertexBuffer* vertexBuffer) = 0;
 
-		virtual IIndexBuffer* CreateIndexBuffer(int numIndices, int* data) = 0;
+		virtual std::unique_ptr<IIndexBuffer> CreateIndexBuffer(int numIndices, int* data) = 0;
 		virtual void UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data) = 0;
 		virtual void BindIndexBuffer(IIndexBuffer* indexBuffer) = 0;
 
-		virtual IRenderSurface2D* CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat) = 0;
-		virtual IRenderSurface2D* CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat) = 0;
-		virtual IRenderSurface2D* CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat) = 0;
+		virtual std::unique_ptr<IRenderSurface2D> CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat) = 0;
+		virtual std::unique_ptr<IRenderSurface2D> CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat) = 0;
+		virtual std::unique_ptr<IRenderSurface2D> CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat) = 0;
 
 		virtual IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) = 0;
 
@@ -60,7 +59,7 @@ namespace TEN::Renderer::Graphics
 
 		virtual void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) = 0;
 		
-		virtual IConstantBuffer* CreateConstantBuffer(int size, std::wstring name) = 0;
+		virtual std::unique_ptr<IConstantBuffer> CreateConstantBuffer(int size, std::wstring name) = 0;
 		virtual void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) = 0;
 		virtual void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
 		virtual void BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
@@ -86,16 +85,16 @@ namespace TEN::Renderer::Graphics
 		virtual void SetPrimitiveType(PrimitiveType primitiveType) = 0;
 
 		virtual void SetInputLayout(IInputLayout* inputLayout) = 0;
-		virtual IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) = 0;
+		virtual std::unique_ptr<IInputLayout> CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) = 0;
 
 		virtual void CreateDevice() = 0;
 		virtual void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) = 0;
-		virtual IRenderSurface2D* InitializeSwapChain(int width, int height, HWND handle) = 0;
+		virtual std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height, HWND handle) = 0;
 
 		virtual std::string GetDefaultAdapterName() = 0;
 		virtual void ChangeScreenResolution(int width, int height, bool windowed) = 0;
 
-		virtual IShader* CreateShader(ShaderCompileRequest& request) = 0;
+		virtual std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) = 0;
 		virtual void BindVertexShader(IShader* shader, bool forceNull) = 0;
 		virtual void BindGeometryShader(IShader* shader, bool forceNull) = 0;
 		virtual void BindPixelShader(IShader* shader, bool forceNull) = 0;
@@ -103,9 +102,9 @@ namespace TEN::Renderer::Graphics
 		virtual void Present() = 0;
 		virtual void ClearState() = 0;
 
-		virtual ISpriteFont* InitializeSpriteFont(std::wstring fontPath) = 0;
-		virtual ISpriteBatch* InitializeSpriteBatch() = 0;
-		virtual IPrimitiveBatch* InitializePrimitiveBatch() = 0;
+		virtual std::unique_ptr<ISpriteFont> InitializeSpriteFont(std::wstring fontPath) = 0;
+		virtual std::unique_ptr<ISpriteBatch> InitializeSpriteBatch() = 0;
+		virtual std::unique_ptr<IPrimitiveBatch> InitializePrimitiveBatch() = 0;
 
 		virtual void SetViewport(RendererViewport viewport) = 0;
 		virtual Vector3 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) = 0;

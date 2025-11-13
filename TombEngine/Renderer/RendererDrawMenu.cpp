@@ -109,9 +109,9 @@ namespace TEN::Renderer
 
 		int shift = MenuVerticalLineSpacing / 2;
 
-		g_MusicVolumeBar = new RendererHudBar(_graphicsDevice, Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
+		g_MusicVolumeBar = new RendererHudBar(_graphicsDevice.get(), Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
 		GetNextLinePosition(&y);
-		g_SFXVolumeBar = new RendererHudBar(_graphicsDevice, Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
+		g_SFXVolumeBar = new RendererHudBar(_graphicsDevice.get(), Vector2(MenuRightSideEntry, y + shift), RendererHudBar::SIZE_DEFAULT, 1, soundSettingColors);
 	}
 
 	void Renderer::RenderOptionsMenu(Menu menu, int initialY)
@@ -834,10 +834,10 @@ namespace TEN::Renderer
 		auto pos = _graphicsDevice->Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
 
 		// Set vertex buffer.
-		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_vertexInputLayout);
-		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
 		// Set matrices.
 		auto hudCamera = CCameraMatrixBuffer{};
@@ -845,8 +845,8 @@ namespace TEN::Renderer
 		hudCamera.ViewProjection = viewMatrix * projMatrix;
 		hudCamera.Frame = GlobalCounter;
 		hudCamera.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
-		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices);
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices);
+		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices.get());
+		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 		for (int i = 0; i < moveableObject->ObjectMeshes.size(); i++)
 		{
@@ -878,10 +878,10 @@ namespace TEN::Renderer
 			_stItem.Color = Vector4::One;
 			_stItem.AmbientLight = AMBIENT_LIGHT_COLOR;
 
-			UpdateConstantBuffer(&_stItem, _cbItem);
+			UpdateConstantBuffer(&_stItem, _cbItem.get());
 
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem);
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem);
+			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
 
 			const auto& mesh = *moveableObject->ObjectMeshes[i];
 
@@ -913,8 +913,7 @@ namespace TEN::Renderer
 
 	void Renderer::RenderTitleImage()
 	{
-		ITexture2D* texture = _graphicsDevice->CreateTexture2D();
-		SetTextureOrDefault(texture, TEN::Utils::ToWString(g_GameFlow->GetGameDir() + g_GameFlow->IntroImagePath.c_str()));
+		auto texture = SetTextureOrDefault(TEN::Utils::ToWString(g_GameFlow->GetGameDir() + g_GameFlow->IntroImagePath.c_str()));
 
 		//if (!texture.Texture)
 		//	return;
@@ -936,7 +935,7 @@ namespace TEN::Renderer
 				currentFade = std::clamp(currentFade -= FADE_FACTOR, 0.0f, 1.0f);
 			}
 
-			DrawFullScreenImage(texture, Smoothstep(currentFade), _backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
+			DrawFullScreenImage(texture.get(), Smoothstep(currentFade), _backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 			Synchronize();
 
 			_graphicsDevice->Present();
@@ -1028,10 +1027,10 @@ namespace TEN::Renderer
 		unsigned int offset = 0;
 
 		// Set vertex buffer.
-		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_vertexInputLayout);
-		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
 		// Set shaders.
 		_shaders.Bind(Shader::Inventory);
@@ -1058,7 +1057,7 @@ namespace TEN::Renderer
 				rect.Bottom = logoBottom * scale;
 
 				_spriteBatch->Begin(SpriteSortingMode::BackToFront, BlendMode::AlphaBlend);
-				_spriteBatch->Draw(_logo, rect, Vector4::One * ScreenFadeCurrent);
+				_spriteBatch->Draw(_logo.get(), rect, Vector4::One * ScreenFadeCurrent);
 				_spriteBatch->End();
 			}
 
@@ -1093,15 +1092,15 @@ namespace TEN::Renderer
 
 		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
-		ApplyGlow(_renderTarget, _gameCamera);
-		ApplyAntialiasing(_renderTarget, _gameCamera);
+		ApplyGlow(_renderTarget.get(), _gameCamera);
+		ApplyAntialiasing(_renderTarget.get(), _gameCamera);
 
-		CopyRenderTarget(_renderTarget, renderTarget, _gameCamera);
+		CopyRenderTarget(_renderTarget.get(), renderTarget, _gameCamera);
 	}
 
 	void Renderer::SetLoadingScreen(std::wstring& fileName)
 	{
-		SetTextureOrDefault(_loadingScreenTexture, fileName);
+		_loadingScreenTexture = SetTextureOrDefault(fileName);
 	}
 
 	void Renderer::RenderFreezeMode(float interpFactor, bool staticBackground)
@@ -1127,7 +1126,7 @@ namespace TEN::Renderer
 		else
 		{
 			InterpolateCamera(interpFactor);
-			RenderScene(_backBuffer, _gameCamera, SceneRenderMode::NoHud);
+			RenderScene(_backBuffer.get(), _gameCamera, SceneRenderMode::NoHud);
 		}
 
 		// TODO: Put 3D object drawing management here (don't forget about interpolation!)
@@ -1165,7 +1164,7 @@ namespace TEN::Renderer
 			// Draw fullscreen background. If unavailable, draw last dumped game scene.
 			if (_loadingScreenTexture)
 			{
-				DrawFullScreenQuad(_loadingScreenTexture, Vector3(ScreenFadeCurrent, ScreenFadeCurrent, ScreenFadeCurrent));
+				DrawFullScreenQuad(_loadingScreenTexture.get(), Vector3(ScreenFadeCurrent, ScreenFadeCurrent, ScreenFadeCurrent));
 			}
 			else if (_dumpScreenRenderTarget)
 			{
@@ -1202,7 +1201,7 @@ namespace TEN::Renderer
 		SetDepthState(DepthState::Write, true);
 		SetCullMode(CullMode::CounterClockwise, true);
 
-		RenderInventoryScene(_backBuffer, _dumpScreenRenderTarget->GetRenderTarget(), 0.5f);
+		RenderInventoryScene(_backBuffer.get(), _dumpScreenRenderTarget->GetRenderTarget(), 0.5f);
 
 		_graphicsDevice->Present();
 	}
@@ -1218,7 +1217,7 @@ namespace TEN::Renderer
 		_graphicsDevice->ClearRenderTarget2D(_backBuffer->GetRenderTarget(), Colors::Black);
 		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
 
-		RenderInventoryScene(_backBuffer, _dumpScreenRenderTarget->GetRenderTarget(), 1.0f);
+		RenderInventoryScene(_backBuffer.get(), _dumpScreenRenderTarget->GetRenderTarget(), 1.0f);
 		
 		_graphicsDevice->Present();
 

@@ -13,12 +13,12 @@ namespace TEN::Renderer
 			break;
 
 		case AntialiasingMode::Low:
-			ApplyFXAA(_renderTarget, _gameCamera);
+			ApplyFXAA(_renderTarget.get(), _gameCamera);
 			break;
 
 		case AntialiasingMode::Medium:
 		case AntialiasingMode::High:
-			ApplySMAA(_renderTarget, _gameCamera);
+			ApplySMAA(_renderTarget.get(), _gameCamera);
 			break;
 		}
 	}
@@ -36,8 +36,8 @@ namespace TEN::Renderer
 
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
-		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		// Copy render target to SMAA scene target.
 		_graphicsDevice->ClearRenderTarget2D(_SMAASceneRenderTarget->GetRenderTarget(), Colors::Transparent);
@@ -57,15 +57,15 @@ namespace TEN::Renderer
 		_shaders.Bind(Shader::SmaaColorEdgeDetection);
 		 
 		_stSMAABuffer.BlendFactor = 1.0f;
-		UpdateConstantBuffer(&_stSMAABuffer, _cbSMAABuffer);
-		BindConstantBufferPS(static_cast<ConstantBufferRegister>(13), _cbSMAABuffer);
+		UpdateConstantBuffer(&_stSMAABuffer, _cbSMAABuffer.get());
+		BindConstantBufferPS(static_cast<ConstantBufferRegister>(13), _cbSMAABuffer.get());
 
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(0), _SMAASceneRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _SMAASceneSRGBRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(5), _SMAAEdgesRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(6), _SMAABlendRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
-		BindTexture(static_cast<TextureRegister>(7), _SMAAAreaTexture, SamplerStateRegister::LinearClamp);
-		BindTexture(static_cast<TextureRegister>(8), _SMAASearchTexture, SamplerStateRegister::LinearClamp);
+		BindTexture(static_cast<TextureRegister>(7), _SMAAAreaTexture.get(), SamplerStateRegister::LinearClamp);
+		BindTexture(static_cast<TextureRegister>(8), _SMAASearchTexture.get(), SamplerStateRegister::LinearClamp);
 
 		DrawTriangles(3, 0);
 
@@ -75,14 +75,14 @@ namespace TEN::Renderer
 		_shaders.Bind(Shader::SmaaBlendingWeightCalculation);
 
 		_stSMAABuffer.SubsampleIndices = Vector4::Zero;
-		UpdateConstantBuffer(&_stSMAABuffer, _cbSMAABuffer);
+		UpdateConstantBuffer(&_stSMAABuffer, _cbSMAABuffer.get());
 
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(0), _SMAASceneRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _SMAASceneSRGBRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(5), _SMAAEdgesRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(6), _SMAABlendRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
-		BindTexture(static_cast<TextureRegister>(7), _SMAAAreaTexture, SamplerStateRegister::LinearClamp);
-		BindTexture(static_cast<TextureRegister>(8), _SMAASearchTexture, SamplerStateRegister::LinearClamp);
+		BindTexture(static_cast<TextureRegister>(7), _SMAAAreaTexture.get(), SamplerStateRegister::LinearClamp);
+		BindTexture(static_cast<TextureRegister>(8), _SMAASearchTexture.get(), SamplerStateRegister::LinearClamp);
 
 		DrawTriangles(3, 0);
 
@@ -95,13 +95,13 @@ namespace TEN::Renderer
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _SMAASceneSRGBRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(5), _SMAAEdgesRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(6), _SMAABlendRenderTarget->GetRenderTarget(), SamplerStateRegister::LinearClamp);
-		BindTexture(static_cast<TextureRegister>(7), _SMAAAreaTexture, SamplerStateRegister::LinearClamp);
-		BindTexture(static_cast<TextureRegister>(8), _SMAASearchTexture, SamplerStateRegister::LinearClamp);
+		BindTexture(static_cast<TextureRegister>(7), _SMAAAreaTexture.get(), SamplerStateRegister::LinearClamp);
+		BindTexture(static_cast<TextureRegister>(8), _SMAASearchTexture.get(), SamplerStateRegister::LinearClamp);
 
 		DrawTriangles(3, 0);
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_vertexInputLayout);
+		_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
 	}
 
 	void Renderer::ApplyFXAA(IRenderSurface2D* renderTarget, RenderView& view)
@@ -117,8 +117,8 @@ namespace TEN::Renderer
 
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout);
-		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer);
+		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
+		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		// Copy render target to temp render target.
 		_graphicsDevice->ClearRenderTarget2D(_postProcessRenderTarget[0]->GetRenderTarget(), Colors::Transparent);
@@ -134,7 +134,7 @@ namespace TEN::Renderer
 		_shaders.Bind(Shader::Fxaa);
 
 		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
-		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer);
+		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 		
 		BindTexture(TextureRegister::ColorMap, _postProcessRenderTarget[0]->GetRenderTarget(), SamplerStateRegister::AnisotropicClamp);
 

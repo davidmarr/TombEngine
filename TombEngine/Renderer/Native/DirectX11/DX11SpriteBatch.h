@@ -25,6 +25,8 @@ namespace TEN::Renderer::Native::DirectX11
 		std::unique_ptr<CommonStates> _renderStates = nullptr;
 
 	public:
+		~DX11SpriteBatch() = default;
+
 		DX11SpriteBatch(ID3D11Device* device, ID3D11DeviceContext* context)
 		{
 			_spriteBatch = std::make_unique<SpriteBatch>(context);

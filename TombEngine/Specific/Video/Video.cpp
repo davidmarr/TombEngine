@@ -521,7 +521,7 @@ namespace TEN::Video
 		
 		_frameBuffer.resize(_size.x * _size.y * 4);
 
-		_videoTexture = _device->CreateTexture2D(_size.x, _size.y, SurfaceFormat::SF_BGRA8_Unorm);
+		//_videoTexture = _device->CreateTexture2D(_size.x, _size.y, SurfaceFormat::SF_BGRA8_Unorm);
 
 		/*auto texDesc = D3D11_TEXTURE2D_DESC{};
 		texDesc.Width = _size.x;

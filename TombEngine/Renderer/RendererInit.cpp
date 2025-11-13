@@ -70,7 +70,7 @@ namespace TEN::Renderer
 		_cbHUD = CreateConstantBuffer<CHUDBuffer>();
 		_stHUD.View = Matrix::CreateLookAt(Vector3::Zero, Vector3(0, 0, 1), Vector3(0, -1, 0));
 		_stHUD.Projection = Matrix::CreateOrthographicOffCenter(0, DISPLAY_SPACE_RES.x, 0, DISPLAY_SPACE_RES.y, 0, 1.0f);
-		UpdateConstantBuffer(&_stHUD, _cbHUD);
+		UpdateConstantBuffer(&_stHUD, _cbHUD.get());
 		_currentCausticsFrame = 0;
 
 		// Preallocate lists.
@@ -105,7 +105,7 @@ namespace TEN::Renderer
 		_spriteVertexBuffer = _graphicsDevice->CreateVertexBuffer(MAX_SPRITE_VERTICES, sizeof(Vertex), _spriteVertices.data());
 
 		// Initialize video player.
-		g_VideoPlayer.Initialize(gameDir, _graphicsDevice);
+		g_VideoPlayer.Initialize(gameDir, _graphicsDevice.get());
 
 		_primitiveBatch = _graphicsDevice->InitializePrimitiveBatch();
 		_spriteBatch = _graphicsDevice->InitializeSpriteBatch();
@@ -355,7 +355,7 @@ namespace TEN::Renderer
 		int h = _screenHeight;
 
 		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, true, DepthFormat::None);
-		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderSurface2D(_SMAASceneRenderTarget, SurfaceFormat::SF_RGBA8_Unorm_Srgb);
+		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderSurface2D(_SMAASceneRenderTarget.get(), SurfaceFormat::SF_RGBA8_Unorm_Srgb);
 		_SMAAEdgesRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RG8_Unorm, false, DepthFormat::None);
 		_SMAABlendRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::None);
 	}
@@ -370,10 +370,10 @@ namespace TEN::Renderer
 		_gameFont = _graphicsDevice->InitializeSpriteFont(fontPath);
 
 		// Initialize common textures.
-		SetTextureOrDefault(_logo, GetAssetPath(L"Textures/Logo.png"));
-		SetTextureOrDefault(_loadingBarBorder, GetAssetPath(L"Textures/LoadingBarBorder.png"));
-		SetTextureOrDefault(_loadingBarInner, GetAssetPath(L"Textures/LoadingBarInner.png"));
-		SetTextureOrDefault(_whiteTexture, GetAssetPath(L"Textures/WhiteSprite.png")); 
+		_logo = SetTextureOrDefault(GetAssetPath(L"Textures/Logo.png"));
+		_loadingBarBorder = SetTextureOrDefault(GetAssetPath(L"Textures/LoadingBarBorder.png"));
+		_loadingBarInner = SetTextureOrDefault(GetAssetPath(L"Textures/LoadingBarInner.png"));
+		_whiteTexture = SetTextureOrDefault(GetAssetPath(L"Textures/WhiteSprite.png"));
 
 		_whiteSprite.Height = _whiteTexture->GetHeight();
 		_whiteSprite.Width = _whiteTexture->GetWidth();
@@ -381,18 +381,18 @@ namespace TEN::Renderer
 		_whiteSprite.UV[1] = Vector2(1.0f, 0.0f);
 		_whiteSprite.UV[2] = Vector2(1.0f, 1.0f);
 		_whiteSprite.UV[3] = Vector2(0.0f, 1.0f);
-		_whiteSprite.Texture = _whiteTexture;
+		_whiteSprite.Texture = _whiteTexture.get();
 	}
 
 	void Renderer::Create()
 	{
 		TENLog("Creating DX11 renderer device...", LogLevel::Info);
 
-		_graphicsDevice = new TEN::Renderer::Native::DirectX11::DX11GraphicsDevice();
+		_graphicsDevice = std::make_unique<TEN::Renderer::Native::DirectX11::DX11GraphicsDevice>();
 		_graphicsDevice->CreateDevice();
 
 		// Initialize shader manager.
-		_shaders.Initialize(_graphicsDevice);
+		_shaders.Initialize(_graphicsDevice.get());
 	}
 
 	void Renderer::ToggleFullScreen(bool force)

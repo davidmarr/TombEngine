@@ -21,9 +21,8 @@ namespace TEN::Renderer::Native::DirectX11
 	public:
 		ComPtr<ID3D11InputLayout> InputLayout;
 
-		DX11InputLayout()
-		{
-		};
+		DX11InputLayout() = default;
+		~DX11InputLayout() = default;
 
 		DX11InputLayout(ID3D11Device* device, std::vector<RendererInputLayoutField> fields, DX11Shader* shader)
 		{

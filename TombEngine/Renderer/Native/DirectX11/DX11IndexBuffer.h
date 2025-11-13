@@ -23,6 +23,8 @@ namespace TEN::Renderer::Native::DirectX11
 	public:
 		ComPtr<ID3D11Buffer> Buffer;
 
+		~DX11IndexBuffer() = default;
+
 		DX11IndexBuffer(ID3D11Device* device, int numIndices, int* indices)
 		{
 			D3D11_BUFFER_DESC desc = {};

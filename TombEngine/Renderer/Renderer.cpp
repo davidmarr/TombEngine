@@ -61,8 +61,11 @@ namespace TEN::Renderer
 		SAFE_DELETE(_staticsVertexBuffer);
 		SAFE_DELETE(_staticsIndexBuffer);
 
-		for (int i =0;i< _roomTextures.size();i++)
-			SAFE_DELETE(_roomTextures[i].)
+		_roomTextures.clear();
+		_moveablesTextures.clear();
+		_staticTextures.clear();
+		_spritesTextures.clear();
+		_animatedTextures.clear();
 	}
 
 	void Renderer::Lock()
@@ -301,7 +304,7 @@ namespace TEN::Renderer
 			_stMaterial.MaterialParameters2  = g_Level.Materials[materialIndex].Parameters2;
 			_stMaterial.MaterialParameters3  = g_Level.Materials[materialIndex].Parameters3;
 
-			UpdateConstantBuffer(&_stMaterial, _cbMaterial);
+			UpdateConstantBuffer(&_stMaterial, _cbMaterial.get());
 
 			_lastMaterialIndex = materialIndex;
 
@@ -321,7 +324,7 @@ namespace TEN::Renderer
 			_graphicsDevice->SetBlendMode(blendMode);
 
 			_stBlending.BlendMode = static_cast<unsigned int>(blendMode);
-			UpdateConstantBuffer(&_stBlending, _cbBlending);
+			UpdateConstantBuffer(&_stBlending, _cbBlending.get());
 			
 			_lastBlendMode = blendMode;
 		}
@@ -378,7 +381,7 @@ namespace TEN::Renderer
 		{
 			_stBlending.AlphaTest = (int)mode;
 			_stBlending.AlphaThreshold = threshold;
-			UpdateConstantBuffer(&_stBlending, _cbBlending);
+			UpdateConstantBuffer(&_stBlending, _cbBlending.get());
 		}
 	}
 

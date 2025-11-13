@@ -15,9 +15,9 @@ using namespace TEN::Renderer::Graphics;
 
 namespace TEN::Renderer::Native::DirectX11
 {
-	IVertexBuffer* DX11GraphicsDevice::CreateVertexBuffer(int numVertices, int vertexSize, void* data)
+	std::unique_ptr<IVertexBuffer> DX11GraphicsDevice::CreateVertexBuffer(int numVertices, int vertexSize, void* data)
 	{
-		return new DX11VertexBuffer(_device.Get(), numVertices, vertexSize, data);
+		return std::make_unique<DX11VertexBuffer>(_device.Get(), numVertices, vertexSize, data);
 	}
 
 	void DX11GraphicsDevice::UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data)
@@ -36,9 +36,9 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->IASetVertexBuffers(0, 1, vb->Buffer.GetAddressOf(), &stride, &offset);
 	}
 
-	IIndexBuffer* DX11GraphicsDevice::CreateIndexBuffer(int numIndices, int* indices)
+	std::unique_ptr<IIndexBuffer> DX11GraphicsDevice::CreateIndexBuffer(int numIndices, int* indices)
 	{
-		return new DX11IndexBuffer(_device.Get(), numIndices, indices);
+		return std::make_unique<DX11IndexBuffer>(_device.Get(), numIndices, indices);
 	}
 
 	void DX11GraphicsDevice::UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data)
@@ -53,35 +53,39 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->IASetIndexBuffer(ib->Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	}
 
-	IRenderSurface2D* DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat)
+	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat)
 	{
-		IRenderTarget2D* renderTarget = new DX11RenderTarget2D(_device.Get(), width, height, GetDXGIFormat(colorFormat), isTypeless);
+		auto renderTarget = std::make_unique<DX11RenderTarget2D>(_device.Get(), width, height, GetDXGIFormat(colorFormat), isTypeless);
 		
-		IDepthTarget* depthTarget = nullptr;
+		std::unique_ptr<IDepthTarget> depthTarget = nullptr;
 		if (depthFormat != DepthFormat::None)
-			depthTarget = new DX11DepthTarget(_device.Get(), width, height, GetDXGIFormat(depthFormat));
+			depthTarget = std::make_unique<DX11DepthTarget>(_device.Get(), width, height, GetDXGIFormat(depthFormat));
 	
-		return new IRenderSurface2D(renderTarget, depthTarget);
+		return std::make_unique<IRenderSurface2D>(
+			std::move(renderTarget),
+			std::move(depthTarget));
 	}
 
-	IRenderSurface2D* DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat)
+	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat)
 	{
-		IRenderTarget2D* renderTarget = new DX11RenderTarget2D(_device.Get(), width, height, arraySize, GetDXGIFormat(colorFormat));
+		auto renderTarget = std::make_unique<DX11RenderTarget2D>(_device.Get(), width, height, arraySize, GetDXGIFormat(colorFormat));
 
-		IDepthTarget* depthTarget = nullptr;
+		std::unique_ptr<IDepthTarget> depthTarget = nullptr;
 		if (depthFormat != DepthFormat::None)
-			depthTarget = new DX11DepthTarget(_device.Get(), width, height, arraySize, GetDXGIFormat(depthFormat));
+			depthTarget = std::make_unique<DX11DepthTarget>(_device.Get(), width, height, arraySize, GetDXGIFormat(depthFormat));
 
-		return new IRenderSurface2D(renderTarget, depthTarget);
+		return std::make_unique<IRenderSurface2D>(
+			std::move(renderTarget),
+			std::move(depthTarget));
 	}
 
-	IRenderSurface2D* DX11GraphicsDevice::CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat)
+	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat)
 	{
 		auto dxRenderTarget = static_cast<DX11RenderTarget2D*>(parentRenderTarget->GetRenderTarget());
 
-		return new IRenderSurface2D(
-			new DX11RenderTarget2D(_device.Get(), dxRenderTarget->GetD3D11Texture(), GetDXGIFormat(colorFormat)),
-			parentRenderTarget->GetDepthTarget()
+		return std::make_unique<IRenderSurface2D>(
+			std::move(std::make_unique<DX11RenderTarget2D>(_device.Get(), dxRenderTarget->GetD3D11Texture(), GetDXGIFormat(colorFormat))),
+			nullptr
 		);
 	}
 
@@ -267,9 +271,9 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->PSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &dxBuffer);
 	}
 
-	IConstantBuffer* DX11GraphicsDevice::CreateConstantBuffer(int size, std::wstring name)
+	std::unique_ptr<IConstantBuffer> DX11GraphicsDevice::CreateConstantBuffer(int size, std::wstring name)
 	{
-		return new DX11ConstantBuffer(_device.Get(), size, name);
+		return std::make_unique<DX11ConstantBuffer>(_device.Get(), size, name);
 	}
 
 	void DX11GraphicsDevice::UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data)
@@ -421,10 +425,10 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->IASetInputLayout(dxInputLayout->InputLayout.Get());
 	}
 
-	IInputLayout* DX11GraphicsDevice::CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader)
+	std::unique_ptr<IInputLayout> DX11GraphicsDevice::CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader)
 	{
 		auto dxShader = static_cast<DX11Shader*>(shader);
-		return new DX11InputLayout(_device.Get(), fields, dxShader);
+		return std::make_unique<DX11InputLayout>(_device.Get(), fields, dxShader);
 	}
 
 	void DX11GraphicsDevice::SetPrimitiveType(PrimitiveType primitiveType)
@@ -580,7 +584,7 @@ namespace TEN::Renderer::Native::DirectX11
 		_viewportToolkit = Viewport(0, 0, w, h, 0.0f, 1.0f);
 	}
 
-	IRenderSurface2D* DX11GraphicsDevice::InitializeSwapChain(int width, int height, HWND handle)
+	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::InitializeSwapChain(int width, int height, HWND handle)
 	{
 		DXGI_SWAP_CHAIN_DESC sd;
 		sd.BufferDesc.Width = width;
@@ -633,9 +637,9 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11Texture2D* backBufferTexture = NULL;
 		Utils::throwIfFailed(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast <void**>(&backBufferTexture)));
 
-		return new IRenderSurface2D(
-			new DX11RenderTarget2D(_device.Get(), backBufferTexture),
-			new DX11DepthTarget(_device.Get(), width, height, DXGI_FORMAT_D32_FLOAT));
+		return std::make_unique<IRenderSurface2D>(
+			std::move(std::make_unique<DX11RenderTarget2D>(_device.Get(), backBufferTexture)),
+			std::move(std::make_unique<DX11DepthTarget>(_device.Get(), width, height, DXGI_FORMAT_D32_FLOAT)));
 	}
 
 	void DX11GraphicsDevice::CreateDevice()
@@ -709,11 +713,10 @@ namespace TEN::Renderer::Native::DirectX11
 		_isWindowed = windowed;
 	}
 
-	IShader* DX11GraphicsDevice::CreateShader(ShaderCompileRequest& req)
+	std::unique_ptr<IShader> DX11GraphicsDevice::CreateShader(ShaderCompileRequest& req)
 	{
-		auto shader = new DX11Shader();
+		auto shader = std::make_unique<DX11Shader>();
 
-		// come nel tuo ShaderManager attuale
 		auto baseFileName = req.SourceDirectory + req.FileName;
 		auto prefix = ((req.CompileIndex < 10) ? L"0" : L"") + std::to_wstring(req.CompileIndex) + L"_";
 
@@ -913,19 +916,19 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->ClearState();
 	}
 
-	ISpriteFont* DX11GraphicsDevice::InitializeSpriteFont(std::wstring fontPath)
+	std::unique_ptr<ISpriteFont> DX11GraphicsDevice::InitializeSpriteFont(std::wstring fontPath)
 	{
-		return new DX11SpriteFont(_device.Get(), fontPath);
+		return std::make_unique<DX11SpriteFont>(_device.Get(), fontPath);
 	}
 
-	ISpriteBatch* DX11GraphicsDevice::InitializeSpriteBatch()
+	std::unique_ptr<ISpriteBatch> DX11GraphicsDevice::InitializeSpriteBatch()
 	{
-		return new DX11SpriteBatch(_device.Get(), _context.Get());
+		return std::make_unique<DX11SpriteBatch>(_device.Get(), _context.Get());
 	}
 
-	IPrimitiveBatch* DX11GraphicsDevice::InitializePrimitiveBatch()
+	std::unique_ptr<IPrimitiveBatch> DX11GraphicsDevice::InitializePrimitiveBatch()
 	{
-		return new DX11PrimitiveBatch(_context.Get());
+		return std::make_unique<DX11PrimitiveBatch>(_context.Get());
 	}
 
 	void DX11GraphicsDevice::SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path)

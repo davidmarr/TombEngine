@@ -180,7 +180,7 @@ namespace TEN::Renderer
 			if (rString.Flags & (int)PrintStringFlags::Outline)
 			{
 				_gameFont->DrawString(
-					_spriteBatch,
+					_spriteBatch.get(),
 					rString.String,
 					Vector2(rString.X + shadowOffset * rString.Scale, rString.Y + shadowOffset * rString.Scale),
 					Vector4(0.0f, 0.0f, 0.0f, rString.Color.w) * ScreenFadeCurrent,
@@ -191,7 +191,8 @@ namespace TEN::Renderer
 
 			// Draw string.
 			_gameFont->DrawString(
-				_spriteBatch, rString.String.c_str(),
+				_spriteBatch.get(), 
+				rString.String.c_str(),
 				Vector2(rString.X, rString.Y),
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
 				0.0f, Vector2::Zero, rString.Scale);

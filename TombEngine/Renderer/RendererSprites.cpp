@@ -285,7 +285,7 @@ namespace TEN::Renderer
 				// Set up vertex buffer and parameters.
 				unsigned int stride = sizeof(Vertex);
 				unsigned int offset = 0;
-				_graphicsDevice->BindVertexBuffer(_quadVertexBuffer);
+				_graphicsDevice->BindVertexBuffer(_quadVertexBuffer.get());
 
 				wasGpuSet = true;
 			}
@@ -310,7 +310,7 @@ namespace TEN::Renderer
 			g_Parallel.AddTasks((int)spriteBucket.SpritesToDraw.size(), prepareSprites).wait();
 
 			BindTexture(TextureRegister::ColorMap, spriteBucket.Sprite->Texture, SamplerStateRegister::LinearClamp);
-			UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+			UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer.get());;
 
 			// Draw sprites with instancing.
 			DrawInstancedTriangles(4, (int)spriteBucket.SpritesToDraw.size(), 0);
@@ -341,7 +341,7 @@ namespace TEN::Renderer
 				_shaders.Bind(Shader::InstancedSprites);
 
 				// Set up vertex buffer and parameters.
-				_graphicsDevice->BindVertexBuffer(_spriteVertexBuffer);
+				_graphicsDevice->BindVertexBuffer(_spriteVertexBuffer.get());
 
 				wasGpuSet = true;
 			}
@@ -356,7 +356,7 @@ namespace TEN::Renderer
 
 			PackSpriteTextureCoordinates(0, spriteBucket.Sprite);
 
-			UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+			UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer.get());;
 
 			BindTexture(TextureRegister::ColorMap, spriteBucket.Sprite->Texture, SamplerStateRegister::LinearClamp);
 
@@ -407,7 +407,7 @@ namespace TEN::Renderer
 
 				if (spritesToDraw == INSTANCED_SPRITES_BUCKET_SIZE || spritesToDraw == spriteBucket.SpritesToDraw.size())
 				{
-					_graphicsDevice->UpdateVertexBuffer(_spriteVertexBuffer, 0, spritesToDraw * 6, _spriteVertices.data());
+					_graphicsDevice->UpdateVertexBuffer(_spriteVertexBuffer.get(), 0, spritesToDraw * 6, _spriteVertices.data());
 			
 					DrawInstancedTriangles(spritesToDraw * 6, 1, 0);
 
@@ -445,7 +445,7 @@ namespace TEN::Renderer
 
 		PackSpriteTextureCoordinates(0, object->Sprite->Sprite);
 
-		UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+		UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer.get());;
 
 		BindTexture(TextureRegister::ColorMap, object->Sprite->Sprite->Texture, SamplerStateRegister::LinearClamp);
 		
@@ -455,7 +455,7 @@ namespace TEN::Renderer
 
 		if (object->Sprite->Type != SpriteType::ThreeD)
 		{
-			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer);
+			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer.get());
 		}
 		else
 		{
@@ -489,8 +489,8 @@ namespace TEN::Renderer
 			_spriteVertices.push_back(vertex3);
 			_spriteVertices.push_back(vertex2);
 
-			_graphicsDevice->UpdateVertexBuffer(_spriteVertexBuffer, 0, 4, _spriteVertices.data());
-			_graphicsDevice->BindVertexBuffer(_spriteVertexBuffer);
+			_graphicsDevice->UpdateVertexBuffer(_spriteVertexBuffer.get(), 0, 4, _spriteVertices.data());
+			_graphicsDevice->BindVertexBuffer(_spriteVertexBuffer.get());
 		}
 
 		// Draw sprites with instancing.
@@ -511,11 +511,11 @@ namespace TEN::Renderer
 
 			_shaders.Bind(Shader::InstancedSprites);
 
-			_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer, 0, (int)_sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
-			_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer);
+			_graphicsDevice->UpdateVertexBuffer(_sortedPolygonsVertexBuffer.get(), 0, (int)_sortedPolygonsVertices.size(), _sortedPolygonsVertices.data());
+			_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer.get());
 
 			_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-			_graphicsDevice->SetInputLayout(_vertexInputLayout);
+			_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
 		}
 
 		_stInstancedSpriteBuffer.Sprites[0].World = Matrix::Identity;
@@ -525,7 +525,7 @@ namespace TEN::Renderer
 
 		PackSpriteTextureCoordinates(0, objectInfo->Sprite->Sprite);
 
-		UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+		UpdateConstantBuffer(&_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer.get());;
 
 		SetDepthState(DepthState::Read);
 		SetCullMode(CullMode::None);

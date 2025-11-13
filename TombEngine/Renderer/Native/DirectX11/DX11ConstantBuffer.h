@@ -21,6 +21,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	public:
 		DX11ConstantBuffer() = default;
+		~DX11ConstantBuffer() = default;
 
 		DX11ConstantBuffer(ID3D11Device* device, int size, std::wstring name)
 		{

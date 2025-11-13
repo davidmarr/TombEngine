@@ -8,25 +8,20 @@ namespace TEN::Renderer::Graphics
 	class IRenderSurface2D
 	{
 	private:
-		IRenderTarget2D*	_renderTarget	= nullptr;
-		IDepthTarget*		_depthTarget	= nullptr;
+		std::unique_ptr<IRenderTarget2D>	_renderTarget	= nullptr;
+		std::unique_ptr<IDepthTarget>		_depthTarget	= nullptr;
 
 	public:
-		IRenderSurface2D(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget)
+		IRenderSurface2D(std::unique_ptr<IRenderTarget2D> renderTarget,
+		                 std::unique_ptr<IDepthTarget>    depthTarget)
+			: _renderTarget(std::move(renderTarget)),
+			  _depthTarget(std::move(depthTarget))
 		{
-			_renderTarget = renderTarget;
-			_depthTarget = depthTarget;
 		}
 
-		~IRenderSurface2D()
-		{
-			if (_renderTarget != nullptr)
-				delete _renderTarget;
-			if (_depthTarget != nullptr)
-				delete _depthTarget;
-		}
+		virtual ~IRenderSurface2D() = default;
 
-		IRenderTarget2D* GetRenderTarget() { return _renderTarget; }
-		IDepthTarget* GetDepthTarget() { return _depthTarget; }
+		IRenderTarget2D* GetRenderTarget() const { return _renderTarget.get(); }
+		IDepthTarget* GetDepthTarget() const { return _depthTarget.get(); }
 	};
 }

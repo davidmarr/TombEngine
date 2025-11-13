@@ -82,7 +82,7 @@ constexpr auto SHININESS_VERTEX_SHIFT = 16;
 constexpr auto LOCKED_VERTEX_SHIFT = 24;
 constexpr auto INDEX_IN_POLY_VERTEX_SHIFT = 25;
 
-#define SAFE_DELETE(x) if (x != nullptr) delete x;
+#define SAFE_DELETE(x) if (x != nullptr) x.reset();
 
 enum class LightType
 {

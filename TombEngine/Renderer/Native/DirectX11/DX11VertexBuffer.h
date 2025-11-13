@@ -26,9 +26,8 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11Buffer> Buffer;
 		int Stride;
 
-		DX11VertexBuffer() 
-		{
-		};
+		DX11VertexBuffer() = default;
+		~DX11VertexBuffer() = default;
 
 		DX11VertexBuffer(ID3D11Device* device, int numVertices, int stride, void* vertices)
 		{

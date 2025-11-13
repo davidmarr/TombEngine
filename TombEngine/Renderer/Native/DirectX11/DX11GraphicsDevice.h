@@ -52,9 +52,6 @@ namespace TEN::Renderer::Native::DirectX11
 		
 		ComPtr<ID3D11InputLayout> _inputLayout = nullptr;
 		ComPtr<ID3D11InputLayout> _fullscreenTriangleInputLayout = nullptr;
-		
-		std::unique_ptr<SpriteBatch> _spriteBatch;
-		std::unique_ptr<PrimitiveBatch<Vertex>> _primitiveBatch;
 
 		Viewport _viewportToolkit;
 
@@ -146,17 +143,19 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 
 	public:
-		IVertexBuffer* CreateVertexBuffer(int numVertices, int vertexSize, void* data) override;
+		~DX11GraphicsDevice() = default;
+
+		std::unique_ptr<IVertexBuffer> CreateVertexBuffer(int numVertices, int vertexSize, void* data) override;
 		void UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data) override;
 		void BindVertexBuffer(IVertexBuffer* vertexBuffer) override;
 
-		IIndexBuffer* CreateIndexBuffer(int numIndices, int* data) override;
+		std::unique_ptr<IIndexBuffer> CreateIndexBuffer(int numIndices, int* data) override;
 		void UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data) override;
 		void BindIndexBuffer(IIndexBuffer* indexBuffer) override;
 
-		IRenderSurface2D* CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat) override;
-		IRenderSurface2D* CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat) override;
-		IRenderSurface2D* CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat) override;
+		std::unique_ptr<IRenderSurface2D> CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat) override;
+		std::unique_ptr<IRenderSurface2D> CreateRenderSurface2D(int width, int height, int arraySize, SurfaceFormat colorFormat, DepthFormat depthFormat) override;
+		std::unique_ptr<IRenderSurface2D> CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat) override;
 
 		IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) override;
 
@@ -173,7 +172,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) override;
 
-		IConstantBuffer* CreateConstantBuffer(int size, std::wstring name) override;
+		std::unique_ptr<IConstantBuffer> CreateConstantBuffer(int size, std::wstring name) override;
 		void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) override;
 		void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
 		void BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
@@ -200,16 +199,16 @@ namespace TEN::Renderer::Native::DirectX11
 		void SetPrimitiveType(PrimitiveType primitiveType) override;
 
 		void SetInputLayout(IInputLayout* inputLayout) override;
-		IInputLayout* CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) override;
+		std::unique_ptr<IInputLayout> CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) override;
 
 		void CreateDevice() override;
 		void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) override;
-		IRenderSurface2D* InitializeSwapChain(int width, int height, HWND handle) override;
+		std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height, HWND handle) override;
 
 		std::string GetDefaultAdapterName() override;
 		void ChangeScreenResolution(int width, int height, bool windowed) override;
 
-		IShader* CreateShader(ShaderCompileRequest& request) override;
+		std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) override;
 		void BindVertexShader(IShader* shader, bool forceNull) override;
 		void BindGeometryShader(IShader* shader, bool forceNull) override;
 		void BindPixelShader(IShader* shader, bool forceNull) override;
@@ -217,9 +216,9 @@ namespace TEN::Renderer::Native::DirectX11
 		void Present() override;
 		void ClearState() override;
 
-		ISpriteFont* InitializeSpriteFont(std::wstring fontPath) override;
-		ISpriteBatch* InitializeSpriteBatch() override;
-		IPrimitiveBatch* InitializePrimitiveBatch() override;
+		std::unique_ptr<ISpriteFont> InitializeSpriteFont(std::wstring fontPath) override;
+		std::unique_ptr<ISpriteBatch> InitializeSpriteBatch() override;
+		std::unique_ptr<IPrimitiveBatch> InitializePrimitiveBatch() override;
 
 		Vector3 Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world) override;
 
@@ -232,7 +231,5 @@ namespace TEN::Renderer::Native::DirectX11
 		void UpdateTexture2D(ITexture2D* texture, byte* data) override;
 
 		int GetRefreshRate() override;
-
-		~DX11GraphicsDevice() override = default;
 	};
 }

@@ -59,7 +59,7 @@ namespace TEN::Renderer
 			TEXTURE* texture = &g_Level.AnimatedTextures[i];
 			
 			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
-				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+				(int)texture->colorMapData.size(), texture->colorMapData.data());
 
 			std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
@@ -146,10 +146,10 @@ namespace TEN::Renderer
 		_roomTextures.resize(g_Level.RoomTextures.size());
 		for (int i = 0; i < g_Level.RoomTextures.size(); i++)
 		{
-			TEXTURE* texture = &g_Level.AnimatedTextures[i];
+			TEXTURE* texture = &g_Level.RoomTextures[i];
 
 			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
-				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+				(int)texture->colorMapData.size(), texture->colorMapData.data());
 
 				std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
@@ -204,10 +204,10 @@ namespace TEN::Renderer
 		_moveablesTextures.resize(g_Level.MoveablesTextures.size());
 		for (int i = 0; i < g_Level.MoveablesTextures.size(); i++)
 		{
-			TEXTURE* texture = &g_Level.AnimatedTextures[i];
+			TEXTURE* texture = &g_Level.MoveablesTextures[i];
 
 			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
-				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+				(int)texture->colorMapData.size(), texture->colorMapData.data());
 
 				std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
@@ -262,12 +262,12 @@ namespace TEN::Renderer
 		_staticTextures.resize(g_Level.StaticsTextures.size());
 		for (int i = 0; i < g_Level.StaticsTextures.size(); i++)
 		{
-			TEXTURE* texture = &g_Level.AnimatedTextures[i];
+			TEXTURE* texture = &g_Level.StaticsTextures[i];
 
 			std::unique_ptr<ITexture2D> color = _graphicsDevice->CreateTexture2D(
-				(int)texture->colorMapData.size(), texture->colorMapData.data()),
+				(int)texture->colorMapData.size(), texture->colorMapData.data());
 
-				std::unique_ptr<ITexture2D> normal;
+			std::unique_ptr<ITexture2D> normal;
 			if (texture->normalMapData.size() < 1)
 			{
 				normal = CreateDefaultTexture(emptyNormalMap);
@@ -1046,7 +1046,7 @@ namespace TEN::Renderer
 			sprite.UV[1] = Vector2(oldSprite->x2, oldSprite->y2);
 			sprite.UV[2] = Vector2(oldSprite->x3, oldSprite->y3);
 			sprite.UV[3] = Vector2(oldSprite->x4, oldSprite->y4);
-			sprite.Texture = _spritesTextures[oldSprite->tile];
+			sprite.Texture = _spritesTextures[oldSprite->tile].get();
 			sprite.Width = round((oldSprite->x2 - oldSprite->x1) * (float)sprite.Texture->GetWidth() + 1.0f);
 			sprite.Height = round((oldSprite->y3 - oldSprite->y2) * (float)sprite.Texture->GetHeight() + 1.0f);
 			sprite.X = oldSprite->x1 * sprite.Texture->GetWidth();

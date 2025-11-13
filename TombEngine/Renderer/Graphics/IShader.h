@@ -24,5 +24,7 @@ namespace TEN::Renderer::Graphics
 
 	class IShader
 	{
+    public:
+        virtual ~IShader() = default;
 	};
 }

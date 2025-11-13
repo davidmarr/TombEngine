@@ -802,7 +802,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Renderer\Graphics\ISpriteBatch.h" />
     <ClInclude Include="Renderer\Graphics\ISpriteFont.h" />
     <ClInclude Include="Renderer\Graphics\ITexture2D.h" />
-    <ClInclude Include="Renderer\Graphics\ITexture2DArray.h" />
     <ClInclude Include="Renderer\Graphics\ITextureBase.h" />
     <ClInclude Include="Renderer\Graphics\IVertexBuffer.h" />
     <ClInclude Include="Renderer\Graphics\IVideoPlayer.h" />

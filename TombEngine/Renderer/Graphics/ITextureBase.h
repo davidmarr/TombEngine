@@ -7,5 +7,6 @@ namespace TEN::Renderer::Graphics
 	public:
 		virtual int GetWidth() = 0;
 		virtual int GetHeight() = 0;
+		virtual ~ITextureBase() = default;
 	};
 }

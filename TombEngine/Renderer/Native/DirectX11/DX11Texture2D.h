@@ -31,6 +31,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
 
 		DX11Texture2D() = default;
+		~DX11Texture2D() = default;
 		
 		DX11Texture2D(ID3D11Device* device, int width, int height, byte* data)
 		{
@@ -205,7 +206,5 @@ namespace TEN::Renderer::Native::DirectX11
 			_width = desc.Width;
 			_height = desc.Height;
 		}
-
-		~DX11Texture2D() = default;
 	};
 }

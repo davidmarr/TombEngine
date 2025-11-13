@@ -8,6 +8,7 @@ namespace TEN::Renderer::Graphics
 	{
 	public:
 		virtual int GetArraySize() = 0;
+		virtual ~IRenderTarget2D() = default;
 	};
 
 	struct IRenderTargetBinding

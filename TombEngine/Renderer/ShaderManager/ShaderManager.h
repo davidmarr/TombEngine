@@ -16,7 +16,7 @@ namespace TEN::Renderer::Utils
 		IGraphicsDevice* _graphicsDevice							   = nullptr;
 
 		int											_compileCounter	   = 0;
-		std::array<IShader*, (int)Shader::Count>	_shaders		   = {};
+		std::array<std::unique_ptr<IShader>, (int)Shader::Count>	_shaders		   = {};
 
 	public:
 		ShaderManager() = default;
@@ -33,7 +33,7 @@ namespace TEN::Renderer::Utils
 		void LoadPostprocessShaders();
 		void LoadAAShaders(int width, int height, bool recompile);
 
-		IShader*       LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile);
+		std::unique_ptr<IShader> LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile);
 		void		   Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile = false);
 		void		   Destroy(Shader shader);
 	};

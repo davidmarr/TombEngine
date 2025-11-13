@@ -22,6 +22,8 @@ namespace TEN::Renderer::Native::DirectX11
 		std::unique_ptr<PrimitiveBatch<Vertex>> _primitiveBatch;
 
 	public:
+		~DX11PrimitiveBatch() = default;
+
 		DX11PrimitiveBatch(ID3D11DeviceContext* context)
 		{
 			_primitiveBatch = std::make_unique<PrimitiveBatch<Vertex>>(context);

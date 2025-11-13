@@ -6,5 +6,7 @@ namespace TEN::Renderer::Graphics
 {
 	class ITexture2D : public virtual ITextureBase
 	{
+	public:
+		virtual ~ITexture2D() = default;
 	};
 }

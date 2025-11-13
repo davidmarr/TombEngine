@@ -81,70 +81,70 @@ namespace TEN::Renderer
 	class Renderer
 	{
 	private:
-		IGraphicsDevice* _graphicsDevice;
+		std::unique_ptr<IGraphicsDevice> _graphicsDevice;
 
-		IInputLayout* _vertexInputLayout;
-		IInputLayout* _fullScreenVertexInputLayout;
+		std::unique_ptr<IInputLayout> _vertexInputLayout;
+		std::unique_ptr<IInputLayout> _fullScreenVertexInputLayout;
 
 		// Render targets
 
-		IRenderSurface2D* _normalsAndMaterialIndexRenderTarget;
-		IRenderSurface2D* _depthRenderTarget;
-		IRenderSurface2D* _emissiveAndRoughnessRenderTarget;
-		IRenderSurface2D* _dumpScreenRenderTarget;
-		IRenderSurface2D* _renderTarget;
-		IRenderSurface2D* _postProcessRenderTarget[2];
-		IRenderSurface2D* _glowRenderTarget[2];
-		IRenderSurface2D* _tempRoomAmbientRenderTarget1;
-		IRenderSurface2D* _tempRoomAmbientRenderTarget2;
-		IRenderSurface2D* _tempRoomAmbientRenderTarget3;
-		IRenderSurface2D* _tempRoomAmbientRenderTarget4;
-		IRenderSurface2D* _shadowMap;
-		IRenderSurface2D* _legacyReflectionsRenderTarget;
-		IRenderSurface2D* _SSAORenderTarget;
-		IRenderSurface2D* _SSAOBlurredRenderTarget;
-		IRenderSurface2D* _SMAASceneRenderTarget;
-		IRenderSurface2D* _SMAASceneSRGBRenderTarget;
-		IRenderSurface2D* _SMAADepthRenderTarget;
-		IRenderSurface2D* _SMAAEdgesRenderTarget;
-		IRenderSurface2D* _SMAABlendRenderTarget;
-		IRenderSurface2D* _skyboxRenderTarget;
-		IRenderSurface2D* _backBuffer;
+		std::unique_ptr<IRenderSurface2D> _normalsAndMaterialIndexRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _depthRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _emissiveAndRoughnessRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _dumpScreenRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _renderTarget;
+		std::unique_ptr<IRenderSurface2D> _postProcessRenderTarget[2];
+		std::unique_ptr<IRenderSurface2D> _glowRenderTarget[2];
+		std::unique_ptr<IRenderSurface2D> _tempRoomAmbientRenderTarget1;
+		std::unique_ptr<IRenderSurface2D> _tempRoomAmbientRenderTarget2;
+		std::unique_ptr<IRenderSurface2D> _tempRoomAmbientRenderTarget3;
+		std::unique_ptr<IRenderSurface2D> _tempRoomAmbientRenderTarget4;
+		std::unique_ptr<IRenderSurface2D> _shadowMap;
+		std::unique_ptr<IRenderSurface2D> _legacyReflectionsRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SSAORenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SSAOBlurredRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SMAASceneRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SMAASceneSRGBRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SMAADepthRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SMAAEdgesRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _SMAABlendRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _skyboxRenderTarget;
+		std::unique_ptr<IRenderSurface2D> _backBuffer;
 
 		// Constant buffers
 
 		RenderView _gameCamera;
 		RenderView _oldGameCamera;
 		RenderView _currentGameCamera;
-		IConstantBuffer* _cbCameraMatrices;
+		std::unique_ptr<IConstantBuffer> _cbCameraMatrices;
 		CItemBuffer _stItem;
-		IConstantBuffer* _cbItem;
+		std::unique_ptr<IConstantBuffer> _cbItem;
 		CLightBuffer _stLights;
-		IConstantBuffer* _cbLights;
+		std::unique_ptr<IConstantBuffer> _cbLights;
 		CRoomBuffer _stRoom;
-		IConstantBuffer* _cbRoom;
+		std::unique_ptr<IConstantBuffer> _cbRoom;
 		CAnimatedBuffer _stAnimated;
-		IConstantBuffer* _cbAnimated;
+		std::unique_ptr<IConstantBuffer> _cbAnimated;
 		CShadowLightBuffer _stShadowMap;
-		IConstantBuffer* _cbShadowMap;
+		std::unique_ptr<IConstantBuffer> _cbShadowMap;
 		CHUDBuffer _stHUD;
-		IConstantBuffer* _cbHUD;
+		std::unique_ptr<IConstantBuffer> _cbHUD;
 		CHUDBarBuffer _stHUDBar;
-		IConstantBuffer* _cbHUDBar;
+		std::unique_ptr<IConstantBuffer> _cbHUDBar;
 		CPostProcessBuffer _stPostProcessBuffer;
-		IConstantBuffer* _cbPostProcessBuffer;
+		std::unique_ptr<IConstantBuffer> _cbPostProcessBuffer;
 		CInstancedSpriteBuffer _stInstancedSpriteBuffer;
-		IConstantBuffer* _cbInstancedSpriteBuffer;
+		std::unique_ptr<IConstantBuffer> _cbInstancedSpriteBuffer;
 		CBlendingBuffer _stBlending;
-		IConstantBuffer* _cbBlending;
+		std::unique_ptr<IConstantBuffer> _cbBlending;
 		CInstancedStaticMeshBuffer _stInstancedStaticMeshBuffer;
-		IConstantBuffer* _cbInstancedStaticMeshBuffer;
+		std::unique_ptr<IConstantBuffer> _cbInstancedStaticMeshBuffer;
 		CSMAABuffer _stSMAABuffer;
-		IConstantBuffer* _cbSMAABuffer;
+		std::unique_ptr<IConstantBuffer> _cbSMAABuffer;
 		CSkyBuffer _stSky;
-		IConstantBuffer* _cbSky;
+		std::unique_ptr<IConstantBuffer> _cbSky;
 		CMaterialBuffer _stMaterial;
-		IConstantBuffer* _cbMaterial;
+		std::unique_ptr<IConstantBuffer> _cbMaterial;
 
 		// Primitive batches
 
@@ -153,7 +153,7 @@ namespace TEN::Renderer
 
 		// Text
 
-		ISpriteFont* _gameFont;
+		std::unique_ptr<ISpriteFont> _gameFont;
 		std::vector<RendererStringToDraw> _stringsToDraw;
 		Vector4 _blinkColorValue = Vector4::Zero;
 		float _blinkTime = 0.0f;
@@ -161,27 +161,27 @@ namespace TEN::Renderer
 
 		// Sprites
 		std::vector<Vertex> _spriteVertices;
-		IVertexBuffer* _spriteVertexBuffer;
+		std::unique_ptr<IVertexBuffer> _spriteVertexBuffer;
 
 		// Graphics resources
 
-		ITexture2D* _logo;
-		ITexture2D* _skyTexture;
-		ITexture2D* _whiteTexture;
+		std::unique_ptr<ITexture2D> _logo;
+		std::unique_ptr<ITexture2D> _skyTexture;
+		std::unique_ptr<ITexture2D> _whiteTexture;
 		RendererSprite _whiteSprite;
-		ITexture2D* _loadingBarBorder;
-		ITexture2D* _loadingBarInner;
-		ITexture2D* _loadingScreenTexture;
+		std::unique_ptr<ITexture2D> _loadingBarBorder;
+		std::unique_ptr<ITexture2D> _loadingBarInner;
+		std::unique_ptr<ITexture2D> _loadingScreenTexture;
 
-		IVertexBuffer* _roomsVertexBuffer;
-		IIndexBuffer* _roomsIndexBuffer;
-		IVertexBuffer* _moveablesVertexBuffer;
-		IIndexBuffer* _moveablesIndexBuffer;
-		IVertexBuffer* _staticsVertexBuffer;
-		IIndexBuffer* _staticsIndexBuffer;
-		IVertexBuffer* _skyVertexBuffer;
-		IIndexBuffer* _skyIndexBuffer;
-		IVertexBuffer* _quadVertexBuffer;
+		std::unique_ptr<IVertexBuffer> _roomsVertexBuffer;
+		std::unique_ptr<IIndexBuffer> _roomsIndexBuffer;
+		std::unique_ptr<IVertexBuffer> _moveablesVertexBuffer;
+		std::unique_ptr<IIndexBuffer> _moveablesIndexBuffer;
+		std::unique_ptr<IVertexBuffer> _staticsVertexBuffer;
+		std::unique_ptr<IIndexBuffer> _staticsIndexBuffer;
+		std::unique_ptr<IVertexBuffer> _skyVertexBuffer;
+		std::unique_ptr<IIndexBuffer> _skyIndexBuffer;
+		std::unique_ptr<IVertexBuffer> _quadVertexBuffer;
 
 		std::vector<Vertex> _roomsVertices;
 		std::vector<int> _roomsIndices;
@@ -216,11 +216,11 @@ namespace TEN::Renderer
 		std::vector<RendererSpriteSequence>					   _spriteSequences;
 		std::vector<RendererAnimatedTextureSet>				   _animatedTextureSets;
 		std::vector<RendererMesh*>							   _meshes;
-		std::vector<AtlasTexturesSet>							   _roomTextures;
-		std::vector<AtlasTexturesSet>							   _animatedTextures;
-		std::vector<AtlasTexturesSet>							   _moveablesTextures;
-		std::vector<AtlasTexturesSet>							   _staticTextures;
-		std::vector<ITexture2D*>								   _spritesTextures;
+		std::vector<AtlasTexturesSet>						   _roomTextures;
+		std::vector<AtlasTexturesSet>						   _animatedTextures;
+		std::vector<AtlasTexturesSet>						   _moveablesTextures;
+		std::vector<AtlasTexturesSet>						   _staticTextures;
+		std::vector<std::unique_ptr<ITexture2D>>			   _spritesTextures;
 		RendererSprite										   _videoSprite; // Video texture is an unique case
 
 		Matrix _playerWorldMatrix;
@@ -302,8 +302,8 @@ namespace TEN::Renderer
 
 		// Antialiasing
 
-		ITexture2D* _SMAAAreaTexture;
-		ITexture2D* _SMAASearchTexture;
+		std::unique_ptr<ITexture2D> _SMAAAreaTexture;
+		std::unique_ptr<ITexture2D> _SMAASearchTexture;
 
 		// Post-process
 
@@ -311,13 +311,13 @@ namespace TEN::Renderer
 		float _postProcessStrength = 1.0f;
 		Vector3 _postProcessTint = Vector3::One;
 
-		IVertexBuffer* _fullscreenTriangleVertexBuffer;
+		std::unique_ptr<IVertexBuffer> _fullscreenTriangleVertexBuffer;
 
 		bool _doingFullscreenPass = false;
 
 		// SSAO
 
-		ITexture2D* _SSAONoiseTexture;
+		std::unique_ptr<ITexture2D> _SSAONoiseTexture;
 		std::vector<Vector4> _SSAOKernel;
 
 		// Special effects
@@ -329,8 +329,8 @@ namespace TEN::Renderer
 
 		fast_vector<Vertex> _sortedPolygonsVertices;
 		fast_vector<int> _sortedPolygonsIndices;
-		IVertexBuffer* _sortedPolygonsVertexBuffer;
-		IIndexBuffer* _sortedPolygonsIndexBuffer;
+		std::unique_ptr<IVertexBuffer> _sortedPolygonsVertexBuffer;
+		std::unique_ptr<IIndexBuffer> _sortedPolygonsIndexBuffer;
 
 		// High framerate
 
@@ -341,8 +341,8 @@ namespace TEN::Renderer
 
 		ShaderManager _shaders;
 
-		IPrimitiveBatch* _primitiveBatch;
-		ISpriteBatch* _spriteBatch;
+		std::unique_ptr<IPrimitiveBatch> _primitiveBatch;
+		std::unique_ptr<ISpriteBatch> _spriteBatch;
 
 		void ApplySMAA(IRenderSurface2D* renderTarget, RenderView& view);
 		void ApplyFXAA(IRenderSurface2D* renderTarget, RenderView& view);
@@ -574,9 +574,9 @@ namespace TEN::Renderer
 		}
 
 		template <typename CBuff>
-		IConstantBuffer* CreateConstantBuffer()
+		std::unique_ptr<IConstantBuffer> CreateConstantBuffer()
 		{
-			return _graphicsDevice->CreateConstantBuffer(sizeof(CBuff), L""); //TEN::Utils::ToString( typeid(CBuff).name()
+			return std::move(_graphicsDevice->CreateConstantBuffer(sizeof(CBuff), L"")); //TEN::Utils::ToString( typeid(CBuff).name()
 		}
 
 		static inline bool IsSortedBlendMode(BlendMode blendMode)
@@ -608,7 +608,7 @@ namespace TEN::Renderer
 			if (_stAnimated.Animated == 0)
 				return;
 			_stAnimated.Animated = 0;
-			UpdateConstantBuffer(&_stAnimated, _cbAnimated);
+			UpdateConstantBuffer(&_stAnimated, _cbAnimated.get());
 		}
 
 		static inline bool IsWaterfall(short objectNumber)
@@ -734,7 +734,7 @@ namespace TEN::Renderer
 		SkinningMode GetSkinningMode(const RendererObject& obj, int skinIndex);
 		void DrawObjectIn2DSpace(int objectNumber, Vector2 pos2D, EulerAngles orient, float scale1, float opacity = 1.0f, int meshBits = NO_JOINT_BITS);
 		void SetLoadingScreen(std::wstring& fileName);
-		void SetTextureOrDefault(ITexture2D*& texture, std::wstring path);
+		std::unique_ptr<ITexture2D> SetTextureOrDefault(std::wstring path);
 		std::string GetDefaultAdapterName();
 		void SaveOldState();
 

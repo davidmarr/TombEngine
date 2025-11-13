@@ -26,8 +26,10 @@ namespace TEN::Renderer
 		return _graphicsDevice->GetDefaultAdapterName();
 	}
 
-	void Renderer::SetTextureOrDefault(ITexture2D*& texture, std::wstring path)
+	std::unique_ptr<ITexture2D> Renderer::SetTextureOrDefault(std::wstring path)
 	{
+		std::unique_ptr<ITexture2D> texture;
+
 		if (std::filesystem::is_regular_file(path))
 		{
 			texture = _graphicsDevice->CreateTexture2D(TEN::Utils::ToString(path));
@@ -42,5 +44,7 @@ namespace TEN::Renderer
 		{
 			texture = _graphicsDevice->CreateTexture2D();
 		}
+
+		return texture;
 	}
 }

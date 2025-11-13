@@ -4,7 +4,9 @@ namespace TEN::Renderer::Graphics
 {
 	class IDepthTarget
 	{
+	public:
 		virtual int GetArraySize() = 0;
+		virtual ~IDepthTarget() = default;
 	};
 
 	struct IDepthTargetBinding

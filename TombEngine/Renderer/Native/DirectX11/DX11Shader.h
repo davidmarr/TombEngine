@@ -25,35 +25,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ComPtr<ID3D11PixelShader> PixelShader = nullptr;
 		ComPtr<ID3D10Blob> Blob = nullptr;
 
-		DX11Shader()
-		{
-		}
-
-		~DX11Shader()
-		{
-			if (VertexShader != nullptr)
-			{
-				VertexShader->Release();
-				VertexShader = nullptr;
-			}
-
-			if (GeometryShader != nullptr)
-			{
-				GeometryShader->Release();
-				GeometryShader = nullptr;
-			}
-
-			if (PixelShader != nullptr)
-			{
-				PixelShader->Release();
-				PixelShader = nullptr;
-			}
-
-			if (Blob != nullptr)
-			{
-				Blob->Release();
-				Blob = nullptr;
-			}
-		}
+		DX11Shader() = default;
+		~DX11Shader() = default;
 	};
 }

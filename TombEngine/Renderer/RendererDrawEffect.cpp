@@ -1226,9 +1226,9 @@ namespace TEN::Renderer
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
-		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
-		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
 		const auto& room = _rooms[LaraItem->RoomNumber];
 		auto* itemPtr = &_items[LaraItem->Index];
@@ -1270,7 +1270,7 @@ namespace TEN::Renderer
 				ReflectMatrixOptionally(worldMatrix);
 
 				_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-				UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+				UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer.get());
 
 				DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1288,7 +1288,7 @@ namespace TEN::Renderer
 				ReflectMatrixOptionally(worldMatrix);
 
 				_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-				UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+				UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer.get());
 
 				DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1307,8 +1307,8 @@ namespace TEN::Renderer
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
-		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
-		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
 		for (auto* rRoomPtr : view.RoomsToDraw)
 		{
@@ -1350,7 +1350,7 @@ namespace TEN::Renderer
 						if (flashBucket.Polygons.size() == 0)
 							continue;
 
-						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[flashBucket.Texture]).get(), SamplerStateRegister::AnisotropicClamp);
 
 						auto tMatrix = Matrix::CreateTranslation(creature.MuzzleFlash[0].Bite.Position);
 						auto rotMatrixX = Matrix::CreateRotationX(TO_RAD(ANGLE(270.0f)));
@@ -1368,7 +1368,7 @@ namespace TEN::Renderer
 						ReflectMatrixOptionally(worldMatrix);
 
 						_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-						UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+						UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer.get());
 
 						DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1392,7 +1392,7 @@ namespace TEN::Renderer
 						if (flashBucket.Polygons.size() == 0)
 							continue;
 
-						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[flashBucket.Texture]).get(), SamplerStateRegister::AnisotropicClamp);
 
 						auto tMatrix = Matrix::CreateTranslation(creature.MuzzleFlash[1].Bite.Position);
 						auto rotMatrixX = Matrix::CreateRotationX(TO_RAD(ANGLE(270.0f)));
@@ -1410,7 +1410,7 @@ namespace TEN::Renderer
 						ReflectMatrixOptionally(worldMatrix);
 
 						_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
-						UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+						UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer.get());
 
 						DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
@@ -1500,7 +1500,7 @@ namespace TEN::Renderer
 		_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = effect->AmbientLight;
 		_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)LightMode::Dynamic;
 		BindInstancedStaticLights(effect->LightsToDraw, 0);
-		UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+		UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer.get());
 
 		auto& mesh = *effect->Mesh;
 		
@@ -1540,8 +1540,8 @@ namespace TEN::Renderer
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
-		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer);
-		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer);
+		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
+		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
 		for (auto* roomPtr : view.RoomsToDraw)
 		{
@@ -1606,15 +1606,15 @@ namespace TEN::Renderer
 
 					if (deb.mesh.Animated)
 					{
-						BindTexture(TextureRegister::ColorMap, std::get<0>(_animatedTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_animatedTextures[deb.mesh.tex]).get(), SamplerStateRegister::LinearClamp);
 					}
 					else if (deb.isStatic)
 					{
-						BindTexture(TextureRegister::ColorMap, std::get<0>(_staticTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_staticTextures[deb.mesh.tex]).get(), SamplerStateRegister::LinearClamp);
 					}
 					else
 					{
-						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+						BindTexture(TextureRegister::ColorMap, std::get<0>(_moveablesTextures[deb.mesh.tex]).get(), SamplerStateRegister::LinearClamp);
 					}
 
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].World = Matrix::Identity;
@@ -1622,7 +1622,7 @@ namespace TEN::Renderer
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = _rooms[deb.roomNumber].AmbientLight;
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)deb.lightMode;
 
-					UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+					UpdateConstantBuffer(&_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer.get());
 
 					auto matrix = Matrix::Lerp(deb.PrevTransform, deb.Transform, GetInterpolationFactor());
 					ReflectMatrixOptionally(matrix);
