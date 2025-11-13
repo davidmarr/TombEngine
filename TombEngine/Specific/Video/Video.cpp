@@ -433,7 +433,7 @@ namespace TEN::Video
 
 		if (_updateInput)
 		{
-			App.ResetClock = true;
+			ResetClock = true;
 			UpdateInputActions(true);
 			interruptPlayback = IsHeld(In::Deselect) || IsHeld(In::Look);
 			_updateInput = _starting = false;

@@ -383,9 +383,11 @@ int SDLCALL GameMain(void *)
 	DeInitialize();
 	DoTheGame = false;
 
-	// Finish thread.
-	PostMessage(WindowsHandle, WM_CLOSE, NULL, NULL);
-	return true;
+	SDL_Event ev{};
+	ev.type = SDL_EVENT_QUIT;
+	SDL_PushEvent(&ev);
+
+	return 0;
 }
 
 GameStatus DoLevel(int levelIndex, bool loadGame)

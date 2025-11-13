@@ -1242,7 +1242,7 @@ namespace TEN::Gui
 
 				case PauseMenuOption::ExitToTitle:
 					SetInventoryMode(InventoryMode::None);
-					App.ResetClock = true;
+					ResetClock = true;
 					return InventoryResult::ExitToTitle;
 					break;
 				}
@@ -3194,7 +3194,7 @@ namespace TEN::Gui
 		{
 			if (ThreadEnded)
 			{
-				App.ResetClock = true;
+				ResetClock = true;
 				return false;
 			}
 
@@ -3245,7 +3245,7 @@ namespace TEN::Gui
 			ResumeAllSounds(SoundPauseMode::Pause);
 		}
 
-		App.ResetClock = true;
+		ResetClock = true;
 
 		return doExitToTitle;
 	}
@@ -3277,7 +3277,7 @@ namespace TEN::Gui
 		{
 			if (ThreadEnded)
 			{
-				App.ResetClock = true;
+				ResetClock = true;
 				return false;
 			}
 
@@ -3387,7 +3387,7 @@ namespace TEN::Gui
 		player.Inventory.IsBusy = player.Inventory.OldBusy;
 		SetInventoryMode(InventoryMode::None);
 
-		App.ResetClock = true;
+		ResetClock = true;
 
 		return doLoad;
 	}

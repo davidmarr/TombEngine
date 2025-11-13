@@ -25,8 +25,6 @@ using namespace TEN::Input;
 using namespace TEN::Utils;
 using namespace TEN::Video;
 
-WINAPP App;
-
 // SDL threads
 SDL_Thread* GameThread = nullptr;
 SDL_Thread* ConsoleThread = nullptr;
@@ -37,7 +35,7 @@ SDL_Mutex* GamePauseMutex = nullptr;
 SDL_Condition* GamePauseCond = nullptr;
 bool       GamePaused = false;
 
-HACCEL hAccTable;
+bool ResetClock;
 HWND WindowsHandle;
 std::unique_ptr<ISubsystem> g_Platform;
 
@@ -333,9 +331,6 @@ int main(int argc, char* argv[])
 			SDL_DetachThread(ConsoleThread);
 	}
 
-	// Clear application structure.
-	memset(&App, 0, sizeof(WINAPP));
-	
 	// Initialize logging.
 	InitTENLog(gameDir);
 	g_Platform->InstallCrashHandler();
@@ -434,12 +429,6 @@ int main(int argc, char* argv[])
 
 	g_Platform->SetSDL3Window(sdlWindow);
 
-	HWND hwnd = nullptr;
-#if defined(SDL_PLATFORM_WIN32)
-	SDL_PropertiesID props = SDL_GetWindowProperties(sdlWindow);
-	hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
-#endif
-
 	// Create renderer and enumerate adapters and video modes.
 	g_Renderer.Create();
 
@@ -467,8 +456,10 @@ int main(int argc, char* argv[])
 		// Initialize audio (should be called prior to initializing renderer, because video handler needs it).
 		Sound_Init(gameDir);
 
+		// TODO: when new platforms will be added, write a more general code
 		SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
 		HWND handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+		WindowsHandle = handle;
 
 		// Initialize renderer.
 		g_Renderer.Initialize(gameDir, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode, handle);
@@ -478,9 +469,6 @@ int main(int argc, char* argv[])
 
 		// Load level if specified in command line.
 		CurrentLevel = g_GameFlow->GetLevelNumber(levelFile);
-
-		App.bNoFocus = false;
-		App.isInScene = false;
 
 		SDL_ShowWindow(sdlWindow);
 		SDL_RaiseWindow(sdlWindow);
@@ -594,7 +582,6 @@ void WinClose()
 	// Se invece preferisci aspettarlo:
 	// if (ConsoleThread) { int s; SDL_WaitThread(ConsoleThread, &s); }
 
-	DestroyAcceleratorTable(hAccTable);
 	ShutdownTENLog();
 	g_Platform->ComUninitialize();
 }

@@ -28,9 +28,9 @@ void HighFramerateSynchronizer::Init()
 
 void HighFramerateSynchronizer::Sync()
 {
-	if (App.ResetClock)
+	if (ResetClock)
 	{
-		App.ResetClock = false;
+		ResetClock = false;
 		QueryPerformanceCounter(&_lastTime);
 		_currentTime = _lastTime;
 		_controlDelay = 0;
@@ -58,7 +58,7 @@ bool HighFramerateSynchronizer::Synced()
 	if (_controlDelay >= DEBUG_SKIP_FRAME_TIME)
 	{
 		TENLog("Game loop is running too slow.", LogLevel::Warning);
-		App.ResetClock = true;
+		ResetClock = true;
 		return false;
 	}
 #endif

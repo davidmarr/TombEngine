@@ -14,19 +14,9 @@ using TEN::Platform::MessageBoxIcon;
 
 using namespace TEN::Math;
 
-struct WINAPP
-{
-    HINSTANCE hInstance;
-    int nFillMode;
-    WNDCLASS WindowClass;
-    bool bNoFocus;
-    bool isInScene;
-    bool ResetClock;
-};
-
-extern HWND WindowsHandle;
-extern WINAPP App;
 extern std::unique_ptr<ISubsystem> g_Platform;
+extern bool ResetClock;
+extern HWND WindowsHandle;
 
 int main(int argc, char* argv[]);
 
