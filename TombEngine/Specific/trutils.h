@@ -30,7 +30,6 @@ namespace TEN::Utils
 	Vector2 ConvertNDCTo2DPosition(const Vector2& ndc);
 
 	std::wstring GetBinaryPath(bool includeExeName);
-	std::vector<unsigned short> GetProductOrFileVersion(bool productVersion);
 
 	template <typename TElement>
 	bool Contains(const std::vector<TElement>& vector, const TElement& element)

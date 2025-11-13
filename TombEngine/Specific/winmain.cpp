@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "Specific/winmain.h"
-
+#include <SDL3/SDL.h>
+//#include <SDL3/SDL_main.h>
 #include <CommCtrl.h>
 #include <DbgHelp.h>
 #include <process.h>
@@ -32,6 +33,7 @@ unsigned int ThreadID, ConsoleThreadID, ThreadSuspendCount;
 uintptr_t ThreadHandle, ConsoleThreadHandle;
 HACCEL hAccTable;
 HWND WindowsHandle;
+std::unique_ptr<ISubsystem> g_Platform;
 
 // Indicates to hybrid graphics systems to prefer discrete part by default.
 extern "C"
@@ -169,25 +171,6 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 		});
 
 	return resList;
-}
-
-void DisableDpiAwareness()
-{
-	// Don't use SHCore library directly, as it's not available on pre-win 8.1 systems.
-
-	typedef HRESULT(WINAPI* SetDpiAwarenessProc)(UINT);
-	static constexpr unsigned int PROCESS_SYSTEM_DPI_AWARE = 1;
-
-	auto lib = LoadLibrary("SHCore.dll");
-	if (lib == NULL)
-		return;
-
-	auto setDpiAwareness = (SetDpiAwarenessProc)GetProcAddress(lib, "SetProcessDpiAwareness");
-	if (setDpiAwareness == NULL)
-		return;
-
-	setDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-	FreeLibrary(lib);
 }
 
 bool GenerateDummyLevel(const std::string& levelPath)
@@ -537,29 +520,83 @@ LRESULT CALLBACK WinAppProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int main() 
+static void HandleWindowFocusGained(SDL_Window* window)
 {
-	return WinMain(GetModuleHandle(nullptr), nullptr, GetCommandLine(), SW_SHOW);
+	// Equivalent of the old WM_ACTIVATE "gain focus" branch
+	SetInputLockState(false);
+
+	if (!g_Configuration.EnableWindowedMode)
+	{
+		// In your old code this forced fullscreen on focus.
+		// Now the fullscreen state is gestito da SDL, ma lasciamo la call
+		// se il tuo renderer fa qualcosa di specifico.
+		g_Renderer.ToggleFullScreen(true);
+	}
+
+	if (ThreadHandle > 0 && ThreadSuspendCount > 0)
+	{
+		TENLog("Resuming game thread", LogLevel::Info);
+
+		if (!g_VideoPlayer.Resume())
+			ResumeAllSounds(SoundPauseMode::Global);
+
+		ResumeThread((HANDLE)ThreadHandle);
+		ThreadSuspendCount--;
+	}
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+static void HandleWindowFocusLost(SDL_Window* window)
 {
-	auto platform = CreatePlatformSubsystem();
+	// Equivalent of the old WM_ACTIVATE "lose focus" branch
+	SetInputLockState(true);
 
-	platform->CheckPrerequisites();
+	if (!g_Configuration.EnableWindowedMode)
+	{
+		// Prima facevi ShowWindow(hWnd, SW_MINIMIZE).
+		// Con SDL3 usiamo la sua API.
+		SDL_MinimizeWindow(window);
+	}
+
+	bool isMinimized =
+		(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0;
+
+	if ((!DebugMode || isMinimized) && ThreadSuspendCount == 0)
+	{
+		TENLog("Suspending game thread", LogLevel::Info);
+
+		if (!g_VideoPlayer.Pause())
+			PauseAllSounds(SoundPauseMode::Global);
+
+		SuspendThread((HANDLE)ThreadHandle);
+		ThreadSuspendCount++;
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	g_Platform = CreatePlatformSubsystem();
+
+	g_Platform->CheckPrerequisites();
+
+	// Initialize SDL3
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS))
+	{
+		// handle error
+		return 1;
+	}
 
 	// Process command line arguments.
 	bool setup = false;
 	std::string levelFile = {};
-	LPWSTR* argv;
-	int argc;
-	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	//LPWSTR* argv;
+	//int argc;
+	//argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	std::string gameDir{};
 
 	// Parse command line arguments.
-	for (int i = 1; i < argc; i++)
+	/*for (int i = 1; i < argc; i++)
 	{
-		if (ArgEquals(argv[i], "setup"))
+		if (ArgEquals(TEN::Utils::ToWString(argv[i]), "setup"))
 		{
 			setup = true;
 		}
@@ -580,7 +617,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			gameDir = TEN::Utils::ToString(argv[i + 1]);
 		}
 	}
-	LocalFree(argv);
+	LocalFree(argv);*/
 
 	// Construct asset directory.
 	gameDir = ConstructAssetDirectory(gameDir);
@@ -602,12 +639,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	// Initialize logging.
 	InitTENLog(gameDir);
-	platform->InstallCrashHandler();
+	g_Platform->InstallCrashHandler();
 
 	auto windowName = std::string("Starting TombEngine");
 
 	// Indicate version.
-	auto ver = GetProductOrFileVersion(false);
+	auto ver = g_Platform->GetProductOrFileVersion(false);
 
 	if (ver.size() == 4)
 	{
@@ -618,11 +655,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					 std::to_string(ver[3]);
 	}
 
-#ifdef _WIN64
-	windowName = windowName + " (64-bit)";
-#else
-	windowName = windowName + " (32-bit)";
-#endif
+	if (g_Platform->Is64Bit())
+		windowName = windowName + " (64-bit)";
+	else
+		windowName = windowName + " (32-bit)";
 
 	TENLog(windowName, LogLevel::Info);
 
@@ -657,41 +693,56 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		auto errorMessage = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
 		TENLog(errorMessage, LogLevel::Error, LogConfig::All);
-		platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
+		g_Platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
 		ShutdownTENLog();
-		platform->Shutdown();
+		g_Platform->Shutdown();
 		return 0;
 	}
 
 	// Disable DPI scaling on Windows 8.1+ systems.
-	DisableDpiAwareness();
+	g_Platform->DisableDpiAwareness();
 
 	// Set up main window.
-	INITCOMMONCONTROLSEX commCtrlInit;
-	commCtrlInit.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	commCtrlInit.dwICC = ICC_USEREX_CLASSES | ICC_STANDARD_CLASSES;
-	InitCommonControlsEx(&commCtrlInit);
+	//INITCOMMONCONTROLSEX commCtrlInit;
+	//commCtrlInit.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	//commCtrlInit.dwICC = ICC_USEREX_CLASSES | ICC_STANDARD_CLASSES;
+	//InitCommonControlsEx(&commCtrlInit);
 
 	// Initialize main window.
-	App.hInstance = hInstance;
-	App.WindowClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
-	App.WindowClass.lpszMenuName = NULL;
-	App.WindowClass.lpszClassName = "TombEngine";
-	App.WindowClass.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-	App.WindowClass.hInstance = hInstance;
-	App.WindowClass.style = CS_VREDRAW | CS_HREDRAW;
-	App.WindowClass.lpfnWndProc = WinAppProc;
-	App.WindowClass.cbClsExtra = 0;
-	App.WindowClass.cbWndExtra = 0;
-	App.WindowClass.hCursor = LoadCursorA(NULL, IDC_ARROW);
 
-	// Register main window.
-	if (!RegisterClass(&App.WindowClass))
+	int width = g_Configuration.ScreenWidth;
+	int height = g_Configuration.ScreenHeight;
+
+	Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
+	if (!g_Configuration.EnableWindowedMode)
+		windowFlags |= SDL_WINDOW_FULLSCREEN;
+
+	SDL_Window* sdlWindow = SDL_CreateWindow(
+		g_GameFlow->GetString(STRING_WINDOW_TITLE),
+		width,
+		height,
+		windowFlags);
+
+	if (!sdlWindow)
 	{
-		TENLog("Unable to register window class.", LogLevel::Error);
+		auto errorMessage = std::string("Failed to create SDL window: ") + SDL_GetError();
+		TENLog(errorMessage, LogLevel::Error);
+		g_Platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
+		SDL_Quit();
+		g_Platform->Shutdown();
 		return 0;
 	}
 
+	HWND hwnd = nullptr;
+#if defined(SDL_PLATFORM_WIN32)
+	SDL_PropertiesID props = SDL_GetWindowProperties(sdlWindow);
+	hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+#endif
+
+	App.WindowHandle = hwnd;
+	WindowsHandle = hwnd;
+	//App.hInstance = hInstance;
+	
 	// Create renderer and enumerate adapters and video modes.
 	g_Renderer.Create();
 
@@ -709,49 +760,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		LoadConfiguration();
-	}
-
-	// Set up window dimensions.
-	RECT rect;
-	rect.left = 0;
-	rect.top = 0;
-	rect.right = g_Configuration.ScreenWidth;
-	rect.bottom = g_Configuration.ScreenHeight;
-	AdjustWindowRect(&rect, WS_CAPTION, false);
-
-	// Calculate window resolution.
-	auto windowRes = Vector2i(rect.right - rect.left, rect.bottom - rect.top);
-
-	// Get screen resolution of primary monitor.
-	auto screenRes = Vector2i(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-
-	// Calculate centered window position on screen.
-	auto windowPos = (screenRes - windowRes) / 2;
-
-	// Create window handle.
-	App.WindowHandle = CreateWindowEx(
-		0,
-		"TombEngine",
-		g_GameFlow->GetString(STRING_WINDOW_TITLE),
-		WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX,
-		windowPos.x,
-		windowPos.y,
-		windowRes.x,
-		windowRes.y,
-		NULL,
-		NULL,
-		App.hInstance,
-		NULL);
-
-	// Register window handle.
-	if (!App.WindowHandle)
-	{
-		TENLog("Unable to create Window. Error: " + std::to_string(GetLastError()), LogLevel::Error);
-		return 0;
-	}
-	else
-	{
-		WindowsHandle = App.WindowHandle;
 	}
 
 	try
@@ -774,17 +782,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		App.bNoFocus = false;
 		App.isInScene = false;
 
-		UpdateWindow(WindowsHandle);
-		ShowWindow(WindowsHandle, nShowCmd);
-
-		hAccTable = LoadAccelerators(hInstance, (LPCSTR)0x65);
+		SDL_ShowWindow(sdlWindow);
+		SDL_RaiseWindow(sdlWindow);
 	}
 	catch (std::exception& ex)
 	{
 		auto errorMessage = "Error during game initialization: " + std::string(ex.what());
 		TENLog(errorMessage, LogLevel::Error);
-		ShowExternalMessageBox(errorMessage);
-		WinClose();
+		g_Platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
+		SDL_Quit();
+		g_Platform->Shutdown();
 		exit(EXIT_FAILURE);
 	}
 
@@ -797,15 +804,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// The game window likes to steal input anyway, so let's put it at the
 	// foreground so the user at least expects it.
-	if (GetForegroundWindow() != WindowsHandle)
-		SetForegroundWindow(WindowsHandle);
+	//if (GetForegroundWindow() != WindowsHandle)
+	//	SetForegroundWindow(WindowsHandle);
 
-	WinProcMsg();
+	//WinProcMsg();
+	bool running = true;
+	while (running && !ThreadEnded && DoTheGame)
+	{
+		SDL_Event ev;
+		while (SDL_PollEvent(&ev))
+		{
+			switch (ev.type)
+			{
+			case SDL_EVENT_QUIT:
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				DoTheGame = false;
+				running = false;
+				break;
+
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
+				HandleWindowFocusGained(sdlWindow);
+				break;
+
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
+				HandleWindowFocusLost(sdlWindow);
+				break;
+
+			default:
+				break;
+			}
+		}
+
+		// Evita di girare al 100% quando non ci sono eventi
+		SDL_Delay(1);
+	}
+
 	ThreadEnded = true;
 
-	while (DoTheGame);
+	while (DoTheGame)
+		SDL_Delay(1);
 
 	TENLog("Cleaning up and exiting...", LogLevel::Info);
+
+	// Cleanup SDL
+	SDL_DestroyWindow(sdlWindow);
+	SDL_Quit();
 
 	WinClose();
 	exit(EXIT_SUCCESS);

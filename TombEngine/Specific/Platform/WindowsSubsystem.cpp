@@ -253,6 +253,93 @@ namespace TEN::Platform
         // cleanup (handles, services, etc.), release them here.
     }
 
+    std::vector<unsigned short> WindowsSubsystem::GetProductOrFileVersion(bool productVersion)
+    {
+        auto fileName = GetBinaryPath(true);
+
+        DWORD dummy;
+        DWORD size = GetFileVersionInfoSizeW(fileName.data(), &dummy);
+
+        if (size == 0)
+        {
+            TENLog("GetFileVersionInfoSizeW failed", LogLevel::Error);
+            return {};
+        }
+
+        std::unique_ptr<unsigned char[]> buffer(new unsigned char[size]);
+
+        // Load version info.
+        if (!GetFileVersionInfoW(fileName.data(), 0, size, buffer.get()))
+        {
+            TENLog("GetFileVersionInfoW failed", LogLevel::Error);
+            return {};
+        }
+
+        VS_FIXEDFILEINFO* info;
+        unsigned int infoSize;
+
+        if (!VerQueryValueW(buffer.get(), L"\\", (void**)&info, &infoSize))
+        {
+            TENLog("VerQueryValueW failed", LogLevel::Error);
+            return {};
+        }
+
+        if (infoSize != sizeof(VS_FIXEDFILEINFO))
+        {
+            TENLog("VerQueryValueW returned wrong size for VS_FIXEDFILEINFO", LogLevel::Error);
+            return {};
+        }
+
+        if (productVersion)
+        {
+            return
+            {
+                HIWORD(info->dwProductVersionMS),
+                LOWORD(info->dwProductVersionMS),
+                HIWORD(info->dwProductVersionLS),
+                LOWORD(info->dwProductVersionLS)
+            };
+        }
+        else
+        {
+            return
+            {
+                HIWORD(info->dwFileVersionMS),
+                LOWORD(info->dwFileVersionMS),
+                HIWORD(info->dwFileVersionLS),
+                LOWORD(info->dwFileVersionLS)
+            };
+        }
+    }
+
+    bool WindowsSubsystem::Is64Bit()
+    {
+#ifdef _WIN64
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    void WindowsSubsystem::DisableDpiAwareness()
+    {
+        // Don't use SHCore library directly, as it's not available on pre-win 8.1 systems.
+
+        typedef HRESULT(WINAPI* SetDpiAwarenessProc)(UINT);
+        static constexpr unsigned int PROCESS_SYSTEM_DPI_AWARE = 1;
+
+        auto lib = LoadLibrary("SHCore.dll");
+        if (lib == NULL)
+            return;
+
+        auto setDpiAwareness = (SetDpiAwarenessProc)GetProcAddress(lib, "SetProcessDpiAwareness");
+        if (setDpiAwareness == NULL)
+            return;
+
+        setDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
+        FreeLibrary(lib);
+    }
+
     // ----------------------------------------------------------------------------
     // Factory function: returns the correct platform subsystem implementation
     // ----------------------------------------------------------------------------

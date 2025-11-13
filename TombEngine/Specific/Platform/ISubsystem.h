@@ -37,6 +37,12 @@ namespace TEN::Platform
         // Called before shutdown.
         // Use this to clean up platform-specific resources if needed.
         virtual void Shutdown() = 0;
+
+        virtual std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) = 0;
+
+        virtual bool Is64Bit() = 0;
+
+        virtual void DisableDpiAwareness() = 0;
     };
 
 

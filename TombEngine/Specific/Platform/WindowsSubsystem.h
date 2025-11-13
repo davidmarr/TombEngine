@@ -6,6 +6,9 @@
 #include <Windows.h>
 #include <string>
 #include "Specific/Platform/ISubsystem.h"
+#include "Specific/trutils.h"
+
+using namespace TEN::Utils;
 
 namespace TEN::Platform
 {
@@ -53,6 +56,12 @@ namespace TEN::Platform
         /// Currently empty, but kept for symmetry and future expansion.
         /// </summary>
         void Shutdown() override;
+        
+        std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) override;
+
+        bool Is64Bit() override;
+
+        void DisableDpiAwareness() override;
 
     private:
         HINSTANCE _hInstance = nullptr;

@@ -1440,7 +1440,7 @@ bool LoadLevel(const std::string& path, bool partial)
 			TENLog("Level compiler version: " + std::to_string(version[0]) + "." + std::to_string(version[1]) + "." + std::to_string(version[2]), LogLevel::Info);
 
 			// Check if level version is higher than engine version
-			auto assemblyVersion = TEN::Utils::GetProductOrFileVersion(true);
+			auto assemblyVersion = g_Platform->GetProductOrFileVersion(true);
 			for (int i = 0; i < assemblyVersion.size(); i++)
 			{
 				if (i >= 3)
