@@ -7,7 +7,7 @@
 
 namespace TEN::Scripting
 {
-	constexpr auto TIME_UNIT = 60;
+	constexpr auto TIME_UNIT   = 60;
 	constexpr auto CENTISECOND = 100;
 
 	/// Represents a time value in game frames, with support for formatting to hours, minutes, seconds, and centiseconds (1/100th of a second).
@@ -43,9 +43,9 @@ namespace TEN::Scripting
 			"GetFormattedString", &Time::GetFormattedString,
 
 			// Readable and writable fields
-			"h", sol::property(&Time::GetHours, &Time::SetHours),
-			"m", sol::property(&Time::GetMinutes, &Time::SetMinutes),
-			"s", sol::property(&Time::GetSeconds, &Time::SetSeconds),
+			"h", sol::property(&Time::GetHours,        &Time::SetHours),
+			"m", sol::property(&Time::GetMinutes,      &Time::SetMinutes),
+			"s", sol::property(&Time::GetSeconds,      &Time::SetSeconds),
 			"c", sol::property(&Time::GetCentiseconds, &Time::SetCentiseconds));
 	}
 
@@ -475,10 +475,10 @@ namespace TEN::Scripting
 			return Time::Hmsc();
 		}
 
-		int hours = match[1].matched ? std::stoi(match[1].str()) : 0;
+		int hours   = match[1].matched ? std::stoi(match[1].str()) : 0;
 		int minutes = match[2].matched ? std::stoi(match[2].str()) : 0;
 		int seconds = match[3].matched ? std::stoi(match[3].str()) : 0;
-		int cents = match[4].matched ? std::stoi(match[4].str()) : 0;
+		int cents   = match[4].matched ? std::stoi(match[4].str()) : 0;
 
 		return { hours, minutes, seconds, cents };
 	}
@@ -500,10 +500,10 @@ namespace TEN::Scripting
 		if (!hmsTable.valid() || hmsTable.size() < 1 || hmsTable.size() > 4)
 			throw std::invalid_argument("Invalid time unit table. Expected {HH, MM, SS, [CC]}");
 
-		int hours = hmsTable.get_or(1, 0);
+		int hours   = hmsTable.get_or(1, 0);
 		int minutes = hmsTable.get_or(2, 0);
 		int seconds = hmsTable.get_or(3, 0);
-		int cents = hmsTable.get_or(4, 0);
+		int cents   = hmsTable.get_or(4, 0);
 
 		SetFromHMSC(hours, minutes, seconds, cents);
 	}
