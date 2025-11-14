@@ -10,7 +10,7 @@ namespace TEN::Scripting
 	constexpr auto TIME_UNIT   = 60;
 	constexpr auto CENTISECOND = 100;
 
-	/// Represents a time value in game frames, with support for formatting to hours, minutes, seconds, and centiseconds (1/100th of a second).
+	/// <style>table.function_list td.name {min-width: 380px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>Represents a time value in game frames, with support for formatting to hours, minutes, seconds, and centiseconds (1/100th of a second).
 	// @tenprimitive Time
 	// @pragma nostrip
 
