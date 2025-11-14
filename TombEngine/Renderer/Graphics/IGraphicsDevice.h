@@ -2,6 +2,7 @@
 #include <vector>
 #include "Specific/fast_vector.h"
 #include <string>
+#include <sdl3/SDL.h>
 #include <SimpleMath.h>
 #include "Renderer/Graphics/IIndexBuffer.h"
 #include "Renderer/Graphics/IVertexBuffer.h"
@@ -88,8 +89,8 @@ namespace TEN::Renderer::Graphics
 		virtual std::unique_ptr<IInputLayout> CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) = 0;
 
 		virtual void CreateDevice() = 0;
-		virtual void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) = 0;
-		virtual std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height, HWND handle) = 0;
+		virtual void Initialize(const std::string gameDir, int w, int h, bool windowed) = 0;
+		virtual std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height) = 0;
 
 		virtual std::string GetDefaultAdapterName() = 0;
 		virtual void ChangeScreenResolution(int width, int height, bool windowed) = 0;

@@ -18,6 +18,7 @@ namespace TEN::Platform
     public:
         virtual ~ISubsystem() = default;
 
+        virtual void Initialize() = 0;
         virtual void CheckPrerequisites() = 0;
         virtual void InstallCrashHandler() = 0;
         virtual void ShowErrorMessage(const std::string& text, MessageBoxIcon icon = MessageBoxIcon::Error) = 0;
@@ -25,9 +26,6 @@ namespace TEN::Platform
         virtual void Shutdown() = 0;
         virtual std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) = 0;
         virtual bool Is64Bit() = 0;
-        virtual void DisableDpiAwareness() = 0;
-        virtual void ComInitialize() = 0;
-        virtual void ComUninitialize() = 0;
         virtual void SetSDL3Window(SDL_Window* window) = 0;
         virtual SDL_Window* GetSDL3Window() = 0;
     };

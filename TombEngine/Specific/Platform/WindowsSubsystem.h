@@ -33,49 +33,14 @@ namespace TEN::Platform
         WindowsSubsystem();
         ~WindowsSubsystem() override;
 
-        /// <summary>
-        /// Check OS-level prerequisites required by the engine.
-        /// Currently: verify that the VC++ 2015–2022 Redistributable is installed.
-        /// Shows a prompt to download it if it is missing.
-        /// </summary>
+        void Initialize() override;
         void CheckPrerequisites() override;
-
-        /// <summary>
-        /// Install a global unhandled exception filter.
-        /// This allows us to catch crashes, log them and display an error message
-        /// instead of just silently terminating.
-        /// </summary>
         void InstallCrashHandler() override;
-
-        /// <summary>
-        /// Show a simple message box using the native Windows API.
-        /// Used to report errors or important information to the user.
-        /// </summary>
-        void ShowErrorMessage(const std::string& text,
-            MessageBoxIcon icon = MessageBoxIcon::Error) override;
-
-        /// <summary>
-        /// Optional per-frame platform tick.
-        /// Currently not used on Windows, but can be used later for things like
-        /// polling console input, OS signals, etc.
-        /// </summary>
+        void ShowErrorMessage(const std::string& text, MessageBoxIcon icon = MessageBoxIcon::Error) override;
         void Tick() override;
-
-        /// <summary>
-        /// Perform any platform-specific shutdown work.
-        /// Currently empty, but kept for symmetry and future expansion.
-        /// </summary>
         void Shutdown() override;
-        
         std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) override;
-
         bool Is64Bit() override;
-
-        void DisableDpiAwareness() override;
-
-        void ComInitialize() override;
-        void ComUninitialize() override;
-
         void SetSDL3Window(SDL_Window* window);
         SDL_Window* GetSDL3Window();
 

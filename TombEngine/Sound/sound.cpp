@@ -16,7 +16,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 
 using namespace TEN::Gui;
 using namespace TEN::Math;
@@ -1016,7 +1016,11 @@ void Sound_Init(const std::string& gameDirectory)
 		soundDevice = NO_VALUE;
 	}
 
-	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, WindowsHandle, NULL);
+	// TODO: in the future write generic code
+	SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
+	HWND handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+
+	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, handle, NULL);
 	if (Sound_CheckBASSError("Initializing BASS sound device", true))
 		return;
 

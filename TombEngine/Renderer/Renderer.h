@@ -1,6 +1,7 @@
 #pragma once
 #include <wrl/client.h>
 #include <SimpleMath.h>
+#include <SDL3/SDL.h>
 #include "Math/Math.h"
 #include "Game/control/box.h"
 #include "Game/items.h"
@@ -374,7 +375,7 @@ namespace TEN::Renderer
 		void ClearShadowMap();
 		void CalculateSSAO(RenderView& view);
 		void UpdateItemAnimations(RenderView& view);
-		void InitializeScreen(int w, int h, HWND handle, bool reset);
+		void InitializeScreen(int w, int h, bool reset);
 		void InitializeCommonTextures();
 		void InitializeGameBars();
 		void InitializeMenuBars(int y);
@@ -668,7 +669,7 @@ namespace TEN::Renderer
 		RendererMesh* GetRendererMeshFromTrMesh(RendererObject* obj, MESH* meshPtr, short boneIndex, int isJoints, int isHairs, int* lastVertex, int* lastIndex);
 		void DrawBar(float percent, const RendererHudBar& bar, GAME_OBJECT_ID textureSlot, int frame, bool poison);
 		void Create();
-		void Initialize(const std::string& gameDir, int w, int h, bool windowed, HWND handle);
+		void Initialize(const std::string& gameDir, int w, int h, bool windowed);
 		void ReloadShaders(bool recompileAAShaders = false);
 		void Render(float interpFactor);
 		void RenderTitle(float interpFactor);

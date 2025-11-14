@@ -7,26 +7,11 @@
 #include <shellapi.h>
 #include <sstream>
 #include <iostream>
-
-#include "Specific/trutils.h"   // TENLog, LogLevel, etc.
-// Add any other includes you need from your project (logging, config, etc.)
+#include <commctrl.h>
+#include "Specific/trutils.h"
 
 namespace TEN::Platform
 {
-    // ----------------------------------------------------------------------------
-    // Global crash handler (Windows unhandled exception filter)
-    // ----------------------------------------------------------------------------
-    //
-    // This function is called by the OS when an unhandled exception occurs.
-    // It tries to:
-    //   1) Map the exception code to a human-readable name.
-    //   2) Resolve the crashing address to a symbol name using DbgHelp (if PDBs are present).
-    //   3) Log a detailed error message using TENLog.
-    //   4) Show a MessageBox to the user with the crash information.
-    //
-    // Returning EXCEPTION_EXECUTE_HANDLER tells Windows that we handled the exception
-    // and that the process should now terminate in a controlled way.
-    //
     static LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
     {
         DWORD code = exceptionInfo->ExceptionRecord->ExceptionCode;
@@ -97,14 +82,9 @@ namespace TEN::Platform
         return EXCEPTION_EXECUTE_HANDLER;
     }
 
-    // ----------------------------------------------------------------------------
-    // WindowsSubsystem implementation
-    // ----------------------------------------------------------------------------
-
     WindowsSubsystem::WindowsSubsystem()
     {
-        // Store the module handle of the current process, in case we need it.
-        _hInstance = GetModuleHandle(nullptr);
+
     }
 
     WindowsSubsystem::~WindowsSubsystem()
@@ -112,6 +92,34 @@ namespace TEN::Platform
         // Nothing special to do here yet.
         // If you allocate any Windows-specific resources later,
         // this is the place to release them.
+    }
+
+    void WindowsSubsystem::Initialize()
+    {
+        _hInstance = GetModuleHandle(nullptr);
+
+        INITCOMMONCONTROLSEX commCtrlInit;
+        commCtrlInit.dwSize = sizeof(INITCOMMONCONTROLSEX);
+        commCtrlInit.dwICC = ICC_USEREX_CLASSES | ICC_STANDARD_CLASSES;
+        InitCommonControlsEx(&commCtrlInit);
+
+        // Don't use SHCore library directly, as it's not available on pre-win 8.1 systems.
+
+        typedef HRESULT(WINAPI* SetDpiAwarenessProc)(UINT);
+        static constexpr unsigned int PROCESS_SYSTEM_DPI_AWARE = 1;
+
+        auto lib = LoadLibrary("SHCore.dll");
+        if (lib == NULL)
+            return;
+
+        auto setDpiAwareness = (SetDpiAwarenessProc)GetProcAddress(lib, "SetProcessDpiAwareness");
+        if (setDpiAwareness == NULL)
+            return;
+
+        setDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
+        FreeLibrary(lib);
+
+        CoInitializeEx(NULL, COINIT_MULTITHREADED);
     }
 
     void WindowsSubsystem::CheckVcRedist()
@@ -199,20 +207,16 @@ namespace TEN::Platform
 
     void WindowsSubsystem::InstallExceptionFilter()
     {
-        // Register our unhandled exception filter so it gets called on crashes.
         SetUnhandledExceptionFilter(HandleException);
     }
 
     void WindowsSubsystem::CheckPrerequisites()
     {
-        // Currently this only checks the VC++ runtime,
-        // but it can be extended with more platform checks if needed.
         CheckVcRedist();
     }
 
     void WindowsSubsystem::InstallCrashHandler()
     {
-        // Set up the global crash handler for unhandled exceptions.
         InstallExceptionFilter();
     }
 
@@ -249,8 +253,7 @@ namespace TEN::Platform
 
     void WindowsSubsystem::Shutdown()
     {
-        // If you add any platform-level resources that require explicit
-        // cleanup (handles, services, etc.), release them here.
+        CoUninitialize();
     }
 
     std::vector<unsigned short> WindowsSubsystem::GetProductOrFileVersion(bool productVersion)
@@ -321,43 +324,10 @@ namespace TEN::Platform
 #endif
     }
 
-    void WindowsSubsystem::DisableDpiAwareness()
-    {
-        // Don't use SHCore library directly, as it's not available on pre-win 8.1 systems.
-
-        typedef HRESULT(WINAPI* SetDpiAwarenessProc)(UINT);
-        static constexpr unsigned int PROCESS_SYSTEM_DPI_AWARE = 1;
-
-        auto lib = LoadLibrary("SHCore.dll");
-        if (lib == NULL)
-            return;
-
-        auto setDpiAwareness = (SetDpiAwarenessProc)GetProcAddress(lib, "SetProcessDpiAwareness");
-        if (setDpiAwareness == NULL)
-            return;
-
-        setDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-        FreeLibrary(lib);
-    }
-
-    // ----------------------------------------------------------------------------
-    // Factory function: returns the correct platform subsystem implementation
-    // ----------------------------------------------------------------------------
-
     std::unique_ptr<ISubsystem> CreatePlatformSubsystem()
     {
         // On Windows, we return the concrete WindowsSubsystem.
         return std::make_unique<WindowsSubsystem>();
-    }
-
-    void WindowsSubsystem::ComInitialize()
-    {
-        CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    }
-
-    void WindowsSubsystem::ComUninitialize()
-    {
-        CoUninitialize();
     }
 
     void WindowsSubsystem::SetSDL3Window(SDL_Window* window)

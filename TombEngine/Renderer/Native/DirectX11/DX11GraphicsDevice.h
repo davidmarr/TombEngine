@@ -59,6 +59,7 @@ namespace TEN::Renderer::Native::DirectX11
 		int _screenHeight;
 		int _isWindowed;
 		int _refreshRate;
+		HWND _handle;
 
 		inline ID3D11DeviceContext* GetDeviceContext() { return _context.Get(); }
 
@@ -202,8 +203,8 @@ namespace TEN::Renderer::Native::DirectX11
 		std::unique_ptr<IInputLayout> CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) override;
 
 		void CreateDevice() override;
-		void Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle) override;
-		std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height, HWND handle) override;
+		void Initialize(const std::string gameDir, int w, int h, bool windowed) override;
+		std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height) override;
 
 		std::string GetDefaultAdapterName() override;
 		void ChangeScreenResolution(int width, int height, bool windowed) override;

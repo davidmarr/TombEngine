@@ -61,7 +61,7 @@
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 #include "Specific/Video/Video.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 
 using namespace std::chrono;
 using namespace TEN::Effects;

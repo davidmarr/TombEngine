@@ -29,7 +29,7 @@
 #include "Sound/sound.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 
 using namespace TEN::Physics;
 using TEN::Renderer::g_Renderer;

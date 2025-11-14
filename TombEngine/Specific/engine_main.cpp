@@ -1,5 +1,5 @@
 #include "framework.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 #include <SDL3/SDL.h>
 #include <process.h>
 #include <iostream>
@@ -36,7 +36,6 @@ SDL_Condition* GamePauseCond = nullptr;
 bool       GamePaused = false;
 
 bool ResetClock;
-HWND WindowsHandle;
 std::unique_ptr<ISubsystem> g_Platform;
 
 // Indicates to hybrid graphics systems to prefer discrete part by default.
@@ -46,68 +45,104 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-bool ArgEquals(wchar_t* incomingArg, std::string name)
+bool ArgEquals(const char* incomingArg, const std::string& name)
 {
-	auto lowerArg = TEN::Utils::ToLower(TEN::Utils::ToString(incomingArg));
-	return (lowerArg == "-" + name) || (lowerArg == "/" + name);
+	if (!incomingArg)
+		return false;
+
+	std::string arg(incomingArg);
+
+	arg = TEN::Utils::ToLower(arg);
+	std::string lowerName = TEN::Utils::ToLower(name);
+
+	if (!arg.empty() && (arg[0] == '-' || arg[0] == '/'))
+	{
+		arg.erase(0, 1);
+		if (!arg.empty() && arg[0] == '-') 
+			arg.erase(0, 1);
+	}
+
+	return arg == lowerName;
 }
+
 
 Vector2i GetScreenResolution()
 {
-	RECT desktop;
-	const HWND hDesktop = GetDesktopWindow();
-	GetWindowRect(hDesktop, &desktop);
-	Vector2i resolution;
-	resolution.x = desktop.right;
-	resolution.y = desktop.bottom;
-	return resolution;
+	Vector2i res{ 0, 0 };
+
+	SDL_DisplayID display = SDL_GetPrimaryDisplay();
+	if (!display)
+		return res;
+
+	const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+	if (!mode)
+		return res;
+
+	res.x = mode->w;
+	res.y = mode->h;
+	return res;
 }
 
 int GetCurrentScreenRefreshRate()
 {
-	DEVMODE devmode;
-	memset(&devmode, 0, sizeof(devmode));
-	devmode.dmSize = sizeof(devmode);
-	
-	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode))
-	{
-		return devmode.dmDisplayFrequency;
-	}
-	else
-	{
+	SDL_DisplayID display = SDL_GetPrimaryDisplay();
+	if (!display)
 		return 0;
-	}
+
+	const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+	if (!mode)
+		return 0;
+
+	if (mode->refresh_rate <= 0.0f)
+		return 0;
+
+	return static_cast<int>(mode->refresh_rate + 0.5f);
 }
 
 std::vector<Vector2i> GetAllSupportedScreenResolutions()
 {
-	auto resList = std::vector<Vector2i>{};
+	std::vector<Vector2i> resList;
 
-	DEVMODE dm = { 0 };
-	dm.dmSize = sizeof(dm);
-	for (int iModeNum = 0; EnumDisplaySettings(NULL, iModeNum, &dm) != 0; iModeNum++)
+	SDL_DisplayID display = SDL_GetPrimaryDisplay();
+	if (!display)
+		return resList;
+
+	int count = 0;
+	SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(display, &count);
+	if (!modes || count <= 0)
+		return resList;
+
+	resList.reserve(count);
+
+	for (int i = 0; i < count; ++i)
 	{
+		const SDL_DisplayMode* mode = modes[i];
+		if (!mode)
+			continue;
+
+		Vector2i res{ mode->w, mode->h };
+
 		bool add = true;
-		for (auto m : resList)
+		for (const auto& m : resList)
 		{
-			if (m.x == dm.dmPelsWidth && m.y == dm.dmPelsHeight)
+			if (m.x == res.x && m.y == res.y)
 			{
 				add = false;
 				break;
 			}
 		}
+
 		if (add)
-		{
-			auto res = Vector2i(dm.dmPelsWidth, dm.dmPelsHeight);
 			resList.push_back(res);
-		}
 	}
+
+	SDL_free(modes);
 
 	std::sort(
 		resList.begin(), resList.end(),
-		[](Vector2i& a, Vector2i& b)
+		[](const Vector2i& a, const Vector2i& b)
 		{
-			return ((a.x == b.x) ? (a.y < b.y) : (a.x < b.x));
+			return (a.x == b.x) ? (a.y < b.y) : (a.x < b.x);
 		});
 
 	return resList;
@@ -188,14 +223,10 @@ int SDLCALL ConsoleInput(void*)
 
 static void HandleWindowFocusGained(SDL_Window* window)
 {
-	// Equivalent of the old WM_ACTIVATE "gain focus" branch
 	SetInputLockState(false);
 
 	if (!g_Configuration.EnableWindowedMode)
 	{
-		// In your old code this forced fullscreen on focus.
-		// Now the fullscreen state is gestito da SDL, ma lasciamo la call
-		// se il tuo renderer fa qualcosa di specifico.
 		g_Renderer.ToggleFullScreen(true);
 	}
 
@@ -270,9 +301,9 @@ void WaitIfGamePaused()
 int main(int argc, char* argv[])
 {
 	g_Platform = CreatePlatformSubsystem();
-
+	g_Platform->Initialize();
 	g_Platform->CheckPrerequisites();
-
+	
 	// Initialize SDL3
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS))
 	{
@@ -283,36 +314,34 @@ int main(int argc, char* argv[])
 	// Process command line arguments.
 	bool setup = false;
 	std::string levelFile = {};
-	//LPWSTR* argv;
-	//int argc;
-	//argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	std::string gameDir{};
 
 	// Parse command line arguments.
-	/*for (int i = 1; i < argc; i++)
+	for (int i = 1; i < argc; ++i)
 	{
-		if (ArgEquals(TEN::Utils::ToWString(argv[i]), "setup"))
+		std::string arg = argv[i];
+
+		if (ArgEquals(arg.c_str(), "setup"))
 		{
 			setup = true;
 		}
-		else if (ArgEquals(argv[i], "debug"))
+		else if (ArgEquals(arg.c_str(), "debug"))
 		{
 			DebugMode = true;
 		}
-		else if (ArgEquals(argv[i], "level") && argc > (i + 1))
+		else if (ArgEquals(arg.c_str(), "level") && i + 1 < argc)
 		{
-			levelFile = TEN::Utils::ToString(argv[i + 1]);
+			levelFile = argv[++i]; // consumi l’argomento successivo
 		}
-		else if (ArgEquals(argv[i], "hash") && argc > (i + 1))
+		else if (ArgEquals(arg.c_str(), "hash") && i + 1 < argc)
 		{
-			SystemNameHash = std::stoul(std::wstring(argv[i + 1]));
+			SystemNameHash = std::stoul(argv[++i]);
 		}
-		else if (ArgEquals(argv[i], "gamedir") && argc > (i + 1))
+		else if (ArgEquals(arg.c_str(), "gamedir") && i + 1 < argc)
 		{
-			gameDir = TEN::Utils::ToString(argv[i + 1]);
+			gameDir = argv[++i];
 		}
 	}
-	LocalFree(argv);*/
 
 	// Construct asset directory.
 	gameDir = ConstructAssetDirectory(gameDir);
@@ -393,21 +422,11 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	// Disable DPI scaling on Windows 8.1+ systems.
-	g_Platform->DisableDpiAwareness();
-
-	// Set up main window.
-	//INITCOMMONCONTROLSEX commCtrlInit;
-	//commCtrlInit.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	//commCtrlInit.dwICC = ICC_USEREX_CLASSES | ICC_STANDARD_CLASSES;
-	//InitCommonControlsEx(&commCtrlInit);
-
 	// Initialize main window.
-
 	int width = g_Configuration.ScreenWidth;
 	int height = g_Configuration.ScreenHeight;
 
-	Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
+	unsigned int windowFlags = SDL_WINDOW_RESIZABLE;
 	if (!g_Configuration.EnableWindowedMode)
 		windowFlags |= SDL_WINDOW_FULLSCREEN;
 
@@ -441,7 +460,7 @@ int main(int argc, char* argv[])
 	{
 		if (!SetupDialog())
 		{
-			WinClose();
+			EngineClose();
 			return 0;
 		}
 
@@ -450,19 +469,11 @@ int main(int argc, char* argv[])
 
 	try
 	{
-		// Unlike CoInitialize(), this line prevents event spamming if a .dll fails.
-		g_Platform->ComInitialize();
-
 		// Initialize audio (should be called prior to initializing renderer, because video handler needs it).
 		Sound_Init(gameDir);
 
-		// TODO: when new platforms will be added, write a more general code
-		SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
-		HWND handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
-		WindowsHandle = handle;
-
 		// Initialize renderer.
-		g_Renderer.Initialize(gameDir, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode, handle);
+		g_Renderer.Initialize(gameDir, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode);
 
 		// Initialize input.
 		InitializeInput();
@@ -501,10 +512,12 @@ int main(int argc, char* argv[])
 
 	// The game window likes to steal input anyway, so let's put it at the
 	// foreground so the user at least expects it.
-	//if (GetForegroundWindow() != WindowsHandle)
-	//	SetForegroundWindow(WindowsHandle);
+	SDL_Window* focused = SDL_GetKeyboardFocus();
+	if (focused != sdlWindow)
+	{
+		SDL_RaiseWindow(sdlWindow);
+	}
 
-	//WinProcMsg();
 	bool running = true;
 	while (running && !ThreadEnded && DoTheGame)
 	{
@@ -532,7 +545,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// Evita di girare al 100% quando non ci sono eventi
+		// Avoid looping at 100% where there're no events
 		SDL_Delay(1);
 	}
 
@@ -543,17 +556,15 @@ int main(int argc, char* argv[])
 
 	TENLog("Cleaning up and exiting...", LogLevel::Info);
 
-	// Cleanup SDL
 	SDL_DestroyWindow(sdlWindow);
 	SDL_Quit();
+	EngineClose();
 
-	WinClose();
 	exit(EXIT_SUCCESS);
 }
 
-void WinClose()
+void EngineClose()
 {
-	// Ferma il game thread
 	if (GameThread)
 	{
 		int status = 0;
@@ -566,7 +577,6 @@ void WinClose()
 		GameThread = nullptr;
 	}
 
-	// Distruggi sincronizzazione
 	if (GamePauseCond)
 	{
 		SDL_DestroyCondition(GamePauseCond);
@@ -578,10 +588,5 @@ void WinClose()
 		GamePauseMutex = nullptr;
 	}
 
-	// Il thread della console è stato detachato, non c'è nulla da chiudere.
-	// Se invece preferisci aspettarlo:
-	// if (ConsoleThread) { int s; SDL_WaitThread(ConsoleThread, &s); }
-
 	ShutdownTENLog();
-	g_Platform->ComUninitialize();
 }

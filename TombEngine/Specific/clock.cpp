@@ -1,8 +1,8 @@
 #include "framework.h"
 
-#include <chrono>
+#include <SDL3/SDL.h>
 #include "Specific/clock.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 
 constexpr auto CONTROL_FRAME_TIME = 1000.0f / 30.0f;
 constexpr auto DEBUG_SKIP_FRAME_TIME = 10 * CONTROL_FRAME_TIME;
@@ -15,15 +15,13 @@ HighFramerateSynchronizer g_Synchronizer;
 
 void HighFramerateSynchronizer::Init()
 {
-	_controlDelay = 0;
-	_frameTime = 0;
+	_controlDelay = 0.0;
+	_frameTime = 0.0;
+	_locked = false;
 
-	_lastTime.QuadPart = 0;
-	_currentTime.QuadPart = 0;
-	_frequency.QuadPart = 0;
-
-	QueryPerformanceFrequency(&_frequency);
-	QueryPerformanceCounter(&_lastTime);
+	_frequency = SDL_GetPerformanceFrequency();
+	_lastCounter = SDL_GetPerformanceCounter();
+	_currentCounter = _lastCounter;
 }
 
 void HighFramerateSynchronizer::Sync()
@@ -31,16 +29,18 @@ void HighFramerateSynchronizer::Sync()
 	if (ResetClock)
 	{
 		ResetClock = false;
-		QueryPerformanceCounter(&_lastTime);
-		_currentTime = _lastTime;
-		_controlDelay = 0;
-		_frameTime = 0;
+		_lastCounter = SDL_GetPerformanceCounter();
+		_currentCounter = _lastCounter;
+		_controlDelay = 0.0;
+		_frameTime = 0.0;
 	}
 	else
 	{
-		QueryPerformanceCounter(&_currentTime);
-		_frameTime = (_currentTime.QuadPart - _lastTime.QuadPart) * 1000.0 / _frequency.QuadPart;
-		_lastTime = _currentTime;
+		_currentCounter = SDL_GetPerformanceCounter();
+		Uint64 diff = _currentCounter - _lastCounter;
+		_lastCounter = _currentCounter;
+
+		_frameTime = (double)diff * 1000.0 / (double)_frequency;
 		_controlDelay += _frameTime;
 	}
 
@@ -63,12 +63,11 @@ bool HighFramerateSynchronizer::Synced()
 	}
 #endif
 
-	// If frameskip is in action, lock flag will remain set until synchronizer is 
-	// about to break out from it. This flag is later reused in input polling to
-	// prevent engine from de-registering input events prematurely.
-
-	if (_controlDelay > CONTROL_FRAME_TIME && _controlDelay <= CONTROL_FRAME_TIME * 2)
+	if (_controlDelay > CONTROL_FRAME_TIME &&
+		_controlDelay <= CONTROL_FRAME_TIME * 2.0)
+	{
 		_locked = false;
+	}
 
 	return (_controlDelay >= CONTROL_FRAME_TIME);
 }
@@ -80,43 +79,40 @@ void HighFramerateSynchronizer::Step()
 
 float HighFramerateSynchronizer::GetInterpolationFactor()
 {
-	return std::min((float)_controlDelay / (float)CONTROL_FRAME_TIME, 1.0f);
+	return std::min(
+		static_cast<float>(_controlDelay / CONTROL_FRAME_TIME),
+		1.0f);
 }
 
 int TimeSync()
 {
-	auto ct = LARGE_INTEGER{};
-	QueryPerformanceCounter(&ct);
+	Uint64 counter = SDL_GetPerformanceCounter();
+	double dCounter = static_cast<double>(counter) / LdFreq;
 
-	double dCounter = (double)ct.LowPart + (double)ct.HighPart * (double)0xffffffff;
-	dCounter /= LdFreq;
-
-	long gameFrames = (long)dCounter - (long)LdSync;
+	long gameFrames = static_cast<long>(dCounter) - static_cast<long>(LdSync);
 	LdSync = dCounter;
-	return gameFrames;
+
+	return static_cast<int>(gameFrames);
 }
 
 bool TimeReset()
 {
-	auto fq = LARGE_INTEGER{};
-	QueryPerformanceCounter(&fq);
-
-	LdSync = (double)fq.LowPart + ((double)fq.HighPart * (double)0xffffffff);
-	LdSync /= LdFreq;
+	Uint64 counter = SDL_GetPerformanceCounter();
+	LdSync = static_cast<double>(counter) / LdFreq;
 	return true;
 }
 
 bool TimeInit()
 {
-	auto fq = LARGE_INTEGER{};
-	if (!QueryPerformanceFrequency(&fq))
+	Uint64 freq = SDL_GetPerformanceFrequency();
+	if (!freq)
 		return false;
 
-	LdFreq = (double)fq.LowPart + ((double)fq.HighPart * (double)0xffffffff);
-	LdFreq /= 60.0;
+	LdFreq = static_cast<double>(freq) / 60.0;
 	TimeReset();
 	return true;
 }
+
 
 bool TestGlobalTimeInterval(unsigned int intervalGameFrames, unsigned int offsetGameFrames)
 {

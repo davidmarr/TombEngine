@@ -9,7 +9,7 @@
 #include "Specific/memory/Vector.h"
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
 
 extern GameConfiguration g_Configuration;
@@ -19,16 +19,16 @@ using namespace TEN::Video;
 
 namespace TEN::Renderer
 {
-	void Renderer::Initialize(const std::string& gameDir, int w, int h, bool windowed, HWND handle)
+	void Renderer::Initialize(const std::string& gameDir, int w, int h, bool windowed)
 	{
-		TENLog("Initializing DX11...", LogLevel::Info);
+		TENLog("Initializing renderer...", LogLevel::Info);
 
 		_screenWidth = w;
 		_screenHeight = h;
 		_isWindowed = windowed;
 
-		_graphicsDevice->Initialize(gameDir, w, h, windowed, handle);
-		InitializeScreen(w, h, handle, false);
+		_graphicsDevice->Initialize(gameDir, w, h, windowed);
+		InitializeScreen(w, h, false);
 		InitializeCommonTextures();
 
 		// Load shaders.
@@ -287,7 +287,7 @@ namespace TEN::Renderer
 		_skyIndexBuffer = _graphicsDevice->CreateIndexBuffer(SKY_INDICES_COUNT, indices.data());
 	}
 
-	void Renderer::InitializeScreen(int w, int h, HWND handle, bool reset)
+	void Renderer::InitializeScreen(int w, int h, bool reset)
 	{
 		// Cleanup resources
 		SAFE_DELETE(_backBuffer);
@@ -310,7 +310,7 @@ namespace TEN::Renderer
 		SAFE_DELETE(_SMAAEdgesRenderTarget);
 		SAFE_DELETE(_SMAABlendRenderTarget);
 		
-		_backBuffer = _graphicsDevice->InitializeSwapChain(w, h, handle);
+		_backBuffer = _graphicsDevice->InitializeSwapChain(w, h);
 		                
 		_renderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, false, DepthFormat::Depth32);
 
@@ -385,7 +385,7 @@ namespace TEN::Renderer
 
 	void Renderer::Create()
 	{
-		TENLog("Creating DX11 renderer device...", LogLevel::Info);
+		TENLog("Creating renderer native device...", LogLevel::Info);
 
 		_graphicsDevice = std::make_unique<TEN::Renderer::Native::DirectX11::DX11GraphicsDevice>();
 		_graphicsDevice->CreateDevice();
@@ -402,29 +402,27 @@ namespace TEN::Renderer
 
 	void Renderer::SetFullScreen()
 	{
+		auto window = g_Platform->GetSDL3Window();
+
 		if (!_isWindowed)
 		{
-			SetWindowLongPtr(WindowsHandle, GWL_STYLE, 0);
-			SetWindowLongPtr(WindowsHandle, GWL_EXSTYLE, WS_EX_TOPMOST);
-			SetWindowPos(WindowsHandle, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-			ShowWindow(WindowsHandle, SW_SHOWMAXIMIZED);
+			SDL_SetWindowAlwaysOnTop(window, true);
+			SDL_SetWindowFullscreen(window, true);
+
+			SDL_SyncWindow(window);
 		}
 		else
 		{
-			int frameW = GetSystemMetrics(SM_CXPADDEDBORDER);
-			int frameX = GetSystemMetrics(SM_CXSIZEFRAME);
-			int frameY = GetSystemMetrics(SM_CYSIZEFRAME);
-			int frameC = GetSystemMetrics(SM_CYCAPTION);
+			SDL_SetWindowFullscreen(window, false);
+			SDL_SetWindowAlwaysOnTop(window, false);
+			SDL_SetWindowBordered(window, true);
 
-			int borderWidth = (frameX + frameW) * 2;
-			int borderHeight = (frameY + frameW) * 2 + frameC;
+			SDL_SetWindowSize(window, _screenWidth, _screenHeight);
+			SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
-			SetWindowLongPtr(WindowsHandle, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-			SetWindowLongPtr(WindowsHandle, GWL_EXSTYLE, 0);
-			ShowWindow(WindowsHandle, SW_SHOWNORMAL);
-			SetWindowPos(WindowsHandle, HWND_TOP, 0, 0, _screenWidth + borderWidth, _screenHeight + borderHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+			SDL_RestoreWindow(window);
+			SDL_RaiseWindow(window);
+			SDL_SyncWindow(window);
 		}
-
-		UpdateWindow(WindowsHandle);
 	}
 }

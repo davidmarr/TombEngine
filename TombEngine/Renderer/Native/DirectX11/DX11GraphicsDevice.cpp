@@ -1,6 +1,6 @@
 #include "framework.h"
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
 #include <wincodec.h>
@@ -453,7 +453,7 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	}
 
-	void DX11GraphicsDevice::Initialize(const std::string gameDir, int w, int h, bool windowed, HWND handle)
+	void DX11GraphicsDevice::Initialize(const std::string gameDir, int w, int h, bool windowed)
 	{
 		_renderStates = std::make_unique<CommonStates>(_device.Get());
 
@@ -588,8 +588,11 @@ namespace TEN::Renderer::Native::DirectX11
 		_viewportToolkit = Viewport(0, 0, w, h, 0.0f, 1.0f);
 	}
 
-	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::InitializeSwapChain(int width, int height, HWND handle)
+	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::InitializeSwapChain(int width, int height)
 	{
+		SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
+		_handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+
 		DXGI_SWAP_CHAIN_DESC sd;
 		sd.BufferDesc.Width = width;
 		sd.BufferDesc.Height = height;
@@ -619,7 +622,7 @@ namespace TEN::Renderer::Native::DirectX11
 		sd.Windowed = true;
 		sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 		sd.Flags = 0;
-		sd.OutputWindow = handle;
+		sd.OutputWindow = _handle;
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
 		sd.BufferCount = 1;
@@ -635,7 +638,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		Utils::throwIfFailed(dxgiFactory->CreateSwapChain(_device.Get(), &sd, &_swapChain));
 
-		dxgiFactory->MakeWindowAssociation(handle, DXGI_MWA_NO_ALT_ENTER);
+		dxgiFactory->MakeWindowAssociation(_handle, DXGI_MWA_NO_ALT_ENTER);
 
 		// Initialize render targets
 		ID3D11Texture2D* backBufferTexture = NULL;
@@ -648,7 +651,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::CreateDevice()
 	{
-		TENLog("Creating DX11 renderer device...", LogLevel::Info);
+		TENLog("DirectX 11 renderer", LogLevel::Info);
 
 		D3D_FEATURE_LEVEL levels[] = { D3D_FEATURE_LEVEL_11_0 };
 		D3D_FEATURE_LEVEL featureLevel;

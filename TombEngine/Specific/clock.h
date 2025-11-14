@@ -10,12 +10,13 @@ constexpr auto DELTA_TIME = 1.0f / FPS;
 class HighFramerateSynchronizer
 {
 private:
-	LARGE_INTEGER _lastTime;
-	LARGE_INTEGER _currentTime;
-	LARGE_INTEGER _frequency;
 	double _controlDelay = 0.0;
-	double _frameTime    = 0.0;
-	bool _locked = false;
+	double _frameTime = 0.0;
+	bool   _locked = false;
+
+	Uint64 _lastCounter = 0;
+	Uint64 _currentCounter = 0;
+	Uint64 _frequency = 0; 
 
 public:
 	void Init();

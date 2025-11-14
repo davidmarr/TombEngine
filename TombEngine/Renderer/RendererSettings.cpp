@@ -3,7 +3,7 @@
 #include <codecvt>
 #include "Renderer/Renderer.h"
 #include "Specific/trutils.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 
 namespace TEN::Renderer 
 {
@@ -18,7 +18,7 @@ namespace TEN::Renderer
 		_screenHeight = height;
 		_isWindowed = windowed;
 
-		InitializeScreen(width, height, WindowsHandle, true);
+		InitializeScreen(width, height, true);
 	}
 
 	std::string Renderer::GetDefaultAdapterName()

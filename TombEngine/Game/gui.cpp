@@ -28,7 +28,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
-#include "Specific/winmain.h"
+#include "Specific/engine_main.h"
 
 using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Input;
