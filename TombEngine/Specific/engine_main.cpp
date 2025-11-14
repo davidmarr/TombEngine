@@ -38,13 +38,6 @@ bool       GamePaused = false;
 bool ResetClock;
 std::unique_ptr<ISubsystem> g_Platform;
 
-// Indicates to hybrid graphics systems to prefer discrete part by default.
-extern "C"
-{
-	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-}
-
 bool ArgEquals(const char* incomingArg, const std::string& name)
 {
 	if (!incomingArg)
@@ -148,6 +141,8 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 	return resList;
 }
 
+// TODO: use xxd -i or bin2c for writing the level as C array instead of using
+// Windows resource system that is not portable to other platforms
 bool GenerateDummyLevel(const std::string& levelPath)
 {
 	// Try loading embedded resource "data.bin"
@@ -350,7 +345,7 @@ int main(int argc, char* argv[])
 #if !_DEBUG
 	if (!DebugMode)
 	{
-		FreeConsole();
+		g_Platform->HideConsole();
 	}
 	else
 #endif

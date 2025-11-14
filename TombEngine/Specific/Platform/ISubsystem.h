@@ -28,6 +28,7 @@ namespace TEN::Platform
         virtual bool Is64Bit() = 0;
         virtual void SetSDL3Window(SDL_Window* window) = 0;
         virtual SDL_Window* GetSDL3Window() = 0;
+        virtual void HideConsole() = 0;
     };
 
 

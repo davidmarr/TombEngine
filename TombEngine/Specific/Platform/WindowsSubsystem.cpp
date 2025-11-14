@@ -10,6 +10,12 @@
 #include <commctrl.h>
 #include "Specific/trutils.h"
 
+extern "C"
+{
+    __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 namespace TEN::Platform
 {
     static LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
@@ -338,6 +344,11 @@ namespace TEN::Platform
     SDL_Window* WindowsSubsystem::GetSDL3Window()
     {
         return _window;
+    }
+
+    void WindowsSubsystem::HideConsole()
+    {
+        FreeConsole();
     }
 
 } // namespace TEN::Platform

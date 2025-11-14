@@ -43,6 +43,7 @@ namespace TEN::Platform
         bool Is64Bit() override;
         void SetSDL3Window(SDL_Window* window);
         SDL_Window* GetSDL3Window();
+        void HideConsole() override;
 
     private:
         HINSTANCE _hInstance = nullptr;
