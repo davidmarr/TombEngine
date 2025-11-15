@@ -16,6 +16,9 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed emissive materials not fading into distance fog.
 * Fixed dynamic lighting for flat surfaces with miscalculated normals.
 
+### Lua API changes
+* Timer module optimization
+
 ## [Version 1.10](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.10) - 2025-11-09
 
 ### New features
