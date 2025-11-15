@@ -359,8 +359,6 @@ namespace TEN::Renderer
 				Vector3(firefly.Position.x, firefly.Position.y, firefly.Position.z),
 				GetInterpolationFactor());
 
-			pos = Vector3(firefly.Position.x, firefly.Position.y, firefly.Position.z);
-
 			// Disallow sprites out of bounds.
 			int spriteIndex = Objects[firefly.SpriteSeqID].meshIndex + firefly.SpriteID;
 			spriteIndex = std::clamp(spriteIndex, 0, (int)_sprites.size());

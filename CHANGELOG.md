@@ -11,6 +11,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed FIRE_PENDULUM crashing the game.
 * Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
 * Fixed interaction highlighter not appearing for SEARCH_OBJECT objects.
+* Fixed fireflies not interpolating in high framerate mode.
 * Fixed emissive materials not fading into distance fog.
 * Fixed dynamic lighting for flat surfaces with miscalculated normals.
 
