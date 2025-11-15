@@ -318,10 +318,13 @@ end
 --    TEN.Strings.ShowString(str, 1)
 -- end
 function Timer:GetRemainingTimeFormatted(timerFormat)
-	timerFormat = timerFormat or defaultTimerFormat
+    timerFormat = timerFormat or defaultTimerFormat
+    if timerFormat ~= defaultTimerFormat then
+        local errorFormat = "Error in Timer:GetRemainingTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
+        timerFormat = Utility.CheckTimeFormat(timerFormat, errorFormat)
+    end
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	local errorFormat = "Error in Timer:GetRemainingTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
-	return Utility.GenerateTimeFormattedString(thisTimer.remainingTime, timerFormat, errorFormat)
+	return Utility.GenerateTimeFormattedString(thisTimer.remainingTime, timerFormat)
 end
 
 --- Set the remaining time of a timer.
@@ -445,9 +448,12 @@ end
 -- end
 function Timer:GetTotalTimeFormatted(timerFormat)
 	timerFormat = timerFormat or defaultTimerFormat
+	if timerFormat ~= defaultTimerFormat then
+		local errorFormat = "Error in Timer:GetTotalTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
+		timerFormat = Utility.CheckTimeFormat(timerFormat, errorFormat)
+	end
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	local errorFormat = "Error in Timer:GetTotalTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
-	return Utility.GenerateTimeFormattedString(thisTimer.totalTime, timerFormat, errorFormat)
+	return Utility.GenerateTimeFormattedString(thisTimer.totalTime, timerFormat)
 end
 
 --- Set the total time for a timer.

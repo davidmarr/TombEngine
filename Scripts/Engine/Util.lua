@@ -29,15 +29,8 @@ Util.CheckTimeFormat = function(timerFormat, errorText)
 end
 
 -- Generate a formatted string from a time.
-Util.GenerateTimeFormattedString = function(time, timerFormat, errorFormat, check)
-	check = (check == nil or not Type.IsBoolean(check)) and true or check
-	errorFormat = Type.IsString(errorFormat) and errorFormat or false
-	timerFormat = check and Util.CheckTimeFormat(timerFormat) or timerFormat
-
+Util.GenerateTimeFormattedString = function(time, timerFormat)
 	if not timerFormat then
-		if errorFormat then
-			TEN.Util.PrintLog(errorFormat, TEN.Util.LogLevel.ERROR)
-		end
 		return ""
 	end
 	local result = {}
