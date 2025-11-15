@@ -359,8 +359,6 @@ namespace TEN::Renderer
 				Vector3(firefly.Position.x, firefly.Position.y, firefly.Position.z),
 				GetInterpolationFactor());
 
-			pos = Vector3(firefly.Position.x, firefly.Position.y, firefly.Position.z);
-
 			// Disallow sprites out of bounds.
 			int spriteIndex = Objects[firefly.SpriteSeqID].meshIndex + firefly.SpriteID;
 			spriteIndex = std::clamp(spriteIndex, 0, (int)_sprites.size());
@@ -526,7 +524,11 @@ namespace TEN::Renderer
 				}
 				else
 				{
-					auto* item = &g_Level.Items[particle.fxObj];
+					if (particle.fxObj < 0 || particle.fxObj >= g_Level.Items.size())
+					{
+						TENLog("Particle FX object index is out of bounds.", LogLevel::Warning);
+						continue;
+					}
 
 					auto nodePos = Vector3i::Zero;
 					if (particle.flags & SP_NODEATTACH)
@@ -537,6 +539,8 @@ namespace TEN::Renderer
 						}
 						else
 						{
+							auto* item = &g_Level.Items[particle.fxObj];
+
 							nodePos.x = NodeOffsets[particle.nodeNumber].x;
 							nodePos.y = NodeOffsets[particle.nodeNumber].y;
 							nodePos.z = NodeOffsets[particle.nodeNumber].z;
