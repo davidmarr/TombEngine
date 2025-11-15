@@ -32,7 +32,7 @@ end
 Util.GenerateTimeFormattedString = function(time, timerFormat, errorFormat, check)
 	check = (check == nil or not Type.IsBoolean(check)) and true or check
 	errorFormat = Type.IsString(errorFormat) and errorFormat or false
-	timerFormat = check and Util.CheckTimeFormat(timerFormat, errorFormat) or timerFormat
+	timerFormat = check and Util.CheckTimeFormat(timerFormat) or timerFormat
 
 	if not timerFormat then
 		if errorFormat then
