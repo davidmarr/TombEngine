@@ -54,6 +54,7 @@ local Utility = require("Engine.Util")
 
 local zero = TEN.Time()
 local defaultTextOptions = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+local defaultTimerFormat = {minutes = true, seconds = true, deciseconds = true}
 local Timer = {}
 Timer.__index = Timer
 LevelFuncs.Engine.Timer = {}
@@ -317,7 +318,7 @@ end
 --    TEN.Strings.ShowString(str, 1)
 -- end
 function Timer:GetRemainingTimeFormatted(timerFormat)
-	timerFormat = timerFormat or {minutes = true, seconds = true, deciseconds = true}
+	timerFormat = timerFormat or defaultTimerFormat
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	local errorFormat = "Error in Timer:GetRemainingTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
 	return Utility.GenerateTimeFormattedString(thisTimer.remainingTime, timerFormat, errorFormat)
@@ -443,7 +444,7 @@ end
 --    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
 -- end
 function Timer:GetTotalTimeFormatted(timerFormat)
-	timerFormat = timerFormat or {minutes = true, seconds = true, deciseconds = true}
+	timerFormat = timerFormat or defaultTimerFormat
 	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 	local errorFormat = "Error in Timer:GetTotalTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
 	return Utility.GenerateTimeFormattedString(thisTimer.totalTime, timerFormat, errorFormat)
