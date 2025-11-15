@@ -1016,11 +1016,7 @@ void Sound_Init(const std::string& gameDirectory)
 		soundDevice = NO_VALUE;
 	}
 
-	// TODO: in the future write generic code
-	SDL_PropertiesID props = SDL_GetWindowProperties(g_Platform->GetSDL3Window());
-	HWND handle = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
-
-	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, handle, NULL);
+	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
 	if (Sound_CheckBASSError("Initializing BASS sound device", true))
 		return;
 
@@ -1209,4 +1205,21 @@ void PlaySoundSources()
 
 		SoundEffect(soundSource.SoundID, (Pose*)&soundSource.Position);
 	}
+}
+
+std::vector<BassDevice> Sound_ListDevices()
+{
+	std::vector<BassDevice> out;
+	BASS_DEVICEINFO info{};
+
+	for (int i = 1; BASS_GetDeviceInfo(i, &info); ++i) {
+		BassDevice d;
+		d.Index = i;
+		d.Name = info.name ? info.name : "";
+		d.IsDefault = (info.flags & BASS_DEVICE_DEFAULT) != 0;
+		d.IsEnabled = (info.flags & BASS_DEVICE_ENABLED) != 0;
+		d.IsInUse = (info.flags & BASS_DEVICE_INIT) != 0;
+		out.push_back(d);
+	}
+	return out;
 }

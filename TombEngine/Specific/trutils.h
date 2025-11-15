@@ -17,6 +17,10 @@ namespace TEN::Utils
 	std::string	 ToString(const wchar_t* wString);
 	std::wstring ToWString(const std::string& string);
 	std::wstring ToWString(const char* cString);
+	std::string Trim(std::string s);
+	bool StartsWith(const std::string s, const char* pref);
+	int ToInt(const std::string v, int def);
+	bool ToBool(const std::string v, bool def);
 
 	std::vector<std::wstring> SplitString(const std::wstring& string);
 	std::vector<std::wstring> SplitWords(const std::wstring& input);

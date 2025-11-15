@@ -1,8 +1,13 @@
 #include "framework.h"
 #include "Specific/configuration.h"
-
+#include <SDL3/SDL.h>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <algorithm>
+#include <cctype>
 #include <CommCtrl.h>
-
 #include "Renderer/Renderer.h"
 #include "resource.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
@@ -17,6 +22,37 @@ using namespace TEN::Renderer;
 using namespace TEN::Utils;
 
 GameConfiguration g_Configuration;
+
+static std::string GetConfigFilePath()
+{
+	char* base = SDL_GetPrefPath("TEN", "TombEngine");
+	if (!base) return "ten.conf";
+	std::string path = std::string(base) + "ten.conf";
+	SDL_free(base);
+	return path;
+}
+
+static bool WriteAllText(const std::string& path, const std::string& text)
+{
+	SDL_IOStream* rw = SDL_IOFromFile(path.c_str(), "wb");
+	if (!rw) return false;
+	const size_t n = text.size();
+	size_t w = SDL_WriteIO(rw, text.data(), n);
+	SDL_CloseIO(rw);
+	return (w == n);
+}
+
+static bool ReadAllText(const std::string& path, std::string& out)
+{
+	SDL_IOStream* rw = SDL_IOFromFile(path.c_str(), "rb");
+	if (!rw) return false;
+	Sint64 size = SDL_GetIOSize(rw);
+	if (size < 0) { SDL_CloseIO(rw); return false; }
+	out.resize(static_cast<size_t>(size));
+	size_t r = SDL_ReadIO(rw, out.data(), out.size());
+	SDL_CloseIO(rw);
+	return (r == out.size());
+}
 
 void LoadResolutionsInCombobox(HWND handle)
 {
@@ -161,147 +197,50 @@ int SetupDialog()
 
 bool SaveConfiguration()
 {
-	// Open root key.
-	HKEY rootKey = NULL;
-	if (RegOpenKeyA(HKEY_CURRENT_USER, REGKEY_ROOT, &rootKey) != ERROR_SUCCESS)
+	std::ostringstream ss;
+
+	ss << "[Graphics]\n";
+	ss << "ScreenWidth=" << g_Configuration.ScreenWidth << "\n";
+	ss << "ScreenHeight=" << g_Configuration.ScreenHeight << "\n";
+	ss << "EnableWindowedMode=" << (g_Configuration.EnableWindowedMode ? 1 : 0) << "\n";
+	ss << "ShadowsMode=" << (int)g_Configuration.ShadowType << "\n";
+	ss << "ShadowMapSize=" << g_Configuration.ShadowMapSize << "\n";
+	ss << "ShadowBlobsMax=" << g_Configuration.ShadowBlobsMax << "\n";
+	ss << "EnableCaustics=" << (g_Configuration.EnableCaustics ? 1 : 0) << "\n";
+	ss << "EnableDecals=" << (g_Configuration.EnableDecals ? 1 : 0) << "\n";
+	ss << "AntialiasingMode=" << (int)g_Configuration.AntialiasingMode << "\n";
+	ss << "AmbientOcclusion=" << (g_Configuration.EnableAmbientOcclusion ? 1 : 0) << "\n";
+	ss << "EnableHighFramerate=" << (g_Configuration.EnableHighFramerate ? 1 : 0) << "\n";
+	ss << "AdapterName=" << g_Configuration.AdapterName << "\n\n";
+
+	ss << "[Sound]\n";
+	ss << "SoundDevice=" << g_Configuration.SoundDevice << "\n";
+	ss << "EnableSound=" << (g_Configuration.EnableSound ? 1 : 0) << "\n";
+	ss << "EnableReverb=" << (g_Configuration.EnableReverb ? 1 : 0) << "\n";
+	ss << "MusicVolume=" << g_Configuration.MusicVolume << "\n";
+	ss << "SfxVolume=" << g_Configuration.SfxVolume << "\n\n";
+
+	ss << "[Gameplay]\n";
+	ss << "EnableSubtitles=" << (g_Configuration.EnableSubtitles ? 1 : 0) << "\n";
+	ss << "EnableAutoMonkeySwingJump=" << (g_Configuration.EnableAutoMonkeySwingJump ? 1 : 0) << "\n";
+	ss << "EnableAutoTargeting=" << (g_Configuration.EnableAutoTargeting ? 1 : 0) << "\n";
+	ss << "EnableTargetHighlighter=" << (g_Configuration.EnableTargetHighlighter ? 1 : 0) << "\n";
+	ss << "EnableInteractionHighlighter=" << (g_Configuration.EnableInteractionHighlighter ? 1 : 0) << "\n";
+	ss << "EnableRumble=" << (g_Configuration.EnableRumble ? 1 : 0) << "\n";
+	ss << "EnableThumbstickCamera=" << (g_Configuration.EnableThumbstickCamera ? 1 : 0) << "\n\n";
+
+	ss << "[Input]\n";
+	ss << "MouseSensitivity=" << g_Configuration.MouseSensitivity << "\n";
+	ss << "MenuOptionLoopingMode=" << (int)g_Configuration.MenuOptionLoopingMode << "\n";
+
+	for (const auto& kv : g_Configuration.Bindings)
 	{
-		// Create new key.
-		if (RegCreateKeyA(HKEY_CURRENT_USER, REGKEY_ROOT, &rootKey) != ERROR_SUCCESS)
-			return false;
+		ss << "bind." << (int)kv.first << "=" << (int)kv.second << "\n";
 	}
+	ss << "\n";
 
-	// Open Graphics subkey.
-	HKEY graphicsKey = NULL;
-	if (RegCreateKeyExA(rootKey, REGKEY_GRAPHICS, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &graphicsKey, NULL) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		return false;
-	}
-
-	// Set Graphics keys.
-	if (SetDWORDRegKey(graphicsKey, REGKEY_SCREEN_WIDTH, g_Configuration.ScreenWidth) != ERROR_SUCCESS ||
-		SetDWORDRegKey(graphicsKey, REGKEY_SCREEN_HEIGHT, g_Configuration.ScreenHeight) != ERROR_SUCCESS ||
-		SetBoolRegKey(graphicsKey, REGKEY_ENABLE_WINDOWED_MODE, g_Configuration.EnableWindowedMode) != ERROR_SUCCESS ||
-		SetDWORDRegKey(graphicsKey, REGKEY_SHADOWS, DWORD(g_Configuration.ShadowType)) != ERROR_SUCCESS ||
-		SetDWORDRegKey(graphicsKey, REGKEY_SHADOW_MAP_SIZE, g_Configuration.ShadowMapSize) != ERROR_SUCCESS ||
-		SetDWORDRegKey(graphicsKey, REGKEY_SHADOW_BLOBS_MAX, g_Configuration.ShadowBlobsMax) != ERROR_SUCCESS ||
-		SetBoolRegKey(graphicsKey, REGKEY_ENABLE_CAUSTICS, g_Configuration.EnableCaustics) != ERROR_SUCCESS ||
-		SetBoolRegKey(graphicsKey, REGKEY_ENABLE_DECALS, g_Configuration.EnableDecals) != ERROR_SUCCESS ||
-		SetDWORDRegKey(graphicsKey, REGKEY_ANTIALIASING_MODE, (DWORD)g_Configuration.AntialiasingMode) != ERROR_SUCCESS ||
-		SetBoolRegKey(graphicsKey, REGKEY_AMBIENT_OCCLUSION, g_Configuration.EnableAmbientOcclusion) != ERROR_SUCCESS ||
-		SetBoolRegKey(graphicsKey, REGKEY_HIGH_FRAMERATE, g_Configuration.EnableHighFramerate) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		return false;
-	}
-
-	// Open Sound subkey.
-	HKEY soundKey = NULL;
-	if (RegCreateKeyExA(rootKey, REGKEY_SOUND, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &soundKey, NULL) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		return false;
-	}
-
-	// Set Sound keys.
-	if (SetDWORDRegKey(soundKey, REGKEY_SOUND_DEVICE, g_Configuration.SoundDevice) != ERROR_SUCCESS ||
-		SetBoolRegKey(soundKey, REGKEY_ENABLE_SOUND, g_Configuration.EnableSound) != ERROR_SUCCESS ||
-		SetBoolRegKey(soundKey, REGKEY_ENABLE_REVERB, g_Configuration.EnableReverb) != ERROR_SUCCESS ||
-		SetDWORDRegKey(soundKey, REGKEY_MUSIC_VOLUME, g_Configuration.MusicVolume) != ERROR_SUCCESS ||
-		SetDWORDRegKey(soundKey, REGKEY_SFX_VOLUME, g_Configuration.SfxVolume) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		return false;
-	}
-
-	// Open Gameplay subkey.
-	HKEY gameplayKey = NULL;
-	if (RegCreateKeyExA(rootKey, REGKEY_GAMEPLAY, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &gameplayKey, NULL) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		RegCloseKey(gameplayKey);
-		return false;
-	}
-
-	// Set Gameplay keys.
-	if (SetBoolRegKey(gameplayKey, REGKEY_ENABLE_SUBTITLES, g_Configuration.EnableSubtitles) != ERROR_SUCCESS ||
-		SetBoolRegKey(gameplayKey, REGKEY_ENABLE_AUTO_MONKEY_JUMP, g_Configuration.EnableAutoMonkeySwingJump) != ERROR_SUCCESS ||
-		SetBoolRegKey(gameplayKey, REGKEY_ENABLE_AUTO_TARGETING, g_Configuration.EnableAutoTargeting) != ERROR_SUCCESS ||
-		SetBoolRegKey(gameplayKey, REGKEY_ENABLE_TARGET_HIGHLIGHTER, g_Configuration.EnableTargetHighlighter) != ERROR_SUCCESS ||
-		SetBoolRegKey(gameplayKey, REGKEY_ENABLE_INTERACTION_HIGHLIGHTER, g_Configuration.EnableInteractionHighlighter) != ERROR_SUCCESS ||
-		SetBoolRegKey(gameplayKey, REGKEY_ENABLE_RUMBLE, g_Configuration.EnableRumble) != ERROR_SUCCESS ||
-		SetBoolRegKey(gameplayKey, REGKEY_ENABLE_THUMBSTICK_CAMERA, g_Configuration.EnableThumbstickCamera) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		RegCloseKey(gameplayKey);
-		return false;
-	}
-
-	// Open Input subkey.
-	HKEY inputKey = NULL;
-	if (RegCreateKeyExA(rootKey, REGKEY_INPUT, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &inputKey, NULL) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		RegCloseKey(gameplayKey);
-		RegCloseKey(inputKey);
-		return false;
-	}
-
-	// Set Input keys.
-	if (SetDWORDRegKey(inputKey, REGKEY_MOUSE_SENSITIVITY, g_Configuration.MouseSensitivity) != ERROR_SUCCESS ||
-		SetDWORDRegKey(inputKey, REGKEY_MENU_OPTION_LOOPING_MODE, (int)g_Configuration.MenuOptionLoopingMode) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		RegCloseKey(gameplayKey);
-		RegCloseKey(inputKey);
-		return false;
-	}
-
-	if (g_Configuration.Bindings.empty())
-		g_Configuration.Bindings = DEFAULT_KEYBOARD_MOUSE_BINDING_PROFILE;
-
-	// Set Input binding keys.
-	for (auto actionGroupID : USER_ACTION_GROUP_IDS)
-	{
-		const auto& actionIDGroup = ACTION_ID_GROUPS[(int)actionGroupID];
-		for (auto actionID : actionIDGroup)
-		{
-			char buffer[9];
-			sprintf(buffer, "Action%d", (int)actionID);
-
-			if (SetDWORDRegKey(inputKey, buffer, g_Configuration.Bindings.at(actionID)) != ERROR_SUCCESS)
-			{
-				RegCloseKey(rootKey);
-				RegCloseKey(graphicsKey);
-				RegCloseKey(soundKey);
-				RegCloseKey(gameplayKey);
-				RegCloseKey(inputKey);
-				return false;
-			}
-		}
-	}
-
-	// Close registry keys.
-	RegCloseKey(rootKey);
-	RegCloseKey(graphicsKey);
-	RegCloseKey(soundKey);
-	RegCloseKey(gameplayKey);
-	RegCloseKey(inputKey);
-	return true;
+	const std::string path = GetConfigFilePath();
+	return WriteAllText(path, ss.str());
 }
 
 void SaveAudioConfig()
@@ -351,270 +290,96 @@ void InitDefaultConfiguration()
 
 bool LoadConfiguration()
 {
-	// Open root key.
-	HKEY rootKey = NULL;
-	if (RegOpenKeyA(HKEY_CURRENT_USER, REGKEY_ROOT, &rootKey) != ERROR_SUCCESS)
+	const std::string path = GetConfigFilePath();
+	std::string text;
+	if (!ReadAllText(path, text))
+		return false; // nessun file: manterrai i default
+
+	std::istringstream in(text);
+	std::string line, section;
+
+	InitDefaultConfiguration();
+
+	bool foundInput = false;
+
+	while (std::getline(in, line))
 	{
-		RegCloseKey(rootKey);
-		return false;
-	}
+		line = Trim(line);
+		if (line.empty() || line[0] == '#' || line[0] == ';')
+			continue;
 
-	// Open Graphics subkey.
-	HKEY graphicsKey = NULL;
-	if (RegOpenKeyExA(rootKey, REGKEY_GRAPHICS, 0, KEY_READ, &graphicsKey) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		return false;
-	}
-
-	DWORD screenWidth = 0;
-	DWORD screenHeight = 0;
-	bool enableWindowedMode = false;
-	DWORD shadowMode = 1;
-	DWORD shadowMapSize = GameConfiguration::DEFAULT_SHADOW_MAP_SIZE;
-	DWORD shadowBlobsMax = GameConfiguration::DEFAULT_SHADOW_BLOBS_MAX;
-	bool enableCaustics = false;
-	bool enableDecals = false;
-	DWORD antialiasingMode = 1;
-	bool enableAmbientOcclusion = false;
-	bool enableHighFramerate = false;
-
-	// Load Graphics keys.
-	if (GetDWORDRegKey(graphicsKey, REGKEY_SCREEN_WIDTH, &screenWidth, 0) != ERROR_SUCCESS ||
-		GetDWORDRegKey(graphicsKey, REGKEY_SCREEN_HEIGHT, &screenHeight, 0) != ERROR_SUCCESS ||
-		GetBoolRegKey(graphicsKey, REGKEY_ENABLE_WINDOWED_MODE, &enableWindowedMode, false) != ERROR_SUCCESS ||
-		GetDWORDRegKey(graphicsKey, REGKEY_SHADOWS, &shadowMode, 1) != ERROR_SUCCESS ||
-		GetDWORDRegKey(graphicsKey, REGKEY_SHADOW_MAP_SIZE, &shadowMapSize, GameConfiguration::DEFAULT_SHADOW_MAP_SIZE) != ERROR_SUCCESS ||
-		GetDWORDRegKey(graphicsKey, REGKEY_SHADOW_BLOBS_MAX, &shadowBlobsMax, GameConfiguration::DEFAULT_SHADOW_BLOBS_MAX) != ERROR_SUCCESS ||
-		GetBoolRegKey(graphicsKey, REGKEY_ENABLE_CAUSTICS, &enableCaustics, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(graphicsKey, REGKEY_ENABLE_DECALS, &enableDecals, true) != ERROR_SUCCESS ||
-		GetDWORDRegKey(graphicsKey, REGKEY_ANTIALIASING_MODE, &antialiasingMode, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(graphicsKey, REGKEY_AMBIENT_OCCLUSION, &enableAmbientOcclusion, false) != ERROR_SUCCESS ||
-		GetBoolRegKey(graphicsKey, REGKEY_HIGH_FRAMERATE, &enableHighFramerate, false) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		return false;
-	}
-
-	// Open Sound subkey.
-	HKEY soundKey = NULL;
-	if (RegOpenKeyExA(rootKey, REGKEY_SOUND, 0, KEY_READ, &soundKey) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		return false;
-	}
-
-	DWORD soundDevice = 0;
-	bool enableSound = true;
-	bool enableReverb = true;
-	DWORD musicVolume = 100;
-	DWORD sfxVolume = 100;
-
-	// Load Sound keys.
-	if (GetDWORDRegKey(soundKey, REGKEY_SOUND_DEVICE, &soundDevice, 1) != ERROR_SUCCESS ||
-		GetBoolRegKey(soundKey, REGKEY_ENABLE_SOUND, &enableSound, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(soundKey, REGKEY_ENABLE_REVERB, &enableReverb, true) != ERROR_SUCCESS ||
-		GetDWORDRegKey(soundKey, REGKEY_MUSIC_VOLUME, &musicVolume, 100) != ERROR_SUCCESS ||
-		GetDWORDRegKey(soundKey, REGKEY_SFX_VOLUME, &sfxVolume, 100) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		return false;
-	}
-
-	// Open Gameplay subkey.
-	HKEY gameplayKey = NULL;
-	if (RegOpenKeyExA(rootKey, REGKEY_GAMEPLAY, 0, KEY_READ, &gameplayKey) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		RegCloseKey(gameplayKey);
-		return false;
-	}
-
-	bool enableAutoMonkeySwingJump = false;
-	bool enableSubtitles = true;
-	bool enableAutoTargeting = true;
-	bool enableTargetHighlighter = true;
-	bool enableInteractionHighlighter = true;
-	bool enableRumble = true;
-	bool enableThumbstickCamera = true;
-
-	// Load Gameplay keys.
-	if (GetBoolRegKey(gameplayKey, REGKEY_ENABLE_AUTO_MONKEY_JUMP, &enableAutoMonkeySwingJump, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(gameplayKey, REGKEY_ENABLE_SUBTITLES, &enableSubtitles, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(gameplayKey, REGKEY_ENABLE_AUTO_TARGETING, &enableAutoTargeting, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(gameplayKey, REGKEY_ENABLE_TARGET_HIGHLIGHTER, &enableTargetHighlighter, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(gameplayKey, REGKEY_ENABLE_INTERACTION_HIGHLIGHTER, &enableInteractionHighlighter, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(gameplayKey, REGKEY_ENABLE_RUMBLE, &enableRumble, true) != ERROR_SUCCESS ||
-		GetBoolRegKey(gameplayKey, REGKEY_ENABLE_THUMBSTICK_CAMERA, &enableThumbstickCamera, true) != ERROR_SUCCESS)
-	{
-		RegCloseKey(rootKey);
-		RegCloseKey(graphicsKey);
-		RegCloseKey(soundKey);
-		RegCloseKey(gameplayKey);
-		return false;
-	}
-
-	DWORD mouseSensitivity = GameConfiguration::DEFAULT_MOUSE_SENSITIVITY;
-	DWORD menuOptionLoopingMode = (DWORD)MenuOptionLoopingMode::SaveLoadOnly;
-
-	// Load Input keys.
-	HKEY inputKey = NULL;
-	if (RegOpenKeyExA(rootKey, REGKEY_INPUT, 0, KEY_READ, &inputKey) == ERROR_SUCCESS)
-	{
-		if (GetDWORDRegKey(inputKey, REGKEY_MOUSE_SENSITIVITY, &mouseSensitivity, GameConfiguration::DEFAULT_MOUSE_SENSITIVITY) != ERROR_SUCCESS ||
-			GetDWORDRegKey(inputKey, REGKEY_MENU_OPTION_LOOPING_MODE, &menuOptionLoopingMode, (DWORD)MenuOptionLoopingMode::SaveLoadOnly) != ERROR_SUCCESS)
+		if (line.front() == '[' && line.back() == ']')
 		{
-			RegCloseKey(rootKey);
-			RegCloseKey(graphicsKey);
-			RegCloseKey(soundKey);
-			RegCloseKey(gameplayKey);
-			RegCloseKey(inputKey);
-			return false;
+			section = line.substr(1, line.size() - 2);
+			continue;
 		}
 
-		for (auto actionGroupID : USER_ACTION_GROUP_IDS)
+		auto eq = line.find('=');
+		if (eq == std::string::npos)
+			continue;
+
+		std::string key = Trim(line.substr(0, eq));
+		std::string val = Trim(line.substr(eq + 1));
+
+		if (section == "Graphics")
 		{
-			const auto& actionIDGroup = ACTION_ID_GROUPS[(int)actionGroupID];
-			for (auto actionID : actionIDGroup)
+			if (key == "ScreenWidth")             g_Configuration.ScreenWidth = ToInt(val, g_Configuration.ScreenWidth);
+			else if (key == "ScreenHeight")       g_Configuration.ScreenHeight = ToInt(val, g_Configuration.ScreenHeight);
+			else if (key == "EnableWindowedMode") g_Configuration.EnableWindowedMode = ToBool(val, g_Configuration.EnableWindowedMode);
+			else if (key == "ShadowsMode")        g_Configuration.ShadowType = (ShadowMode)ToInt(val, (int)g_Configuration.ShadowType);
+			else if (key == "ShadowMapSize")      g_Configuration.ShadowMapSize = ToInt(val, g_Configuration.ShadowMapSize);
+			else if (key == "ShadowBlobsMax")     g_Configuration.ShadowBlobsMax = ToInt(val, g_Configuration.ShadowBlobsMax);
+			else if (key == "EnableCaustics")     g_Configuration.EnableCaustics = ToBool(val, g_Configuration.EnableCaustics);
+			else if (key == "EnableDecals")       g_Configuration.EnableDecals = ToBool(val, g_Configuration.EnableDecals);
+			else if (key == "AntialiasingMode")   g_Configuration.AntialiasingMode = (AntialiasingMode)ToInt(val, (int)g_Configuration.AntialiasingMode);
+			else if (key == "AmbientOcclusion")   g_Configuration.EnableAmbientOcclusion = ToBool(val, g_Configuration.EnableAmbientOcclusion);
+			else if (key == "EnableHighFramerate")g_Configuration.EnableHighFramerate = ToBool(val, g_Configuration.EnableHighFramerate);
+			else if (key == "AdapterName")        g_Configuration.AdapterName = val;
+		}
+		else if (section == "Sound")
+		{
+			if (key == "SoundDevice")      g_Configuration.SoundDevice = ToInt(val, g_Configuration.SoundDevice);
+			else if (key == "EnableSound") g_Configuration.EnableSound = ToBool(val, g_Configuration.EnableSound);
+			else if (key == "EnableReverb")g_Configuration.EnableReverb = ToBool(val, g_Configuration.EnableReverb);
+			else if (key == "MusicVolume") g_Configuration.MusicVolume = ToInt(val, g_Configuration.MusicVolume);
+			else if (key == "SfxVolume")   g_Configuration.SfxVolume = ToInt(val, g_Configuration.SfxVolume);
+		}
+		else if (section == "Gameplay")
+		{
+			if (key == "EnableSubtitles")              g_Configuration.EnableSubtitles = ToBool(val, g_Configuration.EnableSubtitles);
+			else if (key == "EnableAutoMonkeySwingJump") g_Configuration.EnableAutoMonkeySwingJump = ToBool(val, g_Configuration.EnableAutoMonkeySwingJump);
+			else if (key == "EnableAutoTargeting")     g_Configuration.EnableAutoTargeting = ToBool(val, g_Configuration.EnableAutoTargeting);
+			else if (key == "EnableTargetHighlighter") g_Configuration.EnableTargetHighlighter = ToBool(val, g_Configuration.EnableTargetHighlighter);
+			else if (key == "EnableInteractionHighlighter") g_Configuration.EnableInteractionHighlighter = ToBool(val, g_Configuration.EnableInteractionHighlighter);
+			else if (key == "EnableRumble")            g_Configuration.EnableRumble = ToBool(val, g_Configuration.EnableRumble);
+			else if (key == "EnableThumbstickCamera")  g_Configuration.EnableThumbstickCamera = ToBool(val, g_Configuration.EnableThumbstickCamera);
+		}
+		else if (section == "Input")
+		{
+			if (key == "MouseSensitivity")      g_Configuration.MouseSensitivity = ToInt(val, g_Configuration.MouseSensitivity);
+			else if (key == "MenuOptionLoopingMode") g_Configuration.MenuOptionLoopingMode = (MenuOptionLoopingMode)ToInt(val, (int)g_Configuration.MenuOptionLoopingMode);
+			else if (StartsWith(key, "bind."))
 			{
-				DWORD tempKeyID = 0;
-				char buffer[9];
-				sprintf(buffer, "Action%d", (int)actionID);
+				foundInput = true;
 
-				int boundKeyID = g_Bindings.GetBoundKeyID(BindingProfileID::Default, actionID);
-
-				if (GetDWORDRegKey(inputKey, buffer, &tempKeyID, boundKeyID) != ERROR_SUCCESS)
+				int actionId = ToInt(key.substr(5), -1);
+				int keyId = ToInt(val, -1);
+				if (actionId >= 0 && keyId >= 0)
 				{
-					RegCloseKey(rootKey);
-					RegCloseKey(graphicsKey);
-					RegCloseKey(soundKey);
-					RegCloseKey(gameplayKey);
-					RegCloseKey(inputKey);
-					return false;
+					g_Configuration.Bindings.insert({ (ActionID)actionId, keyId });
+					g_Bindings.SetKeyBinding(BindingProfileID::Custom, (ActionID)actionId, keyId);
 				}
-
-				g_Configuration.Bindings.insert({ actionID, tempKeyID });
-				g_Bindings.SetKeyBinding(BindingProfileID::Custom, actionID, tempKeyID);
 			}
 		}
-
-		RegCloseKey(inputKey);
 	}
-	// Input key doesn't exist; use default bindings.
-	else
-	{
+
+	if (!foundInput)
 		g_Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Default);
-	}
 
-	RegCloseKey(rootKey);
-	RegCloseKey(graphicsKey);
-	RegCloseKey(soundKey);
-	RegCloseKey(gameplayKey);
-
-	// All configuration values found; apply configuration to engine.
-	g_Configuration.ScreenWidth = screenWidth;
-	g_Configuration.ScreenHeight = screenHeight;
-	g_Configuration.EnableWindowedMode = enableWindowedMode;
-	g_Configuration.ShadowType = (ShadowMode)shadowMode;
-	g_Configuration.ShadowBlobsMax = shadowBlobsMax;
-	g_Configuration.EnableCaustics = enableCaustics;
-	g_Configuration.EnableDecals = enableDecals;
-	g_Configuration.AntialiasingMode = (AntialiasingMode)antialiasingMode;
-	g_Configuration.ShadowMapSize = shadowMapSize;
-	g_Configuration.EnableAmbientOcclusion = enableAmbientOcclusion;
-	g_Configuration.EnableHighFramerate = enableHighFramerate;
-
-	g_Configuration.EnableSound = enableSound;
-	g_Configuration.EnableReverb = enableReverb;
-	g_Configuration.MusicVolume = musicVolume;
-	g_Configuration.SfxVolume = sfxVolume;
-	g_Configuration.SoundDevice = soundDevice;
-
-	g_Configuration.EnableSubtitles = enableSubtitles;
-	g_Configuration.EnableAutoMonkeySwingJump = enableAutoMonkeySwingJump;
-	g_Configuration.EnableAutoTargeting = enableAutoTargeting;
-	g_Configuration.EnableTargetHighlighter = enableTargetHighlighter;
-	g_Configuration.EnableInteractionHighlighter = enableInteractionHighlighter;
-	g_Configuration.EnableRumble = enableRumble;
-	g_Configuration.EnableThumbstickCamera = enableThumbstickCamera;
-
-	g_Configuration.MouseSensitivity = mouseSensitivity;
-	g_Configuration.MenuOptionLoopingMode = (MenuOptionLoopingMode)menuOptionLoopingMode;
-
-	// Set legacy variables.
-	SetVolumeTracks(musicVolume);
-	SetVolumeFX(sfxVolume);
+	SetVolumeTracks(g_Configuration.MusicVolume);
+	SetVolumeFX(g_Configuration.SfxVolume);
 
 	DefaultConflict();
 
 	return true;
-}
-
-LONG SetDWORDRegKey(HKEY hKey, LPCSTR strValueName, DWORD nValue)
-{
-	return RegSetValueExA(hKey, strValueName, 0, REG_DWORD, reinterpret_cast<LPBYTE>(&nValue), sizeof(DWORD));
-}
-
-LONG SetBoolRegKey(HKEY hKey, LPCSTR strValueName, bool bValue)
-{
-	return SetDWORDRegKey(hKey, strValueName, (bValue ? 1 : 0));
-}
-
-LONG SetStringRegKey(HKEY hKey, LPCSTR strValueName, char* strValue)
-{
-	return 1; // RegSetValueExA(hKey, strValueName, 0, REG_DWORD, reinterpret_cast<LPBYTE>(&nValue), sizeof(DWORD));
-}
-
-LONG GetDWORDRegKey(HKEY hKey, LPCSTR strValueName, DWORD* nValue, DWORD nDefaultValue)
-{
-	*nValue = nDefaultValue;
-
-	DWORD dwBufferSize(sizeof(DWORD));
-	DWORD nResult(0);
-	LONG nError = ::RegQueryValueEx(
-		hKey,
-		strValueName,
-		0,
-		NULL,
-		reinterpret_cast<LPBYTE>(&nResult),
-		&dwBufferSize);
-
-	if (ERROR_SUCCESS == nError)
-		*nValue = nResult;
-
-	return nError;
-}
-
-LONG GetBoolRegKey(HKEY hKey, LPCSTR strValueName, bool* bValue, bool bDefaultValue)
-{
-	DWORD nDefValue((bDefaultValue) ? 1 : 0);
-	DWORD nResult(nDefValue);
-	LONG nError = GetDWORDRegKey(hKey, strValueName, &nResult, nDefValue);
-
-	if (ERROR_SUCCESS == nError)
-		*bValue = (nResult != 0);
-
-	return nError;
-}
-
-LONG GetStringRegKey(HKEY hKey, LPCSTR strValueName, char** strValue, char* strDefaultValue)
-{
-	*strValue = strDefaultValue;
-	char szBuffer[512];
-	DWORD dwBufferSize = sizeof(szBuffer);
-	ULONG nError;
-	nError = RegQueryValueEx(hKey, strValueName, 0, NULL, (LPBYTE)szBuffer, &dwBufferSize);
-	if (ERROR_SUCCESS == nError)
-	{
-		*strValue = szBuffer;
-	}
-	return nError;
 }

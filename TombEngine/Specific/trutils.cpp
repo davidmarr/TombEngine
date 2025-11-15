@@ -91,6 +91,32 @@ namespace TEN::Utils
 		return string;
 	}
 
+	std::string Trim(std::string s)
+	{
+		auto notspace = [](int ch) { return !std::isspace(ch); };
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
+		s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
+		return s;
+	}
+
+	bool StartsWith(const std::string s, const char* pref)
+	{
+		return s.rfind(pref, 0) == 0;
+	}
+
+	int ToInt(const std::string v, int def)
+	{
+		try { return std::stoi(v); }
+		catch (...) { return def; }
+	}
+
+	bool ToBool(const std::string v, bool def)
+	{
+		if (v == "1" || v == "true" || v == "True" || v == "TRUE")  return true;
+		if (v == "0" || v == "false" || v == "False" || v == "FALSE") return false;
+		return def;
+	}
+
 	std::string ToString(const std::wstring& wString)
 	{
 		return ToString(wString.c_str());

@@ -153,6 +153,14 @@ struct SoundSourceInfo
 	}
 };
 
+struct BassDevice {
+	int         Index;      // BASS index (1..N) - on Windows "0" is "no sound"
+	std::string Name;
+	bool        IsDefault;
+	bool        IsEnabled;
+	bool        IsInUse;
+};
+
 extern std::map<std::string, int> SoundTrackMap;
 extern std::unordered_map<int, SoundTrackInfo> SoundTracks;
 
@@ -202,3 +210,4 @@ float Sound_DistanceToListener(Vector3 position);
 float Sound_Attenuate(float gain, float distance, float radius);
 bool  Sound_UpdateEffectPosition(int index, Pose *position, bool force = false);
 bool  Sound_UpdateEffectAttributes(int index, float pitch, float gain);
+std::vector<BassDevice> Sound_ListDevices();
