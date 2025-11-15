@@ -34,6 +34,12 @@ Util.GenerateTimeFormattedString = function(time, timerFormat, errorFormat, chec
 	errorFormat = Type.IsString(errorFormat) and errorFormat or false
 	timerFormat = check and Util.CheckTimeFormat(timerFormat, errorFormat) or timerFormat
 
+	if not timerFormat then
+		if errorFormat then
+			TEN.Util.PrintLog(errorFormat, TEN.Util.LogLevel.ERROR)
+		end
+		return ""
+	end
 	local result = {}
 	local index = 1
 	if timerFormat.hours then
