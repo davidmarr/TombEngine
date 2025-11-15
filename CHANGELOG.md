@@ -17,6 +17,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed dynamic lighting for flat surfaces with miscalculated normals.
 
 ### Lua API changes
+* Added optional type argument for `Sound.IsAudioTrackPlaying` function.
 * Timer module optimization
 
 ## [Version 1.10](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.10) - 2025-11-09
