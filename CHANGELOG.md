@@ -5,6 +5,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10.1]
 
+### New features
 * Added silent mode for CLASSIC_ROLLINGBALL (OCB 1).
 
 ### Bug fixes
