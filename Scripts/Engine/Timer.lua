@@ -53,6 +53,7 @@ local Type = require("Engine.Type")
 local Utility = require("Engine.Util")
 
 local zero = TEN.Time()
+local defaultTextOptions = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
 local Timer = {}
 Timer.__index = Timer
 LevelFuncs.Engine.Timer = {}
@@ -122,7 +123,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.scale = 1
 	thisTimer.unpausedColor = TEN.Color(255, 255, 255)
 	thisTimer.pausedColor = TEN.Color(255, 255, 0)
-	thisTimer.stringOption = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+	thisTimer.stringOption = defaultTextOptions
 	return setmetatable(self, Timer)
 end
 
@@ -696,7 +697,7 @@ end
 --    Timer.Get("my_timer"):SetTextOption()
 -- end
 function Timer:SetTextOption(optionsTable)
-	optionsTable = optionsTable or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+	optionsTable = optionsTable or defaultTextOptions
 	if type(optionsTable) ~= "table" then
 		TEN.Util.PrintLog("Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
@@ -777,9 +778,9 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active then
 			if t.timerFormat then
-				local timerString = TEN.Strings.DisplayString("TIMER", t.pos, t.scale, t.unpausedColor, false, t.stringOption)
-				timerString:SetKey(Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat))
-				timerString:SetColor(t.paused and t.pausedColor or t.unpausedColor)
+				local text = Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat, false, false)
+				local color = t.paused and t.pausedColor or t.unpausedColor
+				local timerString = TEN.Strings.DisplayString(text, t.pos, t.scale, color, false, t.stringOption)
 				TEN.Strings.ShowString(timerString, (t.remainingTime == zero and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30)
 			end
 			if t.remainingTime == zero then
