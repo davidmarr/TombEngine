@@ -5,11 +5,20 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10.1]
 
+### New features
 * Added silent mode for CLASSIC_ROLLINGBALL (OCB 1).
 
 ### Bug fixes
+* Fixed EARTHQUAKE object not working.
 * Fixed FIRE_PENDULUM crashing the game.
 * Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
+* Fixed interaction highlighter not appearing for SEARCH_OBJECT objects.
+* Fixed fireflies not interpolating in high framerate mode and not emitting dynamic lights.
+* Fixed emissive materials not fading into distance fog.
+* Fixed dynamic lighting for flat surfaces with miscalculated normals.
+
+### Lua API changes
+* Added optional type argument for `Sound.IsAudioTrackPlaying` function.
 
 ## [Version 1.10](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.10) - 2025-11-09
 
