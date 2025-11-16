@@ -12,6 +12,7 @@ using TEN::Platform::CreatePlatformSubsystem;
 
 using namespace TEN::Math;
 
+extern std::string GameDirectory;
 extern std::unique_ptr<ISubsystem> g_Platform;
 extern bool ResetClock;
 

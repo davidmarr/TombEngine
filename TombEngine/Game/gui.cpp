@@ -476,6 +476,22 @@ namespace TEN::Gui
 		}
 	}
 
+	void GuiController::FillOtherOptions()
+	{
+		BackupOptions();
+
+		CurrentSettings.SelectedSoundDevice = 0;
+
+		for (int i = 0; i < g_Configuration.SupportedSoundDevices.size(); i++)
+		{
+			if (g_Configuration.SupportedSoundDevices[i].Index == CurrentSettings.Configuration.SoundDevice)
+			{
+				CurrentSettings.SelectedSoundDevice = i;
+				break;
+			}
+		}
+	}
+
 	void GuiController::HandleDisplaySettingsInput(bool fromPauseMenu)
 	{
 		enum DisplaySettingsOption
@@ -931,7 +947,7 @@ namespace TEN::Gui
 			break;
 
 		case OptionsOption::OtherSettings:
-			BackupOptions();
+			FillOtherOptions();
 			MenuToDisplay = Menu::OtherSettings;
 			SelectedOption = 0;
 			break;
@@ -948,6 +964,7 @@ namespace TEN::Gui
 	{
 		enum OtherSettingsOption
 		{
+			SoundDevice,
 			Reverb,
 			MusicVolume,
 			SfxVolume,
@@ -1026,6 +1043,20 @@ namespace TEN::Gui
 				CurrentSettings.Configuration.EnableThumbstickCamera = !CurrentSettings.Configuration.EnableThumbstickCamera;
 				break;
 			}
+		}
+
+		if (GuiIsPulsed(In::Left) && SelectedOption == OtherSettingsOption::SoundDevice)
+		{
+			SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+			if (CurrentSettings.SelectedSoundDevice > 0)
+				CurrentSettings.SelectedSoundDevice--;
+		}
+
+		if (GuiIsPulsed(In::Right) && SelectedOption == OtherSettingsOption::SoundDevice)
+		{
+			SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+			if (CurrentSettings.SelectedSoundDevice < g_Configuration.SupportedSoundDevices.size() - 1)
+				CurrentSettings.SelectedSoundDevice++;
 		}
 
 		bool isVolumeAdjusted = false;
@@ -1129,6 +1160,12 @@ namespace TEN::Gui
 			{
 				// Was rumble setting changed?
 				bool indicateRumble = CurrentSettings.Configuration.EnableRumble && !g_Configuration.EnableRumble;
+				
+				// Save the new sound device
+				int oldSoundDeviceIndex = CurrentSettings.Configuration.SoundDevice;
+				int newSoundDeviceIndex = g_Configuration.SupportedSoundDevices[CurrentSettings.SelectedSoundDevice].Index;
+				bool reinitSoundSystem = oldSoundDeviceIndex != newSoundDeviceIndex;
+				CurrentSettings.Configuration.SoundDevice = newSoundDeviceIndex;
 
 				// Save the configuration.
 				g_Configuration = CurrentSettings.Configuration;
@@ -1138,6 +1175,10 @@ namespace TEN::Gui
 				if (indicateRumble)
 					Rumble(0.5f);
 
+				// Reset the sound system
+				if (reinitSoundSystem)
+					Sound_Reset();
+		
 				MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
 				SelectedOption = 1;
 			}

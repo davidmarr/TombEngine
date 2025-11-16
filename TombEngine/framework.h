@@ -27,10 +27,6 @@
 #include <unordered_set>
 #include <vector>
 
-// DirerctX 11
-#include <d3d11.h>
-#include <d3dcompiler.h>
-
 // DXTK
 #include <SimpleMath.h>
 

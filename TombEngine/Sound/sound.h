@@ -198,6 +198,7 @@ void  SetVolumeFX(int vol);
 
 void  Sound_Init(const std::string& gameDirectory);
 void  Sound_DeInit();
+void  Sound_Reset();
 bool  Sound_CheckBASSError(const char* message, bool verbose, ...);
 void  Sound_UpdateScene();
 void  Sound_FreeSample(int index);

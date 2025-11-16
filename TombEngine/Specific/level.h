@@ -124,6 +124,13 @@ struct MirrorData
 	bool ReflectSprites	  = false;
 };
 
+struct SampleData
+{
+	int UncompressedSize;
+	int CompressedSize;
+	std::vector<char> Data;
+};
+
 // LevelData
 struct LEVEL
 {
@@ -159,6 +166,7 @@ struct LEVEL
 	std::vector<short>			 SoundMap	  = {};
 	std::vector<SoundSourceInfo> SoundSources = {};
 	std::vector<SampleInfo>		 SoundDetails = {};
+	std::vector<SampleData>		 Samples	  = {};
 
 	// Misc.
 

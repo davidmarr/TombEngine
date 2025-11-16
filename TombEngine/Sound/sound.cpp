@@ -1086,6 +1086,19 @@ void Sound_DeInit()
 		FreeLibrary(ADPCMLibrary);
 }
 
+void Sound_Reset()
+{
+	FreeSamples();
+	Sound_DeInit();
+	Sound_Init(GameDirectory);
+
+	for (int i = 0; i < g_Level.Samples.size(); i++)
+	{
+		auto* sample = &g_Level.Samples[i];
+		LoadSample(sample->Data.data(), sample->CompressedSize, sample->UncompressedSize, i);
+	}
+}
+
 const char* Sound_GetBassErrorString(int errorCode)
 {
 	switch (errorCode)
@@ -1211,6 +1224,11 @@ std::vector<BassDevice> Sound_ListDevices()
 {
 	std::vector<BassDevice> out;
 	BASS_DEVICEINFO info{};
+
+	BassDevice nullDevice;
+	nullDevice.Index = 0;
+	nullDevice.Name = "No sound device";
+	out.push_back(nullDevice);
 
 	for (int i = 1; BASS_GetDeviceInfo(i, &info); ++i) {
 		BassDevice d;

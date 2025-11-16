@@ -54,195 +54,6 @@ static bool ReadAllText(const std::string& path, std::string& out)
 	return (r == out.size());
 }
 
-void LoadResolutionsInCombobox(HWND handle)
-{
-	HWND cbHandle = GetDlgItem(handle, IDC_RESOLUTION);
-
-	SendMessageA(cbHandle, CB_RESETCONTENT, 0, 0);
-
-	for (int i = 0; i < g_Configuration.SupportedScreenResolutions.size(); i++)
-	{
-		auto screenResolution = g_Configuration.SupportedScreenResolutions[i];
-
-		char* str = (char*)malloc(255);
-		ZeroMemory(str, 255);
-		sprintf(str, "%d x %d", screenResolution.x, screenResolution.y);
-
-		SendMessageA(cbHandle, CB_ADDSTRING, i, (LPARAM)(str));
-
-		free(str);
-	}
-
-	SendMessageA(cbHandle, CB_SETCURSEL, 0, 0);
-	SendMessageA(cbHandle, CB_SETMINVISIBLE, 20, 0);
-}
-
-void LoadSoundDevicesInCombobox(HWND handle)
-{
-	HWND cbHandle = GetDlgItem(handle, IDC_SNDADAPTER);
-
-	SendMessageA(cbHandle, CB_RESETCONTENT, 0, 0);
-
-	// Get all audio devices, including the default one
-	BASS_DEVICEINFO info;
-	int i = 1;
-	while (BASS_GetDeviceInfo(i, &info))
-	{
-		SendMessageA(cbHandle, CB_ADDSTRING, 0, (LPARAM)info.name);
-		i++;
-	}
-
-	SendMessageA(cbHandle, CB_SETCURSEL, 0, 0);
-}
-
-BOOL CALLBACK DialogProc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	Vector2i mode;
-	int selectedMode;
-
-	switch (msg)
-	{
-	case WM_INITDIALOG:
-		//DB_Log(6, "WM_INITDIALOG");
-
-		SendMessageW(GetDlgItem(handle, IDC_GROUP_OUTPUT_SETTINGS), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_OUTPUT_SETTINGS))).c_str());
-		SendMessageW(GetDlgItem(handle, IDOK), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_OK))).c_str());
-		SendMessageW(GetDlgItem(handle, IDCANCEL), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_CANCEL))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_GROUP_RESOLUTION), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_SCREEN_RESOLUTION))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_GROUP_SOUND), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_SOUND))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_ENABLE_SOUNDS), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_ENABLE_SOUND))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_WINDOWED), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_WINDOWED))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_GROUP_RENDER_OPTIONS), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_RENDER_OPTIONS))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_SHADOWS), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_SHADOWS))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_CAUSTICS), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_CAUSTICS))).c_str());
-		SendMessageW(GetDlgItem(handle, IDC_ANTIALIASING), WM_SETTEXT, 0, (LPARAM)ToWString(std::string(g_GameFlow->GetString(STRING_ANTIALIASING))).c_str());
-
-		LoadResolutionsInCombobox(handle);
-		LoadSoundDevicesInCombobox(handle);
-
-		// Set some default values.
-		g_Configuration.EnableAutoTargeting = true;
-
-		g_Configuration.AntialiasingMode = AntialiasingMode::Low;
-		SendDlgItemMessage(handle, IDC_ANTIALIASING, BM_SETCHECK, 1, 0);
-
-		g_Configuration.ShadowType = ShadowMode::Player;
-		SendDlgItemMessage(handle, IDC_SHADOWS, BM_SETCHECK, 1, 0);
-
-		g_Configuration.EnableCaustics = true;
-		SendDlgItemMessage(handle, IDC_CAUSTICS, BM_SETCHECK, 1, 0);
-
-		g_Configuration.EnableWindowedMode = true;
-		SendDlgItemMessage(handle, IDC_WINDOWED, BM_SETCHECK, 1, 0);
-
-		g_Configuration.EnableSound = true;
-		SendDlgItemMessage(handle, IDC_ENABLE_SOUNDS, BM_SETCHECK, 1, 0);
-
-		break;
-
-	case WM_COMMAND:
-		//DB_Log(6, "WM_COMMAND");
-
-		// Checkboxes
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			switch (LOWORD(wParam))
-			{
-			case IDOK:
-				// Get values from dialog components.
-				g_Configuration.EnableWindowedMode = (SendDlgItemMessage(handle, IDC_WINDOWED, BM_GETCHECK, 0, 0));
-				g_Configuration.ShadowType = (ShadowMode)(SendDlgItemMessage(handle, IDC_SHADOWS, BM_GETCHECK, 0, 0));
-				g_Configuration.EnableCaustics = (SendDlgItemMessage(handle, IDC_CAUSTICS, BM_GETCHECK, 0, 0));
-				g_Configuration.AntialiasingMode = (AntialiasingMode)(SendDlgItemMessage(handle, IDC_ANTIALIASING, BM_GETCHECK, 0, 0));
-				g_Configuration.EnableSound = (SendDlgItemMessage(handle, IDC_ENABLE_SOUNDS, BM_GETCHECK, 0, 0));
-				selectedMode = (SendDlgItemMessage(handle, IDC_RESOLUTION, CB_GETCURSEL, 0, 0));
-				mode = g_Configuration.SupportedScreenResolutions[selectedMode];
-				g_Configuration.ScreenWidth = mode.x;
-				g_Configuration.ScreenHeight = mode.y;
-				g_Configuration.SoundDevice = (SendDlgItemMessage(handle, IDC_SNDADAPTER, CB_GETCURSEL, 0, 0)) + 1;
-
-				// Save configuration.
-				SaveConfiguration();
-				EndDialog(handle, wParam);
-				return 1;
-
-			case IDCANCEL:
-				EndDialog(handle, wParam);
-				return 1;
-
-			}
-
-			return 0;
-		}
-
-		break;
-
-	default:
-		return 0;
-	}
-
-	return 0;
-}
-
-int SetupDialog()
-{
-	auto res = FindResource(nullptr, MAKEINTRESOURCE(IDD_SETUP), RT_DIALOG);
-
-	ShowCursor(true);
-	int result = DialogBoxParamA(nullptr, MAKEINTRESOURCE(IDD_SETUP), 0, (DLGPROC)DialogProc, 0);
-	ShowCursor(false);
-
-	return true;
-}
-
-bool SaveConfiguration()
-{
-	std::ostringstream ss;
-
-	ss << "[Graphics]\n";
-	ss << "ScreenWidth=" << g_Configuration.ScreenWidth << "\n";
-	ss << "ScreenHeight=" << g_Configuration.ScreenHeight << "\n";
-	ss << "EnableWindowedMode=" << (g_Configuration.EnableWindowedMode ? 1 : 0) << "\n";
-	ss << "ShadowsMode=" << (int)g_Configuration.ShadowType << "\n";
-	ss << "ShadowMapSize=" << g_Configuration.ShadowMapSize << "\n";
-	ss << "ShadowBlobsMax=" << g_Configuration.ShadowBlobsMax << "\n";
-	ss << "EnableCaustics=" << (g_Configuration.EnableCaustics ? 1 : 0) << "\n";
-	ss << "EnableDecals=" << (g_Configuration.EnableDecals ? 1 : 0) << "\n";
-	ss << "AntialiasingMode=" << (int)g_Configuration.AntialiasingMode << "\n";
-	ss << "AmbientOcclusion=" << (g_Configuration.EnableAmbientOcclusion ? 1 : 0) << "\n";
-	ss << "EnableHighFramerate=" << (g_Configuration.EnableHighFramerate ? 1 : 0) << "\n";
-	ss << "AdapterName=" << g_Configuration.AdapterName << "\n\n";
-
-	ss << "[Sound]\n";
-	ss << "SoundDevice=" << g_Configuration.SoundDevice << "\n";
-	ss << "EnableSound=" << (g_Configuration.EnableSound ? 1 : 0) << "\n";
-	ss << "EnableReverb=" << (g_Configuration.EnableReverb ? 1 : 0) << "\n";
-	ss << "MusicVolume=" << g_Configuration.MusicVolume << "\n";
-	ss << "SfxVolume=" << g_Configuration.SfxVolume << "\n\n";
-
-	ss << "[Gameplay]\n";
-	ss << "EnableSubtitles=" << (g_Configuration.EnableSubtitles ? 1 : 0) << "\n";
-	ss << "EnableAutoMonkeySwingJump=" << (g_Configuration.EnableAutoMonkeySwingJump ? 1 : 0) << "\n";
-	ss << "EnableAutoTargeting=" << (g_Configuration.EnableAutoTargeting ? 1 : 0) << "\n";
-	ss << "EnableTargetHighlighter=" << (g_Configuration.EnableTargetHighlighter ? 1 : 0) << "\n";
-	ss << "EnableInteractionHighlighter=" << (g_Configuration.EnableInteractionHighlighter ? 1 : 0) << "\n";
-	ss << "EnableRumble=" << (g_Configuration.EnableRumble ? 1 : 0) << "\n";
-	ss << "EnableThumbstickCamera=" << (g_Configuration.EnableThumbstickCamera ? 1 : 0) << "\n\n";
-
-	ss << "[Input]\n";
-	ss << "MouseSensitivity=" << g_Configuration.MouseSensitivity << "\n";
-	ss << "MenuOptionLoopingMode=" << (int)g_Configuration.MenuOptionLoopingMode << "\n";
-
-	for (const auto& kv : g_Configuration.Bindings)
-	{
-		ss << "bind." << (int)kv.first << "=" << (int)kv.second << "\n";
-	}
-	ss << "\n";
-
-	const std::string path = GetConfigFilePath();
-	return WriteAllText(path, ss.str());
-}
-
 void SaveAudioConfig()
 {
 	SetVolumeTracks(g_Configuration.MusicVolume);
@@ -286,6 +97,8 @@ void InitDefaultConfiguration()
 
 	g_Configuration.SupportedScreenResolutions = GetAllSupportedScreenResolutions();
 	g_Configuration.AdapterName = g_Renderer.GetDefaultAdapterName();
+
+	g_Configuration.SupportedSoundDevices = Sound_ListDevices();
 }
 
 bool LoadConfiguration()
@@ -382,4 +195,52 @@ bool LoadConfiguration()
 	DefaultConflict();
 
 	return true;
+}
+
+bool SaveConfiguration()
+{
+	std::ostringstream ss;
+
+	ss << "[Graphics]\n";
+	ss << "ScreenWidth=" << g_Configuration.ScreenWidth << "\n";
+	ss << "ScreenHeight=" << g_Configuration.ScreenHeight << "\n";
+	ss << "EnableWindowedMode=" << (g_Configuration.EnableWindowedMode ? 1 : 0) << "\n";
+	ss << "ShadowsMode=" << (int)g_Configuration.ShadowType << "\n";
+	ss << "ShadowMapSize=" << g_Configuration.ShadowMapSize << "\n";
+	ss << "ShadowBlobsMax=" << g_Configuration.ShadowBlobsMax << "\n";
+	ss << "EnableCaustics=" << (g_Configuration.EnableCaustics ? 1 : 0) << "\n";
+	ss << "EnableDecals=" << (g_Configuration.EnableDecals ? 1 : 0) << "\n";
+	ss << "AntialiasingMode=" << (int)g_Configuration.AntialiasingMode << "\n";
+	ss << "AmbientOcclusion=" << (g_Configuration.EnableAmbientOcclusion ? 1 : 0) << "\n";
+	ss << "EnableHighFramerate=" << (g_Configuration.EnableHighFramerate ? 1 : 0) << "\n";
+	ss << "AdapterName=" << g_Configuration.AdapterName << "\n\n";
+
+	ss << "[Sound]\n";
+	ss << "SoundDevice=" << g_Configuration.SoundDevice << "\n";
+	ss << "EnableSound=" << (g_Configuration.EnableSound ? 1 : 0) << "\n";
+	ss << "EnableReverb=" << (g_Configuration.EnableReverb ? 1 : 0) << "\n";
+	ss << "MusicVolume=" << g_Configuration.MusicVolume << "\n";
+	ss << "SfxVolume=" << g_Configuration.SfxVolume << "\n\n";
+
+	ss << "[Gameplay]\n";
+	ss << "EnableSubtitles=" << (g_Configuration.EnableSubtitles ? 1 : 0) << "\n";
+	ss << "EnableAutoMonkeySwingJump=" << (g_Configuration.EnableAutoMonkeySwingJump ? 1 : 0) << "\n";
+	ss << "EnableAutoTargeting=" << (g_Configuration.EnableAutoTargeting ? 1 : 0) << "\n";
+	ss << "EnableTargetHighlighter=" << (g_Configuration.EnableTargetHighlighter ? 1 : 0) << "\n";
+	ss << "EnableInteractionHighlighter=" << (g_Configuration.EnableInteractionHighlighter ? 1 : 0) << "\n";
+	ss << "EnableRumble=" << (g_Configuration.EnableRumble ? 1 : 0) << "\n";
+	ss << "EnableThumbstickCamera=" << (g_Configuration.EnableThumbstickCamera ? 1 : 0) << "\n\n";
+
+	ss << "[Input]\n";
+	ss << "MouseSensitivity=" << g_Configuration.MouseSensitivity << "\n";
+	ss << "MenuOptionLoopingMode=" << (int)g_Configuration.MenuOptionLoopingMode << "\n";
+
+	for (const auto& kv : g_Configuration.Bindings)
+	{
+		ss << "bind." << (int)kv.first << "=" << (int)kv.second << "\n";
+	}
+	ss << "\n";
+
+	const std::string path = GetConfigFilePath();
+	return WriteAllText(path, ss.str());
 }

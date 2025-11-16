@@ -37,6 +37,7 @@ bool       GamePaused = false;
 
 bool ResetClock;
 std::unique_ptr<ISubsystem> g_Platform;
+std::string GameDirectory;
 
 bool ArgEquals(const char* incomingArg, const std::string& name)
 {
@@ -307,7 +308,6 @@ int main(int argc, char* argv[])
 	}
 
 	// Process command line arguments.
-	bool setup = false;
 	std::string levelFile = {};
 	std::string gameDir{};
 
@@ -316,11 +316,7 @@ int main(int argc, char* argv[])
 	{
 		std::string arg = argv[i];
 
-		if (ArgEquals(arg.c_str(), "setup"))
-		{
-			setup = true;
-		}
-		else if (ArgEquals(arg.c_str(), "debug"))
+		if (ArgEquals(arg.c_str(), "debug"))
 		{
 			DebugMode = true;
 		}
@@ -340,6 +336,7 @@ int main(int argc, char* argv[])
 
 	// Construct asset directory.
 	gameDir = ConstructAssetDirectory(gameDir);
+	GameDirectory = gameDir;
 
 	// Hide console window if mode isn't debug.
 #if !_DEBUG
@@ -450,17 +447,7 @@ int main(int argc, char* argv[])
 	g_Bindings.Initialize();
 
 	// Load configuration and optionally show setup dialog.
-	InitDefaultConfiguration();
-	if (setup || !LoadConfiguration())
-	{
-		if (!SetupDialog())
-		{
-			EngineClose();
-			return 0;
-		}
-
-		LoadConfiguration();
-	}
+	LoadConfiguration();
 
 	try
 	{

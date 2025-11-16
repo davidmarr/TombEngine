@@ -2,6 +2,7 @@
 #include "Math/Math.h"
 #include "Specific/Input/Input.h"
 #include "Renderer/RendererEnums.h"
+#include "Sound/sound.h"
 
 using namespace TEN::Input;
 using namespace TEN::Math;
@@ -56,14 +57,11 @@ struct GameConfiguration
 	MenuOptionLoopingMode MenuOptionLoopingMode = MenuOptionLoopingMode::SaveLoadOnly;
 	BindingProfile		  Bindings				= {};
 
-	std::vector<Vector2i> SupportedScreenResolutions = {};
-	std::string			  AdapterName				 = {};
+	std::vector<Vector2i>	SupportedScreenResolutions	= {};
+	std::string				AdapterName					= {};
+	std::vector<BassDevice> SupportedSoundDevices				= {};
 };
 
-void LoadResolutionsInCombobox(HWND handle);
-void LoadSoundDevicesInCombobox(HWND handle);
-BOOL CALLBACK DialogProc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam);
-int	 SetupDialog();
 void InitDefaultConfiguration();
 bool LoadConfiguration();
 bool SaveConfiguration();

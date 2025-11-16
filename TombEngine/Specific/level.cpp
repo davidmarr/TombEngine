@@ -1147,6 +1147,7 @@ void FreeLevel(bool partial)
 	g_Level.SoundMap.resize(0);
 	g_Level.FloorData.resize(0);
 	g_Level.Materials.resize(0);
+	g_Level.Samples.resize(0);
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -1606,7 +1607,15 @@ void LoadSamples()
 		buffer.resize(compressedSize);
 
 		ReadBytes(buffer.data(), compressedSize);
+
+		auto sample = SampleData();
+		sample.UncompressedSize = uncompressedSize;
+		sample.CompressedSize = compressedSize;
+		sample.Data = buffer;
+
 		LoadSample(buffer.data(), compressedSize, uncompressedSize, i);
+
+		g_Level.Samples.push_back(sample);
 	}
 }
 
