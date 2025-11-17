@@ -15,6 +15,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed interaction highlighter not appearing for SEARCH_OBJECT objects.
 * Fixed fireflies not interpolating in high framerate mode and not emitting dynamic lights.
 * Fixed emissive materials not fading into distance fog.
+* Fixed subtractive sprites not rendering correctly.
 * Fixed dynamic lighting for flat surfaces with miscalculated normals.
 
 ### Lua API changes
