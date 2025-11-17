@@ -321,8 +321,7 @@ namespace TEN::Renderer
 
 		// Draw 3D non-instanced sprites.
 		wasGpuSet = false;
-
-		for (auto& spriteBucket : _spriteBuckets)
+		for (const auto& spriteBucket : _spriteBuckets)
 		{
 			if (spriteBucket.SpritesToDraw.empty() || spriteBucket.IsBillboard)
 				continue;
@@ -359,7 +358,7 @@ namespace TEN::Renderer
 
 			PackSpriteTextureCoordinates(0, spriteBucket.Sprite);
 
-			UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+			UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);
 
 			BindTexture(TextureRegister::ColorMap, spriteBucket.Sprite->Texture, SamplerStateRegister::LinearClamp);
 
