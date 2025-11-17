@@ -30,7 +30,7 @@ namespace TEN::Renderer::Native::DirectX11
 		int GetArraySize() override { return (int)_renderTargetViews.size(); }
 		ID3D11RenderTargetView* GetD3D11RenderTargetView(int arrayIndex) const noexcept { return _renderTargetViews[arrayIndex].Get(); }
 		ID3D11RenderTargetView* GetD3D11RenderTargetView() const noexcept { return GetD3D11RenderTargetView(0); }
-		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
+		ID3D11ShaderResourceView* GetD3D11ShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
 
 		// Default constructor

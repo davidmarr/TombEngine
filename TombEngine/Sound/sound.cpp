@@ -1088,15 +1088,55 @@ void Sound_DeInit()
 
 void Sound_Reset()
 {
-	FreeSamples();
-	Sound_DeInit();
-	Sound_Init(GameDirectory);
-
-	for (int i = 0; i < g_Level.Samples.size(); i++)
+	if (g_Configuration.EnableSound)
 	{
-		auto* sample = &g_Level.Samples[i];
-		LoadSample(sample->Data.data(), sample->CompressedSize, sample->UncompressedSize, i);
+		int oldSoundDevice = BASS_GetDevice();
+		int newSoundDevice = g_Configuration.SoundDevice;
+
+		BASS_DEVICEINFO info;
+		if (!BASS_GetDeviceInfo(newSoundDevice, &info))
+		{
+			TENLog("Selected sound device is not available, using default", LogLevel::Warning);
+			newSoundDevice = NO_VALUE;
+		}
+
+		// Init the new device
+		BASS_Init(newSoundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
+		if (Sound_CheckBASSError("Initializing BASS sound device", true))
+			return;
+
+		// Move all opened streams to the new device
+		for (int i = 0; i < SOUND_MAX_SAMPLES; i++)
+		{
+			auto sample = BASS_SamplePointer[i];
+
+			if (sample != NULL)
+			{
+				BASS_ChannelLock(sample, true);
+				BASS_ChannelSetDevice(sample, newSoundDevice);
+				BASS_ChannelLock(sample, false);
+			}
+		}
+
+
+		for (int i = 0; i < (int)SoundTrackType::Count; i++)
+		{
+			auto stream = SoundtrackSlot[i].Channel;
+
+			if (stream != NULL)
+			{
+				BASS_ChannelLock(stream, true);
+				BASS_ChannelSetDevice(stream, newSoundDevice);
+				BASS_ChannelLock(stream, false);
+			}
+		}
+
+		// Clear the old device
+		BASS_SetDevice(oldSoundDevice);
+		BASS_Free();
 	}
+	else
+		Sound_DeInit();
 }
 
 const char* Sound_GetBassErrorString(int errorCode)
@@ -1230,7 +1270,8 @@ std::vector<BassDevice> Sound_ListDevices()
 	nullDevice.Name = "No sound device";
 	out.push_back(nullDevice);
 
-	for (int i = 1; BASS_GetDeviceInfo(i, &info); ++i) {
+	for (int i = 1; BASS_GetDeviceInfo(i, &info); i++) 
+	{
 		BassDevice d;
 		d.Index = i;
 		d.Name = info.name ? info.name : "";

@@ -447,7 +447,8 @@ int main(int argc, char* argv[])
 	g_Bindings.Initialize();
 
 	// Load configuration and optionally show setup dialog.
-	LoadConfiguration();
+	if (!LoadConfiguration())
+		InitDefaultConfiguration();
 
 	try
 	{

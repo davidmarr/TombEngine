@@ -106,7 +106,7 @@ bool LoadConfiguration()
 	const std::string path = GetConfigFilePath();
 	std::string text;
 	if (!ReadAllText(path, text))
-		return false; // nessun file: manterrai i default
+		return false; 
 
 	std::istringstream in(text);
 	std::string line, section;

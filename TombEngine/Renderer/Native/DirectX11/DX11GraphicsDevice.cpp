@@ -216,7 +216,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
 	{
-		ID3D11ShaderResourceView* srv = GetShaderResourceView(texture);
+		ID3D11ShaderResourceView* srv = GetD3D11ShaderResourceView(texture);
 
 		_context->PSSetShaderResources((unsigned int)registerType, 1, &srv);
 

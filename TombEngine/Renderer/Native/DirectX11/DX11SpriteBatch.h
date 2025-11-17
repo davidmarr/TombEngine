@@ -35,17 +35,17 @@ namespace TEN::Renderer::Native::DirectX11
 
 		SpriteBatch* GetNativeSpriteBatch() { return _spriteBatch.get(); }
 
-		ID3D11ShaderResourceView* GetShaderResourceView(ITextureBase* texture)
+		ID3D11ShaderResourceView* GetD3D11ShaderResourceView(ITextureBase* texture)
 		{
 			ID3D11ShaderResourceView* srv = nullptr;
 
 			if (auto tex2D = dynamic_cast<DX11Texture2D*>(texture))
 			{
-				srv = tex2D->GetShaderResourceView();
+				srv = tex2D->GetD3D11ShaderResourceView();
 			}
 			else if (auto rt2D = dynamic_cast<DX11RenderTarget2D*>(texture))
 			{
-				srv = rt2D->GetShaderResourceView();
+				srv = rt2D->GetD3D11ShaderResourceView();
 			}
 
 			return srv;
@@ -103,7 +103,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		void Draw(ITextureBase* texture, RendererRectangle area, Vector4 color) override
 		{
-			auto dxTexture = GetShaderResourceView(texture);
+			auto dxTexture = GetD3D11ShaderResourceView(texture);
 
 			RECT rect;
 			rect.left = area.Left;

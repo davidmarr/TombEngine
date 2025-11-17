@@ -127,17 +127,17 @@ namespace TEN::Renderer::Native::DirectX11
 			return out;
 		}
 
-		inline ID3D11ShaderResourceView* GetShaderResourceView(ITextureBase* texture)
+		inline ID3D11ShaderResourceView* GetD3D11ShaderResourceView(ITextureBase* texture)
 		{
 			ID3D11ShaderResourceView* srv = nullptr;
 
 			if (auto tex2D = dynamic_cast<DX11Texture2D*>(texture))
 			{
-				srv = tex2D->GetShaderResourceView();
+				srv = tex2D->GetD3D11ShaderResourceView();
 			}
 			else if (auto rt2D = dynamic_cast<DX11RenderTarget2D*>(texture))
 			{
-				srv = rt2D->GetShaderResourceView();
+				srv = rt2D->GetD3D11ShaderResourceView();
 			}
 
 			return srv;

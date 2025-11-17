@@ -21,6 +21,6 @@ namespace TEN::Renderer::Native::DirectX11
 		DX11TextureBase() = default;
 		~DX11TextureBase() = default;
 
-		ID3D11ShaderResourceView* GetShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
+		ID3D11ShaderResourceView* GetD3D11ShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 	};
 }

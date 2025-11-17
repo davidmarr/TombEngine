@@ -26,6 +26,7 @@ namespace TEN::Renderer::Native::DirectX11
 		DX11SpriteFont(ID3D11Device* device, std::wstring fontPath)
 		{
 			_gameFont = std::make_unique<SpriteFont>(device, fontPath.c_str());
+			_gameFont->SetDefaultCharacter(L' ');
 		}
 
 		float GetLineSpacing()
