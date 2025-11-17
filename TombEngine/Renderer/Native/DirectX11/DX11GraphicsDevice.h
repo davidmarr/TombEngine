@@ -5,7 +5,6 @@
 #include <CommonStates.h>
 #include <SpriteFont.h>
 #include <PrimitiveBatch.h>
-#include <d3d9types.h>
 #include <SimpleMath.h>
 #include "Renderer/Native/DirectX11/DX11IndexBuffer.h"
 #include "Renderer/Native/DirectX11/DX11VertexBuffer.h"
