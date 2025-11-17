@@ -1164,8 +1164,9 @@ namespace TEN::Gui
 				// Save the new sound device
 				int oldSoundDeviceIndex = CurrentSettings.Configuration.SoundDevice;
 				int newSoundDeviceIndex = g_Configuration.SupportedSoundDevices[CurrentSettings.SelectedSoundDevice].Index;
-				bool reinitSoundSystem = oldSoundDeviceIndex != newSoundDeviceIndex;
+				bool reinitSoundSystem = oldSoundDeviceIndex != newSoundDeviceIndex || newSoundDeviceIndex == 0;
 				CurrentSettings.Configuration.SoundDevice = newSoundDeviceIndex;
+				CurrentSettings.Configuration.EnableSound = newSoundDeviceIndex > 0;
 
 				// Save the configuration.
 				g_Configuration = CurrentSettings.Configuration;

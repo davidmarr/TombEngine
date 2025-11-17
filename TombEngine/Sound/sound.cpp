@@ -1001,9 +1001,17 @@ void Sound_Init(const std::string& gameDirectory)
 	FullAudioDirectory = gameDirectory + TRACKS_PATH;
 	EnumerateLegacyTracks();
 
-	if (!g_Configuration.EnableSound)
+	// List all found sound devices. First device is always a dummy null device 
+	// so if the list returns 1 element that means that not sound devices are installed 
+	// on the system.
+	auto foundDevices = Sound_ListDevices();
+	if (foundDevices.size() <= 1)
+	{
+		TENLog("No sound devices found, disabling sounds", LogLevel::Warning);
+		g_Configuration.EnableSound = false;
 		return;
-	
+	}
+
 	// HACK: Manually force-load ADPCM codec, because on Win11 systems it may suddenly unload otherwise.
 	ADPCMLibrary = LoadLibrary("msadp32.acm");
 
@@ -1130,6 +1138,14 @@ void Sound_Reset()
 				BASS_ChannelLock(stream, false);
 			}
 		}
+
+		BASS_ChannelLock(BASS_3D_Mixdown, true);
+		BASS_ChannelSetDevice(BASS_3D_Mixdown, newSoundDevice);
+		BASS_ChannelLock(BASS_3D_Mixdown, false);
+
+		BASS_ChannelLock(BASS_Video, true);
+		BASS_ChannelSetDevice(BASS_Video, newSoundDevice);
+		BASS_ChannelLock(BASS_Video, false);
 
 		// Clear the old device
 		BASS_SetDevice(oldSoundDevice);

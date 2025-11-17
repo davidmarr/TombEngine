@@ -1,7 +1,8 @@
 #include "framework.h"
+#include "SDL3/SDL.h"
 #include "Specific/Platform/WindowsSubsystem.h"
 
-#ifdef _WIN32
+#ifdef SDL_PLATFORM_WIN32
 
 #include <DbgHelp.h>
 #include <shellapi.h>

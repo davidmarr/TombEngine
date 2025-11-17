@@ -152,7 +152,6 @@ bool LoadConfiguration()
 		else if (section == "Sound")
 		{
 			if (key == "SoundDevice")      g_Configuration.SoundDevice = ToInt(val, g_Configuration.SoundDevice);
-			else if (key == "EnableSound") g_Configuration.EnableSound = ToBool(val, g_Configuration.EnableSound);
 			else if (key == "EnableReverb")g_Configuration.EnableReverb = ToBool(val, g_Configuration.EnableReverb);
 			else if (key == "MusicVolume") g_Configuration.MusicVolume = ToInt(val, g_Configuration.MusicVolume);
 			else if (key == "SfxVolume")   g_Configuration.SfxVolume = ToInt(val, g_Configuration.SfxVolume);
@@ -188,6 +187,8 @@ bool LoadConfiguration()
 
 	if (!foundInput)
 		g_Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Default);
+
+	g_Configuration.EnableSound = g_Configuration.SoundDevice > 0;
 
 	SetVolumeTracks(g_Configuration.MusicVolume);
 	SetVolumeFX(g_Configuration.SfxVolume);

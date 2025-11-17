@@ -1,6 +1,7 @@
 #pragma once
+#include <SDL3/SDL.h>
 
-#ifdef _WIN32
+#ifdef SDL_PLATFORM_WIN32
 
 #pragma comment(linker,"/manifestdependency:\"" \
     "type='win32' " \
@@ -61,4 +62,4 @@ namespace TEN::Platform
     };
 }
 
-#endif // _WIN32
+#endif
