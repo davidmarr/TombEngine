@@ -23,6 +23,8 @@ namespace TEN::Renderer
 	{
 		TENLog("Initializing renderer...", LogLevel::Info);
 
+		_isWindowed = windowed;
+
 		_graphicsDevice->Initialize();
 		InitializeScreen(w, h, false);
 		InitializeCommonTextures();

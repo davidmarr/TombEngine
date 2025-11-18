@@ -14,6 +14,8 @@ namespace TEN::Renderer
 		_graphicsDevice->ClearState();
 		_graphicsDevice->ResizeSwapChain(width, height);
 
+		_isWindowed = windowed;
+
 		InitializeScreen(width, height, true);
 	}
 
