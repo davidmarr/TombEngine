@@ -301,9 +301,6 @@ void Renderer::DrawLara(RenderView& view, RendererPass rendererPass)
 	if (nativeItem->Flags & IFLAG_INVISIBLE)
 		return;
 
-	unsigned int stride = sizeof(Vertex);
-	unsigned int offset = 0;
-
 	_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 	_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 

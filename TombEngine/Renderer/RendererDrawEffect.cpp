@@ -1222,9 +1222,6 @@ namespace TEN::Renderer
 
 		_shaders.Bind(Shader::InstancedStatics);
 
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-
 		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
@@ -1302,9 +1299,6 @@ namespace TEN::Renderer
 	void Renderer::DrawBaddyGunflashes(RenderView& view)
 	{
 		_shaders.Bind(Shader::InstancedStatics);
-
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
 
 		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
@@ -1535,9 +1529,6 @@ namespace TEN::Renderer
 	void Renderer::DrawEffects(RenderView& view, RendererPass rendererPass)
 	{
 		_shaders.Bind(Shader::InstancedStatics);
-
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
 
 		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 		_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());

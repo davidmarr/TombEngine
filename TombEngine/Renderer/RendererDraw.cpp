@@ -186,9 +186,6 @@ namespace TEN::Renderer
 			if (shadowLightPos == item->Position)
 				return;
 
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
-
 			// Set shaders.
 			_shaders.Bind(Shader::ShadowMap);
 
@@ -723,9 +720,6 @@ namespace TEN::Renderer
 					_shaders.Bind(Shader::InstancedStatics);
 				}
 
-				unsigned int stride = sizeof(Vertex);
-				unsigned int offset = 0;
-
 				_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 				_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
@@ -862,9 +856,6 @@ namespace TEN::Renderer
 						_shaders.Bind(Shader::InstancedStatics);
 					}
 
-					unsigned int stride = sizeof(Vertex);
-					unsigned int offset = 0;
-
 					_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 					_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
@@ -992,9 +983,6 @@ namespace TEN::Renderer
 					{
 						_shaders.Bind(Shader::InstancedStatics);
 					}
-
-					unsigned int stride = sizeof(Vertex);
-					unsigned int offset = 0;
 
 					_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 					_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
@@ -3310,8 +3298,6 @@ namespace TEN::Renderer
 			_shaders.Bind(Shader::InstancedSprites);
 
 			// Set up vertex buffer and parameters.
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
 			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer.get());
 
 			auto rDrawSprite = RendererSpriteToDraw{};

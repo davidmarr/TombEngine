@@ -800,9 +800,6 @@ namespace TEN::Renderer
 	{
 		constexpr auto AMBIENT_LIGHT_COLOR = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
 
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-
 		auto screenRes = GetScreenResolution();
 		auto factor = Vector2(
 			screenRes.x / DISPLAY_SPACE_RES.x,
@@ -1030,9 +1027,6 @@ namespace TEN::Renderer
 
 		_graphicsDevice->BindRenderTargets(renderTargets, _renderTarget->GetDepthTarget());
 		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
 
 		// Set vertex buffer.
 		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
