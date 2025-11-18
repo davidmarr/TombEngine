@@ -1019,7 +1019,7 @@ namespace TEN::Renderer
 		renderTargets.push_back(_emissiveAndRoughnessRenderTarget->GetRenderTarget());
 
 		_graphicsDevice->SetViewport(_viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(_viewport);
 
 		_graphicsDevice->ClearRenderTarget2D(_renderTarget->GetRenderTarget(), Colors::Black);
 		_graphicsDevice->ClearRenderTarget2D(_emissiveAndRoughnessRenderTarget->GetRenderTarget(), Colors::Transparent);
@@ -1126,7 +1126,7 @@ namespace TEN::Renderer
 			// Bind back buffer.
 			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 			_graphicsDevice->SetViewport(_viewport);
-			ResetScissor();
+			_graphicsDevice->SetScissor(_viewport);
 
 			// Draw full screen background.
 			DrawFullScreenQuad(_dumpScreenRenderTarget->GetRenderTarget(), Vector3::One);
@@ -1167,7 +1167,7 @@ namespace TEN::Renderer
 			// Bind back buffer.
 			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 			_graphicsDevice->SetViewport(_viewport);
-			ResetScissor();
+			_graphicsDevice->SetScissor(_viewport);
 
 			// Draw fullscreen background. If unavailable, draw last dumped game scene.
 			if (_loadingScreenTexture)

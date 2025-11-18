@@ -33,6 +33,9 @@
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+// SDL3
+#include <SDL3/SDL.h>
+
 // OIS
 #include <OISException.h>
 #include <OISForceFeedback.h>

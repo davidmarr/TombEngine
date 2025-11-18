@@ -41,10 +41,9 @@ namespace TEN::Video
 
 		// Renderer Resources
 
-		std::vector<char>		  _frameBuffer	= {};
-		ITexture2D*				  _texture		= nullptr;
-		ITexture2D*				  _videoTexture = nullptr;
-		IGraphicsDevice*		  _device		= nullptr;
+		std::vector<char>			_frameBuffer	= {};
+		std::unique_ptr<ITexture2D>	_videoTexture	= nullptr;
+		IGraphicsDevice*			_device			= nullptr;
 
 	public:
 		// Constructors

@@ -326,7 +326,7 @@ namespace TEN::Renderer
 
 		_graphicsDevice->BindRenderTarget(target, depthTarget);
 		_graphicsDevice->SetViewport(_viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(_viewport);
 
 		DrawFullScreenQuad(texture, Vector3(fade), true);
 	}

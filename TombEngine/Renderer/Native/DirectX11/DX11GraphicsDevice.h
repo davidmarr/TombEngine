@@ -1,4 +1,7 @@
 #pragma once
+#include "framework.h"
+
+#ifdef SDL_PLATFORM_WIN32
 
 #include "Renderer/Graphics/IGraphicsDevice.h"
 #include <wrl/client.h>
@@ -168,6 +171,7 @@ namespace TEN::Renderer::Native::DirectX11
 		void SetDepthState(DepthState depthState) override;
 		void SetCullMode(CullMode cullMode) override;
 		void SetScissor(RendererRectangle rectangle) override;
+		void SetScissor(RendererViewport viewport) override;
 
 		void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) override;
 
@@ -226,7 +230,7 @@ namespace TEN::Renderer::Native::DirectX11
 		void UnbindAllRenderTargets() override;
 
 		std::unique_ptr<ITexture2D> CreateTexture2D() override;
-		void UpdateTexture2D(ITexture2D* texture, byte* data) override;
+		void UpdateTexture2D(ITexture2D* texture, std::vector<char> data) override;
 
 		int GetRefreshRate() override;
 
@@ -234,3 +238,5 @@ namespace TEN::Renderer::Native::DirectX11
 		int GetScreenHeight() override;
 	};
 }
+
+#endif

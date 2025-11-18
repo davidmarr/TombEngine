@@ -51,12 +51,13 @@ namespace TEN::Renderer::Graphics
 		virtual std::unique_ptr<ITexture2D> CreateTexture2D(const std::string fileName) = 0;
 		virtual std::unique_ptr<ITexture2D> CreateTexture2D(int dataSize, byte* data) = 0;
 		virtual std::unique_ptr<ITexture2D> CreateTexture2D() = 0;
-		virtual void UpdateTexture2D(ITexture2D* texture, byte* data) = 0;
+		virtual void UpdateTexture2D(ITexture2D* texture, std::vector<char> data) = 0;
 
 		virtual void SetBlendMode(BlendMode blendMode) = 0;
 		virtual void SetDepthState(DepthState depthState) = 0;
 		virtual void SetCullMode(CullMode cullMode) = 0;
 		virtual void SetScissor(RendererRectangle rectangle) = 0;
+		virtual void SetScissor(RendererViewport viewport) = 0;
 
 		virtual void BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType) = 0;
 		
