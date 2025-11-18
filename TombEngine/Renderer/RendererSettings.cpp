@@ -12,11 +12,7 @@ namespace TEN::Renderer
 		_graphicsDevice->UnbindAllRenderTargets();
 		_graphicsDevice->Flush();
 		_graphicsDevice->ClearState();
-		_graphicsDevice->ChangeScreenResolution(width, height, windowed);
-
-		_screenWidth = width;
-		_screenHeight = height;
-		_isWindowed = windowed;
+		_graphicsDevice->ResizeSwapChain(width, height);
 
 		InitializeScreen(width, height, true);
 	}

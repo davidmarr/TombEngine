@@ -19,7 +19,7 @@ namespace TEN::Renderer
 
 		_stPostProcessBuffer.ScreenFadeFactor = screenFadeFactor;
 		_stPostProcessBuffer.CinematicBarsHeight = cinematicBarsHeight;
-		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
+		_stPostProcessBuffer.ViewportSize = Vector2i( _graphicsDevice->GetScreenWidth(),  _graphicsDevice->GetScreenHeight());
 		_stPostProcessBuffer.EffectStrength = _postProcessStrength;
 		_stPostProcessBuffer.Tint = _postProcessTint;
 		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
@@ -176,7 +176,7 @@ namespace TEN::Renderer
 
 	void Renderer::CopyRenderTargetAndDownscale(IRenderSurface2D* source, IRenderSurface2D* dest, float factor, RenderView& view)
 	{
-		RendererViewport viewport = { 0, 0, (int)(_screenWidth / factor), (int)(_screenHeight / factor), 0.0f, 1.0f };
+		RendererViewport viewport = { 0, 0, (int)( _graphicsDevice->GetScreenWidth() / factor), (int)( _graphicsDevice->GetScreenHeight() / factor), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
 
 		RendererRectangle scissor = { 0, 0, viewport.Width , viewport.Height };
@@ -210,7 +210,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 		SetDepthState(DepthState::Write, true);
 
-		RendererViewport viewport = { 0, 0, (int)(_screenWidth / GLOW_DOWNSCALE_FACTOR), (int)(_screenHeight / GLOW_DOWNSCALE_FACTOR), 0.0f, 1.0f };
+		RendererViewport viewport = { 0, 0, (int)( _graphicsDevice->GetScreenWidth() / GLOW_DOWNSCALE_FACTOR), (int)( _graphicsDevice->GetScreenHeight() / GLOW_DOWNSCALE_FACTOR), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
 
 		RendererRectangle scissor = { 0, 0, viewport.Width , viewport.Height };
@@ -219,7 +219,7 @@ namespace TEN::Renderer
 
 		_shaders.Bind(Shader::PostProcess);
 
-		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
+		_stPostProcessBuffer.ViewportSize = Vector2i( _graphicsDevice->GetScreenWidth(),  _graphicsDevice->GetScreenHeight());
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
@@ -244,7 +244,7 @@ namespace TEN::Renderer
 		// Blur
 		_shaders.Bind(Shader::Blur);
 
-		_stPostProcessBuffer.TexelSize = Vector2(1.0f / (_screenWidth / GLOW_DOWNSCALE_FACTOR), 1.0f / (_screenHeight / GLOW_DOWNSCALE_FACTOR));
+		_stPostProcessBuffer.TexelSize = Vector2(1.0f / ( _graphicsDevice->GetScreenWidth() / GLOW_DOWNSCALE_FACTOR), 1.0f / ( _graphicsDevice->GetScreenHeight() / GLOW_DOWNSCALE_FACTOR));
 		_stPostProcessBuffer.BlurSigma = GLOW_BLUR_SIGMA;
 		_stPostProcessBuffer.BlurRadius = GLOW_BLUR_RADIUS;
 

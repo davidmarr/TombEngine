@@ -335,8 +335,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Construct asset directory.
-	gameDir = ConstructAssetDirectory(gameDir);
-	GameDirectory = gameDir;
+	GameDirectory = ConstructAssetDirectory(gameDir);
 
 	// Hide console window if mode isn't debug.
 #if !_DEBUG
@@ -353,7 +352,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Initialize logging.
-	InitTENLog(gameDir);
+	InitTENLog(GameDirectory);
 	g_Platform->InstallCrashHandler();
 
 	auto windowName = std::string("Starting TombEngine");
@@ -378,8 +377,8 @@ int main(int argc, char* argv[])
 	TENLog(windowName, LogLevel::Info);
 
 	// Initialize savegame and scripting systems.
-	SaveGame::Init(gameDir);
-	ScriptInterfaceState::Init(gameDir);
+	SaveGame::Init(GameDirectory);
+	ScriptInterfaceState::Init(GameDirectory);
 
 	// Initialize scripting.
 	try 
@@ -401,7 +400,7 @@ int main(int argc, char* argv[])
 		//should be moved to LogicHandler or vice versa to make this stuff
 		//less fragile (squidshire, 16/09/22)
 		g_GameScript->ShortenTENCalls();
-		g_GameFlow->SetGameDir(gameDir);
+		g_GameFlow->SetGameDir(GameDirectory);
 		g_GameFlow->LoadFlowScript();
 	}
 	catch (TENScriptException const& e)
@@ -413,6 +412,14 @@ int main(int argc, char* argv[])
 		g_Platform->Shutdown();
 		return 0;
 	}
+
+	g_Renderer.Create();
+
+	// Load configuration and optionally show setup dialog.
+	if (!LoadConfiguration())
+		InitDefaultConfiguration();
+
+	g_Bindings.Initialize();
 
 	// Initialize main window.
 	int width = g_Configuration.ScreenWidth;
@@ -440,23 +447,13 @@ int main(int argc, char* argv[])
 
 	g_Platform->SetSDL3Window(sdlWindow);
 
-	// Create renderer and enumerate adapters and video modes.
-	g_Renderer.Create();
-
-	// Initialize key bindings.
-	g_Bindings.Initialize();
-
-	// Load configuration and optionally show setup dialog.
-	if (!LoadConfiguration())
-		InitDefaultConfiguration();
-
 	try
 	{
 		// Initialize audio (should be called prior to initializing renderer, because video handler needs it).
-		Sound_Init(gameDir);
+		Sound_Init(GameDirectory);
 
 		// Initialize renderer.
-		g_Renderer.Initialize(gameDir, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode);
+		g_Renderer.Initialize(GameDirectory, g_Configuration.ScreenWidth, g_Configuration.ScreenHeight, g_Configuration.EnableWindowedMode);
 
 		// Initialize input.
 		InitializeInput();

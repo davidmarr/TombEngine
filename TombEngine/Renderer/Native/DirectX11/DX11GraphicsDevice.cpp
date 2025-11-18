@@ -453,7 +453,7 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	}
 
-	void DX11GraphicsDevice::Initialize(const std::string gameDir, int w, int h, bool windowed)
+	void DX11GraphicsDevice::Initialize()
 	{
 		_renderStates = std::make_unique<CommonStates>(_device.Get());
 
@@ -584,8 +584,6 @@ namespace TEN::Renderer::Native::DirectX11
 		samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		samplerStateDesc.MaxAnisotropy = 1;
 		Utils::throwIfFailed(_device->CreateSamplerState(&samplerStateDesc, _pointWrapSamplerState.GetAddressOf()));
-
-		_viewportToolkit = Viewport(0, 0, w, h, 0.0f, 1.0f);
 	}
 
 	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::InitializeSwapChain(int width, int height)
@@ -644,6 +642,11 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11Texture2D* backBufferTexture = NULL;
 		Utils::throwIfFailed(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast <void**>(&backBufferTexture)));
 
+		_viewportToolkit = Viewport(0, 0, width, height, 0.0f, 1.0f);
+
+		_screenWidth = width;
+		_screenHeight = height;
+
 		return std::make_unique<IRenderSurface2D>(
 			std::move(std::make_unique<DX11RenderTarget2D>(_device.Get(), backBufferTexture)),
 			std::move(std::make_unique<DX11DepthTarget>(_device.Get(), width, height, DXGI_FORMAT_D32_FLOAT)));
@@ -688,7 +691,7 @@ namespace TEN::Renderer::Native::DirectX11
 		return TEN::Utils::ToString(adapterDesc.Description);
 	}
 
-	void DX11GraphicsDevice::ChangeScreenResolution(int width, int height, bool windowed)
+	void DX11GraphicsDevice::ResizeSwapChain(int width, int height)
 	{
 		ID3D11RenderTargetView* nullViews[] = { nullptr };
 		_context->OMSetRenderTargets(0, nullViews, NULL);
@@ -717,7 +720,8 @@ namespace TEN::Renderer::Native::DirectX11
 
 		_screenWidth = width;
 		_screenHeight = height;
-		_isWindowed = windowed;
+
+		_viewportToolkit = Viewport(0, 0, width, height, 0.0f, 1.0f);
 	}
 
 	std::unique_ptr<IShader> DX11GraphicsDevice::CreateShader(ShaderCompileRequest& req)
@@ -964,5 +968,15 @@ namespace TEN::Renderer::Native::DirectX11
 	int DX11GraphicsDevice::GetRefreshRate()
 	{
 		return _refreshRate;
+	}
+
+	int DX11GraphicsDevice::GetScreenWidth()
+	{
+		return _screenWidth;
+	}
+
+	int DX11GraphicsDevice::GetScreenHeight()
+	{
+		return _screenHeight;
 	}
 }

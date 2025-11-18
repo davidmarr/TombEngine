@@ -821,7 +821,7 @@ namespace TEN::Renderer
 		}
 
 		auto viewMatrix = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, BLOCK(2)), Vector3::Zero, Vector3::Down);
-		auto projMatrix = Matrix::CreateOrthographic(_screenWidth, _screenHeight, -BLOCK(1), BLOCK(1));
+		auto projMatrix = Matrix::CreateOrthographic(_graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight(), -BLOCK(1), BLOCK(1));
 
 		auto& moveableObject = _moveableObjects[objectNumber];
 		if (!moveableObject.has_value())
@@ -1050,9 +1050,9 @@ namespace TEN::Renderer
 
 			if (drawLogo && _logo != nullptr)
 			{
-				float factorX = (float)_screenWidth / DISPLAY_SPACE_RES.x;
-				float factorY = (float)_screenHeight / DISPLAY_SPACE_RES.y;
-				float scale = _screenWidth > _screenHeight ? factorX : factorY;
+				float factorX = (float)_graphicsDevice->GetScreenWidth() / DISPLAY_SPACE_RES.x;
+				float factorY = (float)_graphicsDevice->GetScreenHeight() / DISPLAY_SPACE_RES.y;
+				float scale = _graphicsDevice->GetScreenWidth() > _graphicsDevice->GetScreenHeight() ? factorX : factorY;
 
 				int logoLeft   = (DISPLAY_SPACE_RES.x / 2) - (LogoWidth / 2);
 				int logoRight  = (DISPLAY_SPACE_RES.x / 2) + (LogoWidth / 2);
@@ -1249,8 +1249,8 @@ namespace TEN::Renderer
 
 		const auto& room = g_Level.Rooms[playerItem.RoomNumber];
 
-		float aspectRatio = _screenWidth / (float)_screenHeight;
-		int thumbWidth = _screenWidth / 8;
+		float aspectRatio = _graphicsDevice->GetScreenWidth() / (float)_graphicsDevice->GetScreenHeight();
+		int thumbWidth = _graphicsDevice->GetScreenWidth() / 8;
 		auto rect = RendererRectangle{};
 		int thumbY = 0;
 
@@ -1262,7 +1262,7 @@ namespace TEN::Renderer
 		case RendererDebugPage::RendererStats:
 			PrintDebugMessage("RENDERER STATS");
 			PrintDebugMessage("FPS: %3.2f", _fps);
-			PrintDebugMessage("Resolution: %d x %d", _screenWidth, _screenHeight);
+			PrintDebugMessage("Resolution: %d x %d", _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight());
 			PrintDebugMessage("GPU: %s", g_Configuration.AdapterName.c_str());
 			PrintDebugMessage("Update time: %d", _timeUpdate);
 			PrintDebugMessage("Frame time: %d", _timeFrame);
@@ -1288,7 +1288,7 @@ namespace TEN::Renderer
 
 			_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::Opaque);
 
-			rect.Left = _screenWidth - thumbWidth;
+			rect.Left = _graphicsDevice->GetScreenWidth() - thumbWidth;
 			rect.Top = thumbY;
 			rect.Right = rect.Left+ thumbWidth;
 			rect.Bottom = rect.Top+thumbWidth / aspectRatio;
@@ -1296,12 +1296,12 @@ namespace TEN::Renderer
 			_spriteBatch->Draw(_normalsAndMaterialIndexRenderTarget->GetRenderTarget(), rect, Vector4::One);
 			thumbY += thumbWidth / aspectRatio;
 
-			rect.Left = _screenWidth - thumbWidth;
+			rect.Left = _graphicsDevice->GetScreenWidth() - thumbWidth;
 			rect.Top = thumbY;
 			rect.Right = rect.Left + thumbWidth;
 			rect.Bottom = rect.Top + thumbWidth / aspectRatio;
 
-			rect.Left = _screenWidth - thumbWidth;
+			rect.Left = _graphicsDevice->GetScreenWidth() - thumbWidth;
 			rect.Top = thumbY;
 			rect.Right = rect.Left + thumbWidth;
 			rect.Bottom = rect.Top + thumbWidth / aspectRatio;
@@ -1311,7 +1311,7 @@ namespace TEN::Renderer
 
 			if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
 			{
-				rect.Left = _screenWidth - thumbWidth;
+				rect.Left = _graphicsDevice->GetScreenWidth() - thumbWidth;
 				rect.Top = thumbY;
 				rect.Right = rect.Left + thumbWidth;
 				rect.Bottom = rect.Top + thumbWidth / aspectRatio;
@@ -1319,7 +1319,7 @@ namespace TEN::Renderer
 				_spriteBatch->Draw(_SMAAEdgesRenderTarget->GetRenderTarget(), rect, Vector4::One);
 				thumbY += thumbWidth / aspectRatio;
 
-				rect.Left = _screenWidth - thumbWidth;
+				rect.Left = _graphicsDevice->GetScreenWidth() - thumbWidth;
 				rect.Top = thumbY;
 				rect.Right = rect.Left + thumbWidth;
 				rect.Bottom = rect.Top + thumbWidth / aspectRatio;

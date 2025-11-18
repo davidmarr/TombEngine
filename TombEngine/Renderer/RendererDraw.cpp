@@ -424,7 +424,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::None);
 
 		_shaders.Bind(Shader::Solid);
-		auto worldMatrix = Matrix::CreateOrthographicOffCenter(0, _screenWidth, _screenHeight, 0, _viewport.MinDepth, _viewport.MaxDepth);
+		auto worldMatrix = Matrix::CreateOrthographicOffCenter(0, _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight(), 0, _viewport.MinDepth, _viewport.MaxDepth);
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::LineList);
 
@@ -1917,7 +1917,7 @@ namespace TEN::Renderer
 		view.FillConstantBuffer(cameraConstantBuffer);
 		cameraConstantBuffer.Frame = GlobalCounter;
 		cameraConstantBuffer.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
-		cameraConstantBuffer.RefreshRate = _refreshRate;
+		cameraConstantBuffer.RefreshRate = _graphicsDevice->GetRefreshRate();
 		cameraConstantBuffer.CameraUnderwater = g_Level.Rooms[cameraConstantBuffer.RoomNumber].flags & ENV_FLAG_WATER;
 		cameraConstantBuffer.DualParaboloidView = Matrix::CreateLookAt(_gameCamera.Camera.WorldPosition, _gameCamera.Camera.WorldPosition + Vector3(0, -1024, 0), Vector3::UnitX);
 
@@ -3019,7 +3019,7 @@ namespace TEN::Renderer
 		cameraConstantBuffer.Hemisphere = -1;
 		cameraConstantBuffer.Frame = GlobalCounter;
 		cameraConstantBuffer.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
-		cameraConstantBuffer.RefreshRate = _refreshRate;
+		cameraConstantBuffer.RefreshRate = _graphicsDevice->GetRefreshRate();
 		view.FillConstantBuffer(cameraConstantBuffer);
 		UpdateConstantBuffer(&cameraConstantBuffer, _cbCameraMatrices.get());
 
@@ -4031,10 +4031,10 @@ namespace TEN::Renderer
 		_graphicsDevice->BindRenderTarget(_SSAORenderTarget->GetRenderTarget(), nullptr);
 
 		// Must set correctly viewport because SSAO is done at 1/4 screen resolution.
-		RendererViewport viewport = { 0,0,_screenWidth, _screenHeight, 0.0f, 1.0f };
+		RendererViewport viewport = { 0, 0, _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight(), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
 
-		RendererRectangle scissor = { 0,0,_screenWidth, _screenHeight };
+		RendererRectangle scissor = { 0, 0, _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight() };
 		_graphicsDevice->SetScissor(scissor);
 	
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
@@ -4046,8 +4046,8 @@ namespace TEN::Renderer
 		BindRenderTargetAsTexture(static_cast<TextureRegister>(1), _normalsAndMaterialIndexRenderTarget->GetRenderTarget(), SamplerStateRegister::PointWrap);
 		BindTexture(static_cast<TextureRegister>(2), _SSAONoiseTexture.get(), SamplerStateRegister::PointWrap);
 
-		_stPostProcessBuffer.ViewportSize = Vector2i(_screenWidth, _screenHeight);
-		_stPostProcessBuffer.TexelSize = Vector2(1.0f / _screenWidth, 1.0f / _screenHeight);
+		_stPostProcessBuffer.ViewportSize = Vector2i(_graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight());
+		_stPostProcessBuffer.TexelSize = Vector2(1.0f / _graphicsDevice->GetScreenWidth(), 1.0f /  _graphicsDevice->GetScreenHeight());
 		memcpy(_stPostProcessBuffer.SSAOKernel, _SSAOKernel.data(), 16 * _SSAOKernel.size());
 		UpdateConstantBuffer(&_stPostProcessBuffer, _cbPostProcessBuffer.get());
 

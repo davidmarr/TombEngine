@@ -23,11 +23,7 @@ namespace TEN::Renderer
 	{
 		TENLog("Initializing renderer...", LogLevel::Info);
 
-		_screenWidth = w;
-		_screenHeight = h;
-		_isWindowed = windowed;
-
-		_graphicsDevice->Initialize(gameDir, w, h, windowed);
+		_graphicsDevice->Initialize();
 		InitializeScreen(w, h, false);
 		InitializeCommonTextures();
 
@@ -350,8 +346,8 @@ namespace TEN::Renderer
 
 	void Renderer::InitializeSMAA()
 	{
-		int w = _screenWidth;
-		int h = _screenHeight;
+		int w = _graphicsDevice->GetScreenWidth();
+		int h = _graphicsDevice->GetScreenHeight();
 
 		_SMAASceneRenderTarget = _graphicsDevice->CreateRenderSurface2D(w, h, SurfaceFormat::SF_RGBA8_Unorm, true, DepthFormat::None);
 		_SMAASceneSRGBRenderTarget = _graphicsDevice->CreateRenderSurface2D(_SMAASceneRenderTarget.get(), SurfaceFormat::SF_RGBA8_Unorm_Srgb);
@@ -417,7 +413,7 @@ namespace TEN::Renderer
 			SDL_SetWindowAlwaysOnTop(window, false);
 			SDL_SetWindowBordered(window, true);
 
-			SDL_SetWindowSize(window, _screenWidth, _screenHeight);
+			SDL_SetWindowSize(window, _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight());
 			SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
 			SDL_RestoreWindow(window);

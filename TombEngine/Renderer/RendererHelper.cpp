@@ -532,7 +532,7 @@ namespace TEN::Renderer
 
 	Vector2i Renderer::GetScreenResolution() const
 	{
-		return Vector2i(_screenWidth, _screenHeight);
+		return Vector2i(_graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight());
 	}
 
 	int Renderer::GetScreenRefreshRate() const

@@ -56,7 +56,6 @@ namespace TEN::Renderer::Native::DirectX11
 
 		int _screenWidth;
 		int _screenHeight;
-		int _isWindowed;
 		int _refreshRate;
 		HWND _handle;
 
@@ -202,11 +201,10 @@ namespace TEN::Renderer::Native::DirectX11
 		std::unique_ptr<IInputLayout> CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) override;
 
 		void CreateDevice() override;
-		void Initialize(const std::string gameDir, int w, int h, bool windowed) override;
+		void Initialize() override;
 		std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height) override;
-
 		std::string GetDefaultAdapterName() override;
-		void ChangeScreenResolution(int width, int height, bool windowed) override;
+		void ResizeSwapChain(int width, int height) override;
 
 		std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) override;
 		void BindVertexShader(IShader* shader, bool forceNull) override;
@@ -231,5 +229,8 @@ namespace TEN::Renderer::Native::DirectX11
 		void UpdateTexture2D(ITexture2D* texture, byte* data) override;
 
 		int GetRefreshRate() override;
+
+		int GetScreenWidth() override;
+		int GetScreenHeight() override;
 	};
 }

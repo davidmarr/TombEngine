@@ -275,29 +275,29 @@ namespace TEN::Renderer
 			// Draw the aiming point
 			Vertex vertices[4];
 
-			vertices[0].Position.x = -4.0f / _screenWidth;
-			vertices[0].Position.y = 4.0f / _screenHeight;
+			vertices[0].Position.x = -4.0f / _graphicsDevice->GetScreenWidth();
+			vertices[0].Position.y = 4.0f / _graphicsDevice->GetScreenHeight();
 			vertices[0].Position.z = 0.0f;
 			vertices[0].UV.x = 0.0f;
 			vertices[0].UV.y = 0.0f;
 			vertices[0].Color = VectorColorToRGBA_TempToVector4(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
 
-			vertices[1].Position.x = 4.0f / _screenWidth;
-			vertices[1].Position.y = 4.0f / _screenHeight;
+			vertices[1].Position.x = 4.0f / _graphicsDevice->GetScreenWidth();
+			vertices[1].Position.y = 4.0f / _graphicsDevice->GetScreenHeight();
 			vertices[1].Position.z = 0.0f;
 			vertices[1].UV.x = 1.0f;
 			vertices[1].UV.y = 0.0f;
 			vertices[1].Color = VectorColorToRGBA_TempToVector4(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
 
-			vertices[2].Position.x = 4.0f / _screenWidth;
-			vertices[2].Position.y = -4.0f / _screenHeight;
+			vertices[2].Position.x = 4.0f / _graphicsDevice->GetScreenWidth();
+			vertices[2].Position.y = -4.0f / _graphicsDevice->GetScreenHeight();
 			vertices[2].Position.z = 0.0f;
 			vertices[2].UV.x = 1.0f;
 			vertices[2].UV.y = 1.0f;
 			vertices[2].Color = VectorColorToRGBA_TempToVector4(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
 
-			vertices[3].Position.x = -4.0f / _screenWidth;
-			vertices[3].Position.y = -4.0f / _screenHeight;
+			vertices[3].Position.x = -4.0f / _graphicsDevice->GetScreenWidth();
+			vertices[3].Position.y = -4.0f / _graphicsDevice->GetScreenHeight();
 			vertices[3].Position.z = 0.0f;
 			vertices[3].UV.x = 0.0f;
 			vertices[3].UV.y = 1.0f;
@@ -418,7 +418,7 @@ namespace TEN::Renderer
 
 		if (fit)
 		{
-			float screenAspect = float(_screenWidth) / float(_screenHeight);
+			float screenAspect = float(_graphicsDevice->GetScreenWidth()) / float(_graphicsDevice->GetScreenHeight());
 			float imageAspect  = customAspect == 0.0f ? float(texture->GetWidth()) / float(texture->GetHeight()) : customAspect;
 
 			if (screenAspect > imageAspect)
@@ -479,7 +479,7 @@ namespace TEN::Renderer
 
 		if (fit)
 		{
-			float screenAspect = float(_screenWidth) / float(_screenHeight);
+			float screenAspect = float(_graphicsDevice->GetScreenWidth()) / float(_graphicsDevice->GetScreenHeight());
 			float imageAspect = float(sprite->Width) / float(sprite->Height);
 
 			if (screenAspect > imageAspect)

@@ -89,7 +89,7 @@ namespace TEN::Renderer
 	{
 		try
 		{
-			_shaders.LoadShaders(_screenWidth, _screenHeight, recompileAAShaders);
+			_shaders.LoadShaders(_graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight(), recompileAAShaders);
 		}
 		catch (const std::exception& e)
 		{
@@ -394,9 +394,9 @@ namespace TEN::Renderer
 	{
 		RendererRectangle s;
 		s.Left = 0;
-		s.Right = _screenWidth;
+		s.Right = _graphicsDevice->GetScreenWidth();
 		s.Top = 0;
-		s.Bottom = _screenHeight;
+		s.Bottom = _graphicsDevice->GetScreenHeight();
 
 		_graphicsDevice->SetScissor(s);
 	}

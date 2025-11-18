@@ -89,11 +89,10 @@ namespace TEN::Renderer::Graphics
 		virtual std::unique_ptr<IInputLayout> CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader) = 0;
 
 		virtual void CreateDevice() = 0;
-		virtual void Initialize(const std::string gameDir, int w, int h, bool windowed) = 0;
+		virtual void Initialize() = 0;
 		virtual std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height) = 0;
-
 		virtual std::string GetDefaultAdapterName() = 0;
-		virtual void ChangeScreenResolution(int width, int height, bool windowed) = 0;
+		virtual void ResizeSwapChain(int width, int height) = 0;
 
 		virtual std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) = 0;
 		virtual void BindVertexShader(IShader* shader, bool forceNull) = 0;
@@ -116,6 +115,9 @@ namespace TEN::Renderer::Graphics
 		virtual void UnbindAllRenderTargets() = 0;
 
 		virtual int GetRefreshRate() = 0;
+
+		virtual int GetScreenWidth() = 0;
+		virtual int GetScreenHeight() = 0;
 
 		virtual ~IGraphicsDevice() = default;
 	};

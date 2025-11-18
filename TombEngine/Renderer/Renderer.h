@@ -277,12 +277,8 @@ namespace TEN::Renderer
 		int _currentCausticsFrame;
 
 		// Screen settings
-
-		int _screenWidth;
-		int _screenHeight;
-		int _refreshRate;
-		bool _isWindowed;
 		float _farView = DEFAULT_FAR_VIEW;
+		bool _isWindowed;
 
 		// A flag to prevent extra renderer object additions
 
