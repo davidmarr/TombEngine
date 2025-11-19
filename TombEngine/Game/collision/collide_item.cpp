@@ -1852,7 +1852,7 @@ void DoObjectCollision(ItemInfo* item, CollisionInfo* coll)
 
 			const auto& object = Objects[linkItem.ObjectNumber];
 
-			if (object.collision == nullptr || object.hitEffect == HitEffect::None)
+			if (object.collision == nullptr)
 				continue;
 
 			if (Vector3i::Distance(linkItem.Pose.Position, item->Pose.Position) >= COLLISION_CHECK_DISTANCE)
