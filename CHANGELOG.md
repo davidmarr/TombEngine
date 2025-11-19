@@ -9,7 +9,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added no shake mode for CLASSIC_ROLLINGBALL (OCB 1).
 
 ### Bug fixes
-* Fixed EARTHQUAKE object not working.
+* Fixed FIREROPE and EARTHQUAKE objects not working.
 * Fixed FIRE_PENDULUM crashing the game.
 * Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
 * Fixed original bug that prevented performing a 2-click vault while holding a torch.
