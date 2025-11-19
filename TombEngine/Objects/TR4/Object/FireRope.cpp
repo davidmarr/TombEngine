@@ -191,7 +191,7 @@ void FireRopeCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll
 		item.ItemFlags[FireRopeItemFlags::UpperMesh] =
 		item.ItemFlags[FireRopeItemFlags::StartMesh] = i;
 
-		item.ItemFlags[FireRopeItemFlags::Timeout] = FIRE_TIMEOUT;
+		item.ItemFlags[FireRopeItemFlags::Timeout] = item.TriggerFlags > 0 ? (item.TriggerFlags * FPS) : FIRE_TIMEOUT;
 
 		AddActiveItem(itemNumber);
 		item.Status = ITEM_ACTIVE;
