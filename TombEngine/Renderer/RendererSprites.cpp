@@ -321,8 +321,7 @@ namespace TEN::Renderer
 
 		// Draw 3D non-instanced sprites.
 		wasGpuSet = false;
-
-		for (auto& spriteBucket : _spriteBuckets)
+		for (const auto& spriteBucket : _spriteBuckets)
 		{
 			if (spriteBucket.SpritesToDraw.empty() || spriteBucket.IsBillboard)
 				continue;
@@ -359,7 +358,7 @@ namespace TEN::Renderer
 
 			PackSpriteTextureCoordinates(0, spriteBucket.Sprite);
 
-			UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);;
+			UpdateConstantBuffer(_stInstancedSpriteBuffer, _cbInstancedSpriteBuffer);
 
 			BindTexture(TextureRegister::ColorMap, spriteBucket.Sprite->Texture, SamplerStateRegister::LinearClamp);
 
@@ -515,12 +514,12 @@ namespace TEN::Renderer
 
 			_shaders.Bind(Shader::InstancedSprites);
 
-			_sortedPolygonsVertexBuffer.Update(_context.Get(), _sortedPolygonsVertices.data(), 0, (int)_sortedPolygonsVertices.size());
-
 			_context->IASetVertexBuffers(0, 1, _sortedPolygonsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
 			_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			_context->IASetInputLayout(_inputLayout.Get());
 		}
+
+		_sortedPolygonsVertexBuffer.Update(_context.Get(), _sortedPolygonsVertices.data(), 0, (int)_sortedPolygonsVertices.size());
 
 		_stInstancedSpriteBuffer.Sprites[0].World = Matrix::Identity;
 		_stInstancedSpriteBuffer.Sprites[0].PerVertexColor = 1;

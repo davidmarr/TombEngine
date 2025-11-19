@@ -1058,7 +1058,7 @@ bool Moveable::GetMeshSwapped(int meshId) const
 // @function Moveable:SwapMesh
 // @tparam int index Index of a mesh.
 // @tparam int objectID ID of a slot to get meshswap from.
-// @tparam[opt] int swapIndex Index of a mesh from meshswap slot to use.
+// @tparam[opt] int swapIndex Index of a mesh from meshswap slot to use. In WadTool, you have to set vertex weights for this mesh according to original mesh index to avoid rendering issues.
 void Moveable::SwapMesh(int meshId, int objectID, sol::optional<int> swapIndex)
 {
 	if (!MeshExists(meshId))
