@@ -12,7 +12,7 @@
 
 constexpr auto FIRE_RADIUS = 64;
 constexpr auto FIRE_OFFSET = Vector3i(-24, 48, 192);
-constexpr auto FIRE_TIMEOUT = 150;
+constexpr auto FIRE_TIMEOUT = 5 * FPS;
 
 enum FireRopeItemFlags
 {
