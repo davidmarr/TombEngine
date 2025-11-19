@@ -343,13 +343,8 @@ namespace TEN::Renderer
 			if (!firefly.on)
 				continue;
 
-
-			if (!CheckIfSlotExists(ID_SPARK_SPRITE, "Particle rendering"))
+			if (!CheckIfSlotExists(ID_FIREFLY_SPRITES, "Firefly rendering"))
 				continue;
-
-			auto axis = Vector3(0,0,0);
-			axis.Normalize();
-
 
 			firefly.scalar = 3;
 			firefly.size = 3;
