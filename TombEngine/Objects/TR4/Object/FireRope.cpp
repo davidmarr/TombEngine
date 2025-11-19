@@ -80,6 +80,17 @@ void TriggerRopeFlame(Vector3i pos)
 	spark->dSize = spark->size / 8.0f;
 }
 
+void InitializeFireRope(short itemNumber)
+{
+	auto& item = g_Level.Items[itemNumber];
+
+	item.ItemFlags[FireRopeItemFlags::LowerMesh] =
+	item.ItemFlags[FireRopeItemFlags::UpperMesh] =
+	item.ItemFlags[FireRopeItemFlags::StartMesh] = 0;
+
+	item.ItemFlags[FireRopeItemFlags::Timeout] = item.TriggerFlags > 0 ? (item.TriggerFlags * FPS) : FIRE_TIMEOUT;
+}
+
 void FireRopeControl(short itemNumber)
 {
 	auto& item = g_Level.Items[itemNumber];
@@ -190,8 +201,6 @@ void FireRopeCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll
 		item.ItemFlags[FireRopeItemFlags::LowerMesh] =
 		item.ItemFlags[FireRopeItemFlags::UpperMesh] =
 		item.ItemFlags[FireRopeItemFlags::StartMesh] = i;
-
-		item.ItemFlags[FireRopeItemFlags::Timeout] = item.TriggerFlags > 0 ? (item.TriggerFlags * FPS) : FIRE_TIMEOUT;
 
 		AddActiveItem(itemNumber);
 		item.Status = ITEM_ACTIVE;
