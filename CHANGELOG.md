@@ -6,14 +6,16 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 1.10.1]
 
 ### New features
-* Added silent mode for CLASSIC_ROLLINGBALL (OCB 1).
+* Added no shake mode for CLASSIC_ROLLINGBALL (OCB 1).
 
 ### Bug fixes
-* Fixed EARTHQUAKE object not working.
+* Fixed FIREROPE and EARTHQUAKE objects not working.
 * Fixed FIRE_PENDULUM crashing the game.
 * Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
+* Fixed original bug that prevented performing vault animations while holding a torch.
 * Fixed interaction highlighter not appearing for SEARCH_OBJECT objects.
 * Fixed fireflies not interpolating in high framerate mode and not emitting dynamic lights.
+* Fixed performance issues with shatterable static meshes.
 * Fixed emissive materials not fading into distance fog.
 * Fixed subtractive sprites not rendering correctly.
 * Fixed dynamic lighting for flat surfaces with miscalculated normals.
