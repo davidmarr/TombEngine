@@ -14,6 +14,7 @@
 #include <string>
 #include "Specific/Platform/ISubsystem.h"
 #include "Specific/trutils.h"
+#include "resource.h"
 
 using namespace TEN::Utils;
 
@@ -36,7 +37,7 @@ namespace TEN::Platform
         void Initialize() override;
         void CheckPrerequisites() override;
         void InstallCrashHandler() override;
-        void ShowErrorMessage(const std::string& text, MessageBoxIcon icon = MessageBoxIcon::Error) override;
+        void ShowErrorMessage(const std::string& text) override;
         void Tick() override;
         void Shutdown() override;
         std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) override;
@@ -44,6 +45,7 @@ namespace TEN::Platform
         void SetSDL3Window(SDL_Window* window);
         SDL_Window* GetSDL3Window();
         void HideConsole() override;
+        bool CreateDummyTitleLevel(const std::string& levelPath) override;
 
     private:
         HINSTANCE _hInstance = nullptr;

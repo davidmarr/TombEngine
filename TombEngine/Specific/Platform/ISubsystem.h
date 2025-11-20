@@ -20,7 +20,7 @@ namespace TEN::Platform
         virtual void Initialize() = 0;
         virtual void CheckPrerequisites() = 0;
         virtual void InstallCrashHandler() = 0;
-        virtual void ShowErrorMessage(const std::string& text, MessageBoxIcon icon = MessageBoxIcon::Error) = 0;
+        virtual void ShowErrorMessage(const std::string& text) = 0;
         virtual void Tick() = 0;
         virtual void Shutdown() = 0;
         virtual std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) = 0;
@@ -28,6 +28,7 @@ namespace TEN::Platform
         virtual void SetSDL3Window(SDL_Window* window) = 0;
         virtual SDL_Window* GetSDL3Window() = 0;
         virtual void HideConsole() = 0;
+        virtual bool CreateDummyTitleLevel(const std::string& levelPath) = 0;
     };
 
 

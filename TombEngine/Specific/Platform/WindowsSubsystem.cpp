@@ -1,5 +1,4 @@
 #include "framework.h"
-#include "SDL3/SDL.h"
 #include "Specific/Platform/WindowsSubsystem.h"
 
 #ifdef SDL_PLATFORM_WIN32
@@ -227,28 +226,48 @@ namespace TEN::Platform
         InstallExceptionFilter();
     }
 
-    void WindowsSubsystem::ShowErrorMessage(const std::string& text, MessageBoxIcon icon)
+    void WindowsSubsystem::ShowErrorMessage(const std::string& text)
     {
-        UINT flags = MB_OK;
-        switch (icon)
+        // Try to locate error message utility resource.
+        HRSRC res = FindResource(NULL, MAKEINTRESOURCE(IDR_CRASHMSG), "EXE");
+        if (!res)
+            return;
+
+        // Load executable, if found.
+        HGLOBAL resData = LoadResource(NULL, res);
+        if (!resData)
+            return;
+
+        // Lock executable resource to get pointer to data.
+        void* resPtr = LockResource(resData);
+        if (!resPtr)
+            return;
+
+        const auto exePath = std::string("crashmsg.exe");
+
+        // Write executable to a disk.
+        HANDLE hFile = CreateFileA(exePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hFile == INVALID_HANDLE_VALUE)
+            return;
+
+        DWORD written;
+        WriteFile(hFile, resPtr, SizeofResource(NULL, res), &written, NULL);
+        CloseHandle(hFile);
+
+        STARTUPINFOA si = { sizeof(si) };
+        PROCESS_INFORMATION pi;
+
+        // Execute the error message utility with the provided text.
+        std::string cmdLine = "\"" + exePath + "\" " + "\"" + text + "\"";
+        if (CreateProcessA(NULL, cmdLine.data(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
         {
-        case MessageBoxIcon::Info:
-            flags |= MB_ICONINFORMATION;
-            break;
-        case MessageBoxIcon::Warning:
-            flags |= MB_ICONWARNING;
-            break;
-        case MessageBoxIcon::Error:
-        default:
-            flags |= MB_ICONERROR;
-            break;
+            WaitForSingleObject(pi.hProcess, INFINITE);
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
         }
 
-        MessageBoxA(
-            nullptr,
-            text.c_str(),
-            "TombEngine",
-            flags);
+        // Clean up error message utility afterwards.
+        DeleteFileA(exePath.c_str());
     }
 
     void WindowsSubsystem::Tick()
@@ -350,6 +369,54 @@ namespace TEN::Platform
     void WindowsSubsystem::HideConsole()
     {
         FreeConsole();
+    }
+
+    bool WindowsSubsystem::CreateDummyTitleLevel(const std::string& levelPath)
+    {
+        // Try loading embedded resource "data.bin"
+        HRSRC hResource = FindResource(NULL, MAKEINTRESOURCE(IDR_TITLELEVEL), "BIN");
+        if (hResource == NULL)
+        {
+            TENLog("Embedded title level file not found.", LogLevel::Error);
+            return false;
+        }
+
+        // Load resource into memory.
+        HGLOBAL hGlobal = LoadResource(NULL, hResource);
+        if (hGlobal == NULL)
+        {
+            TENLog("Failed to load embedded title level file.", LogLevel::Error);
+            return false;
+        }
+
+        // Lock resource to get data pointer.
+        void* pData = LockResource(hGlobal);
+        DWORD dwSize = SizeofResource(NULL, hResource);
+
+        // Write resource data to file.
+        try
+        {
+            auto dir = std::filesystem::path(levelPath).parent_path();
+            if (!dir.empty())
+                std::filesystem::create_directories(dir);
+
+            auto outFile = std::ofstream(levelPath, std::ios::binary);
+            if (!outFile)
+                throw std::ios_base::failure("Failed to create title level file.");
+
+            outFile.write(reinterpret_cast<const char*>(pData), dwSize);
+            if (!outFile)
+                throw std::ios_base::failure("Failed to write to title level file.");
+
+            outFile.close();
+        }
+        catch (const std::exception& ex)
+        {
+            TENLog("Error while generating title level file: " + std::string(ex.what()), LogLevel::Error);
+            return false;
+        }
+
+        return true;
     }
 
 } // namespace TEN::Platform

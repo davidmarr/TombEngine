@@ -142,56 +142,6 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 	return resList;
 }
 
-// TODO: use xxd -i or bin2c for writing the level as C array instead of using
-// Windows resource system that is not portable to other platforms
-bool GenerateDummyLevel(const std::string& levelPath)
-{
-	// Try loading embedded resource "data.bin"
-	HRSRC hResource = FindResource(NULL, MAKEINTRESOURCE(IDR_TITLELEVEL), "BIN");
-	if (hResource == NULL)
-	{
-		TENLog("Embedded title level file not found.", LogLevel::Error);
-		return false;
-	}
-
-	// Load resource into memory.
-	HGLOBAL hGlobal = LoadResource(NULL, hResource);
-	if (hGlobal == NULL)
-	{
-		TENLog("Failed to load embedded title level file.", LogLevel::Error);
-		return false;
-	}
-
-	// Lock resource to get data pointer.
-	void* pData = LockResource(hGlobal);
-	DWORD dwSize = SizeofResource(NULL, hResource);
-
-	// Write resource data to file.
-	try
-	{
-		auto dir = std::filesystem::path(levelPath).parent_path();
-		if (!dir.empty())
-			std::filesystem::create_directories(dir);
-
-		auto outFile = std::ofstream(levelPath, std::ios::binary);
-		if (!outFile)
-			throw std::ios_base::failure("Failed to create title level file.");
-
-		outFile.write(reinterpret_cast<const char*>(pData), dwSize);
-		if (!outFile)
-			throw std::ios_base::failure("Failed to write to title level file.");
-
-		outFile.close();
-	}
-	catch (const std::exception& ex)
-	{
-		TENLog("Error while generating title level file: " + std::string(ex.what()), LogLevel::Error);
-		return false;
-	}
-
-	return true;
-}
-
 int SDLCALL ConsoleInput(void*)
 {
 	auto input = std::string();
@@ -407,7 +357,7 @@ int main(int argc, char* argv[])
 	{
 		auto errorMessage = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
 		TENLog(errorMessage, LogLevel::Error, LogConfig::All);
-		g_Platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
+		g_Platform->ShowErrorMessage(errorMessage);
 		ShutdownTENLog();
 		g_Platform->Shutdown();
 		return 0;
@@ -439,7 +389,7 @@ int main(int argc, char* argv[])
 	{
 		auto errorMessage = std::string("Failed to create SDL window: ") + SDL_GetError();
 		TENLog(errorMessage, LogLevel::Error);
-		g_Platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
+		g_Platform->ShowErrorMessage(errorMessage);
 		SDL_Quit();
 		g_Platform->Shutdown();
 		return 0;
@@ -468,7 +418,7 @@ int main(int argc, char* argv[])
 	{
 		auto errorMessage = "Error during game initialization: " + std::string(ex.what());
 		TENLog(errorMessage, LogLevel::Error);
-		g_Platform->ShowErrorMessage(errorMessage, MessageBoxIcon::Error);
+		g_Platform->ShowErrorMessage(errorMessage);
 		SDL_Quit();
 		g_Platform->Shutdown();
 		exit(EXIT_FAILURE);

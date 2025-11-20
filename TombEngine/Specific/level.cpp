@@ -1730,7 +1730,7 @@ bool LoadLevelFile(int levelIndex)
 		if (levelIndex == 0)
 		{
 			levelPath = assetDir + DUMMY_LEVEL_NAME;
-			GenerateDummyLevel(levelPath);
+			g_Platform->CreateDummyTitleLevel(levelPath);
 			TENLog("Title level file not found, using dummy level.", LogLevel::Info);
 			isDummyLevel = true;
 		}
