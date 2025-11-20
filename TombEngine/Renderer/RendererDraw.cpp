@@ -181,13 +181,10 @@ namespace TEN::Renderer
 				IRenderTargetBinding(_shadowMap->GetRenderTarget(), step),
 				IDepthTargetBinding(_shadowMap->GetDepthTarget(), step));
 			_graphicsDevice->SetViewport(_shadowMapViewport);
-			ResetScissor();
+			_graphicsDevice->SetScissor(_shadowMapViewport);
 
 			if (shadowLightPos == item->Position)
 				return;
-
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
 
 			// Set shaders.
 			_shaders.Bind(Shader::ShadowMap);
@@ -723,9 +720,6 @@ namespace TEN::Renderer
 					_shaders.Bind(Shader::InstancedStatics);
 				}
 
-				unsigned int stride = sizeof(Vertex);
-				unsigned int offset = 0;
-
 				_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 				_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
@@ -862,9 +856,6 @@ namespace TEN::Renderer
 						_shaders.Bind(Shader::InstancedStatics);
 					}
 
-					unsigned int stride = sizeof(Vertex);
-					unsigned int offset = 0;
-
 					_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 					_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
@@ -992,9 +983,6 @@ namespace TEN::Renderer
 					{
 						_shaders.Bind(Shader::InstancedStatics);
 					}
-
-					unsigned int stride = sizeof(Vertex);
-					unsigned int offset = 0;
 
 					_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
 					_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
@@ -1910,7 +1898,7 @@ namespace TEN::Renderer
 
 		// Reset viewport and scissor.
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		// Camera constant buffer contains matrices, camera position, fog values, and other things shared for all shaders.
 		CCameraMatrixBuffer cameraConstantBuffer;
@@ -1979,7 +1967,7 @@ namespace TEN::Renderer
 		_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
 
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		// Bind main render target again. Main depth buffer is already filled and avoids overdraw in following steps.
 		_graphicsDevice->BindRenderTarget(_renderTarget->GetRenderTarget(), _renderTarget->GetDepthTarget());
@@ -2328,7 +2316,7 @@ namespace TEN::Renderer
 		_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 		
 		_graphicsDevice->SetViewport(_viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(_viewport);
 
 		// Draw full screen background.
 		DrawFullScreenQuad(texture, Vector3::One, true, aspect);
@@ -3008,6 +2996,7 @@ namespace TEN::Renderer
 		viewport.MaxDepth = 1;
 
 		_graphicsDevice->SetViewport(viewport);
+		_graphicsDevice->SetScissor(viewport);
 
 		SetBlendMode(BlendMode::Opaque);
 		SetCullMode(CullMode::CounterClockwise);
@@ -3309,8 +3298,6 @@ namespace TEN::Renderer
 			_shaders.Bind(Shader::InstancedSprites);
 
 			// Set up vertex buffer and parameters.
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
 			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer.get());
 
 			auto rDrawSprite = RendererSpriteToDraw{};
@@ -4033,9 +4020,7 @@ namespace TEN::Renderer
 		// Must set correctly viewport because SSAO is done at 1/4 screen resolution.
 		RendererViewport viewport = { 0, 0, _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight(), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
-
-		RendererRectangle scissor = { 0, 0, _graphicsDevice->GetScreenWidth(), _graphicsDevice->GetScreenHeight() };
-		_graphicsDevice->SetScissor(scissor);
+		_graphicsDevice->SetScissor(viewport);
 	
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());

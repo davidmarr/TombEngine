@@ -119,9 +119,6 @@ namespace TEN::Renderer
 		if (!CheckIfSlotExists(ID_BAR_BORDER_GRAPHICS, "Bar rendering"))
 			return;
 
-		unsigned int strides = sizeof(Vertex);
-		unsigned int offset = 0;
-	
 		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 0.0f, 0xFF);
 		
 		_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
@@ -183,9 +180,6 @@ namespace TEN::Renderer
 		if (!g_GameFlow->GetSettings()->Hud.LoadingBar)
 			return;
 
-		unsigned int strides = sizeof(Vertex);
-		unsigned int offset = 0;
-		
 		_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 0.0f, 0xFF);
 	
 		_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
@@ -326,7 +320,7 @@ namespace TEN::Renderer
 
 		_graphicsDevice->BindRenderTarget(target, depthTarget);
 		_graphicsDevice->SetViewport(_viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(_viewport);
 
 		DrawFullScreenQuad(texture, Vector3(fade), true);
 	}

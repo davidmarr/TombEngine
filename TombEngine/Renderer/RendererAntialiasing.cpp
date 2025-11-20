@@ -29,7 +29,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 		SetDepthState(DepthState::Write, true);
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		// Common vertex shader to all fullscreen effects
 		_shaders.Bind(Shader::PostProcess);
@@ -110,7 +110,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 		SetDepthState(DepthState::Write, true);
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		// Common vertex shader to all fullscreen effects
 		_shaders.Bind(Shader::PostProcess);

@@ -800,9 +800,6 @@ namespace TEN::Renderer
 	{
 		constexpr auto AMBIENT_LIGHT_COLOR = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
 
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-
 		auto screenRes = GetScreenResolution();
 		auto factor = Vector2(
 			screenRes.x / DISPLAY_SPACE_RES.x,
@@ -1019,7 +1016,7 @@ namespace TEN::Renderer
 		renderTargets.push_back(_emissiveAndRoughnessRenderTarget->GetRenderTarget());
 
 		_graphicsDevice->SetViewport(_viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(_viewport);
 
 		_graphicsDevice->ClearRenderTarget2D(_renderTarget->GetRenderTarget(), Colors::Black);
 		_graphicsDevice->ClearRenderTarget2D(_emissiveAndRoughnessRenderTarget->GetRenderTarget(), Colors::Transparent);
@@ -1030,9 +1027,6 @@ namespace TEN::Renderer
 
 		_graphicsDevice->BindRenderTargets(renderTargets, _renderTarget->GetDepthTarget());
 		_graphicsDevice->ClearDepthStencil(_renderTarget->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
 
 		// Set vertex buffer.
 		_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
@@ -1126,7 +1120,7 @@ namespace TEN::Renderer
 			// Bind back buffer.
 			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 			_graphicsDevice->SetViewport(_viewport);
-			ResetScissor();
+			_graphicsDevice->SetScissor(_viewport);
 
 			// Draw full screen background.
 			DrawFullScreenQuad(_dumpScreenRenderTarget->GetRenderTarget(), Vector3::One);
@@ -1167,7 +1161,7 @@ namespace TEN::Renderer
 			// Bind back buffer.
 			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
 			_graphicsDevice->SetViewport(_viewport);
-			ResetScissor();
+			_graphicsDevice->SetScissor(_viewport);
 
 			// Draw fullscreen background. If unavailable, draw last dumped game scene.
 			if (_loadingScreenTexture)

@@ -360,7 +360,7 @@ namespace TEN::Video
 	void VideoHandler::Stop()
 	{
 		DeinitializePlayer();
-		delete _videoTexture;
+		DeinitializeVideoTexture();
 
 		// Don't unset this flag until the native texture is released, otherwise it may crash when trying to render the texture.
 		_needRender = false;
@@ -376,7 +376,7 @@ namespace TEN::Video
 		// Attempt to map and render texture only if callback has set frame to be rendered.
 		if (_needRender)
 		{
-			_device->UpdateTexture2D(_videoTexture, (byte*)(_frameBuffer.data()));
+			_device->UpdateTexture2D(_videoTexture.get(), _frameBuffer);
 
 			if (_playbackMode == VideoPlaybackMode::Exclusive)
 			{
@@ -462,7 +462,7 @@ namespace TEN::Video
 
 	void VideoHandler::RenderExclusive()
 	{
-		g_Renderer.RenderFullScreenTexture(_videoTexture, (float)_size.x / (float)_size.y);
+		g_Renderer.RenderFullScreenTexture(_videoTexture.get(), (float)_size.x / (float)_size.y);
 	}
 
 	void VideoHandler::UpdateBackground()
@@ -488,12 +488,7 @@ namespace TEN::Video
 
 	void VideoHandler::RenderBackground()
 	{
-		/*_texture.Width = _size.x;
-		_texture.Height = _size.y;
-		_texture.Texture = _videoTexture;
-		_texture.ShaderResourceView = _textureView;*/
-
-		g_Renderer.UpdateVideoTexture(_videoTexture);
+		g_Renderer.UpdateVideoTexture(_videoTexture.get());
 	}
 
 	bool VideoHandler::HandleError()
@@ -521,52 +516,19 @@ namespace TEN::Video
 		
 		_frameBuffer.resize(_size.x * _size.y * 4);
 
-		//_videoTexture = _device->CreateTexture2D(_size.x, _size.y, SurfaceFormat::SF_BGRA8_Unorm);
-
-		/*auto texDesc = D3D11_TEXTURE2D_DESC{};
-		texDesc.Width = _size.x;
-		texDesc.Height = _size.y;
-		texDesc.MipLevels = 1;
-		texDesc.ArraySize = 1;
-		texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		texDesc.SampleDesc.Count = 1;
-		texDesc.Usage = D3D11_USAGE_DYNAMIC;
-		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		texDesc.MiscFlags = 0;
-
-		if (FAILED(_d3dDevice->CreateTexture2D(&texDesc, nullptr, &_videoTexture)))
-		{
-			TENLog("Failed to create video texture", LogLevel::Error);
-			return false;
-		}
-
-		if (_videoTexture != nullptr && FAILED(_d3dDevice->CreateShaderResourceView(_videoTexture, nullptr, &_textureView)))
-		{
-			TENLog("Failed to create shader resource view", LogLevel::Error);
-			return false;
-		}*/
+		_videoTexture = _device->CreateTexture2D(_size.x, _size.y, SurfaceFormat::SF_BGRA8_Unorm);
 
 		return true;
 	}
 
 	void VideoHandler::DeinitializeVideoTexture()
 	{
-		delete _videoTexture;
-
-		/*if (_videoTexture != nullptr)
+		if (_videoTexture != nullptr)
 		{
-			_videoTexture->Release();
+			_videoTexture.release();
 			_videoTexture = nullptr;
 		}
 
-		if (_textureView != nullptr)
-		{
-			_textureView->Release();
-			_textureView = nullptr;
-		}*/
-
-		_texture = {};
 		_frameBuffer.clear();
 
 		_size = Vector2i::Zero;

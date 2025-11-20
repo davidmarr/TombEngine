@@ -283,8 +283,6 @@ namespace TEN::Renderer
 				_shaders.Bind(Shader::InstancedSprites);
 
 				// Set up vertex buffer and parameters.
-				unsigned int stride = sizeof(Vertex);
-				unsigned int offset = 0;
 				_graphicsDevice->BindVertexBuffer(_quadVertexBuffer.get());
 
 				wasGpuSet = true;
@@ -449,9 +447,6 @@ namespace TEN::Renderer
 		BindTexture(TextureRegister::ColorMap, object->Sprite->Sprite->Texture, SamplerStateRegister::LinearClamp);
 		
 		// Set up vertex buffer and parameters.
-		unsigned int stride = sizeof(Vertex);
-		unsigned int offset = 0;
-
 		if (object->Sprite->Type != SpriteType::ThreeD)
 		{
 			_graphicsDevice->BindVertexBuffer(_quadVertexBuffer.get());
@@ -505,9 +500,6 @@ namespace TEN::Renderer
 	{
 		if (lastObjectType != objectInfo->ObjectType)
 		{
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
-
 			_shaders.Bind(Shader::InstancedSprites);
 
 			_graphicsDevice->BindVertexBuffer(_sortedPolygonsVertexBuffer.get());

@@ -1,4 +1,7 @@
 #include "framework.h"
+
+#ifdef SDL_PLATFORM_WIN32
+
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
 #include "Specific/engine_main.h"
 #include "Specific/configuration.h"
@@ -419,6 +422,17 @@ namespace TEN::Renderer::Native::DirectX11
 		rects[0].right = dxViewport.Width;
 		rects[0].top = dxViewport.TopLeftY;
 		rects[0].bottom = dxViewport.Height;
+
+		_context->RSSetScissorRects(1, rects);
+	}
+
+	void DX11GraphicsDevice::SetScissor(RendererViewport viewport)
+	{
+		D3D11_RECT rects[1];
+		rects[0].left = viewport.X;
+		rects[0].right = viewport.Width;
+		rects[0].top = viewport.Y;
+		rects[0].bottom = viewport.Height;
 
 		_context->RSSetScissorRects(1, rects);
 	}
@@ -960,8 +974,27 @@ namespace TEN::Renderer::Native::DirectX11
 		return std::make_unique<DX11Texture2D>();
 	}
 
-	void DX11GraphicsDevice::UpdateTexture2D(ITexture2D* texture, byte* data)
+	void DX11GraphicsDevice::UpdateTexture2D(ITexture2D* texture, std::vector<char> data)
 	{
+		auto dxTexture = static_cast<DX11Texture2D*>(texture);
+		auto dxNativeTexture = dxTexture->GetD3D11Texture();
+		
+		int width = texture->GetWidth();
+		int height = texture->GetHeight();
+
+		auto mappedResource = D3D11_MAPPED_SUBRESOURCE{};
+		if (dxNativeTexture && SUCCEEDED(_context->Map(dxNativeTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
+		{
+			// Copy framebuffer row by row, otherwise skewing may occur.
+			unsigned char* pData = reinterpret_cast<unsigned char*>(mappedResource.pData);
+			for (int row = 0; row < height; row++)
+				memcpy(pData + row * mappedResource.RowPitch, data.data() + row * width * 4, width * 4);
+			_context->Unmap(dxNativeTexture, 0);
+		}
+		else
+		{
+			TENLog("Failed to render video texture", LogLevel::Error);
+		}
 
 	}
 
@@ -980,3 +1013,5 @@ namespace TEN::Renderer::Native::DirectX11
 		return _screenHeight;
 	}
 }
+
+#endif

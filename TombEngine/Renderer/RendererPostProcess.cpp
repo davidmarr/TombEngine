@@ -12,7 +12,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise);
 		SetDepthState(DepthState::Write);
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		float screenFadeFactor = renderMode == SceneRenderMode::Full ? ScreenFadeCurrent : 1.0f;
 		float cinematicBarsHeight = renderMode == SceneRenderMode::Full ? Smoothstep(CinematicBarsHeight) * SPOTCAM_CINEMATIC_BARS_HEIGHT : 0.0f;
@@ -26,10 +26,6 @@ namespace TEN::Renderer
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
-
-		unsigned int stride = sizeof(PostProcessVertex);
-		unsigned int offset = 0;
-
 		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		_shaders.Bind(Shader::PostProcess);
@@ -152,7 +148,7 @@ namespace TEN::Renderer
 		SetCullMode(CullMode::CounterClockwise, true);
 		SetDepthState(DepthState::Write, true);
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		// Common vertex shader to all fullscreen effects
 		_shaders.Bind(Shader::PostProcess);
@@ -160,9 +156,6 @@ namespace TEN::Renderer
 		// We draw a fullscreen triangle
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
-
-		unsigned int stride = sizeof(PostProcessVertex);
-		unsigned int offset = 0;
 
 		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
@@ -178,9 +171,7 @@ namespace TEN::Renderer
 	{
 		RendererViewport viewport = { 0, 0, (int)( _graphicsDevice->GetScreenWidth() / factor), (int)( _graphicsDevice->GetScreenHeight() / factor), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
-
-		RendererRectangle scissor = { 0, 0, viewport.Width , viewport.Height };
-		_graphicsDevice->SetScissor(scissor);
+		_graphicsDevice->SetScissor(viewport);
 
 		SetBlendMode(BlendMode::Opaque, true);
 		SetCullMode(CullMode::CounterClockwise, true);
@@ -212,10 +203,7 @@ namespace TEN::Renderer
 
 		RendererViewport viewport = { 0, 0, (int)( _graphicsDevice->GetScreenWidth() / GLOW_DOWNSCALE_FACTOR), (int)( _graphicsDevice->GetScreenHeight() / GLOW_DOWNSCALE_FACTOR), 0.0f, 1.0f };
 		_graphicsDevice->SetViewport(viewport);
-
-		RendererRectangle scissor = { 0, 0, viewport.Width , viewport.Height };
-		_graphicsDevice->SetScissor(scissor);
-
+		_graphicsDevice->SetScissor(viewport);
 
 		_shaders.Bind(Shader::PostProcess);
 
@@ -223,10 +211,6 @@ namespace TEN::Renderer
 
 		_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 		_graphicsDevice->SetInputLayout(_fullScreenVertexInputLayout.get());
-
-		unsigned int stride = sizeof(PostProcessVertex);
-		unsigned int offset = 0;
-
 		_graphicsDevice->BindVertexBuffer(_fullscreenTriangleVertexBuffer.get());
 
 		// Downscale 
@@ -270,7 +254,7 @@ namespace TEN::Renderer
 
 		// Reset viewport
 		_graphicsDevice->SetViewport(view.Viewport);
-		ResetScissor();
+		_graphicsDevice->SetScissor(view.Viewport);
 
 		// Copy render target to temp render target
 		CopyRenderTarget(renderTarget, _postProcessRenderTarget[0].get(), view);
