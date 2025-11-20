@@ -984,7 +984,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Specific\Structures\SpatialHash.h" />
     <ClInclude Include="Specific\trutils.h" />
     <ClInclude Include="Specific\Video\Video.h" />
-    <ClInclude Include="Specific\engine_main.h" />
+    <ClInclude Include="Specific\EngineMain.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="targetver.h" />
@@ -1421,7 +1421,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Specific\Structures\SpatialHash.cpp" />
     <ClCompile Include="Specific\trutils.cpp" />
     <ClCompile Include="Specific\Video\Video.cpp" />
-    <ClCompile Include="Specific\engine_main.cpp" />
+    <ClCompile Include="Specific\EngineMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Objects\Generic\Switches\rail_switch.h" />

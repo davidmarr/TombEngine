@@ -2,7 +2,6 @@
 #include "framework.h"
 #include <memory>
 #include <string>
-#include <SDL3/SDL.h>
 
 namespace TEN::Platform
 {

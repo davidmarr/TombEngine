@@ -5,7 +5,7 @@
 #include "Sound/sound.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/engine_main.h"
+#include "Specific/EngineMain.h"
 
 using namespace TEN::Input;
 

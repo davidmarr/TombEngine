@@ -1,5 +1,4 @@
 #pragma once
-#include <sdl3/SDL.h>
 #include "Game/animation.h"
 #include "Game/control/trigger.h"
 #include "Game/items.h"

@@ -9,7 +9,7 @@
 #include "Specific/memory/Vector.h"
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
-#include "Specific/engine_main.h"
+#include "Specific/EngineMain.h"
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
 
 extern GameConfiguration g_Configuration;

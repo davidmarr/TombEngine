@@ -1,5 +1,4 @@
 #pragma once
-#include <SDL3/SDL.h>
 
 #ifdef SDL_PLATFORM_WIN32
 

@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include "Specific/clock.h"
-#include "Specific/engine_main.h"
+#include "Specific/EngineMain.h"
 
 constexpr auto CONTROL_FRAME_TIME = 1000.0f / 30.0f;
 constexpr auto DEBUG_SKIP_FRAME_TIME = 10 * CONTROL_FRAME_TIME;

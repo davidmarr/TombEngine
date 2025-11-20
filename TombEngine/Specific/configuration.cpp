@@ -14,7 +14,7 @@
 #include "Scripting/Internal/LanguageScript.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/engine_main.h"
+#include "Specific/EngineMain.h"
 #include "Sound/sound.h"
 
 using namespace TEN::Input;

@@ -3,7 +3,7 @@
 #ifdef SDL_PLATFORM_WIN32
 
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
-#include "Specific/engine_main.h"
+#include "Specific/EngineMain.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
 #include <wincodec.h>

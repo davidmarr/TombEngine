@@ -2,7 +2,6 @@
 #include <vector>
 #include "Specific/fast_vector.h"
 #include <string>
-#include <sdl3/SDL.h>
 #include <SimpleMath.h>
 #include "Renderer/Graphics/IIndexBuffer.h"
 #include "Renderer/Graphics/IVertexBuffer.h"

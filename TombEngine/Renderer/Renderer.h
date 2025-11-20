@@ -1,7 +1,6 @@
 #pragma once
 #include <wrl/client.h>
 #include <SimpleMath.h>
-#include <SDL3/SDL.h>
 #include "Math/Math.h"
 #include "Game/control/box.h"
 #include "Game/items.h"
