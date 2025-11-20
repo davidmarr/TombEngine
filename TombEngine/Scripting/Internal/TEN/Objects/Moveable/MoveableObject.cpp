@@ -1315,7 +1315,6 @@ bool Moveable::MeshExists(int index) const
 
 /// Attach camera to the moveable's current position, and target another moveable.
 // The camera's position and target position will be maintained until this function is called again.
-// *If the moveable or the targets are moving, you should probably call this continuously.*
 // Use @{View.ResetObjCamera} to restore the regular camera.
 // @function Moveable:AttachObjCamera
 // @tparam int mesh Mesh of the moveable to which the camera will be attached.
