@@ -12,7 +12,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed FIREROPE and EARTHQUAKE objects not working.
 * Fixed FIRE_PENDULUM crashing the game.
 * Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
-* Fixed original bug that prevented performing a 2-click vault while holding a torch.
+* Fixed original bug that prevented performing vault animations while holding a torch.
 * Fixed interaction highlighter not appearing for SEARCH_OBJECT objects.
 * Fixed fireflies not interpolating in high framerate mode and not emitting dynamic lights.
 * Fixed performance issues with shatterable static meshes.
