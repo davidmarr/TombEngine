@@ -1519,6 +1519,17 @@ std::optional<VaultTestResult> TestLaraVault(ItemInfo* item, CollisionInfo* coll
 			return vaultResult;
 		}
 
+		// Vault to stand up three steps.
+		vaultResult = TestLaraVault3Steps(item, coll);
+		if (vaultResult.has_value())
+		{
+			vaultResult->TargetState = LS_VAULT_3_STEPS;
+			if (!HasStateDispatch(item, vaultResult->TargetState))
+				return std::nullopt;
+
+			return vaultResult;
+		}
+
 		// All other vault tests are invalid with torch in hand.
 		if (torchInHand)
 			return std::nullopt;
@@ -1539,17 +1550,6 @@ std::optional<VaultTestResult> TestLaraVault(ItemInfo* item, CollisionInfo* coll
 		if (vaultResult.has_value() && settings.CrawlExtended)
 		{
 			vaultResult->TargetState = LS_VAULT_2_STEPS_CROUCH;
-			if (!HasStateDispatch(item, vaultResult->TargetState))
-				return std::nullopt;
-
-			return vaultResult;
-		}
-
-		// Vault to stand up three steps.
-		vaultResult = TestLaraVault3Steps(item, coll);
-		if (vaultResult.has_value())
-		{
-			vaultResult->TargetState = LS_VAULT_3_STEPS;
 			if (!HasStateDispatch(item, vaultResult->TargetState))
 				return std::nullopt;
 

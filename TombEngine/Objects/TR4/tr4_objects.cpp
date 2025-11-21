@@ -579,6 +579,7 @@ namespace TEN::Entities
 		obj = &Objects[ID_FIREROPE];
 		if (obj->loaded)
 		{
+			obj->Initialize = InitializeFireRope;
 			obj->control = FireRopeControl;
 			obj->collision = FireRopeCollision;
 		}
