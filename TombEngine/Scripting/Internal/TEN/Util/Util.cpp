@@ -68,7 +68,6 @@ namespace TEN::Scripting::Util
 	// @usage 
 	// -- Example: Display a string at the player's position.
 	// local displayPos = TEN.Util.GetDisplayPosition(Lara:GetPosition())
-	// string:SetPosition(TEN.Util.PercentToScreen(displayPos))
 	// local string = TEN.Strings.DisplayString('You are here!', displayPos)
 	// ShowString(string, 4)
 	static sol::optional<Vec2> GetDisplayPosition(const Vec3& worldPos)
