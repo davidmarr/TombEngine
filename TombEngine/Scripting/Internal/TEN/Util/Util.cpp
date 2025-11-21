@@ -24,7 +24,7 @@ using TEN::Renderer::g_Renderer;
 
 namespace TEN::Scripting::Util
 {
-	/// Utility functions for various calculations.
+	/// Utility functions for various calculations.<style>table.function_list td.name {min-width: 290px;}</style>
 	// @tentable Util
 	// @pragma nostrip
 
@@ -36,7 +36,7 @@ namespace TEN::Scripting::Util
 	// @treturn bool true if there is a line of sight, false if not.
 	// @usage
 	// local flamePlinthPos = flamePlinth:GetPosition() + Vec3(0, flamePlinthHeight, 0);
-	// print(Misc.HasLineOfSight(enemyHead:GetRoomNumber(), enemyHead:GetPosition(), flamePlinthPos))
+	// print(TEN.Util.HasLineOfSight(enemyHead:GetRoomNumber(), enemyHead:GetPosition(), flamePlinthPos))
 	static bool HasLineOfSight(int roomID, const Vec3& posA, const Vec3& posB)
 	{
 		auto vector0 = posA.ToGameVector();
@@ -52,6 +52,8 @@ namespace TEN::Scripting::Util
 	// @tparam Vec3 posA First position.
 	// @tparam Vec3 posB Second position.
 	// @treturn float Horizontal distance between the two positions.
+	// @usage
+	// local dist = TEN.Util.CalculateHorizontalDistance(Lara:GetPosition(), enemyHead:GetPosition())
 	static float CalculateHorizontalDistance(const Vec3& posA, const Vec3& posB)
 	{
 		auto pos0 = Vector2(posA.x, posA.z);
@@ -64,10 +66,11 @@ namespace TEN::Scripting::Util
 	// @tparam Vec3 worldPos 3D world position.
 	// @treturn Vec2 Projected display space position in percent.
 	// @usage 
-	// Example: Display a string at the player's position.
-	// local string = DisplayString('Example', 0, 0, Color(255, 255, 255), false)
-	// local displayPos = GetDisplayPosition(Lara:GetPosition())
-	// string:SetPosition(PercentToScreen(displayPos.x, displayPos.y))
+	// -- Example: Display a string at the player's position.
+	// local displayPos = TEN.Util.GetDisplayPosition(Lara:GetPosition())
+	// string:SetPosition(TEN.Util.PercentToScreen(displayPos))
+	// local string = TEN.Strings.DisplayString('You are here!', displayPos)
+	// ShowString(string, 4)
 	static sol::optional<Vec2> GetDisplayPosition(const Vec3& worldPos)
 	{
 		auto displayPos = g_Renderer.Get2DPosition(worldPos.ToVector3());
@@ -88,9 +91,10 @@ namespace TEN::Scripting::Util
 	//@treturn int y Y coordinate in pixels.
 	//@usage	
 	//local halfwayX, halfwayY = PercentToScreen(50, 50)
-	//local baddy
-	//local spawnLocationNullmesh = GetMoveableByName("position_behind_left_pillar")
-	//local str1 = DisplayString("You spawned an enemy!", halfwayX, halfwayY, Color(255, 100, 100), false, { DisplayStringOption.SHADOW, DisplayStringOption.CENTER })
+	//local ScreenPos = Vec2(halfwayX, halfwayY)
+	//local spawnLocationNullmesh = TEN.Objects.GetMoveableByName("position_behind_left_pillar")
+	//local flags = { DisplayStringOption.SHADOW, DisplayStringOption.CENTER }
+	//local str1 = TEN.Strings.DisplayString("You spawned an enemy!", ScreenPos, Color(255, 100, 100), false, flags)
 	//
 	//LevelFuncs.triggerOne = function(obj) 
 	//	ShowString(str1, 4)
@@ -105,6 +109,22 @@ namespace TEN::Scripting::Util
 		return std::make_tuple(resX, resY);
 	}
 
+	/// Translate a Vec2 of display position coordinates to Vec2 pixel coordinates.
+	//To be used with @{Strings.DisplayString:SetPosition} and @{Strings.DisplayString}.
+	//@function PercentToScreen
+	//@tparam Vec2 percentPos Display position to translate to pixel coordinates.
+	//@treturn Vec2 Pixel coordinates.
+	//@usage
+	//local percentPos = Vec2(25, 75)
+	//local screenPos = TEN.Util.PercentToScreen(percentPos)
+	//local str1 = TEN.Strings.DisplayString("Position at 25% X and 75% Y", screenPos)
+	//ShowString(str1, 4)
+	static Vec2 PercentToScreen(const Vec2& percentPos)
+	{
+		auto [screenX, screenY] = PercentToScreen(percentPos.x, percentPos.y);
+		return Vec2(screenX, screenY);
+	}
+
 	/// Translate a pair of pixel coordinates to display position coordinates.
 	//To be used with @{Strings.DisplayString:GetPosition}.
 	//@function ScreenToPercent
@@ -112,6 +132,8 @@ namespace TEN::Scripting::Util
 	//@tparam int y Y pixel coordinate to translate to display position.
 	//@treturn float x X component of display position.
 	//@treturn float y Y component of display position.
+	//@usage
+	//local percentX, percentY = TEN.Util.ScreenToPercent(800, 600)
 	static std::tuple<float, float> ScreenToPercent(int x, int y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -121,10 +143,34 @@ namespace TEN::Scripting::Util
 		return std::make_tuple(resX, resY);
 	}
 
+	/// Translate a Vec2 of pixel coordinates to Vec2 display position coordinates.
+	//To be used with @{Strings.DisplayString:GetPosition}.
+	//@function ScreenToPercent
+	//@tparam Vec2 screenPos Pixel coordinates to translate to display position.
+	//@treturn Vec2 Display position.
+	//@usage
+	//local screenPos = Vec2(400, 300)
+	//local percentPos = Util.ScreenToPercent(screenPos)
+	//print('Percent X: ' .. percentPos.x .. ' Percent Y: ' .. percentPos.y)
+	static Vec2 ScreenToPercent(const Vec2& screenPos)
+	{
+		auto [percentX, percentY] = ScreenToPercent((int)screenPos.x, (int)screenPos.y);
+		return Vec2(percentX, percentY);
+	}
+
 	/// Pick a moveable by the given display position.
 	// @function PickMoveableByDisplayPosition
 	// @tparam Vec2 position Display space position in percent.
 	// @treturn Objects.Moveable Picked moveable (nil if no moveable was found under the cursor).
+	// @usage
+	// -- Example: Pick a moveable at the center of the screen.
+	// local screenCenter = Vec2(50, 50)
+	// local pickedMoveable = TEN.Util.PickMoveableByDisplayPosition(screenCenter)
+	// if pickedMoveable then
+	//     print("Picked moveable: " .. pickedMoveable:GetName())
+	// else
+	//     print("No moveable found at the center of the screen.")
+	// end
 	static sol::optional <std::unique_ptr<Moveable>> PickMoveable(const Vec2& screenPos)
 	{
 		auto realScreenPos = PercentToScreen(screenPos.x, screenPos.y);
@@ -143,6 +189,15 @@ namespace TEN::Scripting::Util
 	// @function PickStaticByDisplayPosition
 	// @tparam Vec2 position Display space position in percent.
 	// @treturn Objects.Static Picked static mesh (nil if no static mesh was found under the cursor).
+	// @usage
+	// -- Example: Pick a static mesh at the center of the screen.
+	// local screenCenter = Vec2(50, 50)
+	// local pickedStatic = TEN.Util.PickStaticByDisplayPosition(screenCenter)
+	// if pickedStatic then
+	//     print("Picked static mesh.")
+	// else
+	//     print("No static mesh found at the center of the screen.")
+	// end
 	static sol::optional <std::unique_ptr<Static>> PickStatic(const Vec2& screenPos)
 	{
 		auto realScreenPos = PercentToScreen(screenPos.x, screenPos.y);
@@ -197,8 +252,18 @@ namespace TEN::Scripting::Util
 		tableUtil.set_function(ScriptReserved_GetDisplayPosition, &GetDisplayPosition);
 		tableUtil.set_function(ScriptReserved_PickMoveable, &PickMoveable);
 		tableUtil.set_function(ScriptReserved_PickStatic, &PickStatic);
-		tableUtil.set_function(ScriptReserved_PercentToScreen, &PercentToScreen);
-		tableUtil.set_function(ScriptReserved_ScreenToPercent, &ScreenToPercent);
+		tableUtil.set_function(ScriptReserved_PercentToScreen,
+			sol::overload(
+				static_cast<std::tuple<int, int>(*)(float, float)>(&PercentToScreen),
+				static_cast<Vec2(*)(const Vec2&)>(&PercentToScreen)
+			)
+		);
+		tableUtil.set_function(ScriptReserved_ScreenToPercent,
+			sol::overload(
+				static_cast<std::tuple<float, float>(*)(int, int)>(&ScreenToPercent),
+				static_cast<Vec2(*)(const Vec2&)>(&ScreenToPercent)
+			)
+		);
 		tableUtil.set_function(ScriptReserved_PrintLog, &PrintLog);
 
 		// COMPATIBILITY
