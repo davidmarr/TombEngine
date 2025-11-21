@@ -89,8 +89,8 @@ namespace TEN::Scripting::Util
 	//@treturn int x X coordinate in pixels.
 	//@treturn int y Y coordinate in pixels.
 	//@usage	
-	//local halfwayX, halfwayY = PercentToScreen(50, 50)
-	//local ScreenPos = Vec2(halfwayX, halfwayY)
+	//local halfwayX, halfwayY = TEN.Util.PercentToScreen(50, 50)
+	//local ScreenPos = TEN.Vec2(halfwayX, halfwayY)
 	//local spawnLocationNullmesh = TEN.Objects.GetMoveableByName("position_behind_left_pillar")
 	//local flags = { DisplayStringOption.SHADOW, DisplayStringOption.CENTER }
 	//local str1 = TEN.Strings.DisplayString("You spawned an enemy!", ScreenPos, Color(255, 100, 100), false, flags)
@@ -114,7 +114,7 @@ namespace TEN::Scripting::Util
 	//@tparam Vec2 percentPos Display position to translate to pixel coordinates.
 	//@treturn Vec2 Pixel coordinates.
 	//@usage
-	//local percentPos = Vec2(25, 75)
+	//local percentPos = TEN.Vec2(25, 75)
 	//local screenPos = TEN.Util.PercentToScreen(percentPos)
 	//local str1 = TEN.Strings.DisplayString("Position at 25% X and 75% Y", screenPos)
 	//ShowString(str1, 4)
@@ -148,7 +148,7 @@ namespace TEN::Scripting::Util
 	//@tparam Vec2 screenPos Pixel coordinates to translate to display position.
 	//@treturn Vec2 Display position.
 	//@usage
-	//local screenPos = Vec2(400, 300)
+	//local screenPos = TEN.Vec2(400, 300)
 	//local percentPos = Util.ScreenToPercent(screenPos)
 	//print('Percent X: ' .. percentPos.x .. ' Percent Y: ' .. percentPos.y)
 	static Vec2 ScreenToPercent(const Vec2& screenPos)
@@ -163,7 +163,7 @@ namespace TEN::Scripting::Util
 	// @treturn Objects.Moveable Picked moveable (nil if no moveable was found under the cursor).
 	// @usage
 	// -- Example: Pick a moveable at the center of the screen.
-	// local screenCenter = Vec2(50, 50)
+	// local screenCenter = TEN.Vec2(50, 50)
 	// local pickedMoveable = TEN.Util.PickMoveableByDisplayPosition(screenCenter)
 	// if pickedMoveable then
 	//     print("Picked moveable: " .. pickedMoveable:GetName())
@@ -190,7 +190,7 @@ namespace TEN::Scripting::Util
 	// @treturn Objects.Static Picked static mesh (nil if no static mesh was found under the cursor).
 	// @usage
 	// -- Example: Pick a static mesh at the center of the screen.
-	// local screenCenter = Vec2(50, 50)
+	// local screenCenter = TEN.Vec2(50, 50)
 	// local pickedStatic = TEN.Util.PickStaticByDisplayPosition(screenCenter)
 	// if pickedStatic then
 	//     print("Picked static mesh.")
@@ -225,11 +225,11 @@ namespace TEN::Scripting::Util
 	//@tparam[opt] bool allowSpam If true, allows continuous spamming of the message.
 	// 
 	//@usage
-	//PrintLog('test info log', LogLevel.INFO)
-	//PrintLog('test warning log', LogLevel.WARNING)
-	//PrintLog('test error log', LogLevel.ERROR)
+	//TEN.Util.PrintLog('test info log', LogLevel.INFO)
+	//TEN.Util.PrintLog('test warning log', LogLevel.WARNING)
+	//TEN.Util.PrintLog('test error log', LogLevel.ERROR)
 	//-- spammed message
-	//PrintLog('test spam log', LogLevel.INFO, true)
+	//TEN.Util.PrintLog('test spam log', LogLevel.INFO, true)
 	// 
 	static void PrintLog(const std::string& message, const LogLevel& level, TypeOrNil<bool> allowSpam)
 	{
