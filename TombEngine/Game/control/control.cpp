@@ -26,7 +26,7 @@
 #include "Game/effects/tomb4fx.h"
 #include "Game/effects/weather.h"
 #include "Game/Gui.h"
-#include "Game/Hud/DrawItems.h"
+#include "Game/Hud/DrawItems/DrawItems.h"
 #include "Game/Hud/Hud.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_cheat.h"
