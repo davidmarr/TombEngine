@@ -51,9 +51,29 @@ namespace TEN::Hud
 		ItemColor = newColor;
 	}
 
+	void DisplayItem::SetItemVisibility(bool visible)
+	{
+		Visible = visible;
+	}
+
 	void DisplayItem::SetItemMeshBits(int meshbits)
 	{
 		MeshBits = meshbits;
+	}
+
+	void DisplayItem::SetItemMeshVisibility(int meshIndex, bool isVisible)
+	{
+		if (!MeshExists(meshIndex))
+			return;
+
+		if (isVisible)
+		{
+			MeshBits.Set(meshIndex);
+		}
+		else
+		{
+			MeshBits.Clear(meshIndex);
+		}
 	}
 
 	void DisplayItem::SetItemMeshRotation(int meshIndex, const EulerAngles& newRot, bool disableInterpolation)
@@ -62,11 +82,6 @@ namespace TEN::Hud
 			PrevMeshRotations[meshIndex] = newRot;
 
 		MeshRotations[meshIndex] = newRot;
-	}
-
-	void DisplayItem::SetItemVisibility(bool visible)
-	{
-		Visible = visible;
 	}
 
 	std::string DisplayItem::GetItemName() const
@@ -99,9 +114,19 @@ namespace TEN::Hud
 		return ItemColor;
 	}
 
+	bool DisplayItem::GetItemVisibility() const
+	{
+		return Visible;
+	}
+
 	int DisplayItem::GetItemMeshBits() const
 	{
-		return MeshBits;
+		return MeshBits.ToPackedBits();
+	}
+
+	bool DisplayItem::GetItemMeshVisibility(int meshIndex) const
+	{
+		return MeshBits.Test(meshIndex);
 	}
 
 	EulerAngles DisplayItem::GetItemMeshRotation(int meshIndex) const
@@ -112,11 +137,6 @@ namespace TEN::Hud
 		else
 			return EulerAngles::Identity;
 
-	}
-
-	bool DisplayItem::GetItemVisibility() const
-	{
-		return Visible;
 	}
 
 	// Interpolation Helpers
@@ -162,4 +182,15 @@ namespace TEN::Hud
 
 		return EulerAngles::Lerp(itPrev->second, itNow->second, t);
 	}
+
+	bool DisplayItem::MeshExists(int index) const
+	{
+		if (index < 0 || index >= Objects[ObjectID].nmeshes)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 }

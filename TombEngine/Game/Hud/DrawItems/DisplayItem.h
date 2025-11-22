@@ -2,8 +2,10 @@
 #include "framework.h"
 #include "Math/Math.h"
 #include "Objects/game_object_ids.h"
+#include "Specific/Structures/BitField.h"
 
 using namespace TEN::Math;
+using namespace TEN::Utils;
 
 namespace TEN::Hud
 {
@@ -21,7 +23,7 @@ namespace TEN::Hud
 
 		Color ItemColor = Vector4::One;
 
-		int MeshBits = 0u;
+		BitField MeshBits = BitField::Default;
 
 		Vector3		PrevPosition = Vector3::Zero;
 		EulerAngles PrevOrientation = EulerAngles::Identity;
@@ -40,9 +42,10 @@ namespace TEN::Hud
 		void SetItemRotation(const EulerAngles& newRot, bool disableInterpolation);
 		void SetItemScale(float newScale, bool disableInterpolation);
 		void SetItemColor(Color& newColor, bool disableInterpolation);
-		void SetItemMeshBits(int meshbits);
-		void SetItemMeshRotation(int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 		void SetItemVisibility(bool visible);
+		void SetItemMeshBits(int meshbits);
+		void SetItemMeshVisibility(int meshIndex, bool visible);
+		void SetItemMeshRotation(int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 
 		std::string GetItemName() const;
 		GAME_OBJECT_ID GetItemObjectID() const;
@@ -50,10 +53,11 @@ namespace TEN::Hud
 		EulerAngles GetItemRotation() const;
 		float GetItemScale() const;
 		Color GetItemColor() const;
-		int GetItemMeshBits() const;
-		EulerAngles GetItemMeshRotation(int meshIndex) const;
 		bool GetItemVisibility() const;
-
+		int GetItemMeshBits() const;
+		bool GetItemMeshVisibility(int meshIndex) const;
+		EulerAngles GetItemMeshRotation(int meshIndex) const;
+		
 		// Interpolation Helpers
 		void StoreInterpolationData();
 		Vector3 GetInterpolatedPosition(float t) const;
@@ -61,6 +65,9 @@ namespace TEN::Hud
 		float GetInterpolatedScale(float t) const;
 		Color GetInterpolatedColor(float t) const;
 		EulerAngles GetInterpolatedMeshRotation(int meshIndex, float t) const;
+
+		//Utilities
+		bool MeshExists(int index) const;
 	};
 
 }

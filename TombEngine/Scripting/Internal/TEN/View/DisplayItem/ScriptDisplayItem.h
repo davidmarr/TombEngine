@@ -11,6 +11,8 @@ using namespace TEN::Scripting::Types;
 
 namespace TEN::Scripting::DisplayItem
 {
+	constexpr auto NO_JOINT_BITS = 0u;
+
 	class ScriptDisplayItem
 	{
 	public:
@@ -23,6 +25,7 @@ namespace TEN::Scripting::DisplayItem
 	public:
 		// Constructors
 		ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation,	float scale, int meshBits);
+		ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position);
 		ScriptDisplayItem(const std::string& itemName);
 		
 		// Methods
@@ -36,6 +39,7 @@ namespace TEN::Scripting::DisplayItem
 		void SetItemScale(float newScale, TypeOrNil<bool> disableInterpolation);
 		void SetItemColor(const ScriptColor& newColor, TypeOrNil<bool> disableInterpolation);
 		void SetItemMeshBits(int meshbits);
+		void SetItemMeshVisibility(int meshIndex, bool visible);
 		void SetItemMeshRotation(int meshIndex, Rotation angles, TypeOrNil<bool> disableInterpolation);
 		void SetItemVisibility(bool visible);
 
@@ -45,6 +49,7 @@ namespace TEN::Scripting::DisplayItem
 		Rotation GetItemRotation() const;
 		float GetItemScale() const;
 		ScriptColor GetItemColor() const;
+		bool GetItemMeshVisibility(int meshIndex) const;
 		Rotation GetItemMeshRotation(int meshIndex) const;
 		bool GetItemVisibility() const;
 
