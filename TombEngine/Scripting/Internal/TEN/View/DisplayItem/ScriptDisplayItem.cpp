@@ -25,6 +25,7 @@ namespace TEN::Scripting::DisplayItem
 	{
 		using ctors = sol::constructors<
 			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale, int meshBits),
+			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale),
 			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position),
 			ScriptDisplayItem(std::string)>;
 
@@ -87,13 +88,19 @@ namespace TEN::Scripting::DisplayItem
 		g_DrawItems.AddItem(itemName, objectID, position, rot, scale, meshBits);
 	}
 
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale)
+	{
+		auto rot = rotation.ToEulerAngles();
+		_itemName = itemName;
+		g_DrawItems.AddItem(itemName, objectID, position, rot, scale, ALL_JOINT_BITS);
+	}
+
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position)
 	{
-
 		auto rot = Rotation(0, 0, 0).ToEulerAngles();
 
 		_itemName = itemName;
-		g_DrawItems.AddItem(itemName, objectID, position, rot, 1.0f, NO_JOINT_BITS);
+		g_DrawItems.AddItem(itemName, objectID, position, rot, 1.0f, ALL_JOINT_BITS);
 	}
 
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName)
