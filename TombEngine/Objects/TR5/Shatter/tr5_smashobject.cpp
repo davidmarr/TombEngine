@@ -44,7 +44,7 @@ void SmashObject(short itemNumber)
 		if (room->Sectors[sectorIndex].PathfindingBoxID != NO_VALUE)
 		{
 			auto* box = &g_Level.PathfindingBoxes[room->Sectors[sectorIndex].PathfindingBoxID];
-			if (box->flags & 0x8000)
+			if (box->flags & BLOCKABLE)
 				box->flags &= ~BLOCKED;
 		}
 	}
