@@ -50,8 +50,9 @@ namespace TEN::Hud
 		EulerAngles GetItemRotation() const;
 		float GetItemScale() const;
 		Color GetItemColor() const;
-		bool GetItemVisibility() const;
+		int GetItemMeshBits() const;
 		EulerAngles GetItemMeshRotation(int meshIndex) const;
+		bool GetItemVisibility() const;
 
 		// Interpolation Helpers
 		void StoreInterpolationData();

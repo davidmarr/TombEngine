@@ -7,6 +7,8 @@
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 
+using namespace TEN::Scripting::Types;
+
 namespace TEN::Scripting::DisplayItem
 {
 	class ScriptDisplayItem

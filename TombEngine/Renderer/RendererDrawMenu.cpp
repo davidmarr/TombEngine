@@ -914,16 +914,16 @@ namespace TEN::Renderer
 
 	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
 	{
-		if (item.Visible)
+		if (item.GetItemVisibility())
 		{
 			float t = GetInterpolationFactor();
 
-			auto objectNumber = item.ObjectID;
+			auto objectNumber = item.GetItemObjectID();
 			auto pos3D = item.GetInterpolatedPosition(t);
 			auto orient = item.GetInterpolatedOrientation(t);
 			auto scale = item.GetInterpolatedScale(t);
 			auto color = item.GetInterpolatedColor(t);
-			int meshBits = item.MeshBits;
+			int meshBits = item.GetItemMeshBits();
 			
 			constexpr float NearPlane = 0.1f; // Near clipping plane
 			constexpr float FarPlane = BLOCK(100); // Far clipping plane
@@ -978,12 +978,8 @@ namespace TEN::Renderer
 				if (meshBits && !(meshBits & (1 << i)))
 					continue;
 
-				// If there's a mesh-specific override, apply it
-				if (item.MeshRotations.find(i) != item.MeshRotations.end())
-				{
-					auto rotOverride = item.GetInterpolatedMeshRotation(i, t);
-					moveableObject->LinearizedBones[i]->ExtraRotation = rotOverride.ToQuaternion();
-				}
+				auto rotOverride = item.GetInterpolatedMeshRotation(i, t);
+				moveableObject->LinearizedBones[i]->ExtraRotation = rotOverride.ToQuaternion();
 
 				// Construct world matrix. // pos.x, pos.y, pos.z
 				auto translationMatrix = Matrix::CreateTranslation(pos3D.x, pos3D.y, pos3D.z);

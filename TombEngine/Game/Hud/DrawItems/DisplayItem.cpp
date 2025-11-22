@@ -99,9 +99,9 @@ namespace TEN::Hud
 		return ItemColor;
 	}
 
-	bool DisplayItem::GetItemVisibility() const
+	int DisplayItem::GetItemMeshBits() const
 	{
-		return Visible;
+		return MeshBits;
 	}
 
 	EulerAngles DisplayItem::GetItemMeshRotation(int meshIndex) const
@@ -111,6 +111,12 @@ namespace TEN::Hud
 			return it->second;
 		else
 			return EulerAngles::Identity;
+
+	}
+
+	bool DisplayItem::GetItemVisibility() const
+	{
+		return Visible;
 	}
 
 	// Interpolation Helpers
