@@ -1,7 +1,7 @@
 -- ldignore
 local Util = {}
 local Type = require("Engine.Type")
-local validKeys = { hours = true, minutes = true, seconds = true, deciseconds = true }
+Util.validKeys = { hours = true, minutes = true, seconds = true, deciseconds = true }
 Util.ShortenTENCalls = function()
 	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
 end
@@ -11,7 +11,7 @@ Util.CheckTimeFormat = function(timerFormat, errorText)
 	errorText = errorText and Type.IsString(errorText) and errorText or false
 	if Type.IsTable(timerFormat) then
 		for k, v in pairs(timerFormat) do
-			if not validKeys[k] or type(v) ~= "boolean" then
+			if not Util.validKeys[k] or type(v) ~= "boolean" then
 				if errorText then
 					TEN.Util.PrintLog(errorText, TEN.Util.LogLevel.WARNING)
 				end
