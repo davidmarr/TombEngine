@@ -11,7 +11,7 @@ namespace TEN::Hud
 	{
 	private:
 		// Constants
-		static constexpr auto DRAW_ITEM_COUNT_MAX	= 64;
+		static constexpr auto DRAW_ITEM_COUNT_MAX	= 128;
 
 		// Fields
 		std::vector<DisplayItem> _displayItems = {};

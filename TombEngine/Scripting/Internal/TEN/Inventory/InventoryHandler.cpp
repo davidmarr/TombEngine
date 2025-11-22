@@ -3,6 +3,7 @@
 
 #include "Game/gui.h"
 #include "Game/Hud/Hud.h"
+#include "Game/Hud/DrawItems/DrawItems.h"
 #include "Game/Lara/lara.h"
 #include "Game/pickup/pickup.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
@@ -107,6 +108,27 @@ namespace TEN::Scripting::InventoryHandler
 		return g_Gui.ConvertInventoryItemToObject(objectNumber);
 	}
 
+	//Inventory overrides
+	static bool GetInventoryOverride()
+	{
+		return g_DrawItems.GetInventoryOverride();
+	}
+
+	static void SetInventoryOverride(bool value)
+	{
+		g_DrawItems.SetInventoryOverride(value);
+	}
+
+	static int GetInventoryOpenStatus()
+	{
+		return g_DrawItems.GetInventoryOpenStatus();
+	}
+
+	static void SetInventoryOpenStatus(int value)
+	{
+		g_DrawItems.SetInventoryOpenStatus(value);
+	}
+
 	void Register(sol::state* state, sol::table& parent)
 	{
 		auto tableInventory = sol::table{ state->lua_state(), sol::create };
@@ -121,5 +143,9 @@ namespace TEN::Scripting::InventoryHandler
 		tableInventory.set_function(ScriptReserved_ClearUsedItem, &ClearUsedItem);
 		tableInventory.set_function("ConvertObjectToInventoryItem", &ConvertObjectToInventoryItem);
 		tableInventory.set_function("ConvertInventoryItemToObject", &ConvertInventoryItemToObject);
+		tableInventory.set_function(ScriptReserved_DrawItemGetInvOverride, &GetInventoryOverride);
+		tableInventory.set_function(ScriptReserved_DrawItemSetInvOverride, &SetInventoryOverride);
+		tableInventory.set_function(ScriptReserved_DrawItemGetOpenInv, &GetInventoryOpenStatus);
+		tableInventory.set_function(ScriptReserved_DrawItemSetOpenInv, &SetInventoryOpenStatus);
 	}
 }

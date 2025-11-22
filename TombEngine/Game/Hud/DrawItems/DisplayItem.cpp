@@ -9,6 +9,10 @@ using namespace TEN::Math;
 
 namespace TEN::Hud
 {
+	void DisplayItem::SetItemName(std::string itemName)
+	{
+		ItemName = itemName;
+	}
 
 	void DisplayItem::SetItemObjectID(GAME_OBJECT_ID objectID)
 	{
@@ -65,42 +69,42 @@ namespace TEN::Hud
 		Visible = visible;
 	}
 
-	std::string DisplayItem::GetItemName()
+	std::string DisplayItem::GetItemName() const
 	{
 		return ItemName;
 	}
 
-	GAME_OBJECT_ID DisplayItem::GetItemObjectID()
+	GAME_OBJECT_ID DisplayItem::GetItemObjectID() const
 	{
 		return ObjectID;
 	}
 
-	Vector3 DisplayItem::GetItemPosition()
+	Vector3 DisplayItem::GetItemPosition() const
 	{
 		return Position;
 	}
 
-	EulerAngles DisplayItem::GetItemRotation()
+	EulerAngles DisplayItem::GetItemRotation() const
 	{
 		return Orientation;
 	}
 
-	float DisplayItem::GetItemScale()
+	float DisplayItem::GetItemScale() const
 	{
 		return Scale;
 	}
 
-	Color DisplayItem::GetItemColor()
+	Color DisplayItem::GetItemColor() const
 	{
 		return ItemColor;
 	}
 
-	bool DisplayItem::GetItemVisibility()
+	bool DisplayItem::GetItemVisibility() const
 	{
 		return Visible;
 	}
 
-	EulerAngles DisplayItem::GetItemMeshRotation(int meshIndex)
+	EulerAngles DisplayItem::GetItemMeshRotation(int meshIndex) const
 	{
 		auto it = MeshRotations.find(meshIndex);
 		if (it != MeshRotations.end())

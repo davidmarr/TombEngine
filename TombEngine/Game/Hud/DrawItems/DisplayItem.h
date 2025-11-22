@@ -10,6 +10,7 @@ namespace TEN::Hud
 
 	struct DisplayItem
 	{
+	private:
 		std::string ItemName;
 		GAME_OBJECT_ID ObjectID = GAME_OBJECT_ID::ID_NO_OBJECT;
 
@@ -32,6 +33,8 @@ namespace TEN::Hud
 		std::unordered_map<int, EulerAngles> MeshRotations;
 		std::unordered_map<int, EulerAngles> PrevMeshRotations;
 
+	public:
+		void SetItemName(std::string itemName);
 		void SetItemObjectID(GAME_OBJECT_ID objectID);
 		void SetItemPosition(const Vector3& newPos, bool disableInterpolation);
 		void SetItemRotation(const EulerAngles& newRot, bool disableInterpolation);
@@ -41,14 +44,14 @@ namespace TEN::Hud
 		void SetItemMeshRotation(int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 		void SetItemVisibility(bool visible);
 
-		std::string GetItemName();
-		GAME_OBJECT_ID GetItemObjectID();
-		Vector3 GetItemPosition();
-		EulerAngles GetItemRotation();
-		float GetItemScale();
-		Color GetItemColor();
-		bool GetItemVisibility();
-		EulerAngles GetItemMeshRotation(int meshIndex);
+		std::string GetItemName() const;
+		GAME_OBJECT_ID GetItemObjectID() const;
+		Vector3 GetItemPosition() const;
+		EulerAngles GetItemRotation() const;
+		float GetItemScale() const;
+		Color GetItemColor() const;
+		bool GetItemVisibility() const;
+		EulerAngles GetItemMeshRotation(int meshIndex) const;
 
 		// Interpolation Helpers
 		void StoreInterpolationData();

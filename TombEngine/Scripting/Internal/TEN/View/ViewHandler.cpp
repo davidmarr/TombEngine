@@ -20,12 +20,14 @@
 #include "Scripting/Internal/TEN/View/DisplaySprite/ScriptDisplaySprite.h"
 #include "Scripting/Internal/TEN/View/ScaleModes.h"
 #include "Scripting/Internal/TEN/View/PostProcessEffects.h"
+#include "Scripting/Internal/TEN/View/DisplayItem/ScriptDisplayItem.h"
 #include "Specific/clock.h"
 #include "Specific/Video/Video.h"
 #include "Specific/trutils.h"
 
 using namespace TEN::Effects::Environment;
 using namespace TEN::Scripting::DisplaySprite;
+using namespace TEN::Scripting::DisplayItem;
 using namespace TEN::Scripting::View;
 using namespace TEN::Utils;
 using namespace TEN::Video;
@@ -388,6 +390,7 @@ namespace TEN::Scripting::View
 
 		// Register types.
 		ScriptDisplaySprite::Register(*state, parent);
+		ScriptDisplayItem::Register(*state, parent);
 
 		// Register enums.
 		auto handler = LuaHandler(state);

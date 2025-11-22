@@ -12,7 +12,6 @@
 #include "Scripting/Internal/TEN/Strings/StringsHandler.h"
 #include "Scripting/Internal/TEN/Sound/SoundHandler.h"
 #include "Scripting/Internal/TEN/Util/Util.h"
-#include "Scripting/Internal/TEN/View/DisplayItem/DisplayItem.h"
 #include "Scripting/Internal/TEN/View/ViewHandler.h"
 
 constexpr auto DEADLOCK_CHECK_INTERVAL = 500;
@@ -102,7 +101,6 @@ void ScriptInterfaceState::Init(const std::string& assetsDir)
 	// Misc. handlers not assigned above.
 	TEN::Scripting::InventoryHandler::Register(&SolState, RootTable);
 	TEN::Scripting::Collision::Register(&SolState, RootTable);
-	TEN::Scripting::DisplayItem::Register(&SolState, RootTable);
 	TEN::Scripting::Effects::Register(&SolState, RootTable);
 	TEN::Scripting::Input::Register(&SolState, RootTable);
 	TEN::Scripting::Sound::Register(&SolState, RootTable);
