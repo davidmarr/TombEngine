@@ -17,10 +17,10 @@
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/View/AlignModes.h"
 #include "Scripting/Internal/TEN/View/CameraTypes.h"
+#include "Scripting/Internal/TEN/View/DisplayItem/ScriptDisplayItem.h"
 #include "Scripting/Internal/TEN/View/DisplaySprite/ScriptDisplaySprite.h"
 #include "Scripting/Internal/TEN/View/ScaleModes.h"
 #include "Scripting/Internal/TEN/View/PostProcessEffects.h"
-#include "Scripting/Internal/TEN/View/DisplayItem/ScriptDisplayItem.h"
 #include "Specific/clock.h"
 #include "Specific/Video/Video.h"
 #include "Specific/trutils.h"
@@ -390,7 +390,7 @@ namespace TEN::Scripting::View
 
 		// Register types.
 		ScriptDisplaySprite::Register(*state, parent);
-		ScriptDisplayItem::Register(*state, parent);
+		ScriptDisplayItem::Register(*state, tableView);
 
 		// Register enums.
 		auto handler = LuaHandler(state);

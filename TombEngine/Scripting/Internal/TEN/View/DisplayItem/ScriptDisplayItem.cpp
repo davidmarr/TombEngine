@@ -25,6 +25,7 @@ namespace TEN::Scripting::DisplayItem
 	{
 		using ctors = sol::constructors<
 			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale, int meshBits),
+			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position),
 			ScriptDisplayItem(std::string)>;
 
 		// Register type.
