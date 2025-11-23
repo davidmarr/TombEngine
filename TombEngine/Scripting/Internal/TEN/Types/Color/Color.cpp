@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 
-/// Represents an RGBA or RGB color.
+/// Represents an RGBA or RGB color.<style>table.function_list td.name {min-width: 230px;}</style>
 // Components are specified as values clamped to the range [0, 255].
 //
 // @tenprimitive Color
@@ -55,8 +55,7 @@ namespace TEN::Scripting::Types
 			"GetHue", & ScriptColor::GetHue,
 			"ToGrayscale", & ScriptColor::ToGrayscale,
 			"Invert", & ScriptColor::Invert,
-			"Modulate", &ScriptColor::Modulate,
-			"Saturate", &ScriptColor::Saturate
+			"Modulate", &ScriptColor::Modulate
 		);
 	}
 
@@ -67,6 +66,9 @@ namespace TEN::Scripting::Types
 	// @int B Blue component.
 	// @int[opt=255] A Alpha (transparency) component.
 	// @treturn Color A new Color object.
+	// @usage 
+	// local color1 = TEN.Color(255, 0, 0)       -- Red color with full opacity
+	// local color2 = TEN.Color(0, 255, 0, 128) -- Green color with 50% opacity
 	ScriptColor::ScriptColor(byte r, byte g, byte b) :
 		_color(r, g, b)
 	{
@@ -136,6 +138,9 @@ namespace TEN::Scripting::Types
 	/// @tparam Color color This color.
 	// @treturn string A string representing R, G, B, and A values.
 	// @function __tostring
+	// @usage
+	// local color = TEN.Color(255, 100, 50, 200)
+	// print(tostring(color)) -- Output: {255, 100, 50, 200}
 	std::string ScriptColor::ToString() const
 	{
 		return "{" + std::to_string(GetR()) + ", " + std::to_string(GetG()) + ", " + std::to_string(GetB()) + ", " + std::to_string(GetA()) + "}";
@@ -190,9 +195,16 @@ namespace TEN::Scripting::Types
 			color.z * COLOR_NORMALIZE);
 	}
 
+	/// Methods for Color type.
+	// @type Color
+
 	/// Get the perceived brightness of this Color using Rec.709 luminance formula.
 	// @function Color:GetBrightness
 	// @treturn float The brightness value in the range [0.0, 1.0].
+	// @usage
+	// local color = TEN.Color(255, 0, 0) -- Red color
+	// local brightness = color:GetBrightness()
+	// print(brightness) -- Output: 0.2126
 	float ScriptColor::GetBrightness() const
 	{
 		const Vector3 normalized = GetNormalizedRGB();
@@ -202,6 +214,10 @@ namespace TEN::Scripting::Types
 	/// Get the saturation of this Color using the HSV color model.
 	// @function Color:GetSaturation
 	// @treturn float The saturation value in the range [0.0, 1.0].
+	// @usage
+	// local color = TEN.Color(255, 0, 0) -- Red color
+	// local saturation = color:GetSaturation()
+	// print(saturation) -- Output: 1.0
 	float ScriptColor::GetSaturation() const
 	{
 		const Vector3 normalized = GetNormalizedRGB();
@@ -218,6 +234,10 @@ namespace TEN::Scripting::Types
 	/// Get the hue of this Color using the HSV color model.
 	// @function Color:GetHue
 	// @treturn float The hue value in the range [0.0, 360.0) in degrees.
+	// @usage
+	// local color = TEN.Color(255, 0, 0) -- Red color
+	// local hue = color:GetHue()
+	// print(hue) -- Output: 0.0
 	float ScriptColor::GetHue() const
 	{
 		const Vector3 normalized = GetNormalizedRGB();
@@ -253,7 +273,11 @@ namespace TEN::Scripting::Types
 
 	/// Convert this Color to grayscale using perceived luminance (ITU-R BT.709).
 	// @function Color:ToGrayscale
-	// @treturn Color A grayscale version of this Color with RGB components set to the luminance value.
+	// @treturn Color A grayscale version of this Color with RGB components set to the luminance value. Alpha remains unchanged.
+	// @usage
+	// local color = TEN.Color(255, 0, 0) -- Red color
+	// local grayscaleColor = color:ToGrayscale()
+	// print(tostring(grayscaleColor)) -- Output: {54, 54, 54, 255}
 	ScriptColor ScriptColor::ToGrayscale() const
 	{
 		const byte grayscaleValue = static_cast<byte>(std::clamp(GetBrightness() * 255.0f, 0.0f, 255.0f));
@@ -263,6 +287,10 @@ namespace TEN::Scripting::Types
 	/// Invert the RGB components of this Color (255 - component).
 	// @function Color:Invert
 	// @treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
+	// @usage
+	// local color = TEN.Color(255, 0, 0) -- Red color
+	// local invertedColor = color:Invert()
+	// print(tostring(invertedColor)) -- Output: {0, 255, 255, 255}
 	ScriptColor ScriptColor::Invert() const
 	{
 		return ScriptColor(
@@ -277,20 +305,15 @@ namespace TEN::Scripting::Types
 	// @function Color:Modulate
 	// @tparam Color other The Color to multiply with.
 	// @treturn Color The resulting Color.
+	// @usage
+	// local color1 = TEN.Color(255, 128, 64) -- Orange color
+	// local color2 = TEN.Color(128, 255, 192) -- Light green color
+	// local modulatedColor = color1:Modulate(color2)
+	// print(tostring(modulatedColor)) -- Output: {128, 128, 48, 255}
 	ScriptColor ScriptColor::Modulate(const ScriptColor& other) const
 	{
 		const Color result = Color::Modulate(static_cast<Color>(_color), static_cast<Color>(other._color));
 		return ScriptColor(result);
-	}
-
-	/// Saturate this Color (clamp all components to valid range).
-	// @function Color:Saturate
-	// @treturn Color The saturated Color.
-	ScriptColor ScriptColor::Saturate() const
-	{
-		Color color = static_cast<Color>(_color);
-		color.Saturate();
-		return ScriptColor(color);
 	}
 
 	/// Get the linearly interpolated Color between this Color and the input Color according to the input alpha.
@@ -298,6 +321,11 @@ namespace TEN::Scripting::Types
 	// @tparam Color color The target Color.
 	// @tparam float alpha The interpolation factor in the range [0.0, 1.0]. If alpha is outside this range, it will be clamped.
 	// @treturn Color The resulting Color.
+	// @usage
+	// local color1 = TEN.Color(255, 0, 0) -- Red color
+	// local color2 = TEN.Color(0, 0, 255) -- Blue color
+	// local lerpedColor = color1:Lerp(color2, 0.5) -- Halfway between red and blue
+	// print(tostring(lerpedColor)) -- Output: {127, 0, 127, 255}
 	ScriptColor ScriptColor::Lerp(const ScriptColor& color, float alpha) const
 	{
 		const float clampedAlpha = std::clamp(alpha, 0.0f, 1.0f);

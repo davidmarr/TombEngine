@@ -51,7 +51,6 @@ namespace TEN::Scripting::Types
 		ScriptColor ToGrayscale() const;
 		ScriptColor Invert() const;
 		ScriptColor Modulate(const ScriptColor& other) const;
-		ScriptColor Saturate() const;
 
 		// Utilities
 
