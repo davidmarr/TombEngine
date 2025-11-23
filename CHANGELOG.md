@@ -3,7 +3,32 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
-## [Version 1.10]
+## [Version 1.10.1]
+
+### New features
+* Added no shake mode for CLASSIC_ROLLINGBALL (OCB 1).
+
+### Bug fixes
+* Fixed FIREROPE and EARTHQUAKE objects not working.
+* Fixed FIRE_PENDULUM crashing the game.
+* Fixed CLASSIC_ROLLINGBALL continuing to animate when Lara is standing on a trigger for it.
+* Fixed BRIDGE objects not clearing collision after disabling them.
+* Fixed SMASH_OBJECT objects with very big coordinates sometimes crashing the game.
+* Fixed BIG_GUN being stuck while unarming it.
+* Fixed original issue that prevented performing vault animations while holding a torch.
+* Fixed interaction highlighter not appearing for SEARCH_OBJECT objects.
+* Fixed fireflies not interpolating in high framerate mode and not emitting dynamic lights.
+* Fixed performance issues with shatterable static meshes.
+* Fixed emissive materials not fading into distance fog.
+* Fixed subtractive sprites not rendering correctly.
+* Fixed dynamic lighting for flat surfaces with miscalculated normals.
+* Fixed black screen when camera direction is exactly 90 degrees up or down.
+
+### Lua API changes
+* Added optional type argument for `Sound.IsAudioTrackPlaying` function.
+* Fixed `Moveable.AttachObjCamera` ignoring mesh index argument.
+
+## [Version 1.10](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.10) - 2025-11-09
 
 ### New features
 * Added material system with support for normal, specular, roughness, emissive, parallax and ambient occlusion maps.
