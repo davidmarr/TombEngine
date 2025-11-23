@@ -9,6 +9,17 @@
 
 namespace TEN::Scripting::Types
 {
+	namespace
+	{
+		// ITU-R BT.709 luminance coefficients.
+		constexpr float LUMA_R = 0.2126f;
+		constexpr float LUMA_G = 0.7152f;
+		constexpr float LUMA_B = 0.0722f;
+		constexpr float COLOR_NORMALIZE = 0.5f; // Normalize from [0.0, 2.0] to [0.0, 1.0].
+		constexpr float HUE_SECTOR = 60.0f;
+		constexpr float HUE_CIRCLE = 360.0f;
+	}
+
 	void ScriptColor::Register(sol::table& parent)
 	{
 		using ctors = sol::constructors<ScriptColor(byte, byte, byte), ScriptColor(byte, byte, byte, byte)>;
@@ -38,7 +49,15 @@ namespace TEN::Scripting::Types
 			"a", sol::property(&ScriptColor::GetA, &ScriptColor::SetA),
 
 			// Register methods.
-			"Lerp", &ScriptColor::Lerp);
+			"Lerp", &ScriptColor::Lerp,
+			"GetBrightness", & ScriptColor::GetBrightness,
+			"GetSaturation", & ScriptColor::GetSaturation,
+			"GetHue", & ScriptColor::GetHue,
+			"ToGrayscale", & ScriptColor::ToGrayscale,
+			"Invert", & ScriptColor::Invert,
+			"Modulate", &ScriptColor::Modulate,
+			"Saturate", &ScriptColor::Saturate
+		);
 	}
 
 	/// Create a Color object.
@@ -162,6 +181,118 @@ namespace TEN::Scripting::Types
 			_color.GetA() == other.GetA();
 	}
 
+	inline Vector3 ScriptColor::GetNormalizedRGB() const
+	{
+		const Color& color = static_cast<const Color&>(_color);
+		return Vector3(
+			color.x * COLOR_NORMALIZE,
+			color.y * COLOR_NORMALIZE,
+			color.z * COLOR_NORMALIZE);
+	}
+
+	/// Get the perceived brightness of this Color using Rec.709 luminance formula.
+	// @function Color:GetBrightness
+	// @treturn float The brightness value in the range [0.0, 1.0].
+	float ScriptColor::GetBrightness() const
+	{
+		const Vector3 normalized = GetNormalizedRGB();
+		return (LUMA_R * normalized.x) + (LUMA_G * normalized.y) + (LUMA_B * normalized.z);
+	}
+
+	/// Get the saturation of this Color using the HSV color model.
+	// @function Color:GetSaturation
+	// @treturn float The saturation value in the range [0.0, 1.0].
+	float ScriptColor::GetSaturation() const
+	{
+		const Vector3 normalized = GetNormalizedRGB();
+		const float maxVal = std::max({ normalized.x, normalized.y, normalized.z });
+		const float minVal = std::min({ normalized.x, normalized.y, normalized.z });
+
+		// Saturation is 0 when max is 0 (black color).
+		if (maxVal == 0.0f)
+			return 0.0f;
+
+		return (maxVal - minVal) / maxVal;
+	}
+
+	/// Get the hue of this Color using the HSV color model.
+	// @function Color:GetHue
+	// @treturn float The hue value in the range [0.0, 360.0) in degrees.
+	float ScriptColor::GetHue() const
+	{
+		const Vector3 normalized = GetNormalizedRGB();
+		const float maxVal = std::max({ normalized.x, normalized.y, normalized.z });
+		const float minVal = std::min({ normalized.x, normalized.y, normalized.z });
+		const float delta = maxVal - minVal;
+
+		// Hue is undefined for achromatic colors.
+		if (delta == 0.0f)
+			return 0.0f;
+
+		float hue = 0.0f;
+
+		if (maxVal == normalized.x)
+		{
+			hue = HUE_SECTOR * fmodf((normalized.y - normalized.z) / delta, 6.0f);
+		}
+		else if (maxVal == normalized.y)
+		{
+			hue = HUE_SECTOR * (((normalized.z - normalized.x) / delta) + 2.0f);
+		}
+		else // maxVal == normalized.z
+		{
+			hue = HUE_SECTOR * (((normalized.x - normalized.y) / delta) + 4.0f);
+		}
+
+		// Normalize to [0.0, 360.0).
+		if (hue < 0.0f)
+			hue += HUE_CIRCLE;
+
+		return hue;
+	}
+
+	/// Convert this Color to grayscale using perceived luminance (ITU-R BT.709).
+	// @function Color:ToGrayscale
+	// @treturn Color A grayscale version of this Color with RGB components set to the luminance value.
+	ScriptColor ScriptColor::ToGrayscale() const
+	{
+		const byte grayscaleValue = static_cast<byte>(std::clamp(GetBrightness() * 255.0f, 0.0f, 255.0f));
+		return ScriptColor(grayscaleValue, grayscaleValue, grayscaleValue, GetA());
+	}
+
+	/// Invert the RGB components of this Color (255 - component).
+	// @function Color:Invert
+	// @treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
+	ScriptColor ScriptColor::Invert() const
+	{
+		return ScriptColor(
+			255 - GetR(),
+			255 - GetG(),
+			255 - GetB(),
+			GetA()
+		);
+	}
+
+	/// Multiply this Color component-wise with another Color (modulation).
+	// @function Color:Modulate
+	// @tparam Color other The Color to multiply with.
+	// @treturn Color The resulting Color.
+	ScriptColor ScriptColor::Modulate(const ScriptColor& other) const
+	{
+		const Color result = Color::Modulate(static_cast<Color>(_color), static_cast<Color>(other._color));
+		return ScriptColor(result);
+	}
+
+	/// Saturate this Color (clamp all components to valid range).
+	// @function Color:Saturate
+	// @treturn Color The saturated Color.
+	ScriptColor ScriptColor::Saturate() const
+	{
+		Color color = static_cast<Color>(_color);
+		color.Saturate();
+		return ScriptColor(color);
+	}
+
 	/// Get the linearly interpolated Color between this Color and the input Color according to the input alpha.
 	// @function Color:Lerp
 	// @tparam Color color The target Color.
@@ -169,8 +300,8 @@ namespace TEN::Scripting::Types
 	// @treturn Color The resulting Color.
 	ScriptColor ScriptColor::Lerp(const ScriptColor& color, float alpha) const
 	{
-		float clampedAlpha = std::clamp(alpha, 0.0f, 1.0f);
-		Color result = Color::Lerp(_color, color, clampedAlpha);
+		const float clampedAlpha = std::clamp(alpha, 0.0f, 1.0f);
+		const Color result = Color::Lerp(_color, color, clampedAlpha);
 		return ScriptColor(result);
 	}
 }

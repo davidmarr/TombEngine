@@ -44,6 +44,14 @@ namespace TEN::Scripting::Types
 		// Methods
 
 		ScriptColor PremultiplyAlpha();
+		Vector3 GetNormalizedRGB() const;
+		float GetBrightness() const;
+		float GetSaturation() const;
+		float GetHue() const;
+		ScriptColor ToGrayscale() const;
+		ScriptColor Invert() const;
+		ScriptColor Modulate(const ScriptColor& other) const;
+		ScriptColor Saturate() const;
 
 		// Utilities
 
