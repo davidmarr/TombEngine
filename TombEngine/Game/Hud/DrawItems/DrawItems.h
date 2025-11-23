@@ -24,9 +24,6 @@ namespace TEN::Hud
 
 		Vector4 _ambientLight = Vector4::One;
 
-		bool _inventoryOverride = false;
-		int _openInventory = NO_VALUE;
-
 	public:
 
 		void AddItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vector3& origin, const EulerAngles& newRot, float scale, int meshBits);
@@ -58,13 +55,6 @@ namespace TEN::Hud
 		Vector3 GetInterpolatedCameraTargetPosition(float t) const;
 
 		void StoreCameraInterpolationData();
-
-		// Inventory override.
-		bool GetInventoryOverride() const;
-		void SetInventoryOverride(bool value);
-
-		int GetInventoryOpenStatus() const;
-		void SetInventoryOpenStatus(int value);
 
 	};
 

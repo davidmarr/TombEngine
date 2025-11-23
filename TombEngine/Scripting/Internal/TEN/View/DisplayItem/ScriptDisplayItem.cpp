@@ -339,9 +339,9 @@ namespace TEN::Scripting::DisplayItem
 	// the WadTool animation editor. If the animation has no frames, the only valid argument
 	// is -1.
 	// @function DisplayItem:SetFrame
-	// @tparam int index The index of the desired animation.
+	// @tparam int animIndex The index of the desired animation.
 	// @tparam int frame The new frame number.
-	void ScriptDisplayItem::SetItemFrame(int animation, int frame)
+	void ScriptDisplayItem::SetItemFrame(int animIndex, int frame)
 	{
 		if (_itemName.empty())
 			return;
@@ -352,7 +352,7 @@ namespace TEN::Scripting::DisplayItem
 		{
 			auto endFrame = GetEndFrame();
 
-			item->SetItemAnimation(animation);
+			item->SetItemAnimation(animIndex);
 			if (frame <= endFrame)
 				item->SetItemFrame(frame);
 			else

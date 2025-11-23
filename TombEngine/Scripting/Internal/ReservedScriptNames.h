@@ -307,6 +307,12 @@ static constexpr char ScriptReserved_SetInvItemCount[]				= "SetItemCount";
 static constexpr char ScriptReserved_GetUsedItem[]					= "GetUsedItem";
 static constexpr char ScriptReserved_SetUsedItem[]					= "SetUsedItem";
 static constexpr char ScriptReserved_ClearUsedItem[]				= "ClearUsedItem";
+static constexpr char ScriptReserved_SetInvOverride[]				= "SetInventoryOverride";
+static constexpr char ScriptReserved_GetInvOverride[]				= "GetInventoryOverride";
+static constexpr char ScriptReserved_SetOpenInv[]					= "SetEnterInventory";
+static constexpr char ScriptReserved_GetOpenInv[]					= "GetEnterInventory";
+static constexpr char ScriptReserved_ConvertObjectToInvItem[]		= "ConvertObjectToInventoryItem";
+static constexpr char ScriptReserved_ConvertInvItemToObject[]		= "ConvertInventoryItemToObject";
 static constexpr char ScriptReserved_GetMoveableByName[]			= "GetMoveableByName";
 static constexpr char ScriptReserved_GetStaticByName[]				= "GetStaticByName";
 static constexpr char ScriptReserved_GetMoveablesBySlot[]			= "GetMoveablesBySlot";
@@ -547,10 +553,6 @@ constexpr char ScriptReserved_DrawItemGetTarget[]	= "GetTargetPosition";
 constexpr char ScriptReserved_DrawItemSetTarget[]	= "SetTargetPosition";
 constexpr char ScriptReserved_DrawItemGetAmbientLight[] = "GetAmbientLight";
 constexpr char ScriptReserved_DrawItemSetAmbientLight[] = "SetAmbientLight";
-constexpr char ScriptReserved_DrawItemSetInvOverride[] = "SetInventoryOverride";
-constexpr char ScriptReserved_DrawItemGetInvOverride[] = "GetInventoryOverride";
-constexpr char ScriptReserved_DrawItemSetOpenInv[]	= "SetOpenInventory";
-constexpr char ScriptReserved_DrawItemGetOpenInv[]	= "GetOpenInventory";
 
 // =====
 // TYPES

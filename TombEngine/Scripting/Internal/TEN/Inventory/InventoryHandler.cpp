@@ -111,22 +111,22 @@ namespace TEN::Scripting::InventoryHandler
 	//Inventory overrides
 	static bool GetInventoryOverride()
 	{
-		return g_DrawItems.GetInventoryOverride();
+		return g_Gui.GetInventoryOverride();
 	}
 
 	static void SetInventoryOverride(bool value)
 	{
-		g_DrawItems.SetInventoryOverride(value);
+		g_Gui.SetInventoryOverride(value);
 	}
 
-	static int GetInventoryOpenStatus()
+	static int GetEnterInventory()
 	{
-		return g_DrawItems.GetInventoryOpenStatus();
+		return g_Gui.GetEnterInventory();
 	}
 
-	static void SetInventoryOpenStatus(int value)
+	static void SetEnterInventory(int value)
 	{
-		g_DrawItems.SetInventoryOpenStatus(value);
+		g_Gui.SetEnterInventory(value);
 	}
 
 	void Register(sol::state* state, sol::table& parent)
@@ -141,11 +141,11 @@ namespace TEN::Scripting::InventoryHandler
 		tableInventory.set_function(ScriptReserved_SetUsedItem, &SetUsedItem);
 		tableInventory.set_function(ScriptReserved_GetUsedItem, &GetUsedItem);
 		tableInventory.set_function(ScriptReserved_ClearUsedItem, &ClearUsedItem);
-		tableInventory.set_function("ConvertObjectToInventoryItem", &ConvertObjectToInventoryItem);
-		tableInventory.set_function("ConvertInventoryItemToObject", &ConvertInventoryItemToObject);
-		tableInventory.set_function(ScriptReserved_DrawItemGetInvOverride, &GetInventoryOverride);
-		tableInventory.set_function(ScriptReserved_DrawItemSetInvOverride, &SetInventoryOverride);
-		tableInventory.set_function(ScriptReserved_DrawItemGetOpenInv, &GetInventoryOpenStatus);
-		tableInventory.set_function(ScriptReserved_DrawItemSetOpenInv, &SetInventoryOpenStatus);
+		tableInventory.set_function(ScriptReserved_ConvertObjectToInvItem, &ConvertObjectToInventoryItem);
+		tableInventory.set_function(ScriptReserved_ConvertInvItemToObject, &ConvertInventoryItemToObject);
+		tableInventory.set_function(ScriptReserved_GetInvOverride, &GetInventoryOverride);
+		tableInventory.set_function(ScriptReserved_SetInvOverride, &SetInventoryOverride);
+		tableInventory.set_function(ScriptReserved_GetOpenInv, &GetEnterInventory);
+		tableInventory.set_function(ScriptReserved_SetOpenInv, &SetEnterInventory);
 	}
 }

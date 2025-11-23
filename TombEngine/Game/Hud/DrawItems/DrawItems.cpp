@@ -186,26 +186,4 @@ namespace TEN::Hud
 		_cameraPreviousPosition = _cameraPosition;
 		_targetPreviousPosition = _targetPosition;
 	}
-
-	bool DrawItemsController::GetInventoryOverride() const
-	{
-		return _inventoryOverride;
-	}
-
-	void DrawItemsController::SetInventoryOverride(bool value)
-	{
-		_inventoryOverride = value;
-
-	}
-	//rename to item
-	int DrawItemsController::GetInventoryOpenStatus() const
-	{
-		return _openInventory;
-	}
-
-	void DrawItemsController::SetInventoryOpenStatus(int value)
-	{
-		_openInventory = value;
-	}
-
 }
