@@ -154,7 +154,8 @@ namespace TEN::Hud
 		dir.Normalize();
 
 		// Check if there's a line of sight between objects.
-		auto losColl = GetRoomLosCollision(playerBoundingBox.Center, player.RoomNumber, dir, dist, true);
+		bool isPushable = item.ObjectNumber >= ID_PUSHABLE_OBJECT_CLIMBABLE1 && item.ObjectNumber <= ID_PUSHABLE_OBJECT_CLIMBABLE10;
+		auto losColl = GetRoomLosCollision(playerBoundingBox.Center, player.RoomNumber, dir, dist, !isPushable);
 		if (losColl.IsIntersected)
 			return;
 
