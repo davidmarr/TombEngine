@@ -44,6 +44,17 @@ namespace TEN::Scripting::Types
 		// Methods
 
 		ScriptColor PremultiplyAlpha();
+		Vector3 GetNormalizedRGB() const;
+		float GetBrightness() const;
+		float GetSaturation() const;
+		float GetHue() const;
+		ScriptColor ToGrayscale() const;
+		ScriptColor Invert() const;
+		ScriptColor Modulate(const ScriptColor& other) const;
+
+		// Utilities
+
+		ScriptColor Lerp(const ScriptColor& color, float alpha) const;
 
 		// Converters
 
@@ -56,5 +67,6 @@ namespace TEN::Scripting::Types
 		operator Vector4() const;
 		operator D3DCOLOR() const;
 		operator RGBAColor8Byte() const;
+		bool operator ==(const ScriptColor& other) const;
 	};
 }
