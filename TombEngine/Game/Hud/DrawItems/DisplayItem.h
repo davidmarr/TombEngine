@@ -35,6 +35,10 @@ namespace TEN::Hud
 		std::unordered_map<int, EulerAngles> MeshRotations;
 		std::unordered_map<int, EulerAngles> PrevMeshRotations;
 
+		int AnimNumber = 0;
+		int FrameNumber = 0;
+		int PrevFrameNumber = 0;
+
 	public:
 		void SetItemName(std::string itemName);
 		void SetItemObjectID(GAME_OBJECT_ID objectID);
@@ -46,6 +50,9 @@ namespace TEN::Hud
 		void SetItemMeshBits(int meshbits);
 		void SetItemMeshVisibility(int meshIndex, bool visible);
 		void SetItemMeshRotation(int meshIndex, const EulerAngles& rot, bool disableInterpolation);
+		
+		void SetItemAnimation(int animation);
+		void SetItemFrame(int frame);
 
 		std::string GetItemName() const;
 		GAME_OBJECT_ID GetItemObjectID() const;
@@ -57,7 +64,11 @@ namespace TEN::Hud
 		int GetItemMeshBits() const;
 		bool GetItemMeshVisibility(int meshIndex) const;
 		EulerAngles GetItemMeshRotation(int meshIndex) const;
-		
+
+		int GetItemAnimation() const;
+		int GetItemFrame() const;
+		int GetItemPreviousFrame() const;
+
 		// Interpolation Helpers
 		void StoreInterpolationData();
 		Vector3 GetInterpolatedPosition(float t) const;

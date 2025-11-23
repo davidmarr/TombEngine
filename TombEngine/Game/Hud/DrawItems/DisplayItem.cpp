@@ -84,6 +84,18 @@ namespace TEN::Hud
 		MeshRotations[meshIndex] = newRot;
 	}
 
+	void DisplayItem::SetItemAnimation(int animation)
+	{
+		//add checks for bounds of animation and frame
+		AnimNumber = animation;
+	}
+
+	void DisplayItem::SetItemFrame(int frame)
+	{
+		//add checks for bounds of animation and frame
+		FrameNumber = frame;
+	}
+
 	std::string DisplayItem::GetItemName() const
 	{
 		return ItemName;
@@ -139,6 +151,21 @@ namespace TEN::Hud
 
 	}
 
+	int DisplayItem::GetItemAnimation() const
+	{
+		return AnimNumber;
+	}
+
+	int DisplayItem::GetItemFrame() const
+	{
+		return FrameNumber;
+	}
+
+	int DisplayItem::GetItemPreviousFrame() const
+	{
+		return PrevFrameNumber;
+	}
+
 	// Interpolation Helpers
 	void DisplayItem::StoreInterpolationData()
 	{
@@ -147,6 +174,7 @@ namespace TEN::Hud
 		PrevScale = Scale;
 		PrevColor = ItemColor;
 		PrevMeshRotations = MeshRotations;
+		PrevFrameNumber = FrameNumber;
 	}
 
 	Vector3 DisplayItem::GetInterpolatedPosition(float t) const

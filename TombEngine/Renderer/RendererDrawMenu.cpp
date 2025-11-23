@@ -944,11 +944,14 @@ namespace TEN::Renderer
 			const auto& object = Objects[objectNumber];
 			if (object.animIndex != -1)
 			{
+				int anim = item.GetItemAnimation();
+				int frame = item.GetItemFrame();
+				int prevFrame = item.GetItemPreviousFrame();
 				auto frameData = AnimFrameInterpData
 				{
-					&g_Level.Frames[GetAnimData(object.animIndex).FramePtr],
-					&g_Level.Frames[GetAnimData(object.animIndex).FramePtr],
-					0.0f
+					GetFrame(objectNumber, anim, prevFrame),
+					GetFrame(objectNumber, anim, frame),
+					t
 				};
 				UpdateAnimation(nullptr, *moveableObject, frameData, UINT_MAX);
 			}

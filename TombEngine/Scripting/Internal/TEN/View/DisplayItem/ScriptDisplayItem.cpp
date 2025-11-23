@@ -1,15 +1,13 @@
 #include "framework.h"
 #include "Scripting/Internal/TEN/View/DisplayItem/ScriptDisplayItem.h"
-
+#include "Game/animation.h"
 #include "Game/Hud/DrawItems/DrawItems.h"
-
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
-
 
 using namespace TEN::Hud;
 using namespace TEN::Scripting::Types;
@@ -45,6 +43,8 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_SetMeshVisible, &ScriptDisplayItem::SetItemMeshVisibility,
 			ScriptReserved_SetJointRotation, &ScriptDisplayItem::SetItemMeshRotation,
 			ScriptReserved_SetVisible, &ScriptDisplayItem::SetItemVisibility,
+			/*ScriptReserved_SetAnimNumber, &ScriptDisplayItem::SetItemAnimation,*/
+			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::SetItemFrame,
 			ScriptReserved_GetObjectID, & ScriptDisplayItem::GetItemObjectID,
 			ScriptReserved_GetPosition, &ScriptDisplayItem::GetItemPosition,
 			ScriptReserved_GetRotation, &ScriptDisplayItem::GetItemRotation,
@@ -53,6 +53,9 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_GetMeshVisible, &ScriptDisplayItem::GetItemMeshVisibility,
 			ScriptReserved_GetJointRotation, &ScriptDisplayItem::GetItemMeshRotation,
 			ScriptReserved_GetVisible, &ScriptDisplayItem::GetItemVisibility,
+			ScriptReserved_GetFrameNumber, &ScriptDisplayItem::GetFrameNumber,
+			ScriptReserved_GetEndFrame, &ScriptDisplayItem::GetEndFrame,
+			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::GetAnimNumber,
 			ScriptReserved_DrawItemGetItem, &ScriptDisplayItem::GetItemByName,
 			ScriptReserved_DrawItemRemoveItem, &ScriptDisplayItem::RemoveItem,
 			ScriptReserved_DrawItemClearAll, &ScriptDisplayItem::ClearItems,
@@ -311,6 +314,49 @@ namespace TEN::Scripting::DisplayItem
 			item->SetItemVisibility(visible);
 	}
 
+	///// Set the moveable's animation to the one specified by the given index.
+	//// Performs no bounds checking. *Ensure the number given is correct, else
+	//// moveable may end up in corrupted animation state.*
+	//// @function DisplayItem:SetAnim
+	//// @tparam int index The index of the desired animation.
+	//// @tparam[opt] int slot Slot ID of the desired anim (if omitted, moveable's own slot ID is used).
+	//void ScriptDisplayItem::SetItemAnimation(int animation)
+	//{
+	//	if (_itemName.empty())
+	//		return;
+
+	//	auto* item = g_DrawItems.GetItemByName(_itemName);
+
+	//	if (item)
+	//	{
+	//		item->SetItemAnimation(animation);
+	//	}
+	//}
+
+	/// Set frame number from an animation.
+	// This will set the specified animation to the given frame.
+	// The number of frames in an animation can be seen under the heading "End frame" in
+	// the WadTool animation editor. If the animation has no frames, the only valid argument
+	// is -1.
+	// @function DisplayItem:SetFrame
+	// @tparam int index The index of the desired animation.
+	// @tparam int frame The new frame number.
+	void ScriptDisplayItem::SetItemFrame(int animation, int frame)
+	{
+		if (_itemName.empty())
+			return;
+
+		auto* item = g_DrawItems.GetItemByName(_itemName);
+
+		if (item)
+		{
+			if (frame <= GetEndFrame())
+				item->SetItemFrame(frame);
+			else
+				item->SetItemFrame(GetEndFrame());
+		}
+	}
+
 	/// Retrieve the object ID from a DisplayItem.
 	// @function DisplayItem:GetObjectID
 	// @treturn Objects.ObjID A number representing the object ID of the DisplayItem.
@@ -457,6 +503,55 @@ namespace TEN::Scripting::DisplayItem
 			return false;
 
 		return item->GetItemVisibility();
+	}
+
+	///Retrieve the index of the current animation.
+	// This corresponds to the number shown in the item's animation list in WadTool.
+	// @function DisplayItem:GetAnim
+	// @treturn int The index of the active animation.
+	int ScriptDisplayItem::GetAnimNumber() const
+	{
+		if (_itemName.empty())
+			return 0;
+
+		auto* item = g_DrawItems.GetItemByName(_itemName);
+		if (!item)
+			return 0;
+
+		return item->GetItemAnimation();
+	}
+
+	/// Retrieve frame number.
+	//This is the current frame of the DisplayItems's active animation.
+	//@function DisplayItem:GetFrame
+	//@treturn int The current frame of the active animation.
+	int ScriptDisplayItem::GetFrameNumber() const
+	{
+		if (_itemName.empty())
+			return 0;
+
+		auto* item = g_DrawItems.GetItemByName(_itemName);
+		if (!item)
+			return 0;
+
+		return item->GetItemFrame();
+	}
+
+	///Get the end frame number of the DisplayItems's active animation.
+	// This is the "End Frame" set in WADTool for the animation.
+	// @function DisplayItem:GetEndFrame()
+	// @treturn int End frame number of the active animation.
+	int ScriptDisplayItem::GetEndFrame() const
+	{
+		if (_itemName.empty())
+			return 0;
+
+		auto* item = g_DrawItems.GetItemByName(_itemName);
+		if (!item)
+			return 0;
+		
+		const auto& anim = GetAnimData(item->GetItemObjectID(), item->GetItemAnimation());
+		return (anim.frameEnd - anim.frameBase);
 	}
 
 	/// Get a DisplayItem by its name.

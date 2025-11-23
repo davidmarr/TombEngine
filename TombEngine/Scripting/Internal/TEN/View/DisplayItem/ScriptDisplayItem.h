@@ -43,6 +43,7 @@ namespace TEN::Scripting::DisplayItem
 		void SetItemMeshVisibility(int meshIndex, bool visible);
 		void SetItemMeshRotation(int meshIndex, Rotation angles, TypeOrNil<bool> disableInterpolation);
 		void SetItemVisibility(bool visible);
+		void SetItemFrame(int animation, int frame);
 
 		// Getters
 		GAME_OBJECT_ID GetItemObjectID() const;
@@ -53,6 +54,9 @@ namespace TEN::Scripting::DisplayItem
 		bool GetItemMeshVisibility(int meshIndex) const;
 		Rotation GetItemMeshRotation(int meshIndex) const;
 		bool GetItemVisibility() const;
+		int GetAnimNumber() const;
+		int GetFrameNumber() const;
+		int GetEndFrame() const;
 
 		//functions
 		static ScriptDisplayItem GetItemByName(const std::string& itemName);
