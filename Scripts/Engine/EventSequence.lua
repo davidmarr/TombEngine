@@ -48,7 +48,6 @@
 
 local Timer = require("Engine.Timer")
 local Type = require("Engine.Type")
-local Utility = require("Engine.Util")
 
 local EventSequence = {}
 EventSequence.__index = EventSequence
@@ -150,7 +149,7 @@ EventSequence.Create = function (name, loop, timerFormat, ...)
 	thisES.loop = loop
 
 	local errorCheckFormat = "Warning in EventSequence.Create(): wrong value for timerFormat, timerFormat for '".. name .."' sequence will be set to false"
-	thisES.timerFormat = Utility.CheckTimeFormat(timerFormat, errorCheckFormat)
+	thisES.timerFormat = LevelFuncs.Engine.Timer.CheckTimeFormat(timerFormat, errorCheckFormat)
 
 	thisES.timesFuncsAndArgs = {...}
 	local tfa = thisES.timesFuncsAndArgs
