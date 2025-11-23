@@ -4,6 +4,8 @@ The dates are in European standard format where date is presented as **YYYY-MM-D
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
 ## [Version 1.10.2]
+
+### Lua API changes
 * Added overloads for `TEN.Util.PercentToScreen(Vec2(x, y))` and `TEN.Util.ScreenToPercent(Vec2(x, y))`.
 
 ## [Version 1.10.1]
