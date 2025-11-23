@@ -19,6 +19,7 @@ namespace TEN::Scripting::Types
 			ctors(),
 			sol::call_constructor, ctors(),
 			sol::meta_function::to_string, &ScriptColor::ToString,
+			sol::meta_function::equal_to, &ScriptColor::operator ==,
 
 			/// (int) Red component.
 			// @mem r
@@ -148,5 +149,25 @@ namespace TEN::Scripting::Types
 	ScriptColor::operator RGBAColor8Byte() const
 	{
 		return _color;
+	}
+
+	bool ScriptColor::operator ==(const ScriptColor& other) const
+	{
+		return _color.GetR() == other.GetR() &&
+			_color.GetG() == other.GetG() &&
+			_color.GetB() == other.GetB() &&
+			_color.GetA() == other.GetA();
+	}
+
+	/// Get the linearly interpolated Color between this Color and the input Color according to the input alpha.
+	// @function Color:Lerp
+	// @tparam Color color The target Color.
+	// @tparam float alpha The interpolation factor in the range [0.0, 1.0]. If alpha is outside this range, it will be clamped.
+	// @treturn Color The resulting Color.
+	ScriptColor ScriptColor::Lerp(const ScriptColor& color, float alpha) const
+	{
+		float clampedAlpha = std::clamp(alpha, 0.0f, 1.0f);
+		Color result = Color::Lerp(_color, color, clampedAlpha);
+		return ScriptColor(result);
 	}
 }
