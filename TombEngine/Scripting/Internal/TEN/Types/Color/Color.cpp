@@ -38,7 +38,7 @@ namespace TEN::Scripting::Types
 			"a", sol::property(&ScriptColor::GetA, &ScriptColor::SetA),
 
 			// Register methods.
-			"Lerp", & ScriptColor::Lerp);
+			"Lerp", &ScriptColor::Lerp);
 	}
 
 	/// Create a Color object.
