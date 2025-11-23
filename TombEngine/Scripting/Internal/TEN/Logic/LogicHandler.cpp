@@ -288,7 +288,7 @@ void LogicHandler::AddCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
 	if (point == _lastCallbackPoint)
 	{
-		TENLog("Attempt to remove callback function within the same callback type.", LogLevel::Error, LogConfig::All);
+		TENLog("Attempt to add callback function " + levelFunc.m_funcName + " within the same callback type.", LogLevel::Error, LogConfig::All);
 		return;
 	}
 
@@ -322,7 +322,7 @@ void LogicHandler::RemoveCallback(CallbackPoint point, const LevelFunc& levelFun
 {
 	if (point == _lastCallbackPoint)
 	{
-		TENLog("Attempt to remove callback function within the same callback type.", LogLevel::Error, LogConfig::All);
+		TENLog("Attempt to remove callback function " + levelFunc.m_funcName + " within the same callback type.", LogLevel::Error, LogConfig::All);
 		return;
 	}
 
@@ -1040,64 +1040,18 @@ unsigned int LogicHandler::GetFunctionCallCount()
 	return _insideFunction ? _functionCallCount : 0;
 }
 
-void LogicHandler::PerformCallbacks(CallbackPoint type)
+void LogicHandler::PerformCallbacks(CallbackPoint point)
 {
-	std::unordered_set<std::string>* list = nullptr;
-
-	switch (type)
-	{
-	case CallbackPoint::PreStart:
-		list = &_callbacksPreStart;
-		break;
-	case CallbackPoint::PostStart:
-		list = &_callbacksPostStart;
-		break;
-	case CallbackPoint::PreEnd:
-		list = &_callbacksPreEnd;
-		break;
-	case CallbackPoint::PostEnd:
-		list = &_callbacksPostEnd;
-		break;
-	case CallbackPoint::PreSave:
-		list = &_callbacksPreSave;
-		break;
-	case CallbackPoint::PostSave:
-		list = &_callbacksPostSave;
-		break;
-	case CallbackPoint::PreLoad:
-		list = &_callbacksPreLoad;
-		break;
-	case CallbackPoint::PostLoad:
-		list = &_callbacksPostLoad;
-		break;
-	case CallbackPoint::PreLoop:
-		list = &_callbacksPreLoop;
-		break;
-	case CallbackPoint::PostLoop:
-		list = &_callbacksPostLoop;
-		break;
-	case CallbackPoint::PreUseItem:
-		list = &_callbacksPreUseItem;
-		break;
-	case CallbackPoint::PostUseItem:
-		list = &_callbacksPostUseItem;
-		break;
-	case CallbackPoint::PreFreeze:
-		list = &_callbacksPreFreeze;
-		break;
-	case CallbackPoint::PostFreeze:
-		list = &_callbacksPostFreeze;
-		break;
-	default:
-		return;
-	}
-
-	if (list == nullptr || list->empty())
+	auto it = _callbacks.find(point);
+	if (it == _callbacks.end())
 		return;
 
-	_lastCallbackPoint = type;
+	if (it->second->empty())
+		return;
 
-	for (const auto& name : *list)
+	_lastCallbackPoint = point;
+
+	for (const auto& name : *it->second)
 		CallLevelFuncByName(name);
 
 	_lastCallbackPoint = std::nullopt;
