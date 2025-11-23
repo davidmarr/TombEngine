@@ -35,7 +35,10 @@ namespace TEN::Scripting::Types
 
 			/// (int) Alpha component (0 = invisible, 255 = opaque).
 			// @mem a
-			"a", sol::property(&ScriptColor::GetA, &ScriptColor::SetA));
+			"a", sol::property(&ScriptColor::GetA, &ScriptColor::SetA),
+
+			// Register methods.
+			"Lerp", & ScriptColor::Lerp);
 	}
 
 	/// Create a Color object.
