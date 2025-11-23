@@ -94,10 +94,11 @@ end
 --- Split a string into a table using a specified delimiter.
 -- @tparam string inputStr The string to split.
 -- @tparam[opt=" " (space)] string delimiter The delimiter to use for splitting.
--- @treturn tbl A table containing the split substrings.
+-- @treturn table A table containing the split substrings.
 -- @usage
 -- local str = "apple,banana,cherry"
 -- local result = LuaUtil.SplitString(str, ",")
+-- -- Result: {"apple", "banana", "cherry"}
 LuaUtil.SplitString = function(inputStr, delimiter)
     if not Type.IsString(inputStr) then
         TEN.Util.PrintLog("Error in LuaUtil.SplitString: inputStr is not a string.", TEN.Util.LogLevel.ERROR)
