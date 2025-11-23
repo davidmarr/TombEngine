@@ -54,15 +54,22 @@ end
 -- @section comparison
 
 --- Compare two values based on the specified operator.
--- @tparam mixed operand The first value to compare.
--- @tparam mixed reference The second value to compare against.
+-- @tparam number|string|Time operand The first value to compare.
+-- @tparam number|string|Time reference The second value to compare against.
 -- @tparam number operator The comparison operator<br>(0: equal, 1: not equal, 2: less than, 3: less than or equal, 4: greater than, 5: greater than or equal).
 -- @treturn bool The result of the comparison.
 LuaUtil.CompareValues = function(operand, reference, operator)
-	if operator < 0 or operator > 5 then
-		TEN.Util.PrintLog("Invalid operator for comparison", TEN.Util.LogLevel.ERROR)
-		return false
-	end
+    if not Type.IsNumber(operator) or operator < 0 or operator > 5 then
+        TEN.Util.PrintLog("Invalid operator for comparison", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    local isNumber = Type.IsNumber(operand) and Type.IsNumber(reference)
+    local isString = Type.IsString(operand) and Type.IsString(reference)
+    local isTime = Type.IsTime(operand) and Type.IsTime(reference)
+    if not (isNumber or isString or isTime) then
+        TEN.Util.PrintLog("Error in LuaUtil.CompareValues: operand and reference must be of the same type (number, string, Time).", TEN.Util.LogLevel.ERROR)
+        return false
+    end
     operand = operand == true and 1 or operand == false and 0 or operand
     reference = reference == true and 1 or reference == false and 0 or reference
     return operators[operator + 1] and operators[operator + 1](operand, reference) or false
