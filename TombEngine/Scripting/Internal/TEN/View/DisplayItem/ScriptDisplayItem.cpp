@@ -55,7 +55,7 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_GetVisible, &ScriptDisplayItem::GetItemVisibility,
 			ScriptReserved_GetFrameNumber, &ScriptDisplayItem::GetFrameNumber,
 			ScriptReserved_GetEndFrame, &ScriptDisplayItem::GetEndFrame,
-			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::GetAnimNumber,
+			ScriptReserved_GetAnimNumber, &ScriptDisplayItem::GetAnimNumber,
 			ScriptReserved_DrawItemGetItem, &ScriptDisplayItem::GetItemByName,
 			ScriptReserved_DrawItemRemoveItem, &ScriptDisplayItem::RemoveItem,
 			ScriptReserved_DrawItemClearAll, &ScriptDisplayItem::ClearItems,
@@ -350,10 +350,13 @@ namespace TEN::Scripting::DisplayItem
 
 		if (item)
 		{
-			if (frame <= GetEndFrame())
+			auto endFrame = GetEndFrame();
+
+			item->SetItemAnimation(animation);
+			if (frame <= endFrame)
 				item->SetItemFrame(frame);
 			else
-				item->SetItemFrame(GetEndFrame());
+				item->SetItemFrame(endFrame);
 		}
 	}
 
