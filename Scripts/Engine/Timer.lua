@@ -788,6 +788,7 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 			if t.timerFormat then
 				local text = Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat)
 				local color = t.paused and t.pausedColor or t.unpausedColor
+				local timerString = TEN.Strings.DisplayString(text, t.pos, t.scale, color, false, t.stringOption)
 				local time = (t.remainingTime == LevelVars.Engine.Timer.params.zero and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30
 				TEN.Strings.ShowString(timerString, time)
 			end
