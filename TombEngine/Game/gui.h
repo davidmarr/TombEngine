@@ -161,7 +161,7 @@ namespace TEN::Gui
 		int EnterInventory;
 		int LastInvItem;
 		AmmoData Ammo;
-		bool InventoryOverride;
+		bool InventoryOverride = false;
 
 	public:
 		int CompassNeedleAngle;

@@ -154,13 +154,19 @@ namespace TEN::Scripting::Input
 		Rumble(strength, time.value_or(0.3f), RumbleMode::Both);
 	}
 
-	//Internal Function
+	/// Returns the name of the key that has been assigned to specified ActionID.
+	// @function GetActionBinding
+	// @tparam Input.ActionID actionID Action ID to get binding key name for.
+	// @treturn string Name of keyboard key that has been assigned to the ActionID.
 	static std::string GetActionBinding(int actionID)
 	{
 		return g_Bindings.GetBindingKeyName((ActionID)actionID);
 	}
 
-	//Internal Function
+	/// Returns the time for which a key has been held.
+	// @function GetActionTimeActive
+	// @tparam Input.ActionID actionID Action ID to clear.
+	// @treturn int Time in game frames for which the specified key has been held.
 	static int GetActionTimeActive(int actionID)
 	{
 		if (!IsValidAction(actionID))

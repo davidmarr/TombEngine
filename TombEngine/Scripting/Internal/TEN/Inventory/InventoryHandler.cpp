@@ -87,46 +87,63 @@ namespace TEN::Scripting::InventoryHandler
 			g_Gui.SetInventoryItemChosen(objectID);
 	}
 
-	/// Clear last item used in the player's inventory.
+	///Clear last item used in the player's inventory.
 	// When this function is used in OnUseItem level function, it allows to override existing item functionality.
 	// For items without existing functionality, this function is needed to avoid Lara saying "No" after using it.
-	//@function ClearUsedItem
+	// @function ClearUsedItem
 	static void ClearUsedItem()
 	{
 		g_Gui.SetInventoryItemChosen(GAME_OBJECT_ID::ID_NO_OBJECT);
 	}
 
-	//Private function required for inventory
-	static int ConvertObjectToInventoryItem(int objectID)
-	{
-		return g_Gui.ConvertObjectToInventoryItem(objectID);
-	}
-
-	//Private function required for inventory
-	static int ConvertInventoryItemToObject(int objectNumber)
-	{
-		return g_Gui.ConvertInventoryItemToObject(objectNumber);
-	}
-
-	//Inventory overrides
-	static bool GetInventoryOverride()
-	{
-		return g_Gui.GetInventoryOverride();
-	}
-
-	static void SetInventoryOverride(bool value)
-	{
-		g_Gui.SetInventoryOverride(value);
-	}
-
+	///Gets the item set to open custom inventory at. Used by Custom Inventory module.
+	// @function GetEnterInventory
+	// @treturn Objects.ObjID objectID Object ID of the item set.
 	static int GetEnterInventory()
 	{
 		return g_Gui.GetEnterInventory();
 	}
 
+	///Sets the item to open custom inventory at. Used by Custom Inventory module.
+	// @function SetEnterInventory
+	// @tparam Objects.ObjID objectID Object ID of the item to set.
 	static void SetEnterInventory(int value)
 	{
 		g_Gui.SetEnterInventory(value);
+	}
+
+	///Gets if the default inventory is disabled. Used by Custom Inventory module.
+	// @function GetInventoryOverride
+	// @treturn bool Returns true is default inventory is disabled. false if not.
+	static bool GetInventoryOverride()
+	{
+		return g_Gui.GetInventoryOverride();
+	}
+
+	///Disables the default inventory. Used by Custom Inventory module.
+	// @function SetInventoryOverride
+	// @tparam bool value Enables or disables the default inventory.
+	static void SetInventoryOverride(bool value)
+	{
+		g_Gui.SetInventoryOverride(value);
+	}
+
+	///Converts ObjectID to InventoryItem. Used by Custom Inventory module.
+	// @function ConvertObjectToInventoryItem
+	// @tparam Objects.ObjID objectID Object ID of the item to convert.
+	// @treturn int InventoryID of the object.
+	static int ConvertObjectToInventoryItem(int objectID)
+	{
+		return g_Gui.ConvertObjectToInventoryItem(objectID);
+	}
+
+	///Converts InventoryItem to ObjectID. Used by Custom Inventory module.
+	// @function ConvertInventoryItemToObject
+	// @tparam int inventoryID inventoryID to convert.
+	// @treturn Objects.ObjID objectID of the object.
+	static int ConvertInventoryItemToObject(int objectNumber)
+	{
+		return g_Gui.ConvertInventoryItemToObject(objectNumber);
 	}
 
 	void Register(sol::state* state, sol::table& parent)

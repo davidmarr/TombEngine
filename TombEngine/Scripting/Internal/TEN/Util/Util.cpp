@@ -193,12 +193,17 @@ namespace TEN::Scripting::Util
 		return posA.Distance(posB);
 	}
 
-	//Internal function required for diary
+	/// Converts ObjectID to a string. Used by Custom Inventory module to retrieve examine texts.
+	// @function GetObjectIDString
+	// @tparam Objects.ObjID objectID ID of the object.
+	// @treturn string ObjectID converted to string.
 	static std::string GetObjectIDString(GAME_OBJECT_ID objectID)
 	{
 		return GetObjectName(objectID);
 	}
 
+	/// Runs the OnUseItem callback. Used by Custom Inventory module to enable OnItemUse callbacks.
+	// @function OnUseItemCallBack
 	static void OnUseItemCallBack()
 	{
 		g_GameScript->OnUseItem((GAME_OBJECT_ID)g_Gui.GetInventoryItemChosen());

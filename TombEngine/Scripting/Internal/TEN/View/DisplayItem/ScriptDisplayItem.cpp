@@ -25,6 +25,7 @@ namespace TEN::Scripting::DisplayItem
 			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale, int meshBits),
 			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale),
 			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID, const Vec3& position),
+			ScriptDisplayItem(std::string itemName, GAME_OBJECT_ID objectID),
 			ScriptDisplayItem(std::string)>;
 
 		// Register type.
@@ -43,7 +44,6 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_SetMeshVisible, &ScriptDisplayItem::SetItemMeshVisibility,
 			ScriptReserved_SetJointRotation, &ScriptDisplayItem::SetItemMeshRotation,
 			ScriptReserved_SetVisible, &ScriptDisplayItem::SetItemVisibility,
-			/*ScriptReserved_SetAnimNumber, &ScriptDisplayItem::SetItemAnimation,*/
 			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::SetItemFrame,
 			ScriptReserved_GetObjectID, & ScriptDisplayItem::GetItemObjectID,
 			ScriptReserved_GetPosition, &ScriptDisplayItem::GetItemPosition,
@@ -74,15 +74,14 @@ namespace TEN::Scripting::DisplayItem
 	// @function DisplayItem
 	// @tparam string itemName Lua name of the display item.
 	// @tparam Objects.ObjID objectID ID of the object.
-	// @tparam Vec3 position Position in 3d screen sapce.
+	// @tparam[opt=Vec3(0&#44; 0&#44; 0)] Vec3 position Position in 3d screen sapce.
 	// @tparam[opt=Rotation(0&#44; 0&#44; 0)] Rotation rotation Rotation about x, y, and z axes.
 	// @tparam[opt=1] float scale Set the visual scale.
 	// @tparam[opt] int meshBits Packed meshbits.
 	// @treturn DisplayItem A new DisplayItem object.
 	// @usage
 	// local item = DisplayItem("item1", -- name
-	//	TEN.Objects.ObjID.PISTOLS_ITEM, -- object id
-	//	Vec3(0,200,1024)) -- position
+	//	TEN.Objects.ObjID.PISTOLS_ITEM, -- object id) 
 
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale, int meshBits)
 	{
@@ -104,6 +103,14 @@ namespace TEN::Scripting::DisplayItem
 
 		_itemName = itemName;
 		g_DrawItems.AddItem(itemName, objectID, position, rot, 1.0f, ALL_JOINT_BITS);
+	}
+
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID)
+	{
+		auto rot = Rotation(0, 0, 0).ToEulerAngles();
+
+		_itemName = itemName;
+		g_DrawItems.AddItem(itemName, objectID, Vec3(0, 0, 0), rot, 1.0f, ALL_JOINT_BITS);
 	}
 
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName)
@@ -314,30 +321,10 @@ namespace TEN::Scripting::DisplayItem
 			item->SetItemVisibility(visible);
 	}
 
-	///// Set the moveable's animation to the one specified by the given index.
-	//// Performs no bounds checking. *Ensure the number given is correct, else
-	//// moveable may end up in corrupted animation state.*
-	//// @function DisplayItem:SetAnim
-	//// @tparam int index The index of the desired animation.
-	//// @tparam[opt] int slot Slot ID of the desired anim (if omitted, moveable's own slot ID is used).
-	//void ScriptDisplayItem::SetItemAnimation(int animation)
-	//{
-	//	if (_itemName.empty())
-	//		return;
-
-	//	auto* item = g_DrawItems.GetItemByName(_itemName);
-
-	//	if (item)
-	//	{
-	//		item->SetItemAnimation(animation);
-	//	}
-	//}
-
 	/// Set frame number from an animation.
 	// This will set the specified animation to the given frame.
 	// The number of frames in an animation can be seen under the heading "End frame" in
-	// the WadTool animation editor. If the animation has no frames, the only valid argument
-	// is -1.
+	// the WadTool animation editor.
 	// @function DisplayItem:SetFrame
 	// @tparam int animIndex The index of the desired animation.
 	// @tparam int frame The new frame number.
@@ -447,7 +434,7 @@ namespace TEN::Scripting::DisplayItem
 		return item->GetItemColor();
 	}
 
-	/// Get visibility state of a specified mesh of a DisplayItem.
+	///Get visibility state of a specified mesh of a DisplayItem.
 	// Returns true if specified mesh is visible on a DisplayItem, and false
 	// if it is not visible.
 	// @function DisplayItem:GetMeshVisible

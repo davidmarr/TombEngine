@@ -56,14 +56,14 @@ namespace TEN::Scripting
 			ScriptReserved_InventoryItem,
 			ctors(), sol::call_constructor, ctors(),
 			// Expose fields to Lua
-			"name", &InventoryItem::Name,
+			"nameKey", &InventoryItem::Name,
 			"objectID", &InventoryItem::ObjectID,
 			"yOffset", &InventoryItem::YOffset,
 			"scale", &InventoryItem::Scale,
 			"rotation", &InventoryItem::Rot,
-			"rotationFlags", &InventoryItem::RotFlags,
+			"axis", &InventoryItem::RotFlags,
 			"meshBits", &InventoryItem::MeshBits,
-			"menuAction", sol::property(&InventoryItem::GetAction)
+			"action", sol::property(&InventoryItem::GetAction)
 			);
 	}
 

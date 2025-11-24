@@ -220,7 +220,6 @@ namespace TEN::Scripting::View
 		g_Renderer.SetPostProcessTint(vec);
 	}
 
-	//Private function required for inventory
 	static void UseBinoculars()
 	{
 		auto& item = *LaraItem;
@@ -385,8 +384,9 @@ namespace TEN::Scripting::View
 		// COMPATIBILITY
 		tableView.set_function("PlayFlyBy", &PlayFlyby);
 
-		//Private function required for inventory
-		tableView.set_function("UseBinoculars", &UseBinoculars);
+		/// Sets the view to binoculars mode.
+		// @function UseBinoculars
+		tableView.set_function(ScriptReserved_UseBinculars, &UseBinoculars);
 
 		// Register types.
 		ScriptDisplaySprite::Register(*state, parent);

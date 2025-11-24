@@ -27,6 +27,7 @@ namespace TEN::Scripting::DisplayItem
 		ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation,	float scale, int meshBits);
 		ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, float scale);
 		ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position);
+		ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID);
 		ScriptDisplayItem(const std::string& itemName);
 		
 		// Methods
