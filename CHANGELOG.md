@@ -5,10 +5,13 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10.2]
 
-### Lua API changes
-* Added overloads for `TEN.Util.PercentToScreen(Vec2(x, y))` and `TEN.Util.ScreenToPercent(Vec2(x, y))`.
+### Bug fixes
+* Fixed interaction highlighter not working for pushable climbable blocks.
 
-## [Version 1.10.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.10.1) - 2025-11-22
+### Lua API changes
+* Added a safeguard for adding or removing callback functions within the same callback type.
+
+## [Version 1.10.1]
 
 ### New features
 * Added no shake mode for CLASSIC_ROLLINGBALL (OCB 1).
