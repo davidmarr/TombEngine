@@ -386,7 +386,7 @@ namespace TEN::Scripting::View
 
 		/// Sets the view to binoculars mode.
 		// @function UseBinoculars
-		tableView.set_function(ScriptReserved_UseBinculars, &UseBinoculars);
+		tableView.set_function(ScriptReserved_UseBinoculars, &UseBinoculars);
 
 		// Register types.
 		ScriptDisplaySprite::Register(*state, parent);

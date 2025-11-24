@@ -275,7 +275,12 @@ void LaraObject::SetWeaponType(LaraWeaponType weaponType, sol::optional<bool> ac
 	}
 }
 
-//docs required
+/// Get player lasersight status.
+// @function LaraObject:GetLaserSight
+// @tparam Objects.WeaponType weaponType Player weapon type. Only works for HK, Revolver and Crossbow.
+// @treturn bool Returns true if lasersight is connected to specified weapon.
+// @usage
+// local test = Lara:GetLaserSight(WeaponType.CROSSBOW)
 bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
 {
 	auto* lara = GetLaraInfo(_moveable);
@@ -292,7 +297,12 @@ bool LaraObject::GetLaserSight(LaraWeaponType weaponType) const
 	}
 }
 
-//docs required
+/// Set player lasersight status.
+// @function LaraObject:SetLaserSight
+// @tparam Objects.WeaponType weaponType Player weapon type to attach lasersight to. Only works for HK, Revolver and Crossbow.
+// @tparam[opt=false] bool activate If `true`, also draw the weapons. If `false`, keep weapons holstered.
+// @usage
+// local test = Lara:SetLaserSight(WeaponType.CROSSBOW)
 void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate)
 {
 	auto* lara = GetLaraInfo(_moveable);
@@ -426,7 +436,12 @@ int LaraObject::GetAmmoType() const
 
 	return (int)*ammoType;
 }
-//docs required
+
+/// Set player weapon ammo type.
+// @function LaraObject:SetAmmoType
+// @tparam Objects.AmmoType Player weapon ammo type.
+// @usage
+// Lara:SetAmmoType(TEN.Objects.AmmoType.CROSSBOW_BOLT_NORMAL)
 void LaraObject::SetAmmoType(PlayerAmmoType ammoType)
 {
 	auto& player = GetLaraInfo(*_moveable);
@@ -482,7 +497,9 @@ int LaraObject::GetAmmoCount() const
 	return (ammo.HasInfinite()) ? -1 : (int)ammo.GetCount();
 }
 
-//Private function required for inventory
+/// Get player HK weapon mode type.
+// @function LaraObject:GetWeaponMode
+// @treturn Objects.WeaponMode Player HK weapon mode type.
 int LaraObject::GetWeaponMode() const
 {
 	const auto& player = GetLaraInfo(*_moveable);
@@ -521,7 +538,9 @@ int LaraObject::GetWeaponMode() const
 	return static_cast<int>(weaponMode.value());
 }
 
-//Private function required for inventory
+/// Set player HK weapon mode type.
+// @function LaraObject:SetWeaponMode
+// @tparam Objects.WeaponMode weaponMode Player HK weapon mode type.
 void LaraObject::SetWeaponMode(PlayerWeaponMode weaponMode)
 {
 	auto& player = GetLaraInfo(*_moveable);
@@ -601,14 +620,25 @@ bool LaraObject::IsTorchLit() const
 	return player.Torch.IsLit;
 }
 
-//add docs later
+/// Get player water status.
+// @function LaraObject:GetWaterStatus
+// @treturn Objects.WaterStatus Current water status of player.
+// @usage
+// local waterStatus = Lara:GetWaterStatus()
 WaterStatus LaraObject::GetWaterStatus() const
 {
 	auto* lara = GetLaraInfo(_moveable);
 	return  WaterStatus{ lara->Control.WaterStatus };
 }
 
-//add docs later
+/// Get player water skin amount.
+// @function LaraObject:GetWaterSkinStatus
+// @tparam bool flag use True get the amount for Big Waterskin. False for Small Waterskin.
+// @treturn int Current capacity of specified water skin. For Smallwater skin (0 = Waterskin not present; 1 = Waterskin Empty; 2 = Waterskin 1L; 3 = WaterSkin 2L; 4 = Waterskin 3L).
+// For Largewater skin (0 = Waterskin not present; 1 = Waterskin Empty; 2 = Waterskin 1L; 3 = WaterSkin 2L; 4 = Waterskin 3L; 5 = Waterskin 4L; 6 = Waterskin 5L)
+// @usage
+// local bigWaterSkinCapacity = Lara:GetWaterSkinStatus(true)
+// local smallWaterSkinCapacity = Lara:GetWaterSkinStatus(false)
 int LaraObject::GetWaterSkinStatus(TypeOrNil<bool> flag) const
 {
 	
@@ -619,7 +649,14 @@ int LaraObject::GetWaterSkinStatus(TypeOrNil<bool> flag) const
 	return value;
 }
 
-//add docs later
+/// Set player water skin amount.
+// @function LaraObject:SetWaterSkinStatus
+// @tparam int amount Current capacity of specified water skin. For Smallwater skin (0 = Waterskin not present; 1 = Waterskin Empty; 2 = Waterskin 1L; 3 = WaterSkin 2L; 4 = Waterskin 3L).
+// For Largewater skin (0 = Waterskin not present; 1 = Waterskin Empty; 2 = Waterskin 1L; 3 = WaterSkin 2L; 4 = Waterskin 3L; 5 = Waterskin 4L; 6 = Waterskin 5L)
+// @tparam bool flag use True get the amount for Big Waterskin. False for Small Waterskin.
+// @usage
+// local bigWaterSkinCapacity = Lara:SetWaterSkinStatus(2)
+// local smallWaterSkinCapacity = Lara:SetWaterSkinStatus(3)
 void LaraObject::SetWaterSkinStatus(int amount, TypeOrNil<bool> flag)
 {
 	auto convertedFlag = ValueOr<bool>(flag, false);

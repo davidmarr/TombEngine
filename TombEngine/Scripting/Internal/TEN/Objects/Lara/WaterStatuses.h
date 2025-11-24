@@ -2,20 +2,20 @@
 
 #include "Game/Lara/lara_struct.h"
 
-/// Constants for player hand statuses.
-// @enum Objects.HandStatus
+/// Constants for player water statuses.
+// @enum Objects.WaterStatus
 // @pragma nostrip
 
-/// Table of Objects.HandStatus constants.
-// To be used with @{Objects.LaraObject.GetAmmoType} function.
+/// Table of Objects.WaterStatus constants.
+// To be used with @{Objects.LaraObject.GetWaterStatus} function.
 //
-// - `FREE`
-// - `BUSY`
-// - `WEAPON_DRAW`
-// - `WEAPON_READY`
-// - `SPECIAL`
+// - `DRY` Player is in a dry room.
+// - `WADE` Player is wading the water.
+// - `TREADWATER` Player is treading the water.
+// - `UNDERWATER` Player is underwater.
+// - `FLYCHEAT` Player is using flycheat.
 //
-// @table Objects.HandStatus
+// @table Objects.WaterStatus
 
 namespace TEN::Scripting
 {
