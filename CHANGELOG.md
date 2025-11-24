@@ -3,6 +3,14 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 1.10.2]
+
+### Bug fixes
+* Fixed interaction highlighter not working for pushable climbable blocks.
+
+### Lua API changes
+* Added a safeguard for adding or removing callback functions within the same callback type.
+
 ## [Version 1.10.1]
 
 ### New features
