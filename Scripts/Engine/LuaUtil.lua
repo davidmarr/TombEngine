@@ -819,8 +819,8 @@ end
 -- @usage
 -- -- Example with associative table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
--- local hasBanana = LuaUtil.TableHasValue(tbl, "banana") -- Result: true
--- local hasGrape = Utility.TableHasValue(tbl, "grape") -- Result: false
+-- local hasBanana = LuaUtil.TableHasValue(tbl, 3) -- Result: true
+-- local hasGrape = Utility.TableHasValue(tbl, 0) -- Result: false
 --
 -- -- Example with array table:
 -- local tbl = { "apple", "banana", "cherry" }
