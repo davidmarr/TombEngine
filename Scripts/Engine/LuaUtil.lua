@@ -15,14 +15,14 @@ local operators = {
 }
 
 -- Helper function for ping-pong calculation on a single component
-local function pingPongComponent(t, length)
+local function PingPongComponent(t, length)
     if length == 0 then return 0 end
     t = t % (length * 2)
     return t > length and (length * 2 - t) or t
 end
 
 -- Helper function for type checking and interpolation
-local function interpolateValues(a, b, clampedT, functionName)
+local function InterpolateValues(a, b, clampedT, functionName)
     local isColor = Type.IsColor(a) and Type.IsColor(b)
     local isRotation = Type.IsRotation(a) and Type.IsRotation(b)
     local isVec2 = Type.IsVec2(a) and Type.IsVec2(b)
@@ -40,7 +40,7 @@ local function interpolateValues(a, b, clampedT, functionName)
 end
 
 -- Helper function for HSL to RGB conversion
-local function hueToRgb(p, q, t)
+local function HueToRgb(p, q, t)
     if t < 0 then t = t + 1 end
     if t > 1 then t = t - 1 end
     if t < 1/6 then return p + (q - p) * 6 * t end
@@ -238,9 +238,9 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
         local p = 2 * l - q
         local hNorm = h / 360
 
-        r = hueToRgb(p, q, hNorm + 1/3)
-        g = hueToRgb(p, q, hNorm)
-        b = hueToRgb(p, q, hNorm - 1/3)
+        r = HueToRgb(p, q, hNorm + 1/3)
+        g = HueToRgb(p, q, hNorm)
+        b = HueToRgb(p, q, hNorm - 1/3)
     end
 
     -- Convert to 0-255 range and create TEN.Color
@@ -386,42 +386,42 @@ LuaUtil.PingPong = function(t, length)
 
     -- Handle number case
     if isNumber then
-        return pingPongComponent(t, length)
+        return PingPongComponent(t, length)
     end
 
     -- Handle Vec2 case
     if isVec2 then
         return TEN.Vec2(
-            pingPongComponent(t.x, length.x),
-            pingPongComponent(t.y, length.y)
+            PingPongComponent(t.x, length.x),
+            PingPongComponent(t.y, length.y)
         )
     end
 
     -- Handle Vec3 case
     if isVec3 then
         return TEN.Vec3(
-            pingPongComponent(t.x, length.x),
-            pingPongComponent(t.y, length.y),
-            pingPongComponent(t.z, length.z)
+            PingPongComponent(t.x, length.x),
+            PingPongComponent(t.y, length.y),
+            PingPongComponent(t.z, length.z)
         )
     end
 
     -- Handle Rotation case
     if isRotation then
         return TEN.Rotation(
-            pingPongComponent(t.x, length.x),
-            pingPongComponent(t.y, length.y),
-            pingPongComponent(t.z, length.z)
+            PingPongComponent(t.x, length.x),
+            PingPongComponent(t.y, length.y),
+            PingPongComponent(t.z, length.z)
         )
     end
 
     -- Handle Color case
     if isColor then
         return TEN.Color(
-            math.floor(pingPongComponent(t.r, length.r)),
-            math.floor(pingPongComponent(t.g, length.g)),
-            math.floor(pingPongComponent(t.b, length.b)),
-            math.floor(pingPongComponent(t.a, length.a))
+            math.floor(PingPongComponent(t.r, length.r)),
+            math.floor(PingPongComponent(t.g, length.g)),
+            math.floor(PingPongComponent(t.b, length.b)),
+            math.floor(PingPongComponent(t.a, length.a))
         )
     end
 
@@ -502,7 +502,7 @@ LuaUtil.PingPongRange = function(t, min, max)
     -- Handle number case
     if isNumber then
         local range = max - min
-        return min + pingPongComponent(t, range)
+        return min + PingPongComponent(t, range)
     end
 
     -- Calculate range for vector types
@@ -666,7 +666,7 @@ LuaUtil.Lerp = function(a, b, t)
     end
     -- Clamp t to the range [0, 1]
     local clampedT = math.max(0, math.min(1, t))
-    return interpolateValues(a, b, clampedT, "LuaUtil.Lerp")
+    return InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -733,7 +733,7 @@ LuaUtil.Smoothstep = function (a, b, edge0, edge1, x)
     local t = math.max(0, math.min(1, (x - edge0) / (edge1 - edge0)))
     -- Evaluate polynomial
     local clampedT = t * t * (3 - 2 * t)
-    return interpolateValues(a, b, clampedT, "LuaUtil.Smoothstep")
+    return InterpolateValues(a, b, clampedT, "LuaUtil.Smoothstep")
 end
 
 --- Table functions.
