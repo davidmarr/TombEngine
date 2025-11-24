@@ -1008,20 +1008,26 @@ namespace TEN::Renderer
 				BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
 
 				const auto& mesh = *moveableObject->ObjectMeshes[i];
-				for (const auto& bucket : mesh.Buckets)
+
+				for (int animated = 0; animated < 2; animated++)
 				{
-					if (bucket.NumVertices == 0)
-						continue;
+					for (const auto& bucket : mesh.Buckets)
+					{
+						if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
+							continue;
 
-					BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-					BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
+						SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
-					// Always render items as alpha-blended surface.
-					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
-					SetAlphaTest(AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
+						SetCullMode(CullMode::CounterClockwise);
+						SetDepthState(DepthState::Write);
 
-					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
-					_numMoveablesDrawCalls++;
+						BindBucketTextures(bucket, TextureSource::Moveables, animated);
+						BindMaterial(bucket.MaterialIndex, false);
+
+						DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);
+						_numMoveablesDrawCalls++;
+					}
 				}
 			}
 		}
