@@ -1,4 +1,4 @@
------<style>table.function_list td.name {min-width: 370px;}</style>
+-----<style>table.function_list td.name {min-width: 345px;}</style>
 --- Lua support functions to simplify operations in scripts. To use, include the module with:
 ---	local LuaUtil = require("Engine.LuaUtil")
 --- @luautil LuaUtil
@@ -338,9 +338,9 @@ end
 --
 -- -- Example with Vec2 for 2D position oscillation:
 -- local timer = 0
+-- local maxOffset = TEN.Vec2(100, 50)
 -- function OnLoop()
 --     timer = timer + 1
---     local maxOffset = TEN.Vec2(100, 50)
 --     local offset = LuaUtil.PingPong(TEN.Vec2(timer, timer), maxOffset)
 --     -- offset.x oscillates between 0-100, offset.y between 0-50
 --     myObject:SetPosition2D(offset)
@@ -348,9 +348,9 @@ end
 --
 -- -- Example with Vec3 for 3D position oscillation:
 -- local timer = 0
+-- local maxOffset = TEN.Vec3(200, 100, 50)
 -- function OnLoop()
 --     timer = timer + 1
---     local maxOffset = TEN.Vec3(50, 100, 75)
 --     local offset = LuaUtil.PingPong(
 --         TEN.Vec3(timer, timer * 0.5, timer * 2),
 --         maxOffset
@@ -361,9 +361,9 @@ end
 --
 -- -- Example with Rotation for oscillating rotation:
 -- local rotTimer = 0
+-- local maxRot = TEN.Rotation(45, 30, 15)
 -- function OnLoop()
 --     rotTimer = rotTimer + 2
---     local maxRot = TEN.Rotation(30, 45, 15)
 --     local rot = LuaUtil.PingPong(
 --         TEN.Rotation(rotTimer, rotTimer * 0.5, rotTimer),
 --         maxRot
@@ -374,9 +374,9 @@ end
 --
 -- -- Example with Color for pulsing effect:
 -- local colorTimer = 0
+-- local maxColor = TEN.Color(255, 128, 64, 200)
 -- function OnLoop()
 --     colorTimer = colorTimer + 5
---     local maxColor = TEN.Color(255, 128, 64, 200)
 --     local color = LuaUtil.PingPong(
 --         TEN.Color(colorTimer, colorTimer, colorTimer, 255),
 --         maxColor
@@ -473,10 +473,10 @@ end
 -- -- Example with Vec3 for platform movement:
 -- local timer = 0
 -- local basePos = TEN.Vec3(1000, 500, 2000)
+-- local minPos = TEN.Vec3(-512, 0, -256)
+-- local maxPos = TEN.Vec3(512, 200, 256)
 -- function OnLoop()
 --     timer = timer + 2
---     local minPos = TEN.Vec3(-512, 0, -256)
---     local maxPos = TEN.Vec3(512, 200, 256)
 --     local offset = LuaUtil.PingPongRange(
 --         TEN.Vec3(timer, timer, timer),
 --         minPos,
@@ -487,10 +487,10 @@ end
 --
 -- -- Example with Rotation for door swing:
 -- local rotTimer = 0
+-- local minRot = TEN.Rotation(0, 0, 0)
+-- local maxRot = TEN.Rotation(0, 90, 0) -- 90 degrees on Y axis
 -- function OnLoop()
 --     rotTimer = rotTimer + 1
---     local minRot = TEN.Rotation(0, 0, 0)
---     local maxRot = TEN.Rotation(0, 90, 0) -- 90 degrees on Y axis
 --     local rot = LuaUtil.PingPongRange(
 --         TEN.Rotation(0, rotTimer, 0),
 --         minRot,
@@ -501,10 +501,10 @@ end
 --
 -- -- Example with Color for pulsing alpha:
 -- local colorTimer = 0
+-- local minColor = TEN.Color(255, 100, 50, 128) -- Semi-transparent
+-- local maxColor = TEN.Color(255, 100, 50, 255) -- Fully opaque
 -- function OnLoop()
 --     colorTimer = colorTimer + 5
---     local minColor = TEN.Color(255, 100, 50, 128) -- Semi-transparent
---     local maxColor = TEN.Color(255, 100, 50, 255) -- Fully opaque
 --     local color = LuaUtil.PingPongRange(
 --         TEN.Color(255, 100, 50, colorTimer),
 --         minColor,
@@ -577,30 +577,30 @@ end
 -- -- Example with Vec3 for floating platform (0.5 Hz = 2 seconds per cycle):
 -- local timer = 0
 -- local basePos = TEN.Vec3(1000, 500, 2000)
+-- local minOffset = TEN.Vec3(0, -512, 0)
+-- local maxOffset = TEN.Vec3(0, 512, 0)
 -- function OnLoop()
 --     timer = timer + 0.033
---     local minOffset = TEN.Vec3(0, -512, 0)
---     local maxOffset = TEN.Vec3(0, 512, 0)
 --     local offset = LuaUtil.PingPongSmooth(timer, minOffset, maxOffset, 0.5)
 --     platform:SetPosition(basePos + offset)
 -- end
 --
 -- -- Example with Rotation for pendulum swing (0.3 Hz):
 -- local timer = 0
+-- local minRot = TEN.Rotation(0, -30, 0)
+-- local maxRot = TEN.Rotation(0, 30, 0)
 -- function OnLoop()
 --     timer = timer + 0.033
---     local minRot = TEN.Rotation(0, -30, 0)
---     local maxRot = TEN.Rotation(0, 30, 0)
 --     local rot = LuaUtil.PingPongSmooth(timer, minRot, maxRot, 0.3)
 --     pendulum:SetRotation(rot)
 -- end
 --
 -- -- Example with Color for rainbow effect (0.2 Hz = 5 seconds per cycle):
 -- local timer = 0
+-- local color1 = TEN.Color(255, 0, 0, 255)   -- Red
+-- local color2 = TEN.Color(0, 0, 255, 255)   -- Blue
 -- function OnLoop()
 --     timer = timer + 0.033
---     local color1 = TEN.Color(255, 0, 0, 255)   -- Red
---     local color2 = TEN.Color(0, 0, 255, 255)   -- Blue
 --     local color = LuaUtil.PingPongSmooth(timer, color1, color2, 0.2)
 --     sprite:SetColor(color)
 -- end
@@ -769,6 +769,9 @@ end
 --- Get the number of elements in a table (works for non-sequential tables).
 -- @tparam table tbl The table to count.
 -- @treturn int The number of elements.
+-- @usage
+-- local tbl = { apple = 1, banana = 2, cherry = 3 }
+-- local count = LuaUtil.TableCount(tbl) -- Result: 3
 LuaUtil.TableCount = function(tbl)
     if not Type.IsTable(tbl) then
         return 0
@@ -785,6 +788,12 @@ end
 --- @tparam table tbl1 The first table to compare.
 --- @tparam table tbl2 The second table to compare.
 --- @treturn bool True if the tables are equal, false otherwise.
+--- @usage
+--- local tblA = { a = 1, b = 2 }
+--- local tblB = { a = 1, b = 2 }
+--- local tblC = { a = 1, b = 3 }
+--- local isEqualAB = LuaUtil.CompareTables(tblA, tblB) -- Result: true
+--- local isEqualAC = LuaUtil.CompareTables(tblA, tblC) -- Result: false
 LuaUtil.CompareTables = function (tbl1, tbl2)
     if not (Type.IsTable(tbl1) and Type.IsTable(tbl2)) then
         return false
@@ -810,6 +819,12 @@ end
 --- @tparam table tbl1 The first table to compare.
 --- @tparam table tbl2 The second table to compare.
 --- @treturn bool True if the tables are deeply equal, false otherwise.
+--- @usage
+--- local tblA = { a = 1, b = { c = 2, d = 3 } }
+--- local tblB = { a = 1, b = { c = 2, d = 3 } }
+--- local tblC = { a = 1, b = { c = 2, d = 4 } }
+--- local isEqualAB = LuaUtil.CompareTablesDeep(tblA, tblB) -- Result: true
+--- local isEqualAC = LuaUtil.CompareTablesDeep(tblA, tblC) -- Result: false
 LuaUtil.CompareTablesDeep = function (tbl1, tbl2)
     if not (Type.IsTable(tbl1) and Type.IsTable(tbl2)) then
         return false
