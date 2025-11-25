@@ -977,11 +977,14 @@ void LogicHandler::ResetVariables()
 
 void LogicHandler::ShortenTENCalls()
 {
-	auto str = R"(local ShortenInner 
+	auto str = R"(
+	local exceptions = {
+		"DisplaySprite"
+	}
 
-	ShortenInner = function(tab)
+	local ShortenInner = function(tab)
 		for k, v in pairs(tab) do
-			if _G[k] then
+			if _G[k] and not exceptions[k] then
 				print("WARNING! Key " .. k .. " already exists in global environment!")
 			else
 				_G[k] = v
