@@ -202,7 +202,7 @@ namespace TEN::Scripting::Types
 	// print(brightness) -- Output: 0.2126
 	float ScriptColor::GetBrightness() const
 	{
-		return (Math::Luma(_color)) / 2.0f;
+		return Math::Luma(_color);
 	}
 
 	/// Get the saturation of this Color using the HSV color model.

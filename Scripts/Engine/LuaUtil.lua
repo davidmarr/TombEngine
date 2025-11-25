@@ -5,7 +5,12 @@
 
 local Type= require("Engine.Type")
 local LuaUtil = {}
-local operators = {
+
+
+LevelVars.Engine.LuaUtil = {}
+LevelVars.Engine.LuaUtil.FPS = 30
+
+LevelVars.Engine.LuaUtil.operators = {
     function(a, b) return a == b end,
     function(a, b) return a ~= b end,
     function(a, b) return a < b end,
@@ -14,15 +19,17 @@ local operators = {
     function(a, b) return a >= b end,
 }
 
+LevelFuncs.Engine.LuaUtil = {}
+
 -- Helper function for ping-pong calculation on a single component
-local function PingPongComponent(t, length)
+LevelFuncs.Engine.LuaUtil.PingPongComponent = function(t, length)
     if length == 0 then return 0 end
     t = t % (length * 2)
     return t > length and (length * 2 - t) or t
 end
 
 -- Helper function for type checking and interpolation
-local function InterpolateValues(a, b, clampedT, functionName)
+LevelFuncs.Engine.LuaUtil.InterpolateValues = function(a, b, clampedT, functionName)
     local isColor = Type.IsColor(a) and Type.IsColor(b)
     local isRotation = Type.IsRotation(a) and Type.IsRotation(b)
     local isVec2 = Type.IsVec2(a) and Type.IsVec2(b)
@@ -40,7 +47,7 @@ local function InterpolateValues(a, b, clampedT, functionName)
 end
 
 -- Helper function for HSL to RGB conversion
-local function HueToRgb(p, q, t)
+LevelFuncs.Engine.LuaUtil.HueToRgb = function(p, q, t)
     if t < 0 then
         t = t + 1
     end
@@ -91,7 +98,7 @@ LuaUtil.CompareValues = function(operand, reference, operator)
     operand = operand == true and 1 or operand == false and 0 or operand
     reference = reference == true and 1 or reference == false and 0 or reference
 
-    return operators[operator + 1] and operators[operator + 1](operand, reference) or false
+    return LevelVars.Engine.LuaUtil.operators[operator + 1] and LevelVars.Engine.LuaUtil.operators[operator + 1](operand, reference) or false
 end
 
 --- Check if a value is within a range (inclusive).
@@ -146,7 +153,7 @@ end
 -- @tparam[opt=30] float fps Frames per second.
 -- @treturn float Number of frames.
 LuaUtil.SecondsToFrames = function(seconds, fps)
-    fps = fps or 30
+    fps = fps or LevelVars.Engine.LuaUtil.FPS
     if not Type.IsNumber(seconds) or not Type.IsNumber(fps) then
         TEN.Util.PrintLog("Error in LuaUtil.SecondsToFrames: seconds and fps must be numbers.", TEN.Util.LogLevel.ERROR)
         return 0
@@ -159,7 +166,7 @@ end
 -- @tparam[opt=30] int fps Frames per second.
 -- @treturn float Time in seconds.
 LuaUtil.FramesToSeconds = function(frames, fps)
-    fps = fps or 30
+    fps = fps or LevelVars.Engine.LuaUtil.FPS
     if not Type.IsNumber(frames) or (fps and not Type.IsNumber(fps)) then
         TEN.Util.PrintLog("Error in LuaUtil.FramesToSeconds: frames and fps must be numbers.", TEN.Util.LogLevel.ERROR)
         return 0
@@ -257,9 +264,9 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
         local p = 2 * l - q
         local hNorm = h / 360
 
-        r = HueToRgb(p, q, hNorm + 1/3)
-        g = HueToRgb(p, q, hNorm)
-        b = HueToRgb(p, q, hNorm - 1/3)
+        r = LevelFuncs.Engine.LuaUtil.HueToRgb(p, q, hNorm + 1/3)
+        g = LevelFuncs.Engine.LuaUtil.HueToRgb(p, q, hNorm)
+        b = LevelFuncs.Engine.LuaUtil.HueToRgb(p, q, hNorm - 1/3)
     end
 
     -- Convert to 0-255 range and create TEN.Color
@@ -405,42 +412,42 @@ LuaUtil.PingPong = function(t, length)
 
     -- Handle number case
     if isNumber then
-        return PingPongComponent(t, length)
+        return LevelFuncs.Engine.LuaUtil.PingPongComponent(t, length)
     end
 
     -- Handle Vec2 case
     if isVec2 then
         return TEN.Vec2(
-            PingPongComponent(t.x, length.x),
-            PingPongComponent(t.y, length.y)
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.x, length.x),
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.y, length.y)
         )
     end
 
     -- Handle Vec3 case
     if isVec3 then
         return TEN.Vec3(
-            PingPongComponent(t.x, length.x),
-            PingPongComponent(t.y, length.y),
-            PingPongComponent(t.z, length.z)
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.x, length.x),
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.y, length.y),
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.z, length.z)
         )
     end
 
     -- Handle Rotation case
     if isRotation then
         return TEN.Rotation(
-            PingPongComponent(t.x, length.x),
-            PingPongComponent(t.y, length.y),
-            PingPongComponent(t.z, length.z)
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.x, length.x),
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.y, length.y),
+            LevelFuncs.Engine.LuaUtil.PingPongComponent(t.z, length.z)
         )
     end
 
     -- Handle Color case
     if isColor then
         return TEN.Color(
-            math.floor(PingPongComponent(t.r, length.r)),
-            math.floor(PingPongComponent(t.g, length.g)),
-            math.floor(PingPongComponent(t.b, length.b)),
-            math.floor(PingPongComponent(t.a, length.a))
+            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(t.r, length.r)),
+            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(t.g, length.g)),
+            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(t.b, length.b)),
+            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(t.a, length.a))
         )
     end
 
@@ -521,7 +528,7 @@ LuaUtil.PingPongRange = function(t, min, max)
     -- Handle number case
     if isNumber then
         local range = max - min
-        return min + PingPongComponent(t, range)
+        return min + LevelFuncs.Engine.LuaUtil.PingPongComponent(t, range)
     end
 
     -- Calculate range for vector types
@@ -685,7 +692,7 @@ LuaUtil.Lerp = function(a, b, t)
     end
     -- Clamp t to the range [0, 1]
     local clampedT = math.max(0, math.min(1, t))
-    return InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
+    return LevelFuncs.Engine.LuaUtil.InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -752,7 +759,7 @@ LuaUtil.Smoothstep = function (a, b, edge0, edge1, x)
     local t = math.max(0, math.min(1, (x - edge0) / (edge1 - edge0)))
     -- Evaluate polynomial
     local clampedT = t * t * (3 - 2 * t)
-    return InterpolateValues(a, b, clampedT, "LuaUtil.Smoothstep")
+    return LevelFuncs.Engine.LuaUtil.InterpolateValues(a, b, clampedT, "LuaUtil.Smoothstep")
 end
 
 --- Table functions.
