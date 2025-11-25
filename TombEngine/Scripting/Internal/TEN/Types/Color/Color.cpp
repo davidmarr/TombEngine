@@ -208,8 +208,7 @@ namespace TEN::Scripting::Types
 	// print(brightness) -- Output: 0.2126
 	float ScriptColor::GetBrightness() const
 	{
-		const Vector3 normalized = GetNormalizedRGB();
-		return (LUMA_R * normalized.x) + (LUMA_G * normalized.y) + (LUMA_B * normalized.z);
+		return Math::Luma(_color);
 	}
 
 	/// Get the saturation of this Color using the HSV color model.
