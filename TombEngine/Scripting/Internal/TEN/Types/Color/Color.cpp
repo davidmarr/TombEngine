@@ -50,13 +50,16 @@ namespace TEN::Scripting::Types
 			"a", sol::property(&ScriptColor::GetA, &ScriptColor::SetA),
 
 			// Register methods.
-			"Lerp", &ScriptColor::Lerp,
-			"GetBrightness", & ScriptColor::GetBrightness,
-			"GetSaturation", & ScriptColor::GetSaturation,
-			"GetHue", & ScriptColor::GetHue,
-			"ToGrayscale", & ScriptColor::ToGrayscale,
-			"Invert", & ScriptColor::Invert,
-			"Modulate", &ScriptColor::Modulate
+			
+			// Methods awaiting normalization fix [2.0 -> 1.0]
+			//"GetBrightness", & ScriptColor::GetBrightness,
+			//"GetSaturation", & ScriptColor::GetSaturation,
+			//"GetHue", & ScriptColor::GetHue,
+			//"ToGrayscale", & ScriptColor::ToGrayscale,
+			//"Invert", & ScriptColor::Invert,
+			//"Modulate", &ScriptColor::Screen,
+
+			"Lerp", &ScriptColor::Lerp
 		);
 	}
 
@@ -187,94 +190,49 @@ namespace TEN::Scripting::Types
 			_color.GetA() == other.GetA();
 	}
 
-	inline Vector3 ScriptColor::GetNormalizedRGB() const
-	{
-		const Color& color = static_cast<const Color&>(_color);
-		return Vector3(
-			color.x * COLOR_NORMALIZE,
-			color.y * COLOR_NORMALIZE,
-			color.z * COLOR_NORMALIZE);
-	}
-
 	/// Methods for Color type.
 	// @type Color
 
 	/// Get the perceived brightness of this Color using Rec.709 luminance formula.
-	// @function Color:GetBrightness
-	// @treturn float The brightness value in the range [0.0, 1.0].
-	// @usage
+	// @ function Color:GetBrightness
+	// @ treturn float The brightness value in the range [0.0, 1.0].
+	// @ usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local brightness = color:GetBrightness()
 	// print(brightness) -- Output: 0.2126
 	float ScriptColor::GetBrightness() const
 	{
-		return Math::Luma(_color);
+		return (Math::Luma(_color)) / 2.0f;
 	}
 
 	/// Get the saturation of this Color using the HSV color model.
-	// @function Color:GetSaturation
-	// @treturn float The saturation value in the range [0.0, 1.0].
-	// @usage
+	// @ function Color:GetSaturation
+	// @ treturn float The saturation value in the range [0.0, 1.0].
+	// @ usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local saturation = color:GetSaturation()
 	// print(saturation) -- Output: 1.0
 	float ScriptColor::GetSaturation() const
 	{
-		const Vector3 normalized = GetNormalizedRGB();
-		const float maxVal = std::max({ normalized.x, normalized.y, normalized.z });
-		const float minVal = std::min({ normalized.x, normalized.y, normalized.z });
-
-		// Saturation is 0 when max is 0 (black color).
-		if (maxVal == 0.0f)
-			return 0.0f;
-
-		return (maxVal - minVal) / maxVal;
+		return Math::Chroma(_color);
 	}
 
 	/// Get the hue of this Color using the HSV color model.
-	// @function Color:GetHue
-	// @treturn float The hue value in the range [0.0, 360.0) in degrees.
-	// @usage
+	// @ function Color:GetHue
+	// @ treturn float The hue value in the range [0.0, 360.0) in degrees.
+	// @ usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local hue = color:GetHue()
 	// print(hue) -- Output: 0.0
 	float ScriptColor::GetHue() const
 	{
-		const Vector3 normalized = GetNormalizedRGB();
-		const float maxVal = std::max({ normalized.x, normalized.y, normalized.z });
-		const float minVal = std::min({ normalized.x, normalized.y, normalized.z });
-		const float delta = maxVal - minVal;
-
-		// Hue is undefined for achromatic colors.
-		if (delta == 0.0f)
-			return 0.0f;
-
-		float hue = 0.0f;
-
-		if (maxVal == normalized.x)
-		{
-			hue = HUE_SECTOR * fmodf((normalized.y - normalized.z) / delta, 6.0f);
-		}
-		else if (maxVal == normalized.y)
-		{
-			hue = HUE_SECTOR * (((normalized.z - normalized.x) / delta) + 2.0f);
-		}
-		else // maxVal == normalized.z
-		{
-			hue = HUE_SECTOR * (((normalized.x - normalized.y) / delta) + 4.0f);
-		}
-
-		// Normalize to [0.0, 360.0).
-		if (hue < 0.0f)
-			hue += HUE_CIRCLE;
-
-		return hue;
+		return Math::Hue(_color);
 	}
 
 	/// Convert this Color to grayscale using perceived luminance (ITU-R BT.709).
-	// @function Color:ToGrayscale
-	// @treturn Color A grayscale version of this Color with RGB components set to the luminance value. Alpha remains unchanged.
-	// @usage
+	// @ function Color:ToGrayscale
+	// @ treturn Color A grayscale version of this Color with RGB components set to the luminance value. Alpha remains unchanged.
+	// @ usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local grayscaleColor = color:ToGrayscale()
 	// print(tostring(grayscaleColor)) -- Output: {54, 54, 54, 255}
@@ -285,9 +243,9 @@ namespace TEN::Scripting::Types
 	}
 
 	/// Invert the RGB components of this Color (255 - component).
-	// @function Color:Invert
-	// @treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
-	// @usage
+	// @ function Color:Invert
+	// @ treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
+	// @ usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local invertedColor = color:Invert()
 	// print(tostring(invertedColor)) -- Output: {0, 255, 255, 255}
@@ -301,18 +259,17 @@ namespace TEN::Scripting::Types
 		);
 	}
 
-	/// Multiply this Color component-wise with another Color (modulation).
-	// @function Color:Modulate
-	// @tparam Color other The Color to multiply with.
-	// @treturn Color The resulting Color.
+	/// Blend this Color with another Color using the Screen blend mode.
+	// @ function Color:Screen
+	// @ tparam Color other The other Color to blend with.
+	// @ treturn Color The resulting blended Color.
 	// @usage
-	// local color1 = TEN.Color(255, 128, 64) -- Orange color
-	// local color2 = TEN.Color(128, 255, 192) -- Light green color
-	// local modulatedColor = color1:Modulate(color2)
-	// print(tostring(modulatedColor)) -- Output: {128, 128, 48, 255}
-	ScriptColor ScriptColor::Modulate(const ScriptColor& other) const
+	// local color1 = TEN.Color(255, 0, 0) -- Red color
+	// local color2 = TEN.Color(0, 0, 255) -- Blue color
+	// local blendedColor = color1:Modulate(color2) -- Screen blend of red and blue
+	ScriptColor ScriptColor::Screen(const ScriptColor& other) const
 	{
-		const Color result = Color::Modulate(static_cast<Color>(_color), static_cast<Color>(other._color));
+		const Color result = Math::Screen(static_cast<Color>(_color), static_cast<Color>(other._color));
 		return ScriptColor(result);
 	}
 

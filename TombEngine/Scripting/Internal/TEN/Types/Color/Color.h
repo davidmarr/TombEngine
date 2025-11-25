@@ -50,7 +50,7 @@ namespace TEN::Scripting::Types
 		float GetHue() const;
 		ScriptColor ToGrayscale() const;
 		ScriptColor Invert() const;
-		ScriptColor Modulate(const ScriptColor& other) const;
+		ScriptColor Screen(const ScriptColor& other) const;
 
 		// Utilities
 
