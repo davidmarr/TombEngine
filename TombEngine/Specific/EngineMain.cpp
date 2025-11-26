@@ -1,11 +1,9 @@
 #include "framework.h"
 #include "Specific/EngineMain.h"
-#include <SDL3/SDL.h>
 #include <process.h>
 #include <iostream>
 #include <codecvt>
 #include <filesystem>
-
 #include "Game/control/control.h"
 #include "Game/savegame.h"
 #include "Renderer/Renderer.h"
@@ -30,11 +28,12 @@ SDL_Thread* GameThread = nullptr;
 SDL_Thread* ConsoleThread = nullptr;
 unsigned int ThreadSuspendCount = 0;
 
-// Cooperative pause
+// Cooperative pause, it emulates Windows APIs for pausing and resuming the game but it's cross platform
 SDL_Mutex* GamePauseMutex = nullptr;
 SDL_Condition* GamePauseCond = nullptr;
 bool       GamePaused = false;
 
+// Global variables
 bool ResetClock;
 std::unique_ptr<ISubsystem> g_Platform;
 std::string GameDirectory;
@@ -228,7 +227,7 @@ void ResumeGameThread()
 	if (ThreadSuspendCount == 0)
 	{
 		GamePaused = false;
-		SDL_BroadcastCondition(GamePauseCond); // sveglia il game thread
+		SDL_BroadcastCondition(GamePauseCond);
 	}
 
 	SDL_UnlockMutex(GamePauseMutex);

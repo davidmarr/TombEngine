@@ -1150,6 +1150,9 @@ void Sound_Reset()
 		// Clear the old device
 		BASS_SetDevice(oldSoundDevice);
 		BASS_Free();
+
+		// Set the new device again
+		BASS_SetDevice(newSoundDevice);
 	}
 	else
 		Sound_DeInit();
