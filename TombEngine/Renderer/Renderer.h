@@ -314,8 +314,6 @@ namespace TEN::Renderer
 		std::vector<Vector4> _SSAOKernel;
 
 		// Special effects
-
-		//std::vector<ITexture2D*> _causticTextures;
 		RendererMirror* _currentMirror = nullptr;
 
 		// Transparency
