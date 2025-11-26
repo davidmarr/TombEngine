@@ -151,17 +151,17 @@ namespace TEN::Renderer
 		static constexpr Vector3 forwardVectors[6] =
 		{
 			//+X (right)
-			Vector3(-1,0,0),
+			Vector3::UnitX,
 			//-X (left)
-			Vector3(1,0,0),
+			-Vector3::UnitX,
 			//-Y (up)
-			Vector3(0,-1,0),
+			-Vector3::UnitY,
 			//+Y (down)
-			Vector3(0,1,0),
+			Vector3::UnitY,
 			//+Z (forward)
-			Vector3(0,0,1),
+			Vector3::UnitZ,
 			//-Z (backward)
-			Vector3(0,0,-1),
+			-Vector3::UnitZ,
 		};
 
 		static constexpr Vector3 upVectors[6] =
