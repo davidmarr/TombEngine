@@ -93,9 +93,17 @@ namespace TEN::Utils
 
 	std::string Trim(std::string s)
 	{
-		auto notspace = [](int ch) { return !std::isspace(ch); };
-		s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
-		s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
+		auto isNotSpace = [](unsigned char ch)
+			{
+				return !std::isspace(ch);
+			};
+
+		auto left = std::find_if(s.begin(), s.end(), isNotSpace);
+		s.erase(s.begin(), left);
+
+		auto right = std::find_if(s.rbegin(), s.rend(), isNotSpace).base();
+		s.erase(right, s.end());
+
 		return s;
 	}
 
