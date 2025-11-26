@@ -920,8 +920,8 @@ namespace TEN::Renderer
 	{
 		auto texture = SetTextureOrDefault(TEN::Utils::ToWString(g_GameFlow->GetGameDir() + g_GameFlow->IntroImagePath.c_str()));
 
-		//if (!texture.Texture)
-		//	return;
+		if (texture == nullptr || !texture->IsValid())
+			return;
 
 		int timeout = 20;
 		float currentFade = FADE_FACTOR;

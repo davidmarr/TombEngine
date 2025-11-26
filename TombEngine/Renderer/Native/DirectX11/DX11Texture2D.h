@@ -35,6 +35,7 @@ namespace TEN::Renderer::Native::DirectX11
 		int GetHeight() override { return _height; }
 		ID3D11ShaderResourceView* GetD3D11ShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
+		bool IsValid() override { return _texture != nullptr; }
 
 		DX11Texture2D(ID3D11Device* device, int width, int height, byte* data)
 		{

@@ -569,7 +569,7 @@ namespace TEN::Renderer
 		for (const auto& displaySprite : DisplaySprites)
 		{
 			// If sprite is a video texture, bypass it if texture is inactive.
-			if (displaySprite.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr))
+			if (displaySprite.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr || !_videoSprite.Texture->IsValid()))
 				continue;
 
 			const auto& sprite = displaySprite.SpriteID == VIDEO_SPRITE_ID ? _videoSprite : _sprites[Objects[displaySprite.ObjectID].meshIndex + displaySprite.SpriteID];

@@ -572,7 +572,7 @@ namespace TEN::Renderer
 				}
 				
 				// If sprite is a video texture, bypass it if texture is inactive.
-				if (particle.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr))
+				if (particle.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr || !_videoSprite.Texture->IsValid()))
 					continue;
 
 				// Disallow sprites out of bounds.

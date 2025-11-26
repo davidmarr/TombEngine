@@ -8,5 +8,6 @@ namespace TEN::Renderer::Graphics
 	{
 	public:
 		virtual ~ITexture2D() = default;
+		virtual bool IsValid() = 0;
 	};
 }

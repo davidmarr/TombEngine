@@ -35,6 +35,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11RenderTargetView* GetD3D11RenderTargetView() const noexcept { return GetD3D11RenderTargetView(0); }
 		ID3D11ShaderResourceView* GetD3D11ShaderResourceView() const noexcept { return _shaderResourceView.Get(); }
 		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
+		bool IsValid() override { return _texture != nullptr; }
 
 		// Default constructor
 		DX11RenderTarget2D(ID3D11Device* device, int width, int height, DXGI_FORMAT colorFormat, bool isTypeless)
