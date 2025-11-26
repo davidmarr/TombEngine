@@ -9,11 +9,12 @@
 #include "Renderer/Structures/RendererHudBar.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/clock.h"
+#include "Specific/trutils.h"
 
 namespace TEN::Renderer
 {
 	using namespace TEN::Renderer::Structures;
-	using namespace Utils;
+	using namespace TEN::Utils;
 
 	Renderer g_Renderer;
 

@@ -7,10 +7,11 @@ using namespace DirectX::SimpleMath;
 #define SHAPE_RECTANGLE 0
 #define SHAPE_TRIANGLE	1
 
-#define PRINTSTRING_COLOR_ORANGE 0xFFD87531u
-#define PRINTSTRING_COLOR_WHITE  0xFFFFFFFFu
-#define PRINTSTRING_COLOR_BLACK  0xFF000000u
-#define PRINTSTRING_COLOR_YELLOW 0xFFF0DC20u
+// TODO: refactor AddString() functions for accepting XMVECTORF32 and define colors in TEN::Renderer::Colors namespace later in this file
+#define PRINTSTRING_COLOR_ORANGE ARGB_TO_UINT(255, 216, 117, 49)
+#define PRINTSTRING_COLOR_WHITE ARGB_TO_UINT(255, 255, 255, 255)
+#define PRINTSTRING_COLOR_BLACK ARGB_TO_UINT(255, 0, 0, 0)
+#define PRINTSTRING_COLOR_YELLOW ARGB_TO_UINT(255, 240, 220, 32)
 
 constexpr auto MAX_LINES_2D		= 256;
 constexpr auto MAX_LINES_3D		= 16384;
@@ -81,8 +82,6 @@ constexpr auto MOVE_VERTEX_SHIFT = 8;
 constexpr auto SHININESS_VERTEX_SHIFT = 16;
 constexpr auto LOCKED_VERTEX_SHIFT = 24;
 constexpr auto INDEX_IN_POLY_VERTEX_SHIFT = 25;
-
-#define SAFE_DELETE(x) if (x != nullptr) x.reset();
 
 enum class LightType
 {
