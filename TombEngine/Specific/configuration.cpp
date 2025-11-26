@@ -34,24 +34,38 @@ static std::string GetConfigFilePath()
 
 static bool WriteAllText(const std::string& path, const std::string& text)
 {
-	SDL_IOStream* rw = SDL_IOFromFile(path.c_str(), "wb");
-	if (!rw) return false;
-	const size_t n = text.size();
-	size_t w = SDL_WriteIO(rw, text.data(), n);
-	SDL_CloseIO(rw);
-	return (w == n);
+	auto stream = SDL_IOFromFile(path.c_str(), "wb");
+	if (!stream) 
+		return false;
+
+	const size_t size = text.size();
+	size_t width = SDL_WriteIO(stream, text.data(), size);
+
+	SDL_CloseIO(stream);
+
+	return (width == size);
 }
 
 static bool ReadAllText(const std::string& path, std::string& out)
 {
-	SDL_IOStream* rw = SDL_IOFromFile(path.c_str(), "rb");
-	if (!rw) return false;
-	Sint64 size = SDL_GetIOSize(rw);
-	if (size < 0) { SDL_CloseIO(rw); return false; }
+	auto stream = SDL_IOFromFile(path.c_str(), "rb");
+	if (!stream) 
+		return false;
+
+	auto size = SDL_GetIOSize(stream);
+	if (size < 0)
+	{ 
+		SDL_CloseIO(stream);
+		return false;
+	}
+
 	out.resize(static_cast<size_t>(size));
-	size_t r = SDL_ReadIO(rw, out.data(), out.size());
-	SDL_CloseIO(rw);
-	return (r == out.size());
+
+	size_t read = SDL_ReadIO(stream, out.data(), out.size());
+
+	SDL_CloseIO(stream);
+
+	return (read == out.size());
 }
 
 void SaveAudioConfig()
