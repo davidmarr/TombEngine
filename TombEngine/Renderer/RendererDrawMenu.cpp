@@ -1284,8 +1284,8 @@ namespace TEN::Renderer
 
 			rect.Left = _graphicsDevice->GetScreenWidth() - thumbWidth;
 			rect.Top = thumbY;
-			rect.Right = rect.Left+ thumbWidth;
-			rect.Bottom = rect.Top+thumbWidth / aspectRatio;
+			rect.Right = rect.Left + thumbWidth;
+			rect.Bottom = rect.Top + thumbWidth / aspectRatio;
 
 			_spriteBatch->Draw(_normalsAndMaterialIndexRenderTarget->GetRenderTarget(), rect, Vector4::One);
 			thumbY += thumbWidth / aspectRatio;
