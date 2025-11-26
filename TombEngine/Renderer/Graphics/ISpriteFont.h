@@ -10,7 +10,7 @@ namespace TEN::Renderer::Graphics
 {
     struct Glyph
     {
-        uint32_t Character;
+        unsigned int Character;
         RendererRectangle Subrect;
         float XOffset;
         float YOffset;

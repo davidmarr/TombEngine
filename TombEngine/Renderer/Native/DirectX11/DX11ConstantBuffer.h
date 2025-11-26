@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef SDL_PLATFORM_WIN32
+
 #include <d3d11.h>
 #include <wrl/client.h>
 #include "Game/Debug/Debug.h"
@@ -57,3 +59,5 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	};
 }
+
+#endif

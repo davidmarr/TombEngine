@@ -1,4 +1,7 @@
 #pragma once
+
+#ifdef SDL_PLATFORM_WIN32
+
 #include <d3d11.h>
 #include <string>
 #include <vector>
@@ -37,3 +40,5 @@ namespace TEN::Renderer::Native::DirectX11
 		void DrawQuad(Vertex const& v1, Vertex const& v2, Vertex const& v3, Vertex const& v4) override { _primitiveBatch->DrawQuad(v1, v2, v3, v4); }
 	}; 
 }
+
+#endif

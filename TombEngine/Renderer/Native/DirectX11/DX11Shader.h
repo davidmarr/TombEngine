@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef SDL_PLATFORM_WIN32
+
 #include <d3d11.h>
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/IShader.h"
@@ -40,3 +42,5 @@ namespace TEN::Renderer::Native::DirectX11
 		void SetD3D10Blob(ComPtr<ID3D10Blob> blob) { _blob = blob; }
 	};
 }
+
+#endif

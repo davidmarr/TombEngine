@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef SDL_PLATFORM_WIN32
+
 #include <d3d11.h>
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/IInputLayout.h"
@@ -45,11 +47,11 @@ namespace TEN::Renderer::Native::DirectX11
 				switch (field.Format)
 				{
 				case VertexInputFormat::VI_RGBA8_Unorm:
-					element.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+					element.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 					break;
 					
 				case VertexInputFormat::VI_RG8_Unorm:
-					element.Format = DXGI_FORMAT_R8G8_UINT;
+					element.Format = DXGI_FORMAT_R8G8_UNORM;
 					break;
 
 				case VertexInputFormat::VI_RGB32_Float:
@@ -92,3 +94,5 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	};
 }
+
+#endif

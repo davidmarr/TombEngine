@@ -1,4 +1,7 @@
 #pragma once
+
+#ifdef SDL_PLATFORM_WIN32
+
 #include <vector>
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -236,3 +239,5 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	};
 }
+
+#endif

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef SDL_PLATFORM_WIN32
+
 #include <d3d11.h>
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/Vertices/Vertex.h"
@@ -79,3 +81,5 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	};
 }
+
+#endif

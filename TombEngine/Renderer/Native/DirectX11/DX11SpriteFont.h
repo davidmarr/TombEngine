@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef SDL_PLATFORM_WIN32
+
 #include <d3d11.h>
 #include "Renderer/Native/DirectX11/DX11SpriteBatch.h"
 #include "Renderer/Graphics/ISpriteFont.h"
@@ -97,3 +99,5 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 	};
 }
+
+#endif
