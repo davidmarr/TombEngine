@@ -188,8 +188,8 @@ bool LoadConfiguration()
 			{
 				foundInput = true;
 
-				int actionId = ToInt(key.substr(5), -1);
-				int keyId = ToInt(val, -1);
+				int actionId = ToInt(key.substr(5), NO_VALUE);
+				int keyId = ToInt(val, NO_VALUE);
 				if (actionId >= 0 && keyId >= 0)
 				{
 					g_Configuration.Bindings.insert({ (ActionID)actionId, keyId });
