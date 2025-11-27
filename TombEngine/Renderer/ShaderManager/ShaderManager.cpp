@@ -1,5 +1,6 @@
 #include "framework.h"
 #include "Renderer/ShaderManager/ShaderManager.h"
+
 #include "Renderer/RendererUtils.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"

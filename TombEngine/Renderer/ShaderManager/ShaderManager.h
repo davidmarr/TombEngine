@@ -1,10 +1,6 @@
 #pragma once
 
 #include "Renderer/Graphics/IGraphicsDevice.h"
-#include <map>
-#include <array>
-#include <string>
-#include <vector>
 
 using namespace TEN::Renderer::Graphics;
 

@@ -60,11 +60,11 @@ Vector2i GetScreenResolution()
 	auto screenRes = Vector2i::Zero;
 
 	auto display = SDL_GetPrimaryDisplay();
-	if (!display)
+	if (display == 0)
 		return screenRes;
 
 	auto mode = SDL_GetCurrentDisplayMode(display);
-	if (!mode)
+	if (mode == nullptr)
 		return screenRes;
 
 	screenRes.x = mode->w;
@@ -76,11 +76,11 @@ Vector2i GetScreenResolution()
 int GetCurrentScreenRefreshRate()
 {
 	auto display = SDL_GetPrimaryDisplay();
-	if (!display)
+	if (display == 0)
 		return 0;
 
 	auto mode = SDL_GetCurrentDisplayMode(display);
-	if (!mode)
+	if (mode == nullptr)
 		return 0;
 
 	if (mode->refresh_rate <= 0.0f)
@@ -94,12 +94,12 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 	auto screenResolutions = std::vector<Vector2i>{};
 
 	auto display = SDL_GetPrimaryDisplay();
-	if (!display)
+	if (display == 0)
 		return screenResolutions;
 
 	int count = 0;
 	auto modes = SDL_GetFullscreenDisplayModes(display, &count);
-	if (!modes || count <= 0)
+	if (modes == nullptr || count <= 0)
 		return screenResolutions;
 
 	screenResolutions.reserve(count);
@@ -107,15 +107,16 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 	for (int i = 0; i < count; ++i)
 	{
 		const auto* mode = modes[i];
-		if (!mode)
+		if (mode == nullptr)
 			continue;
 
 		auto screenResolution = Vector2i(mode->w, mode->h);
 
 		bool add = true;
-		for (const auto& m : screenResolutions)
+		for (const auto& screenRes : screenResolutions)
 		{
-			if (m.x == screenResolution.x && m.y == screenResolution.y)
+			if (screenRes.x == screenResolution.x &&
+				screenRes.y == screenResolution.y)
 			{
 				add = false;
 				break;
@@ -130,9 +131,9 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 
 	std::sort(
 		screenResolutions.begin(), screenResolutions.end(),
-		[](const Vector2i& a, const Vector2i& b)
+		[](const Vector2i& screenRes0, const Vector2i& screenRes1)
 		{
-			return (a.x == b.x) ? (a.y < b.y) : (a.x < b.x);
+			return ((screenRes0.x == screenRes1.x) ? (screenRes0.y < screenRes1.y) : (screenRes0.x < screenRes1.x));
 		});
 
 	return screenResolutions;
@@ -174,7 +175,7 @@ static void HandleWindowFocusGained(SDL_Window* window)
 
 	if (ThreadSuspendCount > 0)
 	{
-		TENLog("Resuming game thread", LogLevel::Info);
+		TENLog("Resuming game thread.", LogLevel::Info);
 
 		if (!g_VideoPlayer.Resume())
 			ResumeAllSounds(SoundPauseMode::Global);
@@ -195,7 +196,7 @@ static void HandleWindowFocusLost(SDL_Window* window)
 
 	if ((!DebugMode || isMinimized) && ThreadSuspendCount == 0)
 	{
-		TENLog("Suspending game thread", LogLevel::Info);
+		TENLog("Suspending game thread.", LogLevel::Info);
 
 		if (!g_VideoPlayer.Pause())
 			PauseAllSounds(SoundPauseMode::Global);
@@ -246,10 +247,10 @@ int main(int argc, char* argv[])
 	g_Platform->Initialize();
 	g_Platform->CheckPrerequisites();
 	
-	// Initialize SDL3
+	// Initialize SDL3.
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS))
 	{
-		// handle error
+		// Handle error.
 		return 1;
 	}
 
@@ -268,7 +269,7 @@ int main(int argc, char* argv[])
 		}
 		else if (ArgEquals(arg.c_str(), "level") && i + 1 < argc)
 		{
-			levelFile = argv[++i]; // consumi l’argomento successivo
+			levelFile = argv[++i];
 		}
 		else if (ArgEquals(arg.c_str(), "hash") && i + 1 < argc)
 		{
@@ -301,7 +302,7 @@ int main(int argc, char* argv[])
 	InitTENLog(GameDirectory);
 	g_Platform->InstallCrashHandler();
 
-	auto windowName = std::string("Starting TombEngine");
+	auto windowName = std::string("Starting Tomb Engine");
 
 	// Indicate version.
 	auto ver = g_Platform->GetProductOrFileVersion(false);
@@ -316,9 +317,13 @@ int main(int argc, char* argv[])
 	}
 
 	if (g_Platform->Is64Bit())
+	{
 		windowName = windowName + " (64-bit)";
+	}
 	else
+	{
 		windowName = windowName + " (32-bit)";
+	}
 
 	TENLog(windowName, LogLevel::Info);
 
@@ -341,17 +346,17 @@ int main(int argc, char* argv[])
 		// hidden one.
 		g_GameScript = ScriptInterfaceState::CreateGame();
 
-		//todo Major hack. This should not be needed to leak outside of
-		//LogicHandler internals. In a future version stuff from FlowHandler
-		//should be moved to LogicHandler or vice versa to make this stuff
-		//less fragile (squidshire, 16/09/22)
+		// TODSO: Major hack. This should not be needed to leak outside of
+		// LogicHandler internals. In a future version stuff from FlowHandler
+		// should be moved to LogicHandler or vice versa to make this stuff
+		// less fragile (squidshire, 16/09/22)
 		g_GameScript->ShortenTENCalls();
 		g_GameFlow->SetGameDir(GameDirectory);
 		g_GameFlow->LoadFlowScript();
 	}
-	catch (TENScriptException const& e)
+	catch (TENScriptException const& ex)
 	{
-		auto errorMessage = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
+		auto errorMessage = std::string("A Lua error occurred while setting up scripts ") + __func__ + ": " + ex.what();
 		TENLog(errorMessage, LogLevel::Error, LogConfig::All);
 		g_Platform->ShowErrorMessage(errorMessage);
 		EngineClose();

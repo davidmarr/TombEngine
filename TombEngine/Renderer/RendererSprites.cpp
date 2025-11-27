@@ -1,8 +1,8 @@
 #include "framework.h"
+#include "Renderer/Renderer.h"
 
 #include "Renderer/Structures/RendererSprite.h"
 #include "Renderer/Structures/RendererSpriteBucket.h"
-#include "Renderer/Renderer.h"
 #include "Specific/Parallel.h"
 
 using namespace TEN::Renderer::Structures;

@@ -1,8 +1,5 @@
 #include "framework.h"
-
-#include <algorithm>
-#include <ctime>
-#include <filesystem>
+#include "Renderer/Renderer.h"
 
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Game/animation.h"
@@ -27,7 +24,6 @@
 #include "Objects/TR4/Vehicles/motorbike_info.h"
 #include "Math/Math.h"
 #include "Renderer/RenderView.h"
-#include "Renderer/Renderer.h"
 #include "Specific/configuration.h"
 #include "Specific/level.h"
 #include "Specific/trutils.h"

@@ -1,11 +1,6 @@
 #include "framework.h"
-
-#include <codecvt>
-#include <locale>
-#include <iostream>
-#include <wrl/client.h>
-
 #include "Renderer/Renderer.h"
+
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/trutils.h"
 
