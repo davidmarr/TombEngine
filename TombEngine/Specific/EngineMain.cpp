@@ -58,31 +58,31 @@ bool ArgEquals(const char* incomingArg, const std::string& name)
 	return arg == lowerName;
 }
 
-
 Vector2i GetScreenResolution()
 {
-	Vector2i res{ 0, 0 };
+	Vector2i screenResolution{ 0, 0 };
 
-	SDL_DisplayID display = SDL_GetPrimaryDisplay();
+	auto display = SDL_GetPrimaryDisplay();
 	if (!display)
-		return res;
+		return screenResolution;
 
-	const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+	auto mode = SDL_GetCurrentDisplayMode(display);
 	if (!mode)
-		return res;
+		return screenResolution;
 
-	res.x = mode->w;
-	res.y = mode->h;
-	return res;
+	screenResolution.x = mode->w;
+	screenResolution.y = mode->h;
+
+	return screenResolution;
 }
 
 int GetCurrentScreenRefreshRate()
 {
-	SDL_DisplayID display = SDL_GetPrimaryDisplay();
+	auto display = SDL_GetPrimaryDisplay();
 	if (!display)
 		return 0;
 
-	const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+	auto mode = SDL_GetCurrentDisplayMode(display);
 	if (!mode)
 		return 0;
 
@@ -94,18 +94,18 @@ int GetCurrentScreenRefreshRate()
 
 std::vector<Vector2i> GetAllSupportedScreenResolutions()
 {
-	std::vector<Vector2i> resList;
+	std::vector<Vector2i> screenResolutions;
 
-	SDL_DisplayID display = SDL_GetPrimaryDisplay();
+	auto display = SDL_GetPrimaryDisplay();
 	if (!display)
-		return resList;
+		return screenResolutions;
 
 	int count = 0;
-	SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(display, &count);
+	auto modes = SDL_GetFullscreenDisplayModes(display, &count);
 	if (!modes || count <= 0)
-		return resList;
+		return screenResolutions;
 
-	resList.reserve(count);
+	screenResolutions.reserve(count);
 
 	for (int i = 0; i < count; ++i)
 	{
@@ -113,12 +113,12 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 		if (!mode)
 			continue;
 
-		Vector2i res{ mode->w, mode->h };
+		Vector2i screenResolution{ mode->w, mode->h };
 
 		bool add = true;
-		for (const auto& m : resList)
+		for (const auto& m : screenResolutions)
 		{
-			if (m.x == res.x && m.y == res.y)
+			if (m.x == screenResolution.x && m.y == screenResolution.y)
 			{
 				add = false;
 				break;
@@ -126,19 +126,19 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 		}
 
 		if (add)
-			resList.push_back(res);
+			screenResolutions.push_back(screenResolution);
 	}
 
 	SDL_free(modes);
 
 	std::sort(
-		resList.begin(), resList.end(),
+		screenResolutions.begin(), screenResolutions.end(),
 		[](const Vector2i& a, const Vector2i& b)
 		{
 			return (a.x == b.x) ? (a.y < b.y) : (a.x < b.x);
 		});
 
-	return resList;
+	return screenResolutions;
 }
 
 int SDLCALL ConsoleInput(void*)
@@ -357,9 +357,8 @@ int main(int argc, char* argv[])
 		auto errorMessage = std::string{ "A Lua error occurred while setting up scripts; " } + __func__ + ": " + e.what();
 		TENLog(errorMessage, LogLevel::Error, LogConfig::All);
 		g_Platform->ShowErrorMessage(errorMessage);
-		ShutdownTENLog();
-		g_Platform->Shutdown();
-		return 0;
+		EngineClose();
+		exit(EXIT_FAILURE);
 	}
 
 	g_Renderer.Create();
@@ -378,7 +377,7 @@ int main(int argc, char* argv[])
 	if (!g_Configuration.EnableWindowedMode)
 		windowFlags |= SDL_WINDOW_FULLSCREEN;
 
-	SDL_Window* sdlWindow = SDL_CreateWindow(
+	auto sdlWindow = SDL_CreateWindow(
 		g_GameFlow->GetString(STRING_WINDOW_TITLE),
 		width,
 		height,
@@ -389,9 +388,8 @@ int main(int argc, char* argv[])
 		auto errorMessage = std::string("Failed to create SDL window: ") + SDL_GetError();
 		TENLog(errorMessage, LogLevel::Error);
 		g_Platform->ShowErrorMessage(errorMessage);
-		SDL_Quit();
-		g_Platform->Shutdown();
-		return 0;
+		EngineClose();
+		exit(EXIT_FAILURE);
 	}
 
 	g_Platform->SetSDL3Window(sdlWindow);
@@ -418,8 +416,7 @@ int main(int argc, char* argv[])
 		auto errorMessage = "Error during game initialization: " + std::string(ex.what());
 		TENLog(errorMessage, LogLevel::Error);
 		g_Platform->ShowErrorMessage(errorMessage);
-		SDL_Quit();
-		g_Platform->Shutdown();
+		EngineClose();
 		exit(EXIT_FAILURE);
 	}
 
@@ -486,7 +483,6 @@ int main(int argc, char* argv[])
 	TENLog("Cleaning up and exiting...", LogLevel::Info);
 
 	SDL_DestroyWindow(sdlWindow);
-	SDL_Quit();
 	EngineClose();
 
 	exit(EXIT_SUCCESS);
@@ -516,6 +512,10 @@ void EngineClose()
 		SDL_DestroyMutex(GamePauseMutex);
 		GamePauseMutex = nullptr;
 	}
+
+	g_Platform->Shutdown();
+
+	SDL_Quit();
 
 	ShutdownTENLog();
 }
