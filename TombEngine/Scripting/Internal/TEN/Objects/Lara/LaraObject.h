@@ -30,7 +30,7 @@ public:
 	void SetWeaponType(LaraWeaponType weaponType, sol::optional<bool> activate);
 	bool GetLaserSight(LaraWeaponType weaponType) const;
 	void SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activate);
-	int GetAmmoType() const;
+	int GetAmmoType(TypeOrNil<LaraWeaponType> weaponType) const;
 	void SetAmmoType(PlayerAmmoType ammoType);
 	int GetAmmoCount() const;
 	int GetWeaponMode() const;

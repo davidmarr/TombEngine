@@ -346,15 +346,18 @@ void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activa
 
 /// Get player weapon ammo type.
 // @function LaraObject:GetAmmoType
+// @tparam[opt] Objects.WeaponType weaponType Weapon to retrieve ammo type for. If omitted, the ammo type of the currently equipped weapon is returned.
 // @treturn Objects.AmmoType Player weapon ammo type.
 // @usage
 // local CurrentAmmoType = Lara:GetAmmoType()
-int LaraObject::GetAmmoType() const
+int LaraObject::GetAmmoType(TypeOrNil<LaraWeaponType> weaponType) const
 {
 	const auto& player = GetLaraInfo(*_moveable);
 
+	auto weapon = ValueOr<LaraWeaponType>(weaponType, player.Control.Weapon.GunType);
+
 	auto ammoType = std::optional<PlayerAmmoType>(std::nullopt);
-	switch (player.Control.Weapon.GunType)
+	switch (weapon)
 	{
 		case::LaraWeaponType::Pistol:
 			ammoType = PlayerAmmoType::Pistol;
