@@ -121,10 +121,15 @@ namespace TEN::Math
 		float maxVal = std::max({ r, g, b });
 		float minVal = std::min({ r, g, b });
 		float delta = maxVal - minVal;
+
 		// Hue is undefined for achromatic colors.
 		if (delta == 0.0f)
 			return 0.0f;
+
+		// Calculate hue based on which component is the maximum.
 		float hue = 0.0f;
+
+		// Note: fmodf can return negative values, so we adjust later.
 		if (maxVal == r)
 		{
 			hue = 60.0f * fmodf((g - b) / delta, 6.0f);
@@ -137,6 +142,7 @@ namespace TEN::Math
 		{
 			hue = 60.0f * (((r - g) / delta) + 4.0f);
 		}
+
 		// Normalize to [0.0, 360.0).
 		if (hue < 0.0f)
 			hue += 360.0f;

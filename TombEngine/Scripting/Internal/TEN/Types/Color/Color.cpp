@@ -54,11 +54,11 @@ namespace TEN::Scripting::Types
 			// Methods awaiting normalization fix [2.0 -> 1.0]
 			//"GetBrightness", & ScriptColor::GetBrightness,
 			//"GetSaturation", & ScriptColor::GetSaturation,
-			//"GetHue", & ScriptColor::GetHue,
 			//"ToGrayscale", & ScriptColor::ToGrayscale,
-			//"Invert", & ScriptColor::Invert,
-			//"Modulate", &ScriptColor::Screen,
+			//"Screen", &ScriptColor::Screen,
 
+			"Invert", & ScriptColor::Invert,
+			"GetHue", & ScriptColor::GetHue,
 			"Lerp", &ScriptColor::Lerp
 		);
 	}
@@ -218,9 +218,9 @@ namespace TEN::Scripting::Types
 	}
 
 	/// Get the hue of this Color using the HSV color model.
-	// @ function Color:GetHue
-	// @ treturn float The hue value in the range [0.0, 360.0) in degrees.
-	// @ usage
+	// @function Color:GetHue
+	// @treturn float The hue value in the range [0.0, 360.0) in degrees.
+	// @usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local hue = color:GetHue()
 	// print(hue) -- Output: 0.0
@@ -243,9 +243,9 @@ namespace TEN::Scripting::Types
 	}
 
 	/// Invert the RGB components of this Color (255 - component).
-	// @ function Color:Invert
-	// @ treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
-	// @ usage
+	// @function Color:Invert
+	// @treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
+	// @usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local invertedColor = color:Invert()
 	// print(tostring(invertedColor)) -- Output: {0, 255, 255, 255}
