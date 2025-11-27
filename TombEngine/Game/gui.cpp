@@ -1,8 +1,6 @@
 #include "framework.h"
 #include "Game/Gui.h"
 
-#include <OISKeyboard.h>
-
 #include "Game/animation.h"
 #include "Game/camera.h"
 #include "Game/control/control.h"
@@ -25,10 +23,10 @@
 #include "Specific/Input/Input.h"
 #include "Specific/clock.h"
 #include "Specific/configuration.h"
+#include "Specific/EngineMain.h"
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
-#include "Specific/EngineMain.h"
 
 using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Input;

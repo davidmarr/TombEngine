@@ -1,8 +1,6 @@
 #pragma once
-#include <SimpleMath.h>
-#include "Math/Math.h"
 
-using namespace DirectX::SimpleMath;
+#include "Math/Math.h"
 
 #define SHAPE_RECTANGLE 0
 #define SHAPE_TRIANGLE	1

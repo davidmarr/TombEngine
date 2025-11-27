@@ -1,26 +1,22 @@
 #pragma once
 
-#include <SimpleMath.h>
-
 namespace TEN::Utils
 {
-	using namespace DirectX::SimpleMath;
-
 	// String utilities
 
 	std::string ConstructAssetDirectory(std::string customDirectory);
 	std::string ReplaceNewLineSymbols(const std::string& string);
 
-	std::string	 ToUpper(std::string string);
-	std::string	 ToLower(std::string string);
-	std::string	 ToString(const std::wstring& wString);
-	std::string	 ToString(const wchar_t* wString);
+	std::string  ToUpper(std::string string);
+	std::string  ToLower(std::string string);
+	std::string  ToString(const std::wstring& wString);
+	std::string  ToString(const wchar_t* wString);
 	std::wstring ToWString(const std::string& string);
 	std::wstring ToWString(const char* cString);
-	std::string Trim(std::string s);
-	bool StartsWith(const std::string s, const char* pref);
-	int ToInt(const std::string v, int def);
-	bool ToBool(const std::string v, bool def);
+	std::string  Trim(std::string string);
+	bool         StartsWith(const std::string& string, const char* pref);
+	int          ToInt(const std::string& string, int fallback);
+	bool         ToBool(const std::string& string, bool fallback);
 
 	std::vector<std::wstring> SplitString(const std::wstring& string);
 	std::vector<std::wstring> SplitWords(const std::wstring& input);

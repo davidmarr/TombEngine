@@ -9,8 +9,8 @@
 #include "Renderer/Renderer.h"
 #include "Sound/sound.h"
 #include "Specific/clock.h"
-#include "Specific/trutils.h"
 #include "Specific/EngineMain.h"
+#include "Specific/trutils.h"
 
 using namespace TEN::Gui;
 using namespace TEN::Math;

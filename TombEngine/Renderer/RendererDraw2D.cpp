@@ -1,5 +1,7 @@
 #include "framework.h"
+
 #include <SimpleMath.h>
+
 #include "Game/camera.h"
 #include "Game/control/control.h"
 #include "Game/spotcam.h"

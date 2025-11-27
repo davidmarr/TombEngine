@@ -1,5 +1,7 @@
 #include "framework.h"
+
 #include <random>
+
 #include "Renderer/Renderer.h"
 #include "Renderer/RendererUtils.h"
 #include "Renderer/SMAA/AreaTex.h"

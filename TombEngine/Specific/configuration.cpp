@@ -1,20 +1,13 @@
 #include "framework.h"
 #include "Specific/configuration.h"
-#include <SDL3/SDL.h>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <algorithm>
-#include <cctype>
-#include <CommCtrl.h>
+
 #include "Renderer/Renderer.h"
 #include "resource.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Scripting/Internal/LanguageScript.h"
+#include "Specific/EngineMain.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/EngineMain.h"
 #include "Sound/sound.h"
 
 using namespace TEN::Input;

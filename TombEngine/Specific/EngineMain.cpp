@@ -1,21 +1,18 @@
 #include "framework.h"
 #include "Specific/EngineMain.h"
-#include <process.h>
-#include <iostream>
-#include <codecvt>
-#include <filesystem>
+
 #include "Game/control/control.h"
 #include "Game/savegame.h"
 #include "Renderer/Renderer.h"
 #include "resource.h"
 #include "Sound/sound.h"
-#include "Specific/level.h"
 #include "Specific/configuration.h"
+#include "Specific/level.h"
 #include "Specific/Parallel.h"
 #include "Specific/trutils.h"
-#include "Scripting/Internal/LanguageScript.h"
 #include "Scripting/Include/ScriptInterfaceState.h"
 #include "Scripting/Include/ScriptInterfaceLevel.h"
+#include "Scripting/Internal/LanguageScript.h"
 #include "Video/Video.h"
 
 using namespace TEN::Renderer;
@@ -43,10 +40,10 @@ bool ArgEquals(const char* incomingArg, const std::string& name)
 	if (!incomingArg)
 		return false;
 
-	std::string arg(incomingArg);
+	auto arg = std::string(incomingArg);
 
 	arg = TEN::Utils::ToLower(arg);
-	std::string lowerName = TEN::Utils::ToLower(name);
+	auto lowerName = TEN::Utils::ToLower(name);
 
 	if (!arg.empty() && (arg[0] == '-' || arg[0] == '/'))
 	{
@@ -60,20 +57,20 @@ bool ArgEquals(const char* incomingArg, const std::string& name)
 
 Vector2i GetScreenResolution()
 {
-	Vector2i screenResolution{ 0, 0 };
+	auto screenRes = Vector2i::Zero;
 
 	auto display = SDL_GetPrimaryDisplay();
 	if (!display)
-		return screenResolution;
+		return screenRes;
 
 	auto mode = SDL_GetCurrentDisplayMode(display);
 	if (!mode)
-		return screenResolution;
+		return screenRes;
 
-	screenResolution.x = mode->w;
-	screenResolution.y = mode->h;
+	screenRes.x = mode->w;
+	screenRes.y = mode->h;
 
-	return screenResolution;
+	return screenRes;
 }
 
 int GetCurrentScreenRefreshRate()
@@ -94,7 +91,7 @@ int GetCurrentScreenRefreshRate()
 
 std::vector<Vector2i> GetAllSupportedScreenResolutions()
 {
-	std::vector<Vector2i> screenResolutions;
+	auto screenResolutions = std::vector<Vector2i>{};
 
 	auto display = SDL_GetPrimaryDisplay();
 	if (!display)
@@ -109,11 +106,11 @@ std::vector<Vector2i> GetAllSupportedScreenResolutions()
 
 	for (int i = 0; i < count; ++i)
 	{
-		const SDL_DisplayMode* mode = modes[i];
+		const auto* mode = modes[i];
 		if (!mode)
 			continue;
 
-		Vector2i screenResolution{ mode->w, mode->h };
+		auto screenResolution = Vector2i(mode->w, mode->h);
 
 		bool add = true;
 		for (const auto& m : screenResolutions)
@@ -257,13 +254,13 @@ int main(int argc, char* argv[])
 	}
 
 	// Process command line arguments.
-	std::string levelFile = {};
-	std::string gameDir{};
+	auto levelFile = std::string();
+	auto gameDir = std::string();
 
 	// Parse command line arguments.
 	for (int i = 1; i < argc; ++i)
 	{
-		std::string arg = argv[i];
+		auto arg = std::string(argv[i]);
 
 		if (ArgEquals(arg.c_str(), "debug"))
 		{
@@ -436,10 +433,9 @@ int main(int argc, char* argv[])
 		DoTheGame = false;
 	}
 
-	// The game window likes to steal input anyway, so let's put it at the
-	// foreground so the user at least expects it.
-	SDL_Window* focused = SDL_GetKeyboardFocus();
-	if (focused != sdlWindow)
+	// Since the game window likes to steal input anyway, put it at the foreground so the user at least expects it.
+	auto* focusedWindow = SDL_GetKeyboardFocus();
+	if (focusedWindow != sdlWindow)
 	{
 		SDL_RaiseWindow(sdlWindow);
 	}
@@ -447,10 +443,10 @@ int main(int argc, char* argv[])
 	bool running = true;
 	while (running && !ThreadEnded && DoTheGame)
 	{
-		SDL_Event ev;
-		while (SDL_PollEvent(&ev))
+		auto event = SDL_Event{};
+		while (SDL_PollEvent(&event))
 		{
-			switch (ev.type)
+			switch (event.type)
 			{
 			case SDL_EVENT_QUIT:
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -471,7 +467,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// Avoid looping at 100% where there're no events
+		// Avoid looping at 100% where there are no events.
 		SDL_Delay(1);
 	}
 

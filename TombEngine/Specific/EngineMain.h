@@ -1,7 +1,5 @@
 #pragma once
 
-#include <process.h>
-#include <vector>
 #include "Math/Math.h"
 #include "Platform/ISubsystem.h"
 

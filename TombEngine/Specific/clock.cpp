@@ -1,6 +1,5 @@
 #include "framework.h"
 
-#include <SDL3/SDL.h>
 #include "Specific/clock.h"
 #include "Specific/EngineMain.h"
 

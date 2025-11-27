@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+
 #include <wrl/client.h>
 
 namespace TEN::Renderer::Utils

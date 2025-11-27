@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Game/control/control.h"
 
 // This might not be the exact amount of time that has passed, but giving it a
@@ -11,12 +12,12 @@ class HighFramerateSynchronizer
 {
 private:
 	double _controlDelay = 0.0;
-	double _frameTime = 0.0;
-	bool   _locked = false;
+	double _frameTime    = 0.0;
+	bool   _locked       = false;
 
-	Uint64 _lastCounter = 0;
+	Uint64 _lastCounter    = 0;
 	Uint64 _currentCounter = 0;
-	Uint64 _frequency = 0; 
+	Uint64 _frequency      = 0; 
 
 public:
 	void Init();
@@ -32,7 +33,6 @@ bool TimeInit();
 bool TimeReset();
 
 bool TestGlobalTimeInterval(unsigned int intervalGameFrames, unsigned int offsetGameFrames = 0);
-
 
 unsigned int SecToGameFrames(float sec);
 float		 GameFramesToSec(unsigned int gameFrames);

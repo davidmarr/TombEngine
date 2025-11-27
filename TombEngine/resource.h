@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// File di inclusione generato con Microsoft Visual C++.
-// Utilizzato da Resources.rc
+// Microsoft Visual C++ generated include file.
+// Used by Resources.rc
 //
 
 #define TEN_BUILD_NUMBER                0

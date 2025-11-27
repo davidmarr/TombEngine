@@ -1,6 +1,4 @@
 #pragma once
-#include <bass.h>
-#include <bass_fx.h>
 
 #include "Game/control/control.h"
 #include "Sound/sound_effects.h"
@@ -153,12 +151,13 @@ struct SoundSourceInfo
 	}
 };
 
-struct BassDevice {
-	int         Index;      // BASS index (1..N) - on Windows "0" is "no sound"
-	std::string Name;
-	bool        IsDefault;
-	bool        IsEnabled;
-	bool        IsInUse;
+struct BassDevice
+{
+	int         Index     = 0; // BASS index (1..N) - on Windows "0" is "no sound".
+	std::string Name      = {};
+	bool        IsDefault = false;
+	bool        IsEnabled = false;
+	bool        IsInUse   = false;
 };
 
 extern std::map<std::string, int> SoundTrackMap;

@@ -1,8 +1,10 @@
 #include "framework.h"
+
 #include <algorithm>
 #include <chrono>
 #include <execution>
 #include <filesystem>
+
 #include "ConstantBuffers/CameraMatrixBuffer.h"
 #include "Game/animation.h"
 #include "Game/camera.h"

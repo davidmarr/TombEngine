@@ -3,9 +3,9 @@
 
 #include "Renderer/Renderer.h"
 #include "Sound/sound.h"
+#include "Specific/EngineMain.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/EngineMain.h"
 
 using namespace TEN::Input;
 
@@ -513,7 +513,7 @@ namespace TEN::Video
 			TENLog("Video texture already exists", LogLevel::Error);
 			return false;
 		}
-		
+
 		_frameBuffer.resize(_size.x * _size.y * 4);
 
 		_videoTexture = _device->CreateTexture2D(_size.x, _size.y, SurfaceFormat::SF_BGRA8_Unorm);

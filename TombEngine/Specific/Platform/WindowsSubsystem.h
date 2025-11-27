@@ -3,64 +3,64 @@
 #ifdef SDL_PLATFORM_WIN32
 
 #pragma comment(linker,"/manifestdependency:\"" \
-    "type='win32' " \
-    "name='Microsoft.Windows.Common-Controls' " \
-    "version='6.0.0.0' " \
-    "processorArchitecture='*' "  \
-    "publicKeyToken='6595b64144ccf1df' " \
-    "language='*'\"")
+	"type='win32' " \
+	"name='Microsoft.Windows.Common-Controls' " \
+	"version='6.0.0.0' " \
+	"processorArchitecture='*' "  \
+	"publicKeyToken='6595b64144ccf1df' " \
+	"language='*'\"")
 
 #include <Windows.h>
-#include <string>
+
+#include "resource.h"
 #include "Specific/Platform/ISubsystem.h"
 #include "Specific/trutils.h"
-#include "resource.h"
 
 using namespace TEN::Utils;
 
 namespace TEN::Platform
 {
-    /// <summary>
-    /// Windows-specific implementation of the platform subsystem.
-    /// Encapsulates all remaining Win32 calls (registry access, crash handler,
-    /// message boxes, etc.) behind a clean interface.
-    /// </summary>
-    class WindowsSubsystem final : public ISubsystem
-    {
-    private:
-        SDL_Window* _window;
+	/// <summary>
+	/// Windows-specific implementation of the platform subsystem.
+	/// Encapsulates all remaining Win32 calls (registry access, crash handler,
+	/// message boxes, etc.) behind a clean interface.
+	/// </summary>
+	class WindowsSubsystem final : public ISubsystem
+	{
+	private:
+		SDL_Window* _window;
 
-    public:
-        WindowsSubsystem();
-        ~WindowsSubsystem() override;
+	public:
+		WindowsSubsystem();
+		~WindowsSubsystem() override;
 
-        void Initialize() override;
-        void CheckPrerequisites() override;
-        void InstallCrashHandler() override;
-        void ShowErrorMessage(const std::string& text) override;
-        void Tick() override;
-        void Shutdown() override;
-        std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) override;
-        bool Is64Bit() override;
-        void SetSDL3Window(SDL_Window* window);
-        SDL_Window* GetSDL3Window();
-        void HideConsole() override;
-        bool CreateDummyTitleLevel(const std::string& levelPath) override;
+		void Initialize() override;
+		void CheckPrerequisites() override;
+		void InstallCrashHandler() override;
+		void ShowErrorMessage(const std::string& text) override;
+		void Tick() override;
+		void Shutdown() override;
+		std::vector<unsigned short> GetProductOrFileVersion(bool productVersion) override;
+		bool Is64Bit() override;
+		void SetSDL3Window(SDL_Window* window);
+		SDL_Window* GetSDL3Window();
+		void HideConsole() override;
+		bool CreateDummyTitleLevel(const std::string& levelPath) override;
 
-    private:
-        HINSTANCE _hInstance = nullptr;
+	private:
+		HINSTANCE _hInstance = nullptr;
 
-        /// <summary>
-        /// Internal helper that checks for the Microsoft Visual C++ Redistributable
-        /// in the registry and prompts the user to install it if needed.
-        /// </summary>
-        void CheckVcRedist();
+		/// <summary>
+		/// Internal helper that checks for the Microsoft Visual C++ Redistributable
+		/// in the registry and prompts the user to install it if needed.
+		/// </summary>
+		void CheckVcRedist();
 
-        /// <summary>
-        /// Internal helper that actually installs the unhandled exception filter.
-        /// </summary>
-        void InstallExceptionFilter();
-    };
+		/// <summary>
+		/// Internal helper that actually installs the unhandled exception filter.
+		/// </summary>
+		void InstallExceptionFilter();
+	};
 }
 
 #endif

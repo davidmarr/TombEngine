@@ -1,7 +1,6 @@
 #include "framework.h"
 #include "Specific/level.h"
 
-#include <process.h>
 #include <lz4.h>
 
 #include "Game/animation.h"
@@ -27,9 +26,9 @@
 #include "Scripting/Include/ScriptInterfaceGame.h"
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Sound/sound.h"
+#include "Specific/EngineMain.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/EngineMain.h"
 
 using namespace TEN::Physics;
 using TEN::Renderer::g_Renderer;

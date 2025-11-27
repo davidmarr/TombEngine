@@ -1,8 +1,10 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
+
 #include <execution>
 #include <stack>
 #include <tuple>
+
 #include "Game/control/control.h"
 #include "Game/effects/Decal.h"
 #include "Game/effects/Hair.h"

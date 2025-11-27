@@ -1,7 +1,6 @@
 #include "framework.h"
 
 #include <codecvt>
-#include <filesystem>
 
 #include "Renderer/Renderer.h"
 #include "Renderer/RendererEnums.h"
@@ -73,10 +72,12 @@ namespace TEN::Utils
 		}
 		catch (std::exception ex)
 		{
-			return std::string{}; // Use exe path if any error is encountered.
+			// Use .EXE path if any error is encountered.
+			return std::string{};
 		}
 
-		return std::string{}; // Use exe path if no any assets were found.
+		// Use .EXE path if no any assets were found.
+		return std::string{};
 	}
 
 	std::string ToUpper(std::string string)
@@ -91,38 +92,48 @@ namespace TEN::Utils
 		return string;
 	}
 
-	std::string Trim(std::string s)
+	std::string Trim(std::string string)
 	{
 		auto isNotSpace = [](unsigned char ch)
-			{
-				return !std::isspace(ch);
-			};
+		{
+			return !std::isspace(ch);
+		};
 
-		auto left = std::find_if(s.begin(), s.end(), isNotSpace);
-		s.erase(s.begin(), left);
+		auto left = std::find_if(string.begin(), string.end(), isNotSpace);
+		string.erase(string.begin(), left);
 
-		auto right = std::find_if(s.rbegin(), s.rend(), isNotSpace).base();
-		s.erase(right, s.end());
+		auto right = std::find_if(string.rbegin(), string.rend(), isNotSpace).base();
+		string.erase(right, string.end());
 
-		return s;
+		return string;
 	}
 
-	bool StartsWith(const std::string s, const char* pref)
+	bool StartsWith(const std::string& string, const char* pref)
 	{
-		return s.rfind(pref, 0) == 0;
+		return string.rfind(pref, 0) == 0;
 	}
 
-	int ToInt(const std::string v, int def)
+	int ToInt(const std::string& string, int fallback)
 	{
-		try { return std::stoi(v); }
-		catch (...) { return def; }
+		try
+		{
+			return std::stoi(string);
+		}
+		catch (...)
+		{
+			return fallback;
+		}
 	}
 
-	bool ToBool(const std::string v, bool def)
+	bool ToBool(const std::string& string, bool fallback)
 	{
-		if (v == "1" || v == "true" || v == "True" || v == "TRUE")  return true;
-		if (v == "0" || v == "false" || v == "False" || v == "FALSE") return false;
-		return def;
+		if (string == "1" || string == "true" || string == "True" || string == "TRUE")
+			return true;
+
+		if (string == "0" || string == "false" || string == "False" || string == "FALSE")
+			return false;
+
+		return fallback;
 	}
 
 	std::string ToString(const std::wstring& wString)
