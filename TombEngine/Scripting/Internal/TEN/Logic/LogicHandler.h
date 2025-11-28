@@ -7,7 +7,33 @@
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
 
-enum class CallbackPoint;
+enum class CallbackPoint
+{
+	PreStart,
+	PostStart,
+	PreLoad,
+	PostLoad,
+	PreLoop,
+	PostLoop,
+	PreSave,
+	PostSave,
+	PreEnd,
+	PostEnd,
+	PreUseItem,
+	PostUseItem,
+	PreFreeze,
+	PostFreeze
+};
+
+enum class LevelEndReason
+{
+	LevelComplete,
+	LoadGame,
+	ExitToTitle,
+	Death,
+	Other
+};
+
 class LevelFunc;
 
 class LogicHandler : public ScriptInterfaceGame

@@ -25,33 +25,6 @@ Saving data, triggering functions, and callbacks for level-specific scripts.
 @pragma nostrip
 */
 
-enum class CallbackPoint
-{
-	PreStart,
-	PostStart,
-	PreLoad,
-	PostLoad,
-	PreLoop,
-	PostLoop,
-	PreSave,
-	PostSave,
-	PreEnd,
-	PostEnd,
-	PreUseItem,
-	PostUseItem,
-	PreFreeze,
-	PostFreeze
-};
-
-enum class LevelEndReason
-{
-	LevelComplete,
-	LoadGame,
-	ExitToTitle,
-	Death,
-	Other
-};
-
 static const auto CALLBACK_POINTS = std::unordered_map<std::string, CallbackPoint>
 {
 	{ ScriptReserved_PreStart, CallbackPoint::PreStart },
