@@ -21,6 +21,7 @@ namespace TEN::Scripting::Types
 
 		// Constructors
 
+		ScriptColor() = default;
 		ScriptColor(byte r, byte g, byte b);
 		ScriptColor(byte r, byte g, byte b, byte a);
 		ScriptColor(const Vector3& color);

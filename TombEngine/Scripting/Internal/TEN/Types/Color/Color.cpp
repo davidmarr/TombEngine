@@ -23,7 +23,7 @@ namespace TEN::Scripting::Types
 
 	void ScriptColor::Register(sol::table& parent)
 	{
-		using ctors = sol::constructors<ScriptColor(byte, byte, byte), ScriptColor(byte, byte, byte, byte)>;
+		using ctors = sol::constructors<ScriptColor(), ScriptColor(byte, byte, byte), ScriptColor(byte, byte, byte, byte)>;
 
 		// Register type.
 		parent.new_usertype<ScriptColor>(
