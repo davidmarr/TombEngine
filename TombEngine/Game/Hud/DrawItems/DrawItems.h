@@ -22,7 +22,7 @@ namespace TEN::Hud
 		Vector3 _cameraPreviousPosition = _cameraPosition;
 		Vector3 _targetPreviousPosition = _targetPosition;
 
-		Vector4 _ambientLight = Vector4::One;
+		Vector4 _ambientLight = Vector4(1.0f, 1.0f, 0.5f, 1.0f);
 
 	public:
 

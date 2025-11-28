@@ -791,8 +791,6 @@ namespace TEN::Renderer
 	// TODO: Handle opacity
 	void Renderer::DrawObjectIn2DSpace(int objectNumber, Vector2 pos2D, EulerAngles orient, float scale, float opacity, int meshBits)
 	{
-		constexpr auto AMBIENT_LIGHT_COLOR = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
 
@@ -877,7 +875,7 @@ namespace TEN::Renderer
 
 			_stItem.BoneLightModes[i] = (int)LightMode::Dynamic;
 			_stItem.Color = Vector4::One;
-			_stItem.AmbientLight = AMBIENT_LIGHT_COLOR;
+			_stItem.AmbientLight = g_DrawItems.GetAmbientLight();
 
 			UpdateConstantBuffer(_stItem, _cbItem);
 
