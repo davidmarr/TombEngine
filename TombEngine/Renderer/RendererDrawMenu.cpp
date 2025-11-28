@@ -914,16 +914,16 @@ namespace TEN::Renderer
 
 	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
 	{
-		if (item.GetItemVisibility())
+		if (item.GetVisibility())
 		{
 			float t = GetInterpolationFactor();
 
-			auto objectNumber = item.GetItemObjectID();
+			auto objectNumber = item.GetObjectID();
 			auto pos3D = item.GetInterpolatedPosition(t);
 			auto orient = item.GetInterpolatedOrientation(t);
 			auto scale = item.GetInterpolatedScale(t);
 			auto color = item.GetInterpolatedColor(t);
-			int meshBits = item.GetItemMeshBits();
+			int meshBits = item.GetMeshBits();
 			
 			constexpr float NearPlane = 0.1f; // Near clipping plane
 			constexpr float FarPlane = BLOCK(100); // Far clipping plane
@@ -942,11 +942,11 @@ namespace TEN::Renderer
 				return;
 
 			const auto& object = Objects[objectNumber];
-			if (object.animIndex != -1)
+			if (object.animIndex != NO_VALUE)
 			{
-				int anim = item.GetItemAnimation();
-				int frame = item.GetItemFrame();
-				int prevFrame = item.GetItemPreviousFrame();
+				int anim = item.GetAnimation();
+				int frame = item.GetFrame();
+				int prevFrame = item.GetPreviousFrame();
 				auto frameData = AnimFrameInterpData
 				{
 					GetFrame(objectNumber, anim, prevFrame),
@@ -978,7 +978,7 @@ namespace TEN::Renderer
 
 			for (int i = 0; i < moveableObject->ObjectMeshes.size(); i++)
 			{
-				if (meshBits && !(meshBits & (1 << i)))
+				if (meshBits && !item.GetMeshVisibility(i))
 					continue;
 
 				auto rotOverride = item.GetInterpolatedMeshRotation(i, t);
@@ -1062,6 +1062,15 @@ namespace TEN::Renderer
 			Synchronize();
 			_swapChain->Present(1, 0);
 			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		}
+	}
+
+	void Renderer::DrawDisplayItems()
+	{
+		if (!g_DrawItems.IsEmpty())
+		{
+			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
+			g_DrawItems.Draw();
 		}
 	}
 
@@ -1254,13 +1263,7 @@ namespace TEN::Renderer
 		// Draw display sprites sorted by priority.
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
-
-		if (!g_DrawItems.IsEmpty())
-		{
-			_context->ClearDepthStencilView(_backBuffer.DepthStencilView.Get(), D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, 1.0f, 0);
-			g_DrawItems.Draw();
-		}
-
+		DrawDisplayItems();
 		DrawDisplaySprites(_gameCamera, true);
 		DrawAllStrings();
 		

@@ -18,14 +18,14 @@ namespace TEN::Hud
 		// Check if item already exists
 		for (auto& item : _displayItems)
 		{
-			if (item.GetItemName() == itemName)
+			if (item.GetName() == itemName)
 			{
 				// Update existing item
-				item.SetItemObjectID(objectID);
-				item.SetItemPosition(position, true);
-				item.SetItemRotation(rotation, true);
-				item.SetItemScale(scale, true);
-				item.SetItemMeshBits(meshBits);
+				item.SetObjectID(objectID);
+				item.SetPosition(position, true);
+				item.SetRotation(rotation, true);
+				item.SetScale(scale, true);
+				item.SetMeshBits(meshBits);
 				return;
 			}
 		}
@@ -35,12 +35,12 @@ namespace TEN::Hud
 			return;
 
 		DisplayItem newItem;
-			newItem.SetItemName(itemName);
-			newItem.SetItemObjectID(objectID);
-			newItem.SetItemPosition(position, true);
-			newItem.SetItemRotation(rotation, true);
-			newItem.SetItemScale(scale, true);
-			newItem.SetItemMeshBits(meshBits);
+			newItem.SetName(itemName);
+			newItem.SetObjectID(objectID);
+			newItem.SetPosition(position, true);
+			newItem.SetRotation(rotation, true);
+			newItem.SetScale(scale, true);
+			newItem.SetMeshBits(meshBits);
 		_displayItems.push_back(newItem);
 	}
 
@@ -49,7 +49,7 @@ namespace TEN::Hud
 		auto item = std::find_if(_displayItems.begin(), _displayItems.end(),
 			[&](const DisplayItem& item)
 			{
-				return item.GetItemName() == itemName;
+				return item.GetName() == itemName;
 			});
 
 		if (item != _displayItems.end())
@@ -64,7 +64,7 @@ namespace TEN::Hud
 		std::sort(_displayItems.begin(), _displayItems.end(),
 			[](const DisplayItem& a, const DisplayItem& b)
 			{
-				return (a.GetItemPosition().z > b.GetItemPosition().z);
+				return (a.GetPosition().z > b.GetPosition().z);
 			});
 
 		for (auto& item : _displayItems)
@@ -95,7 +95,7 @@ namespace TEN::Hud
 	{
 		for (auto& item : _displayItems)
 		{
-			if (item.GetItemName() == itemName)
+			if (item.GetName() == itemName)
 				return &item;
 		}
 		return nullptr;
@@ -110,7 +110,7 @@ namespace TEN::Hud
 	{
 		for (auto& item : _displayItems)
 		{
-			if (item.GetItemName() == itemName)
+			if (item.GetName() == itemName)
 			{
 				return true;
 			}
@@ -122,7 +122,7 @@ namespace TEN::Hud
 	{
 		for (auto& item : _displayItems)
 		{
-			if (item.GetItemObjectID() == objectID)
+			if (item.GetObjectID() == objectID)
 			{
 				return true;
 			}

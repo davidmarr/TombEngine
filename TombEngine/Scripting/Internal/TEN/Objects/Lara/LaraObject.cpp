@@ -332,7 +332,7 @@ void LaraObject::SetLaserSight(LaraWeaponType weaponType, TypeOrNil<bool> activa
 		// Attach laser sight
 		lara->Weapons[static_cast<int>(weaponType)].HasLasersight = convertedActivate;
 
-		//Activate weapon if required
+		// Activate weapon if required
 		if (convertedActivate == false)
 			lara->Control.Weapon.LastGunType = weaponType;
 		else
@@ -513,17 +513,17 @@ int LaraObject::GetWeaponMode() const
 	{
 
 	case::LaraWeaponType::HK:
-		if (player.Weapons[(int)LaraWeaponType::GrenadeLauncher].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_1)
+		if (player.Weapons[(int)LaraWeaponType::HK].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_1)
 		{
-			weaponMode = PlayerWeaponMode::HKRapid;
+			weaponMode = PlayerWeaponMode::Rapid;
 		}
-		else if (player.Weapons[(int)LaraWeaponType::GrenadeLauncher].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_2)
+		else if (player.Weapons[(int)LaraWeaponType::HK].WeaponMode == LaraWeaponTypeCarried::WTYPE_AMMO_2)
 		{
-			weaponMode = PlayerWeaponMode::HKBurst;
+			weaponMode = PlayerWeaponMode::Burst;
 		}
 		else
 		{
-			weaponMode = PlayerWeaponMode::HKSniper;
+			weaponMode = PlayerWeaponMode::Sniper;
 		}
 
 		break;
@@ -550,15 +550,15 @@ void LaraObject::SetWeaponMode(PlayerWeaponMode weaponMode)
 
 	switch (weaponMode)
 	{
-	case PlayerWeaponMode::HKRapid:
+	case PlayerWeaponMode::Rapid:
 		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_1;
 		break;
 
-	case PlayerWeaponMode::HKBurst:
+	case PlayerWeaponMode::Burst:
 		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_2;
 		break;
 
-	case PlayerWeaponMode::HKSniper:
+	case PlayerWeaponMode::Sniper:
 		player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_3;
 		break;
 
@@ -644,7 +644,6 @@ WaterStatus LaraObject::GetWaterStatus() const
 // local smallWaterSkinCapacity = Lara:GetWaterSkinStatus(false)
 int LaraObject::GetWaterSkinStatus(TypeOrNil<bool> flag) const
 {
-	
 	auto convertedFlag = ValueOr<bool>(flag, false);
 
 	const auto& inventory = GetLaraInfo(*_moveable).Inventory;

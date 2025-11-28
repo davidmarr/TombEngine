@@ -40,34 +40,34 @@ namespace TEN::Hud
 		int PrevFrameNumber = 0;
 
 	public:
-		void SetItemName(std::string itemName);
-		void SetItemObjectID(GAME_OBJECT_ID objectID);
-		void SetItemPosition(const Vector3& newPos, bool disableInterpolation);
-		void SetItemRotation(const EulerAngles& newRot, bool disableInterpolation);
-		void SetItemScale(float newScale, bool disableInterpolation);
-		void SetItemColor(Color& newColor, bool disableInterpolation);
-		void SetItemVisibility(bool visible);
-		void SetItemMeshBits(int meshbits);
-		void SetItemMeshVisibility(int meshIndex, bool visible);
-		void SetItemMeshRotation(int meshIndex, const EulerAngles& rot, bool disableInterpolation);
+		void SetName(std::string itemName);
+		void SetObjectID(GAME_OBJECT_ID objectID);
+		void SetPosition(const Vector3& newPos, bool disableInterpolation);
+		void SetRotation(const EulerAngles& newRot, bool disableInterpolation);
+		void SetScale(float newScale, bool disableInterpolation);
+		void SetColor(Color& newColor, bool disableInterpolation);
+		void SetVisibility(bool visible);
+		void SetMeshBits(int meshbits);
+		void SetMeshVisibility(int meshIndex, bool visible);
+		void SetMeshRotation(int meshIndex, const EulerAngles& rot, bool disableInterpolation);
 		
-		void SetItemAnimation(int animation);
-		void SetItemFrame(int frame);
+		void SetAnimation(int animation);
+		void SetFrame(int frame);
 
-		std::string GetItemName() const;
-		GAME_OBJECT_ID GetItemObjectID() const;
-		Vector3 GetItemPosition() const;
-		EulerAngles GetItemRotation() const;
-		float GetItemScale() const;
-		Color GetItemColor() const;
-		bool GetItemVisibility() const;
-		int GetItemMeshBits() const;
-		bool GetItemMeshVisibility(int meshIndex) const;
-		EulerAngles GetItemMeshRotation(int meshIndex) const;
+		std::string GetName() const;
+		GAME_OBJECT_ID GetObjectID() const;
+		Vector3 GetPosition() const;
+		EulerAngles GetRotation() const;
+		float GetScale() const;
+		Color GetColor() const;
+		bool GetVisibility() const;
+		int GetMeshBits() const;
+		bool GetMeshVisibility(int meshIndex) const;
+		EulerAngles GetMeshRotation(int meshIndex) const;
 
-		int GetItemAnimation() const;
-		int GetItemFrame() const;
-		int GetItemPreviousFrame() const;
+		int GetAnimation() const;
+		int GetFrame() const;
+		int GetPreviousFrame() const;
 
 		// Interpolation Helpers
 		void StoreInterpolationData();

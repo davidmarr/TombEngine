@@ -926,9 +926,9 @@ enum class PlayerAmmoType
 enum class PlayerWeaponMode
 {
 	None,
-	HKRapid,
-	HKBurst,
-	HKSniper,
+	Rapid,
+	Burst,
+	Sniper,
 
 	Count
 };

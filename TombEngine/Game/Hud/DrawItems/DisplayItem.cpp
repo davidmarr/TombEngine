@@ -9,17 +9,17 @@ using namespace TEN::Math;
 
 namespace TEN::Hud
 {
-	void DisplayItem::SetItemName(std::string itemName)
+	void DisplayItem::SetName(std::string itemName)
 	{
 		ItemName = itemName;
 	}
 
-	void DisplayItem::SetItemObjectID(GAME_OBJECT_ID objectID)
+	void DisplayItem::SetObjectID(GAME_OBJECT_ID objectID)
 	{
 		ObjectID = objectID;
 	}
 
-	void DisplayItem::SetItemPosition(const Vector3& newPos, bool disableInterpolation)
+	void DisplayItem::SetPosition(const Vector3& newPos, bool disableInterpolation)
 	{
 		if (disableInterpolation)
 			PrevPosition = newPos;
@@ -27,7 +27,7 @@ namespace TEN::Hud
 		Position = newPos;
 	}
 
-	void DisplayItem::SetItemRotation(const EulerAngles& newRot, bool disableInterpolation)
+	void DisplayItem::SetRotation(const EulerAngles& newRot, bool disableInterpolation)
 	{
 		if (disableInterpolation)
 			PrevOrientation = newRot;
@@ -35,7 +35,7 @@ namespace TEN::Hud
 		Orientation = newRot;
 	}
 
-	void DisplayItem::SetItemScale(float newScale, bool disableInterpolation)
+	void DisplayItem::SetScale(float newScale, bool disableInterpolation)
 	{
 		if (disableInterpolation)
 			PrevScale = newScale;
@@ -43,7 +43,7 @@ namespace TEN::Hud
 		Scale = newScale;
 	}
 
-	void DisplayItem::SetItemColor(Color& newColor, bool disableInterpolation)
+	void DisplayItem::SetColor(Color& newColor, bool disableInterpolation)
 	{
 		if (disableInterpolation)
 			PrevColor = newColor;
@@ -51,17 +51,17 @@ namespace TEN::Hud
 		ItemColor = newColor;
 	}
 
-	void DisplayItem::SetItemVisibility(bool visible)
+	void DisplayItem::SetVisibility(bool visible)
 	{
 		Visible = visible;
 	}
 
-	void DisplayItem::SetItemMeshBits(int meshbits)
+	void DisplayItem::SetMeshBits(int meshbits)
 	{
 		MeshBits = meshbits;
 	}
 
-	void DisplayItem::SetItemMeshVisibility(int meshIndex, bool isVisible)
+	void DisplayItem::SetMeshVisibility(int meshIndex, bool isVisible)
 	{
 		if (!MeshExists(meshIndex))
 			return;
@@ -76,7 +76,7 @@ namespace TEN::Hud
 		}
 	}
 
-	void DisplayItem::SetItemMeshRotation(int meshIndex, const EulerAngles& newRot, bool disableInterpolation)
+	void DisplayItem::SetMeshRotation(int meshIndex, const EulerAngles& newRot, bool disableInterpolation)
 	{
 		if (disableInterpolation)
 			PrevMeshRotations[meshIndex] = newRot;
@@ -84,64 +84,64 @@ namespace TEN::Hud
 		MeshRotations[meshIndex] = newRot;
 	}
 
-	void DisplayItem::SetItemAnimation(int animation)
+	void DisplayItem::SetAnimation(int animation)
 	{
 		//add checks for bounds of animation and frame
 		AnimNumber = animation;
 	}
 
-	void DisplayItem::SetItemFrame(int frame)
+	void DisplayItem::SetFrame(int frame)
 	{
 		//add checks for bounds of animation and frame
 		FrameNumber = frame;
 	}
 
-	std::string DisplayItem::GetItemName() const
+	std::string DisplayItem::GetName() const
 	{
 		return ItemName;
 	}
 
-	GAME_OBJECT_ID DisplayItem::GetItemObjectID() const
+	GAME_OBJECT_ID DisplayItem::GetObjectID() const
 	{
 		return ObjectID;
 	}
 
-	Vector3 DisplayItem::GetItemPosition() const
+	Vector3 DisplayItem::GetPosition() const
 	{
 		return Position;
 	}
 
-	EulerAngles DisplayItem::GetItemRotation() const
+	EulerAngles DisplayItem::GetRotation() const
 	{
 		return Orientation;
 	}
 
-	float DisplayItem::GetItemScale() const
+	float DisplayItem::GetScale() const
 	{
 		return Scale;
 	}
 
-	Color DisplayItem::GetItemColor() const
+	Color DisplayItem::GetColor() const
 	{
 		return ItemColor;
 	}
 
-	bool DisplayItem::GetItemVisibility() const
+	bool DisplayItem::GetVisibility() const
 	{
 		return Visible;
 	}
 
-	int DisplayItem::GetItemMeshBits() const
+	int DisplayItem::GetMeshBits() const
 	{
 		return MeshBits.ToPackedBits();
 	}
 
-	bool DisplayItem::GetItemMeshVisibility(int meshIndex) const
+	bool DisplayItem::GetMeshVisibility(int meshIndex) const
 	{
 		return MeshBits.Test(meshIndex);
 	}
 
-	EulerAngles DisplayItem::GetItemMeshRotation(int meshIndex) const
+	EulerAngles DisplayItem::GetMeshRotation(int meshIndex) const
 	{
 		auto it = MeshRotations.find(meshIndex);
 		if (it != MeshRotations.end())
@@ -151,17 +151,17 @@ namespace TEN::Hud
 
 	}
 
-	int DisplayItem::GetItemAnimation() const
+	int DisplayItem::GetAnimation() const
 	{
 		return AnimNumber;
 	}
 
-	int DisplayItem::GetItemFrame() const
+	int DisplayItem::GetFrame() const
 	{
 		return FrameNumber;
 	}
 
-	int DisplayItem::GetItemPreviousFrame() const
+	int DisplayItem::GetPreviousFrame() const
 	{
 		return PrevFrameNumber;
 	}

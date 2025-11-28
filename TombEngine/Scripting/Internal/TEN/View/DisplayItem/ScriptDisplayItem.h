@@ -35,26 +35,26 @@ namespace TEN::Scripting::DisplayItem
 		bool Exists() const;
 
 		// Setters
-		void SetItemObjectID(GAME_OBJECT_ID objectID);
-		void SetItemPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation);
-		void SetItemRotation(const Rotation& newRot, TypeOrNil<bool> disableInterpolation);
-		void SetItemScale(float newScale, TypeOrNil<bool> disableInterpolation);
-		void SetItemColor(const ScriptColor& newColor, TypeOrNil<bool> disableInterpolation);
-		void SetItemMeshBits(int meshbits);
-		void SetItemMeshVisibility(int meshIndex, bool visible);
-		void SetItemMeshRotation(int meshIndex, Rotation angles, TypeOrNil<bool> disableInterpolation);
-		void SetItemVisibility(bool visible);
-		void SetItemFrame(int animation, int frame);
+		void SetObjectID(GAME_OBJECT_ID objectID);
+		void SetPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation);
+		void SetRotation(const Rotation& newRot, TypeOrNil<bool> disableInterpolation);
+		void SetScale(float newScale, TypeOrNil<bool> disableInterpolation);
+		void SetColor(const ScriptColor& newColor, TypeOrNil<bool> disableInterpolation);
+		void SetMeshBits(int meshbits);
+		void SetMeshVisibility(int meshIndex, bool visible);
+		void SetMeshRotation(int meshIndex, Rotation angles, TypeOrNil<bool> disableInterpolation);
+		void SetVisibility(bool visible);
+		void SetFrame(int animation, int frame);
 
 		// Getters
-		GAME_OBJECT_ID GetItemObjectID() const;
-		Vec3 GetItemPosition() const;
-		Rotation GetItemRotation() const;
-		float GetItemScale() const;
-		ScriptColor GetItemColor() const;
-		bool GetItemMeshVisibility(int meshIndex) const;
-		Rotation GetItemMeshRotation(int meshIndex) const;
-		bool GetItemVisibility() const;
+		GAME_OBJECT_ID GetObjectID() const;
+		Vec3 GetPosition() const;
+		Rotation GetRotation() const;
+		float GetScale() const;
+		ScriptColor GetColor() const;
+		bool GetMeshVisibility(int meshIndex) const;
+		Rotation GetMeshRotation(int meshIndex) const;
+		bool GetVisibility() const;
 		int GetAnimNumber() const;
 		int GetFrameNumber() const;
 		int GetEndFrame() const;

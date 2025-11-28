@@ -35,24 +35,24 @@ namespace TEN::Scripting::DisplayItem
 			sol::call_constructor, ctors(),
 			ScriptReserved_DrawItemRemove, &ScriptDisplayItem::Remove,
 			ScriptReserved_DrawItemExists, &ScriptDisplayItem::Exists,
-			ScriptReserved_SetObjectID, &ScriptDisplayItem::SetItemObjectID,
-			ScriptReserved_SetPosition, &ScriptDisplayItem::SetItemPosition,
-			ScriptReserved_SetRotation, &ScriptDisplayItem::SetItemRotation,
-			ScriptReserved_SetScale, &ScriptDisplayItem::SetItemScale,
-			ScriptReserved_SetColor, &ScriptDisplayItem::SetItemColor,
-			ScriptReserved_DrawItemSetMeshBits, &ScriptDisplayItem::SetItemMeshBits,
-			ScriptReserved_SetMeshVisible, &ScriptDisplayItem::SetItemMeshVisibility,
-			ScriptReserved_SetJointRotation, &ScriptDisplayItem::SetItemMeshRotation,
-			ScriptReserved_SetVisible, &ScriptDisplayItem::SetItemVisibility,
-			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::SetItemFrame,
-			ScriptReserved_GetObjectID, & ScriptDisplayItem::GetItemObjectID,
-			ScriptReserved_GetPosition, &ScriptDisplayItem::GetItemPosition,
-			ScriptReserved_GetRotation, &ScriptDisplayItem::GetItemRotation,
-			ScriptReserved_GetScale, &ScriptDisplayItem::GetItemScale,
-			ScriptReserved_GetColor, &ScriptDisplayItem::GetItemColor,
-			ScriptReserved_GetMeshVisible, &ScriptDisplayItem::GetItemMeshVisibility,
-			ScriptReserved_GetJointRotation, &ScriptDisplayItem::GetItemMeshRotation,
-			ScriptReserved_GetVisible, &ScriptDisplayItem::GetItemVisibility,
+			ScriptReserved_SetObjectID, &ScriptDisplayItem::SetObjectID,
+			ScriptReserved_SetPosition, &ScriptDisplayItem::SetPosition,
+			ScriptReserved_SetRotation, &ScriptDisplayItem::SetRotation,
+			ScriptReserved_SetScale, &ScriptDisplayItem::SetScale,
+			ScriptReserved_SetColor, &ScriptDisplayItem::SetColor,
+			ScriptReserved_DrawItemSetMeshBits, &ScriptDisplayItem::SetMeshBits,
+			ScriptReserved_SetMeshVisible, &ScriptDisplayItem::SetMeshVisibility,
+			ScriptReserved_SetJointRotation, &ScriptDisplayItem::SetMeshRotation,
+			ScriptReserved_SetVisible, &ScriptDisplayItem::SetVisibility,
+			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::SetFrame,
+			ScriptReserved_GetObjectID, & ScriptDisplayItem::GetObjectID,
+			ScriptReserved_GetPosition, &ScriptDisplayItem::GetPosition,
+			ScriptReserved_GetRotation, &ScriptDisplayItem::GetRotation,
+			ScriptReserved_GetScale, &ScriptDisplayItem::GetScale,
+			ScriptReserved_GetColor, &ScriptDisplayItem::GetColor,
+			ScriptReserved_GetMeshVisible, &ScriptDisplayItem::GetMeshVisibility,
+			ScriptReserved_GetJointRotation, &ScriptDisplayItem::GetMeshRotation,
+			ScriptReserved_GetVisible, &ScriptDisplayItem::GetVisibility,
 			ScriptReserved_GetFrameNumber, &ScriptDisplayItem::GetFrameNumber,
 			ScriptReserved_GetEndFrame, &ScriptDisplayItem::GetEndFrame,
 			ScriptReserved_GetAnimNumber, &ScriptDisplayItem::GetAnimNumber,
@@ -99,18 +99,16 @@ namespace TEN::Scripting::DisplayItem
 
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position)
 	{
-		auto rot = Rotation(0, 0, 0).ToEulerAngles();
-
+		auto rot = Rotation().ToEulerAngles();
 		_itemName = itemName;
 		g_DrawItems.AddItem(itemName, objectID, position, rot, 1.0f, ALL_JOINT_BITS);
 	}
 
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID)
 	{
-		auto rot = Rotation(0, 0, 0).ToEulerAngles();
-
+		auto rot = Rotation().ToEulerAngles();
 		_itemName = itemName;
-		g_DrawItems.AddItem(itemName, objectID, Vec3(0, 0, 0), rot, 1.0f, ALL_JOINT_BITS);
+		g_DrawItems.AddItem(itemName, objectID, Vec3(), rot, 1.0f, ALL_JOINT_BITS);
 	}
 
 	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName)
@@ -157,7 +155,7 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetObjectID(TEN.Objects.ObjID.BIGMEDI_ITEM)
-	void ScriptDisplayItem::SetItemObjectID(GAME_OBJECT_ID objectID)
+	void ScriptDisplayItem::SetObjectID(GAME_OBJECT_ID objectID)
 	{
 		if (_itemName.empty())
 			return;
@@ -165,7 +163,7 @@ namespace TEN::Scripting::DisplayItem
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 
 		if (item)
-		item->SetItemObjectID(objectID);
+			item->SetObjectID(objectID);
 	}
 
 	/// Set the DisplayItem's position.
@@ -175,17 +173,15 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetPosition(Vec3(0,200,1024))
-	void ScriptDisplayItem::SetItemPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
+	void ScriptDisplayItem::SetPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
 		if (_itemName.empty())
 			return;
 
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
-
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		item->SetItemPosition(newPos, convertedBool);
+			item->SetPosition(newPos, ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the DisplayItem's rotation.
@@ -195,18 +191,15 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetRotation(Vec3(0,200,1024))
-	void ScriptDisplayItem::SetItemRotation(const Rotation& newRot, TypeOrNil<bool> disableInterpolation)
+	void ScriptDisplayItem::SetRotation(const Rotation& newRot, TypeOrNil<bool> disableInterpolation)
 	{
 		if (_itemName.empty())
 			return;
 
-		auto rotation = newRot.ToEulerAngles();
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
-
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		item->SetItemRotation(rotation, convertedBool);
+			item->SetRotation(newRot.ToEulerAngles(), ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the DisplayItem's scale.
@@ -216,17 +209,15 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetScale(2))
-	void ScriptDisplayItem::SetItemScale(float newScale, TypeOrNil<bool> disableInterpolation)
+	void ScriptDisplayItem::SetScale(float newScale, TypeOrNil<bool> disableInterpolation)
 	{
 		if (_itemName.empty())
 			return;
 
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
-
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		item->SetItemScale(newScale, convertedBool);
+			item->SetScale(newScale, ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the DisplayItem's color.
@@ -236,24 +227,21 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetColor(Color(128,200,255))
-	void ScriptDisplayItem::SetItemColor(const ScriptColor& color, TypeOrNil<bool> disableInterpolation)
+	void ScriptDisplayItem::SetColor(const ScriptColor& color, TypeOrNil<bool> disableInterpolation)
 	{
 		if (_itemName.empty())
 			return;
 
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
-		Color convertedColor = color;
-
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		item->SetItemColor(convertedColor, convertedBool);
+			item->SetColor(Color (color), ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the packed MeshBits for the Display Item (for advanced users).
 	// @function DisplayItem:SetMeshBits
 	// @tparam int meshBits Packed MeshBits to be set.
-	void ScriptDisplayItem::SetItemMeshBits(int meshBits)
+	void ScriptDisplayItem::SetMeshBits(int meshBits)
 	{
 		if (_itemName.empty())
 			return;
@@ -261,7 +249,7 @@ namespace TEN::Scripting::DisplayItem
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		item->SetItemMeshBits(meshBits);
+			item->SetMeshBits(meshBits);
 	}
 
 	/// Makes specified mesh visible or invisible.
@@ -272,7 +260,7 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetMeshVisible(1, false)
-	void ScriptDisplayItem::SetItemMeshVisibility(int meshIndex, bool visible)
+	void ScriptDisplayItem::SetMeshVisibility(int meshIndex, bool visible)
 	{
 		if (_itemName.empty())
 			return;
@@ -280,7 +268,7 @@ namespace TEN::Scripting::DisplayItem
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 
 		if (item)
-			item->SetItemMeshVisibility(meshIndex, visible);
+			item->SetMeshVisibility(meshIndex, visible);
 	}
 
 	/// Set the DisplayItem's joint rotation.
@@ -291,17 +279,15 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetJointRotation(1, Rotation(0,200,0))
-	void ScriptDisplayItem::SetItemMeshRotation(int meshIndex, Rotation rotation, TypeOrNil<bool> disableInterpolation)
+	void ScriptDisplayItem::SetMeshRotation(int meshIndex, Rotation rotation, TypeOrNil<bool> disableInterpolation)
 	{
 		if (_itemName.empty())
 			return;
 
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
-
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		item->SetItemMeshRotation(meshIndex, rotation.ToEulerAngles(), convertedBool);
+			item->SetMeshRotation(meshIndex, rotation.ToEulerAngles(), ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the DisplayItems's visibility.
@@ -310,7 +296,7 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:SetVisible(true)
-	void ScriptDisplayItem::SetItemVisibility(bool visible)
+	void ScriptDisplayItem::SetVisibility(bool visible)
 	{
 		if (_itemName.empty())
 			return;
@@ -318,7 +304,7 @@ namespace TEN::Scripting::DisplayItem
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 
 		if (item)
-			item->SetItemVisibility(visible);
+			item->SetVisibility(visible);
 	}
 
 	/// Set frame number from an animation.
@@ -328,7 +314,7 @@ namespace TEN::Scripting::DisplayItem
 	// @function DisplayItem:SetFrame
 	// @tparam int animIndex The index of the desired animation.
 	// @tparam int frame The new frame number.
-	void ScriptDisplayItem::SetItemFrame(int animIndex, int frame)
+	void ScriptDisplayItem::SetFrame(int animIndex, int frame)
 	{
 		if (_itemName.empty())
 			return;
@@ -339,11 +325,11 @@ namespace TEN::Scripting::DisplayItem
 		{
 			auto endFrame = GetEndFrame();
 
-			item->SetItemAnimation(animIndex);
+			item->SetAnimation(animIndex);
 			if (frame <= endFrame)
-				item->SetItemFrame(frame);
+				item->SetFrame(frame);
 			else
-				item->SetItemFrame(endFrame);
+				item->SetFrame(endFrame);
 		}
 	}
 
@@ -353,12 +339,12 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectID = item:GetObjectID()
-	GAME_OBJECT_ID ScriptDisplayItem::GetItemObjectID() const
+	GAME_OBJECT_ID ScriptDisplayItem::GetObjectID() const
 	{
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		
 		if (item)
-		return item->GetItemObjectID();
+		return item->GetObjectID();
 
 		return ID_NO_OBJECT;
 	}
@@ -368,16 +354,16 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectPosition = item:GetPosition()
-	Vec3 ScriptDisplayItem::GetItemPosition() const
+	Vec3 ScriptDisplayItem::GetPosition() const
 	{
 		if (_itemName.empty())
-			return Vec3(0, 0, 0);
+			return Vec3();
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return Vec3(0, 0, 0);
+			return Vec3();
 
-		return Vec3(item->GetItemPosition());
+		return Vec3(item->GetPosition());
 	}
 
 	/// Get the DisplayItem's rotation.
@@ -386,16 +372,16 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectRotation = item:GetRotation()
-	Rotation ScriptDisplayItem::GetItemRotation() const
+	Rotation ScriptDisplayItem::GetRotation() const
 	{
 		if (_itemName.empty())
-			return Rotation(0, 0, 0);
+			return Rotation();
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return Rotation(0, 0, 0);
+			return Rotation();
 
-		return Rotation(item->GetItemRotation());
+		return Rotation(item->GetRotation());
 	}
 
 	/// Get the DisplayItem's visual scale.
@@ -404,7 +390,7 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectRotation = item:GetScale()
-	float ScriptDisplayItem::GetItemScale() const
+	float ScriptDisplayItem::GetScale() const
 	{
 		if (_itemName.empty())
 			return 0.0f;
@@ -413,7 +399,7 @@ namespace TEN::Scripting::DisplayItem
 		if (!item)
 			return 0.0f;
 
-		return item->GetItemScale();
+		return item->GetScale();
 	}
 
 	/// Get the DisplayItem's color.
@@ -422,16 +408,16 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectColor = item:GetColor()
-	ScriptColor ScriptDisplayItem::GetItemColor() const
+	ScriptColor ScriptDisplayItem::GetColor() const
 	{
 		if (_itemName.empty())
-			return ScriptColor(0, 0, 0, 0);
+			return ScriptColor();
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return ScriptColor(0, 0, 0, 0);
+			return ScriptColor();
 
-		return item->GetItemColor();
+		return item->GetColor();
 	}
 
 	///Get visibility state of a specified mesh of a DisplayItem.
@@ -444,7 +430,7 @@ namespace TEN::Scripting::DisplayItem
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local test = item:GetMeshVisible(1)
 	// print(test)
-	bool ScriptDisplayItem::GetItemMeshVisibility(int meshIndex) const
+	bool ScriptDisplayItem::GetMeshVisibility(int meshIndex) const
 	{
 		if (_itemName.empty())
 			return false;
@@ -453,7 +439,7 @@ namespace TEN::Scripting::DisplayItem
 		if (!item)
 			return false;
 
-		return item->GetItemMeshVisibility(meshIndex);
+		return item->GetMeshVisibility(meshIndex);
 	}
 
 	/// Get the DisplayItem's joint rotation.
@@ -463,16 +449,16 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local jointRotation = item:GetJointRotation(1)
-	Rotation ScriptDisplayItem::GetItemMeshRotation(int meshIndex) const
+	Rotation ScriptDisplayItem::GetMeshRotation(int meshIndex) const
 	{
 		if (_itemName.empty())
-			return Rotation(0, 0, 0);
+			return Rotation();
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return Rotation(0, 0, 0);
+			return Rotation();
 
-		auto rotation = item->GetItemMeshRotation(meshIndex);
+		auto rotation = item->GetMeshRotation(meshIndex);
 		return Rotation(rotation);
 	}
 
@@ -483,7 +469,7 @@ namespace TEN::Scripting::DisplayItem
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local test = item:GetVisible()
 	// print(test)
-	bool ScriptDisplayItem::GetItemVisibility() const
+	bool ScriptDisplayItem::GetVisibility() const
 	{
 		if (_itemName.empty())
 			return false;
@@ -492,7 +478,7 @@ namespace TEN::Scripting::DisplayItem
 		if (!item)
 			return false;
 
-		return item->GetItemVisibility();
+		return item->GetVisibility();
 	}
 
 	///Retrieve the index of the current animation.
@@ -508,7 +494,7 @@ namespace TEN::Scripting::DisplayItem
 		if (!item)
 			return 0;
 
-		return item->GetItemAnimation();
+		return item->GetAnimation();
 	}
 
 	/// Retrieve frame number.
@@ -524,7 +510,7 @@ namespace TEN::Scripting::DisplayItem
 		if (!item)
 			return 0;
 
-		return item->GetItemFrame();
+		return item->GetFrame();
 	}
 
 	///Get the end frame number of the DisplayItems's active animation.
@@ -540,7 +526,7 @@ namespace TEN::Scripting::DisplayItem
 		if (!item)
 			return 0;
 		
-		const auto& anim = GetAnimData(item->GetItemObjectID(), item->GetItemAnimation());
+		const auto& anim = GetAnimData(item->GetObjectID(), item->GetAnimation());
 		return (anim.frameEnd - anim.frameBase);
 	}
 
