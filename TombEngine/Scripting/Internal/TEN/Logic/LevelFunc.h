@@ -33,3 +33,71 @@ public:
 		parent.new_usertype<LevelFunc>(ScriptReserved_LevelFunc, sol::no_constructor, sol::meta_function::call, &Call);
 	}
 };
+
+// This file use for documentation of LevelFunc.
+
+/// A table nested table system for level-specific functions.
+// @specialtable LevelFunc
+// This serves a few purposes : it holds the level callbacks(listed below) as well as
+// any trigger functions you might have specified.
+// 
+// For example, if you give a trigger a Lua name of "my_trigger" in Tomb Editor, you will have to implement it as a member
+// of this table :
+//	LevelFuncs.my_trigger = function()
+//		--implementation goes here
+//	end
+// You can organise functions into tables within the hierarchy:
+//	LevelFuncs.enemyFuncs = {}
+//
+//	LevelFuncs.enemyFuncs.makeBaddyRunAway = function()
+//		--implementation goes here
+//	end
+//
+//	LevelFuncs.enemyFuncs.makeBaddyUseMedkit = function()
+//		--implementation goes here
+//	end
+// There are two special subtables which you should __not__ overwrite :
+//	-- this is for 'first-party' functions, i.e.ones that come with TombEngine.
+//	LevelFuncs.Engine
+//	
+//	-- this is for 'third-party' functions.
+//	-- If you write a library providing LevelFuncs functions for other builders to use in their levels, put those functions in LevelFuncs.External.YourLibraryNameHere
+//	LevelFuncs.External
+// 
+// __The order of loading is as follows:__
+// 
+// 1. The level data itself is loaded.
+// 
+// 2. The level script itself is run (i.e. any code you put outside the `LevelFuncs` callbacks is executed).
+// 
+// 3. Save data is loaded, if saving from a saved game (will empty `LevelVars` and `GameVars` and repopulate them with what they contained when the game was saved).
+// 
+// 4. If loading from a save, OnLoaded will be called. Otherwise, OnStart will be called.
+// 
+// 5. The control loop, in which OnLoop will be called once per frame, begins.
+// 
+// The following are the level callbacks.
+// 
+// * __OnStart__ Will be called when a level is entered by completing a previous level or by selecting it in the menu. Will not be called when loaded from a saved game.
+// * __OnLoad__ Will be called when a level is loaded from a saved game.
+// * __OnLoop__ Will be called once per frame while the level is active.
+// * __OnSave__ Will be called when the game is saved while in the level.
+// * __OnEnd__ Will be called when leaving a level. This includes finishing it, exiting to the menu, or loading a save in a different level. It can take an @{Logic.EndReason}.
+// <br>For example:
+//	LevelFuncs.OnEnd = function(reason)
+//		if reason == TEN.Logic.EndReason.LevelComplete then
+//			--implementation goes here
+//		end
+//		if reason == TEN.Logic.EndReason.Death then
+//			print("death")
+//		end
+//	end
+// * __OnUseItem__ Will be called when the player uses an item from their inventory. It can take a @{Objects.ObjID}.
+// <br>For example:
+//	LevelFuncs.OnUseItem = function(itemID)
+//		if itemID == TEN.Objects.ObjID.SMALLMEDI_ITEM then
+//			--implementation goes here
+//		end
+//	end
+// * __OnFreeze__ Will be called when any of the Freeze modes are activated.
+//

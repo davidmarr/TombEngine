@@ -4,11 +4,12 @@ new_type("files", "Script Files", true)
 new_type("entityclass", "Entity classes", true)
 new_type("pregameclass", "Pre-game script classes", true)
 new_type("miscclass", "Misc classes", true)
-new_type("tentable", "1 Modules", true)
-new_type("tenclass", "2 Classes", true)
-new_type("tenprimitive", "3 Primitive Classes", true)
-new_type("enum", "4 Enums", true)
-new_type("luautil", "5 Lua utility modules", true)
+new_type("specialtable", "1 Special Table", true)
+new_type("tentable", "2 Modules", true)
+new_type("tenclass", "3 Classes", true)
+new_type("tenprimitive", "4 Primitive Classes", true)
+new_type("enum", "5 Enums", true)
+new_type("luautil", "6 Lua utility modules", true)
 
 not_luadoc = true
 
@@ -22,7 +23,7 @@ Note that this is primarily a reference document, not a tutorial, so expect desc
 At the time of writing, there is a tutorial describing the basics of Lua, as well as a number of example scripts, on <a href="https://www.tombengine.com">the TombEngine website</a>.
 
 ####Module Hierarchy
-Other than the "special tables" (`GameVars`, `LevelVars` and `LevelFuncs`), every module described herein is held in a master table called TEN.
+Other than the "special tables" (`GameVars`, `LevelVars` and <a href="1 special table/LevelFunc.html#">LevelFunc</a>), every module described herein is held in a master table called TEN.
 For convenience, these modules and classes are automatically put in the global table. For example, you can call GetMoveableByName either of these two ways:
 	local door = TEN.Objects.GetMoveableByName("door_type4_14")
 	local door = GetMoveableByName("door_type4_14")
