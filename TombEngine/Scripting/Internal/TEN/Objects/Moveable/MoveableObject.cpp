@@ -152,6 +152,7 @@ void Moveable::Register(sol::state& state, sol::table& parent)
 		ScriptReserved_GetScale, &Moveable::GetScale,
 		ScriptReserved_GetVelocity, &Moveable::GetVelocity,
 		ScriptReserved_GetColor, &Moveable::GetColor,
+		ScriptReserved_GetVisible, &Moveable::GetVisible,
 		ScriptReserved_GetCollidable, &Moveable::GetCollidable,
 		ScriptReserved_GetEffect, &Moveable::GetEffect,
 		ScriptReserved_GetStateNumber, &Moveable::GetStateNumber,
@@ -439,7 +440,7 @@ void Moveable::SetPosition(const Vec3& pos, sol::optional<bool> updateRoom)
 		}
 	}
 
-	if (_moveable->IsBridge())
+	if (_initialized && _moveable->IsBridge())
 	{
 		auto& bridge = GetBridgeObject(*_moveable);
 		bridge.Update(*_moveable);
@@ -520,7 +521,7 @@ void Moveable::SetRotation(const Rotation& rot)
 
 	_moveable->Pose.Orientation = newRot;
 
-	if (_moveable->IsBridge())
+	if (_initialized && _moveable->IsBridge())
 	{
 		auto& bridge = GetBridgeObject(*_moveable);
 		bridge.Update(*_moveable);
@@ -1002,6 +1003,9 @@ bool Moveable::GetMeshVisible(int meshId) const
 	if (!MeshExists(meshId))
 		return false;
 
+	if (!GetVisible())
+		return false;
+
 	return _moveable->MeshBits.Test(meshId);
 }
 
@@ -1054,7 +1058,7 @@ bool Moveable::GetMeshSwapped(int meshId) const
 // @function Moveable:SwapMesh
 // @tparam int index Index of a mesh.
 // @tparam int objectID ID of a slot to get meshswap from.
-// @tparam[opt] int swapIndex Index of a mesh from meshswap slot to use.
+// @tparam[opt] int swapIndex Index of a mesh from meshswap slot to use. In WadTool, you have to set vertex weights for this mesh according to original mesh index to avoid rendering issues.
 void Moveable::SwapMesh(int meshId, int objectID, sol::optional<int> swapIndex)
 {
 	if (!MeshExists(meshId))
@@ -1197,7 +1201,7 @@ void Moveable::Shatter()
 /// Get the item's collision state.
 // @function Moveable:GetCollidable
 // @treturn bool Item's collision state.
-bool Moveable::GetCollidable()
+bool Moveable::GetCollidable() const
 {
 	return _moveable->Collidable;
 }
@@ -1208,6 +1212,14 @@ bool Moveable::GetCollidable()
 void Moveable::SetCollidable(bool isCollidable)
 {
 	_moveable->Collidable = isCollidable;
+}
+
+/// Get the item's visibility state.
+// @function Moveable:GetVisible
+// @treturn bool Item's visibility state.
+bool Moveable::GetVisible() const
+{
+	return (_moveable->Status != ITEM_INVISIBLE && _moveable->Model.Color.w > EPSILON);
 }
 
 // Make the item invisible. Alias for `Moveable:SetVisible(false)`.
@@ -1301,11 +1313,13 @@ bool Moveable::MeshExists(int index) const
 	return true;
 }
 
-/// Attach camera to a moveable.
+/// Attach camera to the moveable's current position, and target another moveable.
+// The camera's position and target position will be maintained until this function is called again.
+// Use @{View.ResetObjCamera} to restore the regular camera.
 // @function Moveable:AttachObjCamera
-// @tparam int mesh Mesh of a moveable to use as a camera position.
-// @tparam Objects.Moveable target Target moveable to attach camera to.
-// @tparam int targetMesh Mesh of a target moveable to use as a camera target.
+// @tparam int mesh Mesh of the moveable to which the camera will be attached.
+// @tparam Objects.Moveable target Moveable to target.
+// @tparam int targetMesh Mesh of the moveable to target.
 void Moveable::AttachObjCamera(short camMeshId, Moveable& mov, short targetMeshId)
 {
 	ObjCamera(_moveable, camMeshId, mov._moveable, targetMeshId, true);

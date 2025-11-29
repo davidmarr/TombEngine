@@ -14,10 +14,10 @@
 #define MATERIAL_FLAG_OCCLUSION 1 << 9
 #define MATERIAL_FLAG_EMISSIVE  1 << 10
 
-#define POM_MIN_STEPS 2
+#define POM_MIN_STEPS 1
 #define POM_MAX_STEPS 16
 #define POM_FADE_START 5000
-#define POM_FADE_END 6000
+#define POM_FADE_END 7000
 #define POM_FADE_TOLERANCE 0.001f
 #define POM_MIN_ANGLE 0.4f
 #define POM_HEIGHT_SCALE 0.0035f
@@ -93,7 +93,7 @@ float3 CalculateLegacyReflections(float3 worldPosition, float3 normal, float spe
 }
 
 
-float3 CalculateReflections(float3 position, float3 color, float3 normal, float3 specular)
+float3 CalculateReflections(float3 position, float3 color, float3 normal, float specular)
 {
     int materialType = MaterialTypeAndFlags & MATERIAL_FLAG_MASK;
 	
@@ -137,12 +137,15 @@ float2 ParallaxOcclusionMapping(float3x3 TBN, float3 pos, float2 baseUV)
 
     // Flip tangent-space Y to match inverted TR coordinate system.
     viewDirTangent.y = -viewDirTangent.y;
-	
-	// Clamp steep view angles to avoid artifacts.
-	viewDirTangent.z = clamp(viewDirTangent.z, POM_MIN_ANGLE, 1.0f);
+
+    // Bring parallax angle to full available range, otherwise effect will be undersampled.
+    float factor = saturate((viewDirTangent.z - POM_MIN_ANGLE) / (1.0f - POM_MIN_ANGLE));
+    int numSamples = max(1, (int)ceil(lerp(POM_MAX_STEPS, POM_MIN_STEPS, factor)));
+
+    // Clamp steep angles to avoid artifacts.
+    viewDirTangent.z = clamp(viewDirTangent.z, POM_MIN_ANGLE, 1.0f);
 
     // Adaptive sample count based on angle.
-    int numSamples = max(1, (int)ceil(lerp(POM_MAX_STEPS, POM_MIN_STEPS, saturate(viewDirTangent.z))));
     float layerDepth = 1.0f / numSamples;
 
     // Parallax amount & delta UV.
@@ -194,6 +197,29 @@ float CalculateOcclusion(float2 samplePosition, float alpha)
 		occlusion = lerp(occlusion, 1.0f, alpha);
 	
 	return occlusion;
+}
+
+inline float3 EnsureNormal(float3 n, float3 worldPos)
+{
+    // Eliminate NaNs by replacing them with 0.
+    n = (n == n) ? n : float3(0, 0, 0);
+
+    float l2 = dot(n, n);
+
+    // If too small, choose a fallback facing the camera
+    if (l2 < EPSILON)
+    {
+        // Camera direction in world space
+        float3 viewDir = normalize(CamPositionWS - worldPos);
+
+        // Guarantee a valid vector even if Cam == worldPos
+        if (any(isnan(viewDir)) || dot(viewDir,viewDir) < EPSILON)
+            viewDir = float3(0, 0, 1);
+
+        return viewDir;
+    }
+
+    return normalize(n);
 }
 
 #endif

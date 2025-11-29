@@ -11,7 +11,6 @@
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Objects/Room/RoomObject.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
-#include "Scripting/Internal/TEN/Types/DisplayAnchors/DisplayAnchors.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Time/Time.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
@@ -349,7 +348,7 @@ namespace TEN::Scripting::View
 		// @treturn Rotation Rotation at the given progress point.
 		tableView.set_function(ScriptReserved_GetFlybyRotation, &GetFlybyRotation);
 
-		/// Reset object camera back to Lara and deactivate object camera.
+		/// Reset object camera back to Lara and deactivate object camera. Can be used after @{Objects.Moveable.AttachObjCamera}.
 		//@function ResetObjCamera
 		tableView.set_function(ScriptReserved_ResetObjCamera, &ResetObjCamera);
 
@@ -368,7 +367,9 @@ namespace TEN::Scripting::View
 		tableView.set_function("PlayFlyBy", &PlayFlyby);
 
 		// Register types.
-		DisplayAnchors::Register(parent);
+		ScriptDisplaySprite::Register(*state, tableView);
+
+		// Register types COMPATIBILITY
 		ScriptDisplaySprite::Register(*state, parent);
 
 		// Register enums.

@@ -809,7 +809,7 @@ namespace TEN::Renderer
 		{
 			const auto& invObject = InventoryObjectTable[invObjectID];
 
-			pos2D.y += invObject.YOffset;
+			pos2D.y += invObject.YOffset * factor.y;
 			orient += invObject.Orientation;
 		}
 
@@ -898,17 +898,7 @@ namespace TEN::Renderer
 					SetDepthState(DepthState::Write);
 
 					BindBucketTextures(bucket, TextureSource::Moveables, animated);
-							
-#ifdef TEST_LEGACY_REFLECTIONS
-					if (objectNumber == ID_PISTOLS_ITEM)
-					{
-						BindRenderTargetAsTexture(TextureRegister::LegacyEnvironmentReflections, &_legacyReflectionsRenderTarget, SamplerStateRegister::LinearClamp);
-						_stMaterial.MaterialType = 1;
-						UpdateConstantBuffer(_stMaterial, _cbMaterial);
-					}
-					else
-#endif
-						BindMaterial(bucket.MaterialIndex, false);
+					BindMaterial(bucket.MaterialIndex, false);
 
 					if (bucket.BlendMode != BlendMode::Opaque)
 						SetBlendMode(bucket.BlendMode, true);

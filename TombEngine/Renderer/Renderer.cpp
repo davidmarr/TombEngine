@@ -149,7 +149,7 @@ namespace TEN::Renderer
 	{
 		_context->PSSetShaderResources((UINT)registerType, 1, texture->ShaderResourceView.GetAddressOf());
 
-		if (g_GameFlow->IsPointFilterEnabled() && samplerType != SamplerStateRegister::ShadowMap)
+		if (g_GameFlow->IsPointFilterEnabled() && registerType == TextureRegister::ColorMap)
 		{
 			samplerType = SamplerStateRegister::PointWrap;
 		}
@@ -360,7 +360,6 @@ namespace TEN::Renderer
 		{
 			return;
 		}
-
 
 		// TODO: in the future output from TE directly an optimized list
 		//if (materialIndex != _lastMaterialIndex || force)
