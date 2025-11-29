@@ -49,19 +49,19 @@ namespace TEN::Scripting
 		// @mem POST_END
 		{ ScriptReserved_PostEnd, CallbackPoint::PostEnd },
 
-		/// Will be called immediately before LevelFuncs.OnUseItem.
+		/// Will be called immediately before LevelFuncs.OnUseItem. This accepts functions that take an objectNumber argument, such as OnUseItem.
 		// @mem PRE_USE_ITEM
 		{ ScriptReserved_PreUseItem, CallbackPoint::PreUseItem },
 
-		/// Will be called immediately after LevelFuncs.OnUseItem.
+		/// Will be called immediately after LevelFuncs.OnUseItem. This accepts functions that take an objectNumber argument, such as OnUseItem.
 		// @mem POST_USE_ITEM
 		{ ScriptReserved_PostUseItem, CallbackPoint::PostUseItem },
 
-		/// Will be called immediately before LevelFuncs.OnFreeze. This accepts functions that take an objectNumber argument, such as OnUseItem
+		/// Will be called immediately before LevelFuncs.OnFreeze.
 		// @mem PRE_FREEZE
 		{ ScriptReserved_PreFreeze, CallbackPoint::PreFreeze },
 
-		/// Will be called immediately after LevelFuncs.OnFreeze. This accepts functions that take an objectNumber argument, such as OnUseItem
+		/// Will be called immediately after LevelFuncs.OnFreeze.
 		// @mem POST_FREEZE
 		{ ScriptReserved_PostFreeze, CallbackPoint::PostFreeze },
 
