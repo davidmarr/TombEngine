@@ -24,7 +24,7 @@ using TEN::Renderer::g_Renderer;
 
 namespace TEN::Scripting::Util
 {
-	/// Utility functions for various calculations.<style>table.function_list td.name {min-width: 290px;}</style>
+	/// Utility functions for various calculations.
 	// @tentable Util
 	// @pragma nostrip
 
