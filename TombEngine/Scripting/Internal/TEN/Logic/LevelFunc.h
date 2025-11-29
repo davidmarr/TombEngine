@@ -85,10 +85,10 @@ public:
 // * __OnEnd__ Will be called when leaving a level. This includes finishing it, exiting to the menu, or loading a save in a different level. It can take an @{Logic.EndReason}.
 // <br>For example:
 //	LevelFuncs.OnEnd = function(reason)
-//		if reason == TEN.Logic.EndReason.LevelComplete then
+//		if reason == TEN.Logic.EndReason.LEVEL_COMPLETE then
 //			--implementation goes here
 //		end
-//		if reason == TEN.Logic.EndReason.Death then
+//		if reason == TEN.Logic.EndReason.DEATH then
 //			print("death")
 //		end
 //	end

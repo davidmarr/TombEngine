@@ -163,7 +163,7 @@ Any returned value will be discarded.
 
 @function AddCallback
 @tparam Logic.CallbackPoint point When should the callback be called?
-@tparam LevelFuncs func The function to be called (must be in the <a href="../1%20special%20table/LevelFunc.html">LevelFuncs</a> hierarchy). Will receive, as an argument, the time in seconds since the last frame.
+@tparam function func The function to be called (must be in the <a href="../1%20special%20table/LevelFunc.html">LevelFuncs</a> hierarchy). Will receive, as an argument, the time in seconds since the last frame.
 @usage
 	LevelFuncs.MyFunc = function(dt) print(dt) end
 	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.MyFunc)
@@ -198,7 +198,7 @@ Will have no effect if the function was not registered as a callback
 
 @function RemoveCallback
 @tparam Logic.CallbackPoint point The callback point the function was registered with. See @{AddCallback}
-@tparam LevelFuncs func The function to remove; must be in the <a href="../1%20special%20table/LevelFunc.html">LevelFuncs</a> hierarchy.
+@tparam function func The function to remove; must be in the <a href="../1%20special%20table/LevelFunc.html">LevelFuncs</a> hierarchy.
 @usage
 	TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.MyFunc)
 */

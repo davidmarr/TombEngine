@@ -8,43 +8,43 @@ namespace TEN::Scripting
 	static const auto EVENT_TYPES = std::unordered_map<std::string, EventType>
 	{
 		/// Triggered when an activator enters the volume.
-		// @mem Enter
+		// @mem ENTER
 		{ ScriptReserved_EventOnEnter, EventType::Enter },
 
 		/// Triggered while an activator is inside the volume.
-		// @mem Inside
+		// @mem INSIDE
 		{ ScriptReserved_EventOnInside, EventType::Inside },
 
 		/// Triggered when an activator leaves the volume.
-		// @mem Leave
+		// @mem LEAVE
 		{ ScriptReserved_EventOnLeave, EventType::Leave },
 
 		/// Triggered each game loop.
-		// @mem Loop
+		// @mem LOOP
 		{ ScriptReserved_EventOnLoop, EventType::Loop },
 
 		/// Triggered when a saved game is loaded.
-		// @mem Load
+		// @mem LOAD
 		{ ScriptReserved_EventOnLoad, EventType::Load },
 
 		/// Triggered when the game is saved.
-		// @mem Save
+		// @mem SAVE
 		{ ScriptReserved_EventOnSave, EventType::Save },
 
 		/// Triggered when the level starts.
-		// @mem Start
+		// @mem START
 		{ ScriptReserved_EventOnStart, EventType::Start },
 
 		/// Triggered when the level ends.
-		// @mem End
+		// @mem END
 		{ ScriptReserved_EventOnEnd, EventType::End },
 
 		/// Triggered when an item is used from inventory.
-		// @mem UseItem
+		// @mem USE_ITEM
 		{ ScriptReserved_EventOnUseItem, EventType::UseItem },
 
 		/// Triggered when any of the Freeze modes are activated.
-		// @mem Freeze
+		// @mem FREEZE
 		{ ScriptReserved_EventOnFreeze, EventType::Freeze },
 
 		// COMPATIBILITY

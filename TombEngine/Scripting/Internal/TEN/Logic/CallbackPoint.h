@@ -10,59 +10,59 @@ namespace TEN::Scripting
 	static const auto CALLBACK_POINTS = std::unordered_map<std::string, CallbackPoint>
 	{
 		/// Will be called immediately before LevelFuncs.OnStart.
-		// @mem PreStart
+		// @mem PRE_START
 		{ ScriptReserved_PreStart, CallbackPoint::PreStart },
 
 		/// Will be called immediately after LevelFuncs.OnStart.
-		// @mem PostStart
+		// @mem POST_START
 		{ ScriptReserved_PostStart, CallbackPoint::PostStart },
 
 		/// Will be called immediately before LevelFuncs.OnLoad.
-		// @mem PreLoad
+		// @mem PRE_LOAD
 		{ ScriptReserved_PreLoad, CallbackPoint::PreLoad },
 
 		/// Will be called immediately after LevelFuncs.OnLoad.
-		// @mem PostLoad
+		// @mem POST_LOAD
 		{ ScriptReserved_PostLoad, CallbackPoint::PostLoad },
 
 		/// Will be called in the beginning of game loop (LevelFuncs.OnLoop).
-		// @mem PreLoop
+		// @mem PRE_LOOP
 		{ ScriptReserved_PreLoop, CallbackPoint::PreLoop },
 
 		/// Will be called at the end of game loop (LevelFuncs.OnLoop).
-		// @mem PostLoop
+		// @mem POST_LOOP
 		{ ScriptReserved_PostLoop, CallbackPoint::PostLoop },
 
 		/// Will be called immediately before LevelFuncs.OnSave.
-		// @mem PreSave
+		// @mem PRE_SAVE
 		{ ScriptReserved_PreSave, CallbackPoint::PreSave },
 
 		/// Will be called immediately after LevelFuncs.OnSave.
-		// @mem PostSave
+		// @mem POST_SAVE
 		{ ScriptReserved_PostSave, CallbackPoint::PostSave },
 
 		/// Will be called immediately before LevelFuncs.OnEnd.
-		// @mem PreEnd
+		// @mem PRE_END
 		{ ScriptReserved_PreEnd, CallbackPoint::PreEnd },
 
 		/// Will be called immediately after LevelFuncs.OnEnd.
-		// @mem PostEnd
+		// @mem POST_END
 		{ ScriptReserved_PostEnd, CallbackPoint::PostEnd },
 
 		/// Will be called immediately before LevelFuncs.OnUseItem.
-		// @mem PreUseItem
+		// @mem PRE_USE_ITEM
 		{ ScriptReserved_PreUseItem, CallbackPoint::PreUseItem },
 
 		/// Will be called immediately after LevelFuncs.OnUseItem.
-		// @mem PostUseItem
+		// @mem POST_USE_ITEM
 		{ ScriptReserved_PostUseItem, CallbackPoint::PostUseItem },
 
 		/// Will be called immediately before LevelFuncs.OnFreeze. This accepts functions that take an objectNumber argument, such as OnUseItem
-		// @mem PreFreeze
+		// @mem PRE_FREEZE
 		{ ScriptReserved_PreFreeze, CallbackPoint::PreFreeze },
 
 		/// Will be called immediately after LevelFuncs.OnFreeze. This accepts functions that take an objectNumber argument, such as OnUseItem
-		// @mem PostFreeze
+		// @mem POST_FREEZE
 		{ ScriptReserved_PostFreeze, CallbackPoint::PostFreeze },
 
 		// COMPATIBILITY
