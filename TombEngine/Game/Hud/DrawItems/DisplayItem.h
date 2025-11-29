@@ -57,6 +57,7 @@ namespace TEN::Hud
 		std::string GetName() const;
 		GAME_OBJECT_ID GetObjectID() const;
 		Vector3 GetPosition() const;
+		std::optional<Vector2> Get2DPosition() const;
 		EulerAngles GetRotation() const;
 		float GetScale() const;
 		Color GetColor() const;

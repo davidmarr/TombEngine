@@ -776,6 +776,7 @@ namespace TEN::Renderer
 		int							GetScreenRefreshRate() const;
 		std::optional<Vector2>		Get2DPosition(const Vector3& pos) const;
 		std::pair<Vector3, Vector3> GetRay(const Vector2& pos) const;
+		std::optional<Vector2> GetDisplayItem2DPosition(const DisplayItem& item) const;
 
 		Vector3	   GetMoveableBonePosition(int itemNumber, int boneID, const Vector3& relOffset = Vector3::Zero);
 		Quaternion GetMoveableBoneOrientation(int itemNumber, int boneID);

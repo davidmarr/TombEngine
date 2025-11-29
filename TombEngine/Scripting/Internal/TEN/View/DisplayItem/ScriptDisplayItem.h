@@ -4,6 +4,7 @@
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
+#include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 
@@ -49,6 +50,7 @@ namespace TEN::Scripting::DisplayItem
 		// Getters
 		GAME_OBJECT_ID GetObjectID() const;
 		Vec3 GetPosition() const;
+		Vec2 Get2DPosition() const;
 		Rotation GetRotation() const;
 		float GetScale() const;
 		ScriptColor GetColor() const;

@@ -47,6 +47,7 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::SetFrame,
 			ScriptReserved_GetObjectID, & ScriptDisplayItem::GetObjectID,
 			ScriptReserved_GetPosition, &ScriptDisplayItem::GetPosition,
+			ScriptReserved_Get2DPosition, &ScriptDisplayItem::Get2DPosition,
 			ScriptReserved_GetRotation, &ScriptDisplayItem::GetRotation,
 			ScriptReserved_GetScale, &ScriptDisplayItem::GetScale,
 			ScriptReserved_GetColor, &ScriptDisplayItem::GetColor,
@@ -364,6 +365,25 @@ namespace TEN::Scripting::DisplayItem
 			return Vec3();
 
 		return Vec3(item->GetPosition());
+	}
+
+	/// Get the projected display space position of a DisplayItem. Returns nil if the DisplayItem position is behind the camera view.
+	// @function Get2DPosition
+	// @treturn Vec2 Projected display space position in pixels.
+	Vec2 ScriptDisplayItem::Get2DPosition() const
+	{
+		if (_itemName.empty())
+			return Vec2();
+
+		auto* item = g_DrawItems.GetItemByName(_itemName);
+		if (!item)
+			return Vec2();
+
+		auto pos = item->Get2DPosition();
+		if (!pos.has_value())
+			return Vec2();
+
+		return Vec2(pos->x, pos->y);
 	}
 
 	/// Get the DisplayItem's rotation.

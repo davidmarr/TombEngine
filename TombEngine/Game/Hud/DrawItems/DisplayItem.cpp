@@ -111,6 +111,17 @@ namespace TEN::Hud
 		return Position;
 	}
 
+	std::optional<Vector2> DisplayItem::Get2DPosition() const
+	{
+		auto displayPos = g_Renderer.GetDisplayItem2DPosition(*this);
+		if (!displayPos.has_value())
+			return std::nullopt;
+
+		return Vector2(
+			(displayPos->x),
+			(displayPos->y));
+	}
+
 	EulerAngles DisplayItem::GetRotation() const
 	{
 		return Orientation;

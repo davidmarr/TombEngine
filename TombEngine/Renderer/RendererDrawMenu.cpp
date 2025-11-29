@@ -1072,6 +1072,50 @@ namespace TEN::Renderer
 		}
 	}
 
+	std::optional<Vector2> Renderer::GetDisplayItem2DPosition(const DisplayItem& item) const
+	{
+		float t = GetInterpolationFactor();
+		Vector3 worldPos = item.GetInterpolatedPosition(t);
+
+		Vector4 point(worldPos.x, worldPos.y, worldPos.z, 1.0f);
+
+		float aspectRatio = (float)_screenWidth / _screenHeight;
+		constexpr float NearPlane = 0.1f;
+		constexpr float FarPlane = BLOCK(100);
+
+		Matrix viewMatrix = Matrix::CreateLookAt(
+			g_DrawItems.GetInterpolatedCameraPosition(t),
+			g_DrawItems.GetInterpolatedCameraTargetPosition(t),
+			Vector3::Up
+		);
+
+		Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(
+			CurrentFOV,
+			aspectRatio,
+			NearPlane,
+			FarPlane
+		);
+
+		Matrix viewProj = viewMatrix * projMatrix;
+
+		// Transform to clip space
+		point = Vector4::Transform(point, viewProj);
+
+		if (fabs(point.w) <= EPSILON)
+			return std::nullopt;
+
+		point /= point.w;
+
+		if (point.x < -1.0f || point.x > 1.0f ||
+			point.y < -1.0f || point.y > 1.0f)
+			return std::nullopt;
+
+		float x = (point.x + 1.0f) * _screenWidth * 0.5f;
+		float y = (1.0f - point.y) * _screenHeight * 0.5f;
+
+		return Vector2(x, y);
+	}
+
 	void Renderer::DrawExamines()
 	{
 		auto screenPos = Vector2(DISPLAY_SPACE_RES.x / 2, DISPLAY_SPACE_RES.y / 2);
