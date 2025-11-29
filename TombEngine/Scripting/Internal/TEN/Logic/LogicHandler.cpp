@@ -157,7 +157,7 @@ stuff during level start/load/end/save/control phase, but don't want the level
 designer to add calls to `OnStart`, `OnLoad`, etc. in their level script.
 
 __Please note__: The order in which two functions with the same CallbackPoint are called is undefined.
-i.e. if you register `MyFunc` and `MyFunc2` with `PRELOOP`, both will be called in the beginning of game loop, but there is no guarantee that `MyFunc` will be called before `MyFunc2`, or vice-versa.
+i.e. if you register `MyFunc` and `MyFunc2` with `PRE_LOOP`, both will be called in the beginning of game loop, but there is no guarantee that `MyFunc` will be called before `MyFunc2`, or vice-versa.
 
 Any returned value will be discarded.
 
