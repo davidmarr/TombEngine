@@ -8,6 +8,7 @@
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
+#include "Specific/configuration.h"
 
 using namespace TEN::Hud;
 using namespace TEN::Scripting::Types;
@@ -369,7 +370,7 @@ namespace TEN::Scripting::DisplayItem
 
 	/// Get the projected display space position of a DisplayItem. Returns nil if the DisplayItem position is behind the camera view.
 	// @function Get2DPosition
-	// @treturn Vec2 Projected display space position in pixels.
+	// @treturn Vec2 Projected display space position in percent.
 	Vec2 ScriptDisplayItem::Get2DPosition() const
 	{
 		if (_itemName.empty())
@@ -383,7 +384,12 @@ namespace TEN::Scripting::DisplayItem
 		if (!pos.has_value())
 			return Vec2();
 
-		return Vec2(pos->x, pos->y);
+		float fWidth = g_Configuration.ScreenWidth;
+		float fHeight = g_Configuration.ScreenHeight;
+		float resX = pos->x / fWidth * 100.0f;
+		float resY = pos->y / fHeight * 100.0f;
+
+		return Vec2(resX, resY);
 	}
 
 	/// Get the DisplayItem's rotation.
