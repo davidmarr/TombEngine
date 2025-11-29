@@ -15,6 +15,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added a safeguard for adding or removing callback functions within the same callback type.
 * Added `DisplayStringOption.VERTICAL_BOTTOM` flag.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
+* Added special tables `LevelVars`, `GameVars` and `LevelFunc` to the documentation
+* Added `Logic.CallbackPoint`, `Logic.EventType` and `Logic.EndReason` enums to the documentation
 
 ## [Version 1.10.1]
 
