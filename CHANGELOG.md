@@ -5,14 +5,16 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 1.10.2]
 
+### New features
+* Added faster Xorshift32 random number generation method.
+
 ### Bug fixes
 * Fixed interaction highlighter not working for pushable climbable blocks.
 
 ### Lua API changes
 * Added a safeguard for adding or removing callback functions within the same callback type.
-* Added DisplayStringOption.VERTICAL_BOTTOM flag
-* Added special tables `LevelVars`, `GameVars` and `LevelFunc` to the documentation
-* Added `Logic.CallbackPoint`, `Logic.EventType` and `Logic.EndReason` enums to the documentation
+* Added `DisplayStringOption.VERTICAL_BOTTOM` flag.
+* Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 
 ## [Version 1.10.1]
 
