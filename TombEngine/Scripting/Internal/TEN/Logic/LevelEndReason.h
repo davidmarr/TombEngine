@@ -7,23 +7,23 @@ namespace TEN::Scripting
 	// @enum Logic.EndReason
 	static const auto LEVEL_END_REASONS = std::unordered_map<std::string, LevelEndReason>
 	{
-		/// Will be used when the level is completed successfully.
+		/// Will be called when the level is completed successfully.
 		// @mem LEVEL_COMPLETE
 		{ ScriptReserved_EndReasonLevelComplete, LevelEndReason::LevelComplete },
 
-		/// Will be used when the level ends due to loading a saved game.
+		/// Will be called when the level ends due to loading a saved game.
 		// @mem LOAD_GAME
 		{ ScriptReserved_EndReasonLoadGame, LevelEndReason::LoadGame },
 
-		/// Will be used when the level ends due to exiting to the title screen.
+		/// Will be called when the level ends due to exiting to the title screen.
 		// @mem EXIT_TO_TITLE
 		{ ScriptReserved_EndReasonExitToTitle, LevelEndReason::ExitToTitle },
 
-		/// Will be used when the level ends due to the player's death.
+		/// Will be called when the level ends due to the player's death.
 		// @mem DEATH
 		{ ScriptReserved_EndReasonDeath, LevelEndReason::Death },
 
-		/// Will be used when the level ends for any other reason.
+		/// Will be called when the level ends for any other reason.
 		// @mem OTHER
 		{ ScriptReserved_EndReasonOther, LevelEndReason::Other },
 
