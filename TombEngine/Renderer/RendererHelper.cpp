@@ -46,7 +46,7 @@ namespace TEN::Renderer
 	{
 		static auto boneIndices = std::vector<int>{};
 		boneIndices.clear();
-		
+
 		RendererBone* bones[MAX_BONES] = {};
 		int nextBone = 0;
 
@@ -134,7 +134,7 @@ namespace TEN::Renderer
 		}
 
 		// Apply mutators on top.
-		if (rItem != nullptr) 
+		if (rItem != nullptr)
 		{
 			const auto& nativeItem = g_Level.Items[rItem->ItemNumber];
 
@@ -200,7 +200,7 @@ namespace TEN::Renderer
 
 			auto prevRotation = currentBone->ExtraRotation;
 			currentBone->ExtraRotation = Quaternion::Identity;
-				
+
 			nativeItem->Data.apply(
 				[&j, &currentBone](QuadBikeInfo& quadBike)
 				{
@@ -291,7 +291,7 @@ namespace TEN::Renderer
 					if (j == 2)
 						currentBone->ExtraRotation = EulerAngles(0, 0, FROM_RAD(bigGun.BarrelRotation)).ToQuaternion();
 				},
-					[&j, &currentBone, &lastJoint](CreatureInfo& creature)
+				[&j, &currentBone, &lastJoint](CreatureInfo& creature)
 				{
 					auto xRot = Quaternion::Identity;
 					auto yRot = Quaternion::Identity;
@@ -361,7 +361,7 @@ namespace TEN::Renderer
 			BuildHierarchyRecursive(obj, childNode, obj->Skeleton);
 	}
 
-	bool Renderer::IsFullsScreen() 
+	bool Renderer::IsFullsScreen()
 	{
 		return (!_isWindowed);
 	}
@@ -457,7 +457,7 @@ namespace TEN::Renderer
 			auto sphere = BoundingSphere(pos, mesh.Sphere.Radius);
 			spheres.push_back(sphere);
 		}
-		
+
 		return spheres;
 	}
 
@@ -471,7 +471,7 @@ namespace TEN::Renderer
 		else
 		{
 			UpdateItemAnimations(itemNumber, true);
-			
+
 			auto* rendererItem = &_items[itemNumber];
 			auto* nativeItem = &g_Level.Items[itemNumber];
 
@@ -491,10 +491,10 @@ namespace TEN::Renderer
 			return SkinningMode::None;
 	}
 
-	Vector4 Renderer::GetPortalRect(Vector4 v, Vector4 vp) 
+	Vector4 Renderer::GetPortalRect(Vector4 v, Vector4 vp)
 	{
 		auto sp = (v * Vector4(0.5f, 0.5f, 0.5f, 0.5f)
-			+ Vector4(0.5f, 0.5f, 0.5f, 0.5f)) 
+			+ Vector4(0.5f, 0.5f, 0.5f, 0.5f))
 			* Vector4(vp.z, vp.w, vp.z, vp.w);
 
 		Vector4 s(sp.x + vp.x, sp.y + vp.y, sp.z + vp.x, sp.w + vp.y);
@@ -518,7 +518,7 @@ namespace TEN::Renderer
 		// Use the viewport rect if one of the dimensions is the same size
 		// as the viewport. This may fix clipping bugs while still allowing
 		// impossible geometry tricks.
-		if (s.z - s.x >= vp.z - vp.x || s.w - s.y >= vp.w - vp.y) 
+		if (s.z - s.x >= vp.z - vp.x || s.w - s.y >= vp.w - vp.y)
 			return vp;
 
 		return s;
@@ -557,7 +557,7 @@ namespace TEN::Renderer
 			_gameCamera.Camera.WorldDirection.y,
 			_gameCamera.Camera.WorldDirection.z,
 			1.0f);
-		
+
 		// Point is behind camera; return nullopt.
 		if ((point - cameraPos).Dot(cameraDir) < 0.0f)
 			return std::nullopt;
@@ -697,63 +697,77 @@ namespace TEN::Renderer
 		Vector3 pos = item.GetInterpolatedPosition(t);
 		auto orient = item.GetInterpolatedOrientation(t);
 		float scale = item.GetInterpolatedScale(t);
+		auto objectNumber = item.GetObjectID();
 
 		// find largest visible mesh sphere (as you already do)
 		auto& moveable = _moveableObjects[item.GetObjectID()];
+
 		float maxRadius = 0.0f;
-		Vector3 localCenter = Vector3::Zero;
+		Vector3 worldCenter = Vector3::Zero;
+
+		const auto& object = Objects[objectNumber];
+
+		// Loop through meshes
 		for (int i = 0; i < moveable->ObjectMeshes.size(); ++i)
 		{
 			if (item.GetMeshBits() && !item.GetMeshVisibility(i)) continue;
+
 			const BoundingSphere& s = moveable->ObjectMeshes[i]->Sphere;
-			if (s.Radius > maxRadius) { maxRadius = s.Radius; localCenter = s.Center; }
+
+			// World matrix per mesh (animation or bind-pose)
+			Matrix meshWorld;
+			if (object.animIndex != NO_VALUE)
+				meshWorld = moveable->AnimationTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+			else
+				meshWorld = moveable->BindPoseTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+
+			// Transform center
+			Vector3 meshWorldCenter = Vector3::Transform(s.Center, meshWorld);
+			float meshWorldRadius = s.Radius * scale;
+
+			// Keep largest for bounding approximation
+			if (meshWorldRadius > maxRadius)
+			{
+				maxRadius = meshWorldRadius;
+				worldCenter = meshWorldCenter;
+			}
 		}
+
 		if (maxRadius <= 0.0f) return std::nullopt;
 
-		// Build world matrix and transform center to world
-		Matrix world = Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
-		Vector3 worldCenter = Vector3::Transform(localCenter, world);
-		float worldRadius = maxRadius * scale;
-
-		// Project center
+		// Project center to screen
 		auto center2Dopt = ProjectDisplayItemPointToScreen(worldCenter);
 		if (!center2Dopt) return std::nullopt;
 		Vector2 center2D = *center2Dopt;
 
 		// --- compute camera basis (world-space right & up) ---
-		float tt = GetInterpolationFactor(); // same t
-		auto camPos = g_DrawItems.GetInterpolatedCameraPosition(tt);
-		auto camTarget = g_DrawItems.GetInterpolatedCameraTargetPosition(tt);
+		Vector3 camPos = g_DrawItems.GetInterpolatedCameraPosition(t);
+		Vector3 camTarget = g_DrawItems.GetInterpolatedCameraTargetPosition(t);
 		Vector3 camForward = (camTarget - camPos);
 		camForward.Normalize();
-		Vector3 worldUp = Vector3::Up; 
-		Vector3 camRight = (camForward.Cross(worldUp));
-		Vector3 camUp = (camRight.Cross(camForward));
+		Vector3 worldUp = Vector3::Up;
+		Vector3 camRight = camForward.Cross(worldUp);
+		camRight.Normalize();
+		Vector3 camUp = camRight.Cross(camForward);
 		camUp.Normalize();
 
-		// sample points along camera right/up directions
-		Vector3 rightWorld = worldCenter + camRight * worldRadius;
-		Vector3 leftWorld = worldCenter - camRight * worldRadius;
-		Vector3 upWorld = worldCenter + camUp * worldRadius;
-		Vector3 downWorld = worldCenter - camUp * worldRadius;
+		// Sample points along camera right/up directions
+		Vector3 rightWorld = worldCenter + camRight * maxRadius;
+		Vector3 leftWorld = worldCenter - camRight * maxRadius;
+		Vector3 upWorld = worldCenter + camUp * maxRadius;
+		Vector3 downWorld = worldCenter - camUp * maxRadius;
 
 		auto pr = ProjectDisplayItemPointToScreen(rightWorld);
 		auto pl = ProjectDisplayItemPointToScreen(leftWorld);
 		auto pu = ProjectDisplayItemPointToScreen(upWorld);
 		auto pd = ProjectDisplayItemPointToScreen(downWorld);
 
-		// if any edge fails projection (behind camera / off-frustum) you can either:
-		//  - return std::nullopt, or
-		//  - fallback to using only successful samples (I prefer returning nullopt)
 		if (!pr || !pl || !pu || !pd) return std::nullopt;
 
 		float halfWidth = std::max(std::abs(pr->x - center2D.x), std::abs(pl->x - center2D.x));
 		float halfHeight = std::max(std::abs(pu->y - center2D.y), std::abs(pd->y - center2D.y));
 
-		Vector2 size2D(halfWidth * 2.0f, halfHeight * 2.0f); // if you want full width/height
-		// you asked earlier for size, we can return half extents instead — adjust as needed:
-		// Vector2 size2D(halfWidth, halfHeight);
-
-		return std::make_pair(center2D, size2D);
+		Vector2 halfExtents(halfWidth * 2.0f, halfHeight * 2.0f); // width/height in pixels
+		return std::make_pair(center2D, halfExtents);
 	}
 }
