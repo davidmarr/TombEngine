@@ -48,7 +48,7 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_SetFrameNumber, &ScriptDisplayItem::SetFrame,
 			ScriptReserved_GetObjectID, & ScriptDisplayItem::GetObjectID,
 			ScriptReserved_GetPosition, &ScriptDisplayItem::GetPosition,
-			ScriptReserved_Get2DPosition, &ScriptDisplayItem::Get2DPosition,
+			ScriptReserved_GetBounds, &ScriptDisplayItem::GetBounds,
 			ScriptReserved_GetRotation, &ScriptDisplayItem::GetRotation,
 			ScriptReserved_GetScale, &ScriptDisplayItem::GetScale,
 			ScriptReserved_GetColor, &ScriptDisplayItem::GetColor,
@@ -368,30 +368,6 @@ namespace TEN::Scripting::DisplayItem
 		return Vec3(item->GetPosition());
 	}
 
-	/// Get the projected display space position of a DisplayItem. Returns nil if the DisplayItem position is behind the camera view.
-	// @function Get2DPosition
-	// @treturn Vec2 Projected display space position in percent.
-	Vec2 ScriptDisplayItem::Get2DPosition() const
-	{
-		if (_itemName.empty())
-			return Vec2();
-
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
-			return Vec2();
-
-		auto pos = item->Get2DPosition();
-		if (!pos.has_value())
-			return Vec2();
-
-		float fWidth = g_Configuration.ScreenWidth;
-		float fHeight = g_Configuration.ScreenHeight;
-		float resX = pos->x / fWidth * 100.0f;
-		float resY = pos->y / fHeight * 100.0f;
-
-		return Vec2(resX, resY);
-	}
-
 	/// Get the DisplayItem's rotation.
 	// @function DisplayItem:GetRotation
 	// @treturn Rotation DisplayItem's rotation.
@@ -554,6 +530,40 @@ namespace TEN::Scripting::DisplayItem
 		
 		const auto& anim = GetAnimData(item->GetObjectID(), item->GetAnimation());
 		return (anim.frameEnd - anim.frameBase);
+	}
+
+	///Get the 2D projected bounding box of this DisplayItem.
+	// This function projects the DisplayItem into screen space and returns two Vec2 values:
+	// @function GetBounds
+	// @treturn[1] Vec2 center The projected center position(percent of screen space).
+	// @treturn[1] Vec2 size The projected width / height (percent of screen space).
+	std::pair<Vec2, Vec2> ScriptDisplayItem::GetBounds() const
+	{
+		if (_itemName.empty())
+			return { Vec2(), Vec2() };
+
+		auto* item = g_DrawItems.GetItemByName(_itemName);
+		if (!item)
+			return { Vec2(), Vec2() };
+
+		auto bounds = item->GetBounds();
+		if (!bounds.has_value())
+			return { Vec2(), Vec2() };
+
+		const float fWidth = g_Configuration.ScreenWidth;
+		const float fHeight = g_Configuration.ScreenHeight;
+
+		const Vector2& center = bounds->first;
+		const Vector2& size = bounds->second;
+
+		// Convert to percent-based resolution
+		Vec2 centerPercent(center.x / fWidth * 100.0f,
+			center.y / fHeight * 100.0f);
+
+		Vec2 sizePercent(size.x / fWidth * 100.0f,
+			size.y / fHeight * 100.0f);
+
+		return { centerPercent, sizePercent };
 	}
 
 	/// Get a DisplayItem by its name.

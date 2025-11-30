@@ -111,15 +111,15 @@ namespace TEN::Hud
 		return Position;
 	}
 
-	std::optional<Vector2> DisplayItem::Get2DPosition() const
+	std::optional<std::pair<Vector2, Vector2>> DisplayItem::GetBounds() const
 	{
-		auto displayPos = g_Renderer.GetDisplayItem2DPosition(*this);
-		if (!displayPos.has_value())
+		auto bounds = g_Renderer.GetDisplayItemBounds(*this);
+		if (!bounds.has_value())
 			return std::nullopt;
 
-		return Vector2(
-			(displayPos->x),
-			(displayPos->y));
+		// bounds->first  = center  (Vector2)
+		// bounds->second = size    (Vector2)
+		return bounds;
 	}
 
 	EulerAngles DisplayItem::GetRotation() const

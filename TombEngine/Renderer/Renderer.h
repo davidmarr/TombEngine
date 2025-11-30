@@ -545,7 +545,7 @@ namespace TEN::Renderer
 		void InitializeSMAA();
 		void SetupAnimatedTextures(const RendererBucket& bucket);
 		Texture2D CreateDefaultTexture(std::vector<unsigned char> color);
-
+		std::optional<Vector2> ProjectDisplayItemPointToScreen(const Vector3& worldPos) const;
 		bool IsRoomReflected(RenderView& renderView, int roomNumber);
 
 		inline bool IgnoreReflectionPassForRoom(int roomNumber)
@@ -776,8 +776,7 @@ namespace TEN::Renderer
 		int							GetScreenRefreshRate() const;
 		std::optional<Vector2>		Get2DPosition(const Vector3& pos) const;
 		std::pair<Vector3, Vector3> GetRay(const Vector2& pos) const;
-		std::optional<Vector2> GetDisplayItem2DPosition(const DisplayItem& item) const;
-
+		std::optional<std::pair<Vector2, Vector2>> GetDisplayItemBounds(const DisplayItem& item) const;
 		Vector3	   GetMoveableBonePosition(int itemNumber, int boneID, const Vector3& relOffset = Vector3::Zero);
 		Quaternion GetMoveableBoneOrientation(int itemNumber, int boneID);
 

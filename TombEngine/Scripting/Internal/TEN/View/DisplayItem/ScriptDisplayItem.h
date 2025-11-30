@@ -50,7 +50,6 @@ namespace TEN::Scripting::DisplayItem
 		// Getters
 		GAME_OBJECT_ID GetObjectID() const;
 		Vec3 GetPosition() const;
-		Vec2 Get2DPosition() const;
 		Rotation GetRotation() const;
 		float GetScale() const;
 		ScriptColor GetColor() const;
@@ -60,6 +59,7 @@ namespace TEN::Scripting::DisplayItem
 		int GetAnimNumber() const;
 		int GetFrameNumber() const;
 		int GetEndFrame() const;
+		std::pair<Vec2, Vec2> GetBounds() const;
 
 		//functions
 		static ScriptDisplayItem GetItemByName(const std::string& itemName);

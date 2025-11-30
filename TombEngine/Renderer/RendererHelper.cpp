@@ -650,16 +650,9 @@ namespace TEN::Renderer
 			&GUID_WICPixelFormat24bppBGR, nullptr, true);
 	}
 
-	std::optional<Vector2> Renderer::GetDisplayItem2DPosition(const DisplayItem& item) const
+	std::optional<Vector2> Renderer::ProjectDisplayItemPointToScreen(const Vector3& worldPos) const
 	{
 		float t = GetInterpolationFactor();
-		Vector3 worldPos = item.GetInterpolatedPosition(t);
-
-		Vector4 point(worldPos.x, worldPos.y, worldPos.z, 1.0f);
-
-		float aspectRatio = (float)_screenWidth / _screenHeight;
-		constexpr float NearPlane = 0.1f;
-		constexpr float FarPlane = BLOCK(100);
 
 		Matrix viewMatrix = Matrix::CreateLookAt(
 			g_DrawItems.GetInterpolatedCameraPosition(t),
@@ -667,30 +660,100 @@ namespace TEN::Renderer
 			Vector3::Up
 		);
 
+		float aspectRatio = (float)_screenWidth / _screenHeight;
+
 		Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(
 			CurrentFOV,
 			aspectRatio,
-			NearPlane,
-			FarPlane
+			0.1f,
+			BLOCK(100)
 		);
 
 		Matrix viewProj = viewMatrix * projMatrix;
 
-		// Transform to clip space
-		point = Vector4::Transform(point, viewProj);
+		Vector4 p(worldPos.x, worldPos.y, worldPos.z, 1.0f);
+		p = Vector4::Transform(p, viewProj);
 
-		if (fabs(point.w) <= EPSILON)
+		if (fabs(p.w) <= EPSILON)
 			return std::nullopt;
 
-		point /= point.w;
+		p /= p.w;
 
-		if (point.x < -1.0f || point.x > 1.0f ||
-			point.y < -1.0f || point.y > 1.0f)
+		if (p.x < -1.0f || p.x > 1.0f || p.y < -1.0f || p.y > 1.0f)
 			return std::nullopt;
 
-		float x = (point.x + 1.0f) * _screenWidth * 0.5f;
-		float y = (1.0f - point.y) * _screenHeight * 0.5f;
+		float screenX = (p.x + 1.0f) * _screenWidth * 0.5f;
+		float screenY = (1.0f - p.y) * _screenHeight * 0.5f;
 
-		return Vector2(x, y);
+		return Vector2(screenX, screenY);
+	}
+
+	std::optional<std::pair<Vector2, Vector2>>
+		Renderer::GetDisplayItemBounds(const DisplayItem& item) const
+	{
+		float t = GetInterpolationFactor();
+
+		// world transforms
+		Vector3 pos = item.GetInterpolatedPosition(t);
+		auto orient = item.GetInterpolatedOrientation(t);
+		float scale = item.GetInterpolatedScale(t);
+
+		// find largest visible mesh sphere (as you already do)
+		auto& moveable = _moveableObjects[item.GetObjectID()];
+		float maxRadius = 0.0f;
+		Vector3 localCenter = Vector3::Zero;
+		for (int i = 0; i < moveable->ObjectMeshes.size(); ++i)
+		{
+			if (item.GetMeshBits() && !item.GetMeshVisibility(i)) continue;
+			const BoundingSphere& s = moveable->ObjectMeshes[i]->Sphere;
+			if (s.Radius > maxRadius) { maxRadius = s.Radius; localCenter = s.Center; }
+		}
+		if (maxRadius <= 0.0f) return std::nullopt;
+
+		// Build world matrix and transform center to world
+		Matrix world = Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+		Vector3 worldCenter = Vector3::Transform(localCenter, world);
+		float worldRadius = maxRadius * scale;
+
+		// Project center
+		auto center2Dopt = ProjectDisplayItemPointToScreen(worldCenter);
+		if (!center2Dopt) return std::nullopt;
+		Vector2 center2D = *center2Dopt;
+
+		// --- compute camera basis (world-space right & up) ---
+		float tt = GetInterpolationFactor(); // same t
+		auto camPos = g_DrawItems.GetInterpolatedCameraPosition(tt);
+		auto camTarget = g_DrawItems.GetInterpolatedCameraTargetPosition(tt);
+		Vector3 camForward = (camTarget - camPos);
+		camForward.Normalize();
+		Vector3 worldUp = Vector3::Up; 
+		Vector3 camRight = (camForward.Cross(worldUp));
+		Vector3 camUp = (camRight.Cross(camForward));
+		camUp.Normalize();
+
+		// sample points along camera right/up directions
+		Vector3 rightWorld = worldCenter + camRight * worldRadius;
+		Vector3 leftWorld = worldCenter - camRight * worldRadius;
+		Vector3 upWorld = worldCenter + camUp * worldRadius;
+		Vector3 downWorld = worldCenter - camUp * worldRadius;
+
+		auto pr = ProjectDisplayItemPointToScreen(rightWorld);
+		auto pl = ProjectDisplayItemPointToScreen(leftWorld);
+		auto pu = ProjectDisplayItemPointToScreen(upWorld);
+		auto pd = ProjectDisplayItemPointToScreen(downWorld);
+
+		// if any edge fails projection (behind camera / off-frustum) you can either:
+		//  - return std::nullopt, or
+		//  - fallback to using only successful samples (I prefer returning nullopt)
+		if (!pr || !pl || !pu || !pd) return std::nullopt;
+
+		float halfWidth = std::max(std::abs(pr->x - center2D.x), std::abs(pl->x - center2D.x));
+		float halfHeight = std::max(std::abs(pu->y - center2D.y), std::abs(pd->y - center2D.y));
+
+		Vector2 size2D(halfWidth * 2.0f, halfHeight * 2.0f); // if you want full width/height
+		// you asked earlier for size, we can return half extents instead — adjust as needed:
+		// Vector2 size2D(halfWidth, halfHeight);
+
+		return std::make_pair(center2D, size2D);
 	}
 }
