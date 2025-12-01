@@ -325,7 +325,12 @@ namespace TEN::Scripting::DisplayItem
 
 		if (item)
 		{
-			auto endFrame = GetEndFrame();
+			auto endFrameOpt = GetEndFrame();
+
+			if (!endFrameOpt.has_value())
+				return;
+
+			int endFrame = endFrameOpt.value();
 
 			item->SetAnimation(animIndex);
 			if (frame <= endFrame)
@@ -356,14 +361,14 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectPosition = item:GetPosition()
-	Vec3 ScriptDisplayItem::GetPosition() const
+	sol::optional <Vec3> ScriptDisplayItem::GetPosition() const
 	{
 		if (_itemName.empty())
-			return Vec3();
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return Vec3();
+			return sol::nullopt;
 
 		return Vec3(item->GetPosition());
 	}
@@ -374,14 +379,14 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectRotation = item:GetRotation()
-	Rotation ScriptDisplayItem::GetRotation() const
+	sol::optional <Rotation> ScriptDisplayItem::GetRotation() const
 	{
 		if (_itemName.empty())
-			return Rotation();
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return Rotation();
+			return sol::nullopt;
 
 		return Rotation(item->GetRotation());
 	}
@@ -392,14 +397,14 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectRotation = item:GetScale()
-	float ScriptDisplayItem::GetScale() const
+	sol::optional <float> ScriptDisplayItem::GetScale() const
 	{
 		if (_itemName.empty())
-			return 0.0f;
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return 0.0f;
+			return sol::nullopt;
 
 		return item->GetScale();
 	}
@@ -410,16 +415,16 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectColor = item:GetColor()
-	ScriptColor ScriptDisplayItem::GetColor() const
+	sol::optional <ScriptColor> ScriptDisplayItem::GetColor() const
 	{
 		if (_itemName.empty())
-			return ScriptColor();
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return ScriptColor();
+			return sol::nullopt;
 
-		return item->GetColor();
+		return ScriptColor(item->GetColor());
 	}
 
 	///Get visibility state of a specified mesh of a DisplayItem.
@@ -451,14 +456,14 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local jointRotation = item:GetJointRotation(1)
-	Rotation ScriptDisplayItem::GetMeshRotation(int meshIndex) const
+	sol::optional <Rotation> ScriptDisplayItem::GetMeshRotation(int meshIndex) const
 	{
 		if (_itemName.empty())
-			return Rotation();
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return Rotation();
+			return sol::nullopt;
 
 		auto rotation = item->GetMeshRotation(meshIndex);
 		return Rotation(rotation);
@@ -487,14 +492,14 @@ namespace TEN::Scripting::DisplayItem
 	// This corresponds to the number shown in the item's animation list in WadTool.
 	// @function DisplayItem:GetAnim
 	// @treturn int The index of the active animation.
-	int ScriptDisplayItem::GetAnimNumber() const
+	sol::optional <int> ScriptDisplayItem::GetAnimNumber() const
 	{
 		if (_itemName.empty())
-			return 0;
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return 0;
+			return sol::nullopt;
 
 		return item->GetAnimation();
 	}
@@ -503,14 +508,14 @@ namespace TEN::Scripting::DisplayItem
 	//This is the current frame of the DisplayItems's active animation.
 	//@function DisplayItem:GetFrame
 	//@treturn int The current frame of the active animation.
-	int ScriptDisplayItem::GetFrameNumber() const
+	sol::optional <int> ScriptDisplayItem::GetFrameNumber() const
 	{
 		if (_itemName.empty())
-			return 0;
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return 0;
+			return sol::nullopt;
 
 		return item->GetFrame();
 	}
@@ -519,14 +524,14 @@ namespace TEN::Scripting::DisplayItem
 	// This is the "End Frame" set in WADTool for the animation.
 	// @function DisplayItem:GetEndFrame()
 	// @treturn int End frame number of the active animation.
-	int ScriptDisplayItem::GetEndFrame() const
+	sol::optional <int> ScriptDisplayItem::GetEndFrame() const
 	{
 		if (_itemName.empty())
-			return 0;
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return 0;
+			return sol::nullopt;
 		
 		const auto& anim = GetAnimData(item->GetObjectID(), item->GetAnimation());
 		return (anim.frameEnd - anim.frameBase);
@@ -537,18 +542,18 @@ namespace TEN::Scripting::DisplayItem
 	// @function GetBounds
 	// @treturn[1] Vec2 center The projected center position(percent of screen space).
 	// @treturn[1] Vec2 size The projected width / height (percent of screen space).
-	std::pair<Vec2, Vec2> ScriptDisplayItem::GetBounds() const
+	sol::optional <std::pair<Vec2, Vec2>> ScriptDisplayItem::GetBounds() const
 	{
 		if (_itemName.empty())
-			return { Vec2(), Vec2() };
+			return sol::nullopt;
 
 		auto* item = g_DrawItems.GetItemByName(_itemName);
 		if (!item)
-			return { Vec2(), Vec2() };
+			return sol::nullopt;
 
 		auto bounds = item->GetBounds();
 		if (!bounds.has_value())
-			return { Vec2(), Vec2() };
+			return sol::nullopt;
 
 		const float fWidth = g_Configuration.ScreenWidth;
 		const float fHeight = g_Configuration.ScreenHeight;
@@ -563,7 +568,7 @@ namespace TEN::Scripting::DisplayItem
 		Vec2 sizePercent(size.x / fWidth * 100.0f,
 			size.y / fHeight * 100.0f);
 
-		return { centerPercent, sizePercent };
+		return std::pair<Vec2, Vec2>(centerPercent, sizePercent);
 	}
 
 	/// Get a DisplayItem by its name.

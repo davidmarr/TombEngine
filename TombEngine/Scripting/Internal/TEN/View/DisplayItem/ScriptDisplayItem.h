@@ -49,17 +49,17 @@ namespace TEN::Scripting::DisplayItem
 
 		// Getters
 		GAME_OBJECT_ID GetObjectID() const;
-		Vec3 GetPosition() const;
-		Rotation GetRotation() const;
-		float GetScale() const;
-		ScriptColor GetColor() const;
+		sol::optional <Vec3> GetPosition() const;
+		sol::optional <Rotation> GetRotation() const;
+		sol::optional <float> GetScale() const;
+		sol::optional <ScriptColor> GetColor() const;
 		bool GetMeshVisibility(int meshIndex) const;
-		Rotation GetMeshRotation(int meshIndex) const;
+		sol::optional <Rotation> GetMeshRotation(int meshIndex) const;
 		bool GetVisibility() const;
-		int GetAnimNumber() const;
-		int GetFrameNumber() const;
-		int GetEndFrame() const;
-		std::pair<Vec2, Vec2> GetBounds() const;
+		sol::optional <int> GetAnimNumber() const;
+		sol::optional <int> GetFrameNumber() const;
+		sol::optional <int> GetEndFrame() const;
+		sol::optional<std::pair<Vec2, Vec2>> GetBounds() const;
 
 		//functions
 		static ScriptDisplayItem GetItemByName(const std::string& itemName);
