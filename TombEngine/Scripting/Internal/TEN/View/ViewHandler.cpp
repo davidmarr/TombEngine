@@ -389,6 +389,9 @@ namespace TEN::Scripting::View
 		tableView.set_function(ScriptReserved_UseBinoculars, &UseBinoculars);
 
 		// Register types.
+		ScriptDisplaySprite::Register(*state, tableView);
+
+		// Register types COMPATIBILITY
 		ScriptDisplaySprite::Register(*state, parent);
 		ScriptDisplayItem::Register(*state, tableView);
 
