@@ -6,10 +6,12 @@
 local Type= require("Engine.Type")
 local LuaUtil = {}
 
-
 LevelVars.Engine.LuaUtil = {}
+
+-- Default frames per second for time-frame conversions
 LevelVars.Engine.LuaUtil.FPS = 30
 
+-- Helper table for comparison operators
 LevelVars.Engine.LuaUtil.operators = {
     function(a, b) return a == b end,
     function(a, b) return a ~= b end,
@@ -19,13 +21,79 @@ LevelVars.Engine.LuaUtil.operators = {
     function(a, b) return a >= b end,
 }
 
+LevelVars.Engine.LuaUtil.CompareDeep = {
+    MAX_DEPTH = 10,        -- Maximum nesting depth (prevents stack overflow)
+    MAX_ELEMENTS = 1000,   -- Maximum total elements processed (prevents performance issues)
+    nextId = 1,            -- Progressive ID for each comparison
+    activeCompares = {}    -- Tracks active comparisons: { [id] = { depth, elementCount, visited } }
+}
+
 LevelFuncs.Engine.LuaUtil = {}
 
--- Helper function for ping-pong calculation on a single component
-LevelFuncs.Engine.LuaUtil.PingPongComponent = function(t, length)
-    if length == 0 then return 0 end
-    t = t % (length * 2)
-    return t > length and (length * 2 - t) or t
+-- Generic ping-pong function
+LevelFuncs.Engine.LuaUtil.PingPongGeneric = function(key, min, max, period, useSmooth, timerStorage)
+    -- Validate key parameter
+    if not (Type.IsString(key) or Type.IsNumber(key)) then
+        local funcName = useSmooth and "PingPongSmooth" or "PingPong"
+        TEN.Util.PrintLog("Error in LuaUtil." .. funcName .. ": key must be a string or number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Type checking for min and max (fatto UNA SOLA volta)
+    local isNumber = Type.IsNumber(min) and Type.IsNumber(max)
+    local isVec2 = Type.IsVec2(min) and Type.IsVec2(max)
+    local isVec3 = Type.IsVec3(min) and Type.IsVec3(max)
+    local isRotation = Type.IsRotation(min) and Type.IsRotation(max)
+    local isColor = Type.IsColor(min) and Type.IsColor(max)
+
+    if not (isNumber or isVec2 or isVec3 or isRotation or isColor) then
+        local funcName = useSmooth and "PingPongSmooth" or "PingPong"
+        TEN.Util.PrintLog("Error in LuaUtil." .. funcName .. ": min and max must be same type (number, Vec2, Vec3, Rotation, or Color).", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Validate period parameter
+    if not Type.IsNumber(period) or period <= 0 then
+        local funcName = useSmooth and "PingPongSmooth" or "PingPong"
+        TEN.Util.PrintLog("Error in LuaUtil." .. funcName .. ": period must be a positive number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Calculate frames per cycle
+    local framesPerCycle = LuaUtil.Round(period, 1) * LevelVars.Engine.LuaUtil.FPS
+
+    -- Initialize or update timer for this key
+    if not timerStorage[key] then
+        timerStorage[key] = 0
+    end
+
+    -- Get current timer and increment
+    local timer = timerStorage[key]
+    
+    -- Keep timer in reasonable range by using modulo
+    timerStorage[key] = (timer + 1) % framesPerCycle
+
+    -- Normalize timer to 0-1 range for current cycle
+    local normalizedTime = timer / framesPerCycle
+    
+    -- Calculate ping-pong factor (0→1→0): goes from 0 to 1 in first half, then 1 to 0 in second half
+    local t = normalizedTime <= 0.5 and normalizedTime * 2 or (1 - normalizedTime) * 2
+    
+    -- Force exact min/max values at cycle extremes to avoid floating-point drift
+    if t <= 0.001 then
+        t = 0
+    elseif t >= 0.999 then
+        t = 1
+    end
+
+    -- Apply interpolation based on mode
+    if useSmooth then
+        -- Use Smoothstep for smooth interpolation (edge0=0, edge1=1, x=t)
+        return LuaUtil.Smoothstep(min, max, 0, 1, t)
+    else
+        -- Use Lerp for linear interpolation
+        return LuaUtil.Lerp(min, max, t)
+    end
 end
 
 -- Helper function for type checking and interpolation
@@ -64,6 +132,79 @@ LevelFuncs.Engine.LuaUtil.HueToRgb = function(p, q, t)
         return p + (q - p) * (2 / 3 - t) * 6
     end
     return p
+end
+
+-- Support function for recursive comparison
+LevelFuncs.Engine.LuaUtil.CompareRecursive = function(t1, t2, compareId)
+    local context = LevelVars.Engine.LuaUtil.CompareDeep.activeCompares[compareId]
+
+    -- Check maximum depth
+    if context.depth >= LevelVars.Engine.LuaUtil.CompareDeep.MAX_DEPTH then
+        TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum depth (" .. 
+            LevelVars.Engine.LuaUtil.CompareDeep.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+        return false
+    end
+
+    -- Check maximum elements
+    if context.elementCount >= LevelVars.Engine.LuaUtil.CompareDeep.MAX_ELEMENTS then
+        TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum elements (" .. 
+            LevelVars.Engine.LuaUtil.CompareDeep.MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+        return false
+    end
+
+    -- Prevent infinite loops: check if we've already visited this pair
+    local pairKey = tostring(t1) .. "-" .. tostring(t2)
+    if context.visited[pairKey] then
+        return true  -- Already visited, assume equal
+    end
+    context.visited[pairKey] = true
+
+    -- Increment depth
+    context.depth = context.depth + 1
+
+    -- Single loop: compare all keys from both tables
+    local currentKeysChecked = {}
+
+    for key, value1 in pairs(t1) do
+        context.elementCount = context.elementCount + 1
+
+        if context.elementCount > LevelVars.Engine.LuaUtil.CompareDeep.MAX_ELEMENTS then
+            context.depth = context.depth - 1
+            return false
+        end
+
+        local value2 = t2[key]
+        currentKeysChecked[key] = true
+
+        -- If key doesn't exist in t2, tables are different
+        if value2 == nil then
+            context.depth = context.depth - 1
+            return false
+        end
+
+        -- Compare values
+        if Type.IsTable(value1) and Type.IsTable(value2) then
+            if not LevelFuncs.Engine.LuaUtil.CompareRecursive(value1, value2, compareId) then
+                context.depth = context.depth - 1
+                return false
+            end
+        elseif value1 ~= value2 then
+            context.depth = context.depth - 1
+            return false
+        end
+    end
+
+    -- Check if t2 has keys that t1 doesn't have
+    for key, _ in pairs(t2) do
+        if not currentKeysChecked[key] then
+            context.depth = context.depth - 1
+            return false
+        end
+    end
+
+    -- Decrement depth before returning
+    context.depth = context.depth - 1
+    return true
 end
 
 --- Comparison and validation functions.
@@ -320,7 +461,7 @@ end
 --- Generate a random number with optional seed.
 -- @tparam float min Minimum value.
 -- @tparam float max Maximum value.
--- @tparam[opt] float seed Optional seed for reproducible randomness.
+-- @tparam[opt] float seed Seed for reproducible randomness.
 -- @treturn float Random number between min and max.
 -- @usage
 -- local rand1 = LuaUtil.Random(1, 10)          -- Random number between 1 and 10
@@ -354,455 +495,13 @@ LuaUtil.Clamp = function(value, min, max)
         TEN.Util.PrintLog("Error in LuaUtil.Clamp: parameters must be numbers.", TEN.Util.LogLevel.ERROR)
         return value
     end
+
+    if min > max then
+        TEN.Util.PrintLog("Error in LuaUtil.Clamp: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+        return value
+    end
+
     return math.max(min, math.min(max, value))
-end
-
---- Ping-pong animation that oscillates from 0 to length over a specified period.
--- Returns a value that oscillates smoothly between 0 and the specified length.
--- Supports numbers, Vec2, Vec3, Rotation, and Color types.
--- 
--- **Important Note:**
--- This function must be called **every frame** to update the animation value.
--- Use it within a repeating function in your level's Lua script, such as:<ul>
--- <li>`LevelFuncs.OnLoop` for animations during normal gameplay</li>
--- <li>`LevelFuncs.OnFreeze` for animations during freeze mode</li>
--- <li>Or register a callback (see @{Logic.AddCallback} for details) with:</li>
--- <ul>
---   <li>`CallbackPoint.PRE_LOOP` or `POST_LOOP` for gameplay animations</li>
---   <li>`CallbackPoint.PRE_FREEZE` or `POST_FREEZE` for freeze mode animations</li>
--- </ul></ul>
--- @tparam string|number key Unique identifier for this animation timer. Different keys create independent animations.
--- @tparam number|Vec2|Vec3|Rotation|Color length The maximum value (oscillates from 0 to this value).
--- @tparam number period Time in seconds for a complete cycle (0→length→0).
--- @treturn number|Vec2|Vec3|Rotation|Color|nil The ping-ponged value, or nil on error.
--- @usage
--- -- Simple number oscillation:
--- LevelFuncs.OnLoop = function()
---     local intensity = LuaUtil.PingPong("torch", 1.0, 2.0) -- Oscillates 0→1→0 every 2 seconds
---     torch:SetIntensity(intensity)
--- end
---
--- -- Multiple independent animations:
--- LevelFuncs.OnLoop = function()
---     local redIntensity = LuaUtil.PingPong("red", 255, 1.0)
---     local blueIntensity = LuaUtil.PingPong("blue", 255, 2.0)
---     light:SetColor(TEN.Color(redIntensity, 0, blueIntensity, 255))
--- end
---
--- -- Vec3 for platform movement:
--- local basePos = TEN.Vec3(1000, 500, 2000)
--- LevelFuncs.OnLoop = function()
---     local offset = LuaUtil.PingPong("platform", TEN.Vec3(0, 512, 0), 3.0)
---     platform:SetPosition(basePos + offset)
--- end
---
--- -- Rotation for door swing (0-90 degrees on Y axis):
--- LevelFuncs.OnLoop = function()
---     local rot = LuaUtil.PingPong("door", TEN.Rotation(0, 90, 0), 4.0)
---     door:SetRotation(rot)
--- end
---
--- -- Color for pulsing alpha:
--- LevelFuncs.OnLoop = function()
---     local color = LuaUtil.PingPong("sprite_alpha", TEN.Color(255, 255, 255, 255), 1.5)
---     sprite:SetColor(color)
--- end
---
--- -- Rotation for full 360° spin:
--- LevelFuncs.OnLoop = function()
---     local rot = LuaUtil.PingPong("spinner", TEN.Rotation(0, 360, 0), 5.0)
---     object:SetRotation(rot)
--- end
-LuaUtil.PingPong = function(key, length, period)
-    -- Validate key parameter
-    if not (Type.IsString(key) or Type.IsNumber(key)) then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPong: key must be a string or number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Type checking for length
-    local isNumber = Type.IsNumber(length)
-    local isVec2 = Type.IsVec2(length)
-    local isVec3 = Type.IsVec3(length)
-    local isRotation = Type.IsRotation(length)
-    local isColor = Type.IsColor(length)
-
-    if not (isNumber or isVec2 or isVec3 or isRotation or isColor) then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPong: length must be a number, Vec2, Vec3, Rotation, or Color.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Validate period parameter
-    if not Type.IsNumber(period) or period <= 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPong: period must be a positive number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Initialize timer storage if not exists
-    if not LevelVars.Engine.LuaUtil.PingPongTimers then
-        LevelVars.Engine.LuaUtil.PingPongTimers = {}
-    end
-
-    -- Calculate frames per cycle
-    local framesPerCycle = LuaUtil.Round(period, 1) * LevelVars.Engine.LuaUtil.FPS
-
-    -- Initialize or update timer for this key
-    if not LevelVars.Engine.LuaUtil.PingPongTimers[key] then
-        LevelVars.Engine.LuaUtil.PingPongTimers[key] = 0
-    end
-
-    -- Get current timer and increment
-    local timer = LevelVars.Engine.LuaUtil.PingPongTimers[key]
-    
-    -- Keep timer in reasonable range by using modulo
-    -- Timer cycles from 0 to framesPerCycle-1
-    LevelVars.Engine.LuaUtil.PingPongTimers[key] = (timer + 1) % framesPerCycle
-
-    -- Calculate scaled value based on type
-    if isNumber then
-        local scale = (length * 2) / framesPerCycle
-        local t = timer * scale
-        return LevelFuncs.Engine.LuaUtil.PingPongComponent(t, length)
-    end
-
-    if isVec2 then
-        local scaleX = (length.x * 2) / framesPerCycle
-        local scaleY = (length.y * 2) / framesPerCycle
-        return TEN.Vec2(
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleX, length.x),
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleY, length.y)
-        )
-    end
-
-    if isVec3 then
-        local scaleX = (length.x * 2) / framesPerCycle
-        local scaleY = (length.y * 2) / framesPerCycle
-        local scaleZ = (length.z * 2) / framesPerCycle
-        return TEN.Vec3(
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleX, length.x),
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleY, length.y),
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleZ, length.z)
-        )
-    end
-
-    if isRotation then
-        -- Rotation components range: 0-360 degrees
-        local scaleX = (length.x * 2) / framesPerCycle
-        local scaleY = (length.y * 2) / framesPerCycle
-        local scaleZ = (length.z * 2) / framesPerCycle
-        return TEN.Rotation(
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleX, length.x),
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleY, length.y),
-            LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleZ, length.z)
-        )
-    end
-
-    if isColor then
-        -- Color components range: 0-255
-        local scaleR = (length.r * 2) / framesPerCycle
-        local scaleG = (length.g * 2) / framesPerCycle
-        local scaleB = (length.b * 2) / framesPerCycle
-        local scaleA = (length.a * 2) / framesPerCycle
-        return TEN.Color(
-            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleR, length.r)),
-            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleG, length.g)),
-            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleB, length.b)),
-            math.floor(LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleA, length.a))
-        )
-    end
-
-    return nil
-end
-
---- Ping-pong animation that oscillates between min and max over a specified period.
--- Returns a value that oscillates smoothly between min and max.
--- Supports numbers, Vec2, Vec3, Rotation, and Color types.
--- @tparam string|number key Unique identifier for this animation timer. Different keys create independent animations.
--- @tparam number|Vec2|Vec3|Rotation|Color min The minimum value (oscillates from this value).
--- @tparam number|Vec2|Vec3|Rotation|Color max The maximum value (oscillates to this value, same type as min).
--- @tparam number period Time in seconds for a complete cycle (min→max→min).
--- @treturn number|Vec2|Vec3|Rotation|Color|nil The ping-ponged value, or nil on error.
--- @usage
--- -- Simple number oscillation between custom range:
--- LevelFuncs.OnLoop = function()
---     local intensity = LuaUtil.PingPongRange("torch", 0.3, 1.0, 2.0) -- Oscillates 0.3→1.0→0.3 every 2 seconds
---     torch:SetIntensity(intensity)
--- end
---
--- -- Multiple independent animations:
--- LevelFuncs.OnLoop = function()
---     local red = LuaUtil.PingPongRange("red", 100, 255, 1.0)
---     local blue = LuaUtil.PingPongRange("blue", 50, 200, 2.0)
---     light:SetColor(TEN.Color(red, 0, blue, 255))
--- end
---
--- -- Vec3 for platform movement between two positions:
--- local basePos = TEN.Vec3(1000, 500, 2000)
--- LevelFuncs.OnLoop = function()
---     local offset = LuaUtil.PingPongRange("platform", TEN.Vec3(0, -256, 0), TEN.Vec3(0, 256, 0), 3.0)
---     platform:SetPosition(basePos + offset)
--- end
---
--- -- Rotation for pendulum swing (-30° to +30° on Y axis):
--- LevelFuncs.OnLoop = function()
---     local rot = LuaUtil.PingPongRange("pendulum", TEN.Rotation(0, -30, 0), TEN.Rotation(0, 30, 0), 4.0)
---     pendulum:SetRotation(rot)
--- end
---
--- -- Color for pulsing between semi-transparent and fully opaque:
--- LevelFuncs.OnLoop = function()
---     local color = LuaUtil.PingPongRange("sprite_fade", 
---         TEN.Color(255, 255, 255, 128), 
---         TEN.Color(255, 255, 255, 255), 
---         1.5)
---     sprite:SetColor(color)
--- end
-LuaUtil.PingPongRange = function(key, min, max, period)
-    -- Validate key parameter
-    if not (Type.IsString(key) or Type.IsNumber(key)) then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPongRange: key must be a string or number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Type checking for min and max
-    local isNumber = Type.IsNumber(min) and Type.IsNumber(max)
-    local isVec2 = Type.IsVec2(min) and Type.IsVec2(max)
-    local isVec3 = Type.IsVec3(min) and Type.IsVec3(max)
-    local isRotation = Type.IsRotation(min) and Type.IsRotation(max)
-    local isColor = Type.IsColor(min) and Type.IsColor(max)
-
-    if not (isNumber or isVec2 or isVec3 or isRotation or isColor) then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPongRange: min and max must be same type (number, Vec2, Vec3, Rotation, or Color).", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Validate period parameter
-    if not Type.IsNumber(period) or period <= 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPongRange: period must be a positive number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Initialize timer storage if not exists
-    if not LevelVars.Engine.LuaUtil.PingPongRangeTimers then
-        LevelVars.Engine.LuaUtil.PingPongRangeTimers = {}
-    end
-
-    -- Calculate frames per cycle
-    local framesPerCycle = LuaUtil.Round(period, 1) * LevelVars.Engine.LuaUtil.FPS
-
-    -- Initialize or update timer for this key
-    if not LevelVars.Engine.LuaUtil.PingPongRangeTimers[key] then
-        LevelVars.Engine.LuaUtil.PingPongRangeTimers[key] = 0
-    end
-
-    -- Get current timer and increment
-    local timer = LevelVars.Engine.LuaUtil.PingPongRangeTimers[key]
-    
-    -- Keep timer in reasonable range by using modulo
-    LevelVars.Engine.LuaUtil.PingPongRangeTimers[key] = (timer + 1) % framesPerCycle
-
-    -- Calculate scaled value based on type
-    if isNumber then
-        local range = max - min
-        local scale = (range * 2) / framesPerCycle
-        local t = timer * scale
-        return min + LevelFuncs.Engine.LuaUtil.PingPongComponent(t, range)
-    end
-
-    if isVec2 then
-        local rangeX = max.x - min.x
-        local rangeY = max.y - min.y
-        local scaleX = (rangeX * 2) / framesPerCycle
-        local scaleY = (rangeY * 2) / framesPerCycle
-        return TEN.Vec2(
-            min.x + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleX, rangeX),
-            min.y + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleY, rangeY)
-        )
-    end
-
-    if isVec3 then
-        local rangeX = max.x - min.x
-        local rangeY = max.y - min.y
-        local rangeZ = max.z - min.z
-        local scaleX = (rangeX * 2) / framesPerCycle
-        local scaleY = (rangeY * 2) / framesPerCycle
-        local scaleZ = (rangeZ * 2) / framesPerCycle
-        return TEN.Vec3(
-            min.x + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleX, rangeX),
-            min.y + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleY, rangeY),
-            min.z + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleZ, rangeZ)
-        )
-    end
-
-    if isRotation then
-        local rangeX = max.x - min.x
-        local rangeY = max.y - min.y
-        local rangeZ = max.z - min.z
-        local scaleX = (rangeX * 2) / framesPerCycle
-        local scaleY = (rangeY * 2) / framesPerCycle
-        local scaleZ = (rangeZ * 2) / framesPerCycle
-        return TEN.Rotation(
-            min.x + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleX, rangeX),
-            min.y + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleY, rangeY),
-            min.z + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleZ, rangeZ)
-        )
-    end
-
-    if isColor then
-        local rangeR = max.r - min.r
-        local rangeG = max.g - min.g
-        local rangeB = max.b - min.b
-        local rangeA = max.a - min.a
-        local scaleR = (rangeR * 2) / framesPerCycle
-        local scaleG = (rangeG * 2) / framesPerCycle
-        local scaleB = (rangeB * 2) / framesPerCycle
-        local scaleA = (rangeA * 2) / framesPerCycle
-        return TEN.Color(
-            math.floor(min.r + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleR, rangeR)),
-            math.floor(min.g + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleG, rangeG)),
-            math.floor(min.b + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleB, rangeB)),
-            math.floor(min.a + LevelFuncs.Engine.LuaUtil.PingPongComponent(timer * scaleA, rangeA))
-        )
-    end
-
-    return nil
-end
-
---- Smoothly oscillate between min and max using Smoothstep interpolation.
--- Creates very smooth, natural-looking animations with gradual acceleration/deceleration.
--- Uses Hermite interpolation (Smoothstep) for smoother transitions than sine wave.
--- Supports numbers, Vec2, Vec3, Rotation, and Color types.
--- @tparam string|number key Unique identifier for this animation timer. Different keys create independent animations.
--- @tparam number|Vec2|Vec3|Rotation|Color min Minimum value.
--- @tparam number|Vec2|Vec3|Rotation|Color max Maximum value (same type as min).
--- @tparam number period Time in seconds for a complete cycle (min→max→min).
--- @treturn number|Vec2|Vec3|Rotation|Color|nil The smoothly oscillated value, or nil on error.
--- @usage
--- -- Simple number oscillation with smooth acceleration:
--- LevelFuncs.OnLoop = function()
---     local intensity = LuaUtil.PingPongSmooth("torch", 0.3, 1.0, 2.0) -- Smoothly oscillates every 2 seconds
---     torch:SetIntensity(intensity)
--- end
---
--- -- Platform movement with natural motion:
--- local basePos = TEN.Vec3(1000, 500, 2000)
--- LevelFuncs.OnLoop = function()
---     local offset = LuaUtil.PingPongSmooth("platform", TEN.Vec3(0, -256, 0), TEN.Vec3(0, 256, 0), 4.0)
---     platform:SetPosition(basePos + offset)
--- end
---
--- -- Door opening/closing with smooth motion:
--- LevelFuncs.OnLoop = function()
---     local rot = LuaUtil.PingPongSmooth("door", TEN.Rotation(0, 0, 0), TEN.Rotation(0, 90, 0), 3.0)
---     door:SetRotation(rot)
--- end
---
--- -- Color pulsing with gradual transitions:
--- LevelFuncs.OnLoop = function()
---     local color = LuaUtil.PingPongSmooth("glow", 
---         TEN.Color(255, 100, 0, 128), 
---         TEN.Color(255, 200, 0, 255), 
---         2.5)
---     sprite:SetColor(color)
--- end
---
--- -- Full 360° spin with smooth acceleration:
--- LevelFuncs.OnLoop = function()
---     local rot = LuaUtil.PingPongSmooth("spinner", TEN.Rotation(0, 0, 0), TEN.Rotation(0, 360, 0), 5.0)
---     object:SetRotation(rot)
--- end
-LuaUtil.PingPongSmooth = function(key, min, max, period)
-    -- Validate key parameter
-    if not (Type.IsString(key) or Type.IsNumber(key)) then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPongSmooth: key must be a string or number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Type checking for min and max
-    local isNumber = Type.IsNumber(min) and Type.IsNumber(max)
-    local isVec2 = Type.IsVec2(min) and Type.IsVec2(max)
-    local isVec3 = Type.IsVec3(min) and Type.IsVec3(max)
-    local isRotation = Type.IsRotation(min) and Type.IsRotation(max)
-    local isColor = Type.IsColor(min) and Type.IsColor(max)
-
-    if not (isNumber or isVec2 or isVec3 or isRotation or isColor) then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPongSmooth: min and max must be same type (number, Vec2, Vec3, Rotation, or Color).", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Validate period parameter
-    if not Type.IsNumber(period) or period <= 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.PingPongSmooth: period must be a positive number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Initialize timer storage if not exists
-    if not LevelVars.Engine.LuaUtil.PingPongSmoothTimers then
-        LevelVars.Engine.LuaUtil.PingPongSmoothTimers = {}
-    end
-
-    -- Calculate frames per cycle
-    local framesPerCycle = LuaUtil.Round(period, 1) * LevelVars.Engine.LuaUtil.FPS
-
-    -- Initialize or update timer for this key
-    if not LevelVars.Engine.LuaUtil.PingPongSmoothTimers[key] then
-        LevelVars.Engine.LuaUtil.PingPongSmoothTimers[key] = 0
-    end
-
-    -- Get current timer and increment
-    local timer = LevelVars.Engine.LuaUtil.PingPongSmoothTimers[key]
-    
-    -- Keep timer in reasonable range by using modulo
-    LevelVars.Engine.LuaUtil.PingPongSmoothTimers[key] = (timer + 1) % framesPerCycle
-
-    -- Normalize timer to 0-1 range
-    local normalizedTime = timer / framesPerCycle
-
-    -- Create ping-pong effect: 0→1→0
-    -- First half (0 to 0.5): goes from 0 to 1
-    -- Second half (0.5 to 1): goes from 1 to 0
-    local t
-    if normalizedTime <= 0.5 then
-        -- First half: map 0-0.5 to 0-1
-        t = normalizedTime * 2
-    else
-        -- Second half: map 0.5-1 to 1-0
-        t = (1 - normalizedTime) * 2
-    end
-
-    -- Apply Smoothstep interpolation (Hermite polynomial: 3t² - 2t³)
-    local smoothT = t * t * (3 - 2 * t)
-
-    -- Interpolate based on type
-    if isNumber then
-        return min + (max - min) * smoothT
-    elseif isVec2 then
-        return TEN.Vec2(
-            min.x + (max.x - min.x) * smoothT,
-            min.y + (max.y - min.y) * smoothT
-        )
-    elseif isVec3 then
-        return TEN.Vec3(
-            min.x + (max.x - min.x) * smoothT,
-            min.y + (max.y - min.y) * smoothT,
-            min.z + (max.z - min.z) * smoothT
-        )
-    elseif isRotation then
-        return TEN.Rotation(
-            min.x + (max.x - min.x) * smoothT,
-            min.y + (max.y - min.y) * smoothT,
-            min.z + (max.z - min.z) * smoothT
-        )
-    elseif isColor then
-        return TEN.Color(
-            math.floor(min.r + (max.r - min.r) * smoothT),
-            math.floor(min.g + (max.g - min.g) * smoothT),
-            math.floor(min.b + (max.b - min.b) * smoothT),
-            math.floor(min.a + (max.a - min.a) * smoothT)
-        )
-    end
-
-    return nil
 end
 
 --- Interpolation functions.
@@ -907,11 +606,143 @@ LuaUtil.Smoothstep = function (a, b, edge0, edge1, x)
         TEN.Util.PrintLog("Error in LuaUtil.Smoothstep: edge0, edge1, and x must be numbers.", TEN.Util.LogLevel.ERROR)
         return nil
     end
+
+    -- Check if edge0 and edge1 are equal (division by zero)
+    if edge1 == edge0 then
+        TEN.Util.PrintLog("Error in LuaUtil.Smoothstep: edge0 and edge1 cannot be equal.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
     -- Scale, bias and saturate x to 0..1 range
     local t = math.max(0, math.min(1, (x - edge0) / (edge1 - edge0)))
+
     -- Evaluate polynomial
     local clampedT = t * t * (3 - 2 * t)
     return LevelFuncs.Engine.LuaUtil.InterpolateValues(a, b, clampedT, "LuaUtil.Smoothstep")
+end
+
+--- Animation functions.
+-- Utilities for time-based animations and oscillations.
+-- @section animation
+
+--- Ping-pong animation that oscillates between min and max over a specified period using Lerp interpolation.
+-- Returns a value that oscillates smoothly between min and max. Supports numbers, Vec2, Vec3, Rotation, and Color types.
+-- 
+-- **Important Note:**
+-- This function must be called **every frame** to update the animation value.
+-- Use it within a repeating function in your level's Lua script, such as:<ul>
+-- <li>`LevelFuncs.OnLoop` for animations during normal gameplay</li>
+-- <li>`LevelFuncs.OnFreeze` for animations during freeze mode</li>
+-- <li>Or register a callback (see @{Logic.AddCallback} for details) with:</li>
+-- <ul>
+--   <li>`CallbackPoint.PRE_LOOP` or `POST_LOOP` for gameplay animations</li>
+--   <li>`CallbackPoint.PRE_FREEZE` or `POST_FREEZE` for freeze mode animations</li>
+-- </ul></ul>
+-- @tparam string|number key Unique identifier for this animation timer. Different keys create independent animations.
+-- @tparam number|Vec2|Vec3|Rotation|Color min The minimum value (oscillates from this value).
+-- @tparam number|Vec2|Vec3|Rotation|Color max The maximum value (oscillates to this value, same type as min).
+-- @tparam number period Time in seconds for a complete cycle (min→max→min).
+-- @treturn number|Vec2|Vec3|Rotation|Color|nil The ping-ponged value, or nil on error.
+-- @usage
+-- -- Simple number oscillation between custom range:
+-- local intensity = LuaUtil.PingPong("torch", 0.3, 1.0, 2.0) -- Oscillates 0.3→1.0→0.3 every 2 seconds
+-- LevelFuncs.OnLoop = function()
+--     intensity = LuaUtil.PingPong("torch", 0.3, 1.0, 2.0)
+--     torch:SetIntensity(intensity)
+-- end
+--
+-- -- Multiple independent animations:
+-- local red = LuaUtil.PingPong("red", 100, 255, 3.0)   -- Oscillates 100→255→100 every 3 seconds
+-- local blue = LuaUtil.PingPong("blue", 50, 200, 2.0) -- Oscillates 50→200→50 every 2 seconds
+-- LevelFuncs.OnLoop = function()
+--     red = LuaUtil.PingPong("red", 100, 255, 3.0)
+--     blue = LuaUtil.PingPong("blue", 50, 200, 2.0)
+--     light:SetColor(TEN.Color(red, 0, blue, 255))
+-- end
+--
+-- -- Vec3 for platform movement between two positions every 10 seconds:
+-- local bridge = TEN.Objects.GetMoveableByName("bridge_flat_5")
+-- local pos = LuaUtil.PingPongSmooth("pos", TEN.Vec3(8704, -384, 12800), TEN.Vec3(10752, -384, 12800), 10.0)
+-- LevelFuncs.OnLoop = function()
+--     pos = LuaUtil.PingPongSmooth("pos", TEN.Vec3(8704, -384, 12800), TEN.Vec3(10752, -384, 12800), 10.0)
+--     bridge:SetPosition(pos)
+-- end
+--
+-- -- Full rotations for spinning object (0° to 360°) every 2 seconds:
+-- local rotation = LuaUtil.PingPong("spinner", TEN.Rotation(0, 0, 0), TEN.Rotation(0, 359.99, 0), 2.0)
+-- LevelFuncs.OnLoop = function()
+--     rotation = LuaUtil.PingPong("spinner", TEN.Rotation(0, 0, 0), TEN.Rotation(0, 359.99, 0), 2.0)
+--     object:SetRotation(rotation)
+-- end
+--
+-- -- Color for pulsing between semi-transparent and fully opaque every 1.5 seconds:
+-- local color = LuaUtil.PingPong("sprite_fade", TEN.Color(255, 255, 255, 128), TEN.Color(255, 255, 255, 255), 1.5)
+-- LevelFuncs.OnLoop = function()
+--     color = LuaUtil.PingPong("sprite_fade", 
+--         TEN.Color(255, 255, 255, 128), 
+--         TEN.Color(255, 255, 255, 255), 
+--         1.5)
+--     sprite:SetColor(color)
+-- end
+LuaUtil.PingPong = function(key, min, max, period)
+    -- Initialize timer storage if not exists
+    if not LevelVars.Engine.LuaUtil.PingPongTimers then
+        LevelVars.Engine.LuaUtil.PingPongTimers = {}
+    end
+    
+    return LevelFuncs.Engine.LuaUtil.PingPongGeneric(key, min, max, period, false, LevelVars.Engine.LuaUtil.PingPongTimers)
+end
+
+--- Smoothly oscillate between min and max using Smoothstep interpolation.
+-- Creates very smooth, natural-looking animations with gradual acceleration/deceleration.
+-- Uses Hermite interpolation (Smoothstep) for smoother transitions than sine wave.
+-- Supports numbers, Vec2, Vec3, Rotation, and Color types.
+-- @tparam string|number key Unique identifier for this animation timer. Different keys create independent animations.
+-- @tparam number|Vec2|Vec3|Rotation|Color min Minimum value.
+-- @tparam number|Vec2|Vec3|Rotation|Color max Maximum value (same type as min).
+-- @tparam number period Time in seconds for a complete cycle (min→max→min).
+-- @treturn number|Vec2|Vec3|Rotation|Color|nil The smoothly oscillated value, or nil on error.
+-- @usage
+-- -- Simple number oscillation with smooth acceleration:
+-- LevelFuncs.OnLoop = function()
+--     local intensity = LuaUtil.PingPongSmooth("torch", 0.3, 1.0, 2.0) -- Smoothly oscillates every 2 seconds
+--     torch:SetIntensity(intensity)
+-- end
+--
+-- -- Platform movement with natural motion:
+-- local basePos = TEN.Vec3(1000, 500, 2000)
+-- LevelFuncs.OnLoop = function()
+--     local offset = LuaUtil.PingPongSmooth("platform", TEN.Vec3(0, -256, 0), TEN.Vec3(0, 256, 0), 4.0)
+--     platform:SetPosition(basePos + offset)
+-- end
+--
+-- -- Door opening/closing with smooth motion:
+-- LevelFuncs.OnLoop = function()
+--     local rot = LuaUtil.PingPongSmooth("door", TEN.Rotation(0, 0, 0), TEN.Rotation(0, 90, 0), 3.0)
+--     door:SetRotation(rot)
+-- end
+--
+-- -- Color pulsing with gradual transitions:
+-- LevelFuncs.OnLoop = function()
+--     local color = LuaUtil.PingPongSmooth("glow", 
+--         TEN.Color(255, 100, 0, 128), 
+--         TEN.Color(255, 200, 0, 255), 
+--         2.5)
+--     sprite:SetColor(color)
+-- end
+--
+-- -- Full 360° spin with smooth acceleration:
+-- LevelFuncs.OnLoop = function()
+--     local rot = LuaUtil.PingPongSmooth("spinner", TEN.Rotation(0, 0, 0), TEN.Rotation(0, 360, 0), 5.0)
+--     object:SetRotation(rot)
+-- end
+LuaUtil.PingPongSmooth = function(key, min, max, period)
+    -- Initialize timer storage if not exists
+    if not LevelVars.Engine.LuaUtil.PingPongSmoothTimers then
+        LevelVars.Engine.LuaUtil.PingPongSmoothTimers = {}
+    end
+    
+    return LevelFuncs.Engine.LuaUtil.PingPongGeneric(key, min, max, period, true, LevelVars.Engine.LuaUtil.PingPongSmoothTimers)
 end
 
 --- Table functions.
@@ -951,15 +782,21 @@ LuaUtil.CompareTables = function (tbl1, tbl2)
         return false
     end
 
+    -- Track keys checked from tbl1
+    local keysChecked = {}
+
+    -- Check all keys from tbl1
     for key, value in pairs(tbl1) do
         if tbl2[key] ~= value then
             return false
         end
+        keysChecked[key] = true
     end
 
-    for key, value in pairs(tbl2) do
-        if tbl1[key] ~= value then
-            return false
+    -- Check if tbl2 has any extra keys not in tbl1
+    for key, _ in pairs(tbl2) do
+        if not keysChecked[key] then
+            return false  -- tbl2 has a key that tbl1 doesn't have
         end
     end
 
@@ -968,6 +805,7 @@ end
 
 --- Deeply compare two tables for equality.
 --- This function checks if both tables have the same keys and corresponding values, including nested tables.
+--- **Limits:** Maximum depth of 10 levels and 1000 total elements processed to prevent performance issues.
 --- @tparam table tbl1 The first table to compare.
 --- @tparam table tbl2 The second table to compare.
 --- @treturn bool True if the tables are deeply equal, false otherwise.
@@ -982,27 +820,25 @@ LuaUtil.CompareTablesDeep = function (tbl1, tbl2)
         return false
     end
 
-    for key, value in pairs(tbl1) do
-        if Type.IsTable(value) and Type.IsTable(tbl2[key]) then
-            if not LuaUtil.CompareTablesDeep(value, tbl2[key]) then
-                return false
-            end
-        elseif tbl2[key] ~= value then
-            return false
-        end
-    end
+    -- Generate unique ID for this comparison
+    local compareId = LevelVars.Engine.LuaUtil.CompareDeep.nextId
+    LevelVars.Engine.LuaUtil.CompareDeep.nextId = LevelVars.Engine.LuaUtil.CompareDeep.nextId + 1
 
-    for key, value in pairs(tbl2) do
-        if Type.IsTable(value) and Type.IsTable(tbl1[key]) then
-            if not LuaUtil.CompareTablesDeep(value, tbl1[key]) then
-                return false
-            end
-        elseif tbl1[key] ~= value then
-            return false
-        end
-    end
+    -- Initialize context for this comparison
+    LevelVars.Engine.LuaUtil.CompareDeep.activeCompares[compareId] = {
+        depth = 0,
+        elementCount = 0,
+        visited = {},  -- Prevents infinite loops on circular tables
+        keysChecked = {}  -- Tracks which keys we've already processed
+    }
 
-    return true
+    -- Execute comparison
+    local result = LevelFuncs.Engine.LuaUtil.CompareRecursive(tbl1, tbl2, compareId)
+
+    -- Cleanup: remove context for this comparison
+    LevelVars.Engine.LuaUtil.CompareDeep.activeCompares[compareId] = nil
+
+    return result
 end
 
 --- Check if a table contains a specific value.
