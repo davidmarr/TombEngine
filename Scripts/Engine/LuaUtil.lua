@@ -458,30 +458,101 @@ LuaUtil.Round = function(num, decimals)
     return math.floor(num * mult + 0.5) / mult
 end
 
---- Generate a random number with optional seed.
--- @tparam float min Minimum value.
--- @tparam float max Maximum value.
+--- Generate a random number or vector/color/time with optional seed.
+-- @tparam float|Vec2|Vec3|Color|Time min Minimum value.
+-- @tparam float|Vec2|Vec3|Color|Time max Maximum value (same type as min).
 -- @tparam[opt] float seed Seed for reproducible randomness.
--- @treturn float Random number between min and max.
+-- @treturn float|Vec2|Vec3|Color|Time|nil Random value between min and max, or nil on error.
 -- @usage
 -- local rand1 = LuaUtil.Random(1, 10)          -- Random number between 1 and 10
 -- local rand2 = LuaUtil.Random(0.0, 1.0)       -- Random float between 0.0 and 1.0
--- local rand3 = LuaUtil.Random(1, 100, 42)    -- Random number between 1 and 100 with seed 42
+-- local rand3 = LuaUtil.Random(1, 100, 42)     -- Random number with seed 42
+-- 
+-- -- Random position in a rectangle:
+-- local randomPos = LuaUtil.Random(
+--     TEN.Vec2(0, 0), 
+--     TEN.Vec2(1024, 768)
+-- )
+-- 
+-- -- Random 3D position in a box:
+-- local randomPos3D = LuaUtil.Random(
+--     TEN.Vec3(-100, 0, -100), 
+--     TEN.Vec3(100, 200, 100)
+-- )
+-- 
+-- -- Random color between red and yellow:
+-- local randomColor = LuaUtil.Random(
+--     TEN.Color(255, 0, 0, 255),
+--     TEN.Color(255, 255, 0, 255)
+-- )
+--
+-- -- Random time duration between 1 and 3 seconds:
+-- local randomDelay = LuaUtil.Random(
+--     TEN.Time.FromSeconds(1),
+--     TEN.Time.FromSeconds(3)
+-- )
+--
+-- -- Random time in frames (30-90 frames = 1-3 seconds @ 30fps):
+-- local randomFrames = LuaUtil.Random(
+--     TEN.Time(30),
+--     TEN.Time(90)
+-- )
 LuaUtil.Random = function(min, max, seed)
-    if not (Type.IsNumber(min) and Type.IsNumber(max)) or (seed and not Type.IsNumber(seed)) then
-        TEN.Util.PrintLog("Error in LuaUtil.Random: min, max and seed must be numbers.", TEN.Util.LogLevel.ERROR)
-        return 0
+    -- Type checking
+    local isNumber = Type.IsNumber(min) and Type.IsNumber(max)
+    local isVec2 = Type.IsVec2(min) and Type.IsVec2(max)
+    local isVec3 = Type.IsVec3(min) and Type.IsVec3(max)
+    local isColor = Type.IsColor(min) and Type.IsColor(max)
+    local isTime = Type.IsTime(min) and Type.IsTime(max)
+
+    if not (isNumber or isVec2 or isVec3 or isColor or isTime) then
+        TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be same type (number, Vec2, Vec3, Color, or Time).", TEN.Util.LogLevel.ERROR)
+        return nil
     end
+
+    if seed and not Type.IsNumber(seed) then
+        TEN.Util.PrintLog("Error in LuaUtil.Random: seed must be a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
     if seed then
         math.randomseed(seed)
     end
-    return min + math.random() * (max - min)
+
+    if isNumber then
+        return min + math.random() * (max - min)
+    elseif isVec2 then
+        return TEN.Vec2(
+            min.x + math.random() * (max.x - min.x),
+            min.y + math.random() * (max.y - min.y)
+        )
+    elseif isVec3 then
+        return TEN.Vec3(
+            min.x + math.random() * (max.x - min.x),
+            min.y + math.random() * (max.y - min.y),
+            min.z + math.random() * (max.z - min.z)
+        )
+    elseif isColor then
+        return TEN.Color(
+            math.floor(min.r + math.random() * (max.r - min.r)),
+            math.floor(min.g + math.random() * (max.g - min.g)),
+            math.floor(min.b + math.random() * (max.b - min.b)),
+            math.floor(min.a + math.random() * (max.a - min.a))
+        )
+    elseif isTime then
+        -- Generate random frames between min and max (Time objects work with gameFrames)
+        local minFrames = min:GetFrameCount()
+        local maxFrames = max:GetFrameCount()
+        local randomFrames = math.floor(minFrames + math.random() * (maxFrames - minFrames))
+        return TEN.Time(randomFrames)
+    end
 end
 
 --- Clamp a value between a minimum and maximum.
 -- @tparam number value The value to clamp.
 -- @tparam number min The minimum value.
 -- @tparam number max The maximum value.
+-- @tparam[opt=true] bool check Whether to perform type and range checks on inputs.
 -- @treturn number The clamped value.
 -- @usage
 -- -- Example: Clamp to 0-1 range for normalized values
@@ -490,15 +561,17 @@ end
 -- -- Practical use: Clamp value between 0 and 1
 -- local inputValue = 1.5
 -- local clampedValue = LuaUtil.Clamp(inputValue, 0, 1) -- Result: 1
-LuaUtil.Clamp = function(value, min, max)
-    if not (Type.IsNumber(value) and Type.IsNumber(min) and Type.IsNumber(max)) then
-        TEN.Util.PrintLog("Error in LuaUtil.Clamp: parameters must be numbers.", TEN.Util.LogLevel.ERROR)
-        return value
-    end
-
-    if min > max then
-        TEN.Util.PrintLog("Error in LuaUtil.Clamp: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
-        return value
+LuaUtil.Clamp = function(value, min, max, check)
+    check = (check == nil or not Type.IsBoolean(check)) and true or check
+    if check then
+        if not (Type.IsNumber(value) and Type.IsNumber(min) and Type.IsNumber(max)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: parameters must be numbers.", TEN.Util.LogLevel.ERROR)
+            return value
+        end
+        if min > max then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+            return value
+        end
     end
 
     return math.max(min, math.min(max, value))
@@ -542,7 +615,7 @@ LuaUtil.Lerp = function(a, b, t)
         return nil
     end
     -- Clamp t to the range [0, 1]
-    local clampedT = math.max(0, math.min(1, t))
+    local clampedT = LuaUtil.Clamp(t, 0, 1, false)
     return LevelFuncs.Engine.LuaUtil.InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
 end
 
@@ -614,11 +687,55 @@ LuaUtil.Smoothstep = function (a, b, edge0, edge1, x)
     end
 
     -- Scale, bias and saturate x to 0..1 range
-    local t = math.max(0, math.min(1, (x - edge0) / (edge1 - edge0)))
+    local t = LuaUtil.Clamp((x - edge0) / (edge1 - edge0), 0, 1, false)
 
     -- Evaluate polynomial
     local clampedT = t * t * (3 - 2 * t)
     return LevelFuncs.Engine.LuaUtil.InterpolateValues(a, b, clampedT, "LuaUtil.Smoothstep")
+end
+
+--- Smoothly interpolate with ease-in-out quadratic curve.
+-- Provides gentle acceleration at the start and deceleration at the end.
+-- More pronounced than Smoothstep but smoother than linear interpolation.
+-- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
+-- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
+-- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @treturn float|Color|Rotation|Vec2|Vec3|nil The interpolated value, or nil on error.
+-- @usage
+-- -- Number interpolation:
+-- local value = LuaUtil.EaseInOut(0, 100, 0.5) -- Result: 50
+--
+-- -- Color interpolation for UI fades:
+-- local color = LuaUtil.EaseInOut(
+--     TEN.Color(255, 0, 0, 255), 
+--     TEN.Color(0, 0, 255, 255), 
+--     0.5
+-- )
+--
+-- -- Position animation with smooth acceleration:
+-- local pos = LuaUtil.EaseInOut(
+--     TEN.Vec3(0, 0, 0), 
+--     TEN.Vec3(1000, 500, 0), 
+--     t
+-- )
+LuaUtil.EaseInOut = function(a, b, t)
+    if not Type.IsNumber(t) then
+        TEN.Util.PrintLog("Error in LuaUtil.EaseInOut: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Clamp t to [0, 1]
+    t = math.max(0, math.min(1, t))
+
+    -- EaseInOutQuad formula
+    local easedT
+    if t < 0.5 then
+        easedT = 2 * t * t  -- Ease in: accelerazione
+    else
+        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: decelerazione
+    end
+
+    return LevelFuncs.Engine.LuaUtil.InterpolateValues(a, b, easedT, "LuaUtil.EaseInOut")
 end
 
 --- Animation functions.
