@@ -1062,6 +1062,47 @@ LuaUtil.Clamp = function(value, min, max)
     return value
 end
 
+--- Wrap an angle to a specific range (e.g., 0-360 or -180 to 180).
+-- Useful for normalizing rotation angles and preventing overflow.
+-- @tparam float angle The angle to wrap.
+-- @tparam[opt=0] float min Minimum value of the range.
+-- @tparam[opt=360] float max Maximum value of the range.
+-- @treturn float The wrapped angle.
+-- @usage
+-- -- Normalize angles to 0-360 range:
+-- local wrapped1 = LuaUtil.Wrap(450, 0, 360)  -- Result: 90
+-- local wrapped2 = LuaUtil.Wrap(-30, 0, 360)  -- Result: 330
+-- local wrapped3 = LuaUtil.Wrap(720, 0, 360)  -- Result: 0
+--
+-- -- Normalize to -180 to 180 range (common for game rotations):
+-- local wrapped4 = LuaUtil.Wrap(200, -180, 180)  -- Result: -160
+-- local wrapped5 = LuaUtil.Wrap(-200, -180, 180) -- Result: 160
+--
+-- -- Practical example: Continuous rotation without overflow
+-- local currentAngle = 0
+-- LevelFuncs.OnLoop = function()
+--     currentAngle = currentAngle + 5  -- Rotate 5° per frame
+--     currentAngle = LuaUtil.Wrap(currentAngle, 0, 360)  -- Keep in 0-360
+--     entity:SetRotation(TEN.Rotation(0, currentAngle, 0))
+-- end
+LuaUtil.Wrap = function(angle, min, max)
+    min = min or 0
+    max = max or 360
+    
+    if not (C.IsNumber(angle) and C.IsNumber(min) and C.IsNumber(max)) then
+        TEN.Util.PrintLog("Error in LuaUtil.Wrap: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)
+        return angle
+    end
+    
+    local range = max - min
+    if range == 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.Wrap: min cannot equal max.", TEN.Util.LogLevel.ERROR)
+        return angle
+    end
+    
+    return angle - range * C.floor((angle - min) / range)
+end
+
 --- Interpolation functions.
 -- Utilities for interpolating between values.
 -- Different interpolation methods provide various speed curves and behaviors.
