@@ -21,7 +21,7 @@ namespace TEN::Scripting::Types
 
 		// Constructors
 
-		ScriptColor() = default;
+		ScriptColor();
 		ScriptColor(byte r, byte g, byte b);
 		ScriptColor(byte r, byte g, byte b, byte a);
 		ScriptColor(const Vector3& color);
@@ -45,7 +45,6 @@ namespace TEN::Scripting::Types
 		// Methods
 
 		ScriptColor PremultiplyAlpha();
-		Vector3 GetNormalizedRGB() const;
 		float GetBrightness() const;
 		float GetSaturation() const;
 		float GetHue() const;

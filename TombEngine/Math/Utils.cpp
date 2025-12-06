@@ -5,6 +5,9 @@
 
 namespace TEN::Math
 {
+	constexpr float HUE_SECTOR = 60.0f;
+	constexpr float HUE_CIRCLE = 360.0f;
+
 	float FloorToStep(float value, float step)
 	{
 		return (floor(value / step) * step);
@@ -132,20 +135,20 @@ namespace TEN::Math
 		// Note: fmodf can return negative values, so we adjust later.
 		if (maxVal == r)
 		{
-			hue = 60.0f * fmodf((g - b) / delta, 6.0f);
+			hue = HUE_SECTOR * fmodf((g - b) / delta, 6.0f);
 		}
 		else if (maxVal == g)
 		{
-			hue = 60.0f * (((b - r) / delta) + 2.0f);
+			hue = HUE_SECTOR * (((b - r) / delta) + 2.0f);
 		}
 		else // maxVal == b
 		{
-			hue = 60.0f * (((r - g) / delta) + 4.0f);
+			hue = HUE_SECTOR * (((r - g) / delta) + 4.0f);
 		}
 
 		// Normalize to [0.0, 360.0).
 		if (hue < 0.0f)
-			hue += 360.0f;
+			hue += HUE_CIRCLE;
 		return hue;
 	}
 
