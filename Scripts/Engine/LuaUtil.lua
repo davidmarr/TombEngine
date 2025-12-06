@@ -412,6 +412,137 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
     )
 end
 
+--- Convert a TEN.Color object to HSL (Hue, Saturation, Lightness) values.
+-- Uses the Color:GetHue() method for accurate hue extraction.
+-- @tparam Color color The TEN.Color object to convert.
+-- @treturn table|nil A table with h, s, l, a values, or nil on error.
+-- @usage
+-- -- Example: Get HSL values from a color
+-- local color = TEN.Color(255, 87, 51, 255)
+-- local hsl = LuaUtil.ColorToHSL(color)
+-- -- Result: { h = 14.0, s = 1.0, l = 0.6, a = 1.0 }
+--
+-- -- Practical example: Adjust saturation
+-- local originalColor = TEN.Color(255, 100, 50, 255)
+-- local hsl = LuaUtil.ColorToHSL(originalColor)
+-- if hsl then
+--     hsl.s = hsl.s * 0.5  -- Reduce saturation by 50%
+--     local desaturatedColor = LuaUtil.HSLtoColor(hsl.h, hsl.s, hsl.l, hsl.a)
+--     sprite:SetColor(desaturatedColor)
+-- end
+--
+-- -- Example: Brighten a color
+-- local darkColor = TEN.Color(50, 50, 150, 255)
+-- local hsl = LuaUtil.ColorToHSL(darkColor)
+-- if hsl then
+--     hsl.l = math.min(1.0, hsl.l + 0.2)  -- Increase lightness by 20%
+--     local brighterColor = LuaUtil.HSLtoColor(hsl.h, hsl.s, hsl.l, hsl.a)
+--     sprite:SetColor(brighterColor)
+-- end
+--
+-- -- Error handling example:
+-- local hsl = LuaUtil.ColorToHSL(invalidColor)
+-- if hsl == nil then
+--     TEN.Util.PrintLog("Failed to convert color to HSL", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+LuaUtil.ColorToHSL = function(color)
+    if not Type.IsColor(color) then
+        TEN.Util.PrintLog("Error in LuaUtil.ColorToHSL: color must be a Color object.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Convert RGB to 0-1 range
+    local r = color.r / 255
+    local g = color.g / 255
+    local b = color.b / 255
+    local a = color.a / 255
+
+    -- Get hue directly from Color method
+    local h = color:GetHue()
+
+    -- Calculate saturation and lightness
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local l = (max + min) / 2
+
+    local s
+    if max == min then
+        s = 0  -- Achromatic (gray)
+    else
+        local delta = max - min
+        s = l > 0.5 and delta / (2 - max - min) or delta / (max + min)
+    end
+
+    return { h = h, s = s, l = l, a = a }
+end
+
+--- Invert the RGB components of a color (255 - component).
+-- Creates a negative/opposite color effect by inverting red, green, and blue channels.
+-- Optionally preserves the original alpha channel.
+-- @tparam Color color The color to invert.
+-- @tparam[opt=false] bool keepAlpha If true, preserves the original alpha value.
+-- @treturn Color|nil The inverted color, or nil on error.
+-- @usage
+-- -- Example: Simple color inversion
+-- local red = TEN.Color(255, 0, 0, 255)
+-- local cyan = LuaUtil.InvertColor(red)  
+-- -- Result: TEN.Color(0, 255, 255, 0)
+--
+-- -- Example: Invert while keeping alpha
+-- local semiRed = TEN.Color(255, 0, 0, 128)
+-- local semiCyan = LuaUtil.InvertColor(semiRed, true)
+-- -- Result: TEN.Color(0, 255, 255, 128)
+--
+-- -- Practical example: Create negative effect on sprite
+-- local originalColor = sprite:GetColor()
+-- local negativeColor = LuaUtil.InvertColor(originalColor, true)  -- Keep transparency
+-- sprite:SetColor(negativeColor)
+--
+-- -- Example: Toggle between normal and inverted
+-- local isInverted = false
+-- local baseColor = TEN.Color(100, 150, 200, 255)
+-- LevelFuncs.OnLoop = function()
+--     if isInverted then
+--         sprite:SetColor(LuaUtil.InvertColor(baseColor, true))
+--     else
+--         sprite:SetColor(baseColor)
+--     end
+-- end
+--
+-- -- Error handling example:
+-- local inverted = LuaUtil.InvertColor(color, true)
+-- if inverted == nil then
+--     TEN.Util.PrintLog("Failed to invert color", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+-- sprite:SetColor(inverted)
+--
+-- -- Safe approach with default fallback:
+-- local invertedColor = LuaUtil.InvertColor(color, true) or TEN.Color(255, 255, 255, 255)
+LuaUtil.InvertColor = function(color, keepAlpha)
+    if not Type.IsColor(color) then
+        TEN.Util.PrintLog("Error in LuaUtil.InvertColor: color must be a Color object.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Handle keepAlpha: use default if nil/not provided, warn if wrong type
+    if keepAlpha ~= nil and not Type.IsBoolean(keepAlpha) then
+        TEN.Util.PrintLog("Warning in LuaUtil.InvertColor: keepAlpha must be a boolean. Using default value (false).", TEN.Util.LogLevel.WARNING)
+        keepAlpha = false
+    else
+        keepAlpha = keepAlpha or false
+    end
+
+    local inverted = color:Invert()
+    
+    if keepAlpha then
+        inverted.a = color.a
+    end
+
+    return inverted
+end
+
 --- Mathematical functions.
 -- Utilities for mathematical operations and rounding.
 -- @section math
