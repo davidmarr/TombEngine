@@ -1064,42 +1064,55 @@ end
 
 --- Wrap an angle to a specific range (e.g., 0-360 or -180 to 180).
 -- Useful for normalizing rotation angles and preventing overflow.
+-- Unlike Clamp, this function wraps values cyclically (e.g., 450° → 90°).
 -- @tparam float angle The angle to wrap.
 -- @tparam[opt=0] float min Minimum value of the range.
 -- @tparam[opt=360] float max Maximum value of the range.
--- @treturn float The wrapped angle.
+-- @treturn float The wrapped angle. If an error occurs, returns the original angle.
 -- @usage
 -- -- Normalize angles to 0-360 range:
--- local wrapped1 = LuaUtil.Wrap(450, 0, 360)  -- Result: 90
--- local wrapped2 = LuaUtil.Wrap(-30, 0, 360)  -- Result: 330
--- local wrapped3 = LuaUtil.Wrap(720, 0, 360)  -- Result: 0
+-- local wrapped1 = LuaUtil.WrapAngle(450, 0, 360)  -- Result: 90
+-- local wrapped2 = LuaUtil.WrapAngle(-30, 0, 360)  -- Result: 330
+-- local wrapped3 = LuaUtil.WrapAngle(720, 0, 360)  -- Result: 0
 --
 -- -- Normalize to -180 to 180 range (common for game rotations):
--- local wrapped4 = LuaUtil.Wrap(200, -180, 180)  -- Result: -160
--- local wrapped5 = LuaUtil.Wrap(-200, -180, 180) -- Result: 160
+-- local wrapped4 = LuaUtil.WrapAngle(200, -180, 180)  -- Result: -160
+-- local wrapped5 = LuaUtil.WrapAngle(-200, -180, 180) -- Result: 160
+--
+-- -- Difference from Clamp (important!):
+-- local clamped = LuaUtil.Clamp(450, 0, 360)    -- Result: 360 (cuts at max)
+-- local wrapped = LuaUtil.WrapAngle(450, 0, 360) -- Result: 90 (wraps around)
 --
 -- -- Practical example: Continuous rotation without overflow
 -- local currentAngle = 0
 -- LevelFuncs.OnLoop = function()
 --     currentAngle = currentAngle + 5  -- Rotate 5° per frame
---     currentAngle = LuaUtil.Wrap(currentAngle, 0, 360)  -- Keep in 0-360
+--     currentAngle = LuaUtil.WrapAngle(currentAngle, 0, 360)  -- Keep in 0-360
 --     entity:SetRotation(TEN.Rotation(0, currentAngle, 0))
 -- end
-LuaUtil.Wrap = function(angle, min, max)
+--
+-- -- Example: Calculate shortest rotation path
+-- local currentYaw = 350  -- Facing almost north
+-- local targetYaw = 10    -- Target is just past north
+-- -- Direct difference would be: 10 - 350 = -340° (wrong direction!)
+-- -- Wrapped difference:
+-- local delta = LuaUtil.WrapAngle(targetYaw - currentYaw, -180, 180)
+-- -- Result: 20° (correct shortest path: turn right 20°)
+LuaUtil.WrapAngle = function(angle, min, max)
     min = min or 0
     max = max or 360
-    
+
     if not (C.IsNumber(angle) and C.IsNumber(min) and C.IsNumber(max)) then
-        TEN.Util.PrintLog("Error in LuaUtil.Wrap: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)
         return angle
     end
-    
+
     local range = max - min
     if range == 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.Wrap: min cannot equal max.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: min cannot equal max.", TEN.Util.LogLevel.ERROR)
         return angle
     end
-    
+
     return angle - range * C.floor((angle - min) / range)
 end
 
