@@ -2,7 +2,7 @@
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Math/Utils.h"
 
-/// Represents an RGBA or RGB color.<style>table.function_list td.name {min-width: 230px;}</style>
+/// Represents an RGBA or RGB color.
 // Components are specified as values clamped to the range [0, 255].
 //
 // @tenprimitive Color
