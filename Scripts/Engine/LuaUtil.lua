@@ -15,6 +15,8 @@
 --- - Early error detection during development
 --- - Predictable results when users make mistakes
 ---
+--- To use, include the module with:
+---
 ---	local LuaUtil = require("Engine.LuaUtil")
 --- @luautil LuaUtil
 
