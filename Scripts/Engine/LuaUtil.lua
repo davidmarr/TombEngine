@@ -990,6 +990,53 @@ end
 -- -- Practical use: Clamp value between 0 and 1
 -- local inputValue = 1.5
 -- local clampedValue = LuaUtil.Clamp(inputValue, 0, 1) -- Result: 1
+--
+-- -- Use clampedValue for further calculations
+-- local scaledValue = clampedValue * 100  -- Scale to 0-100 range
+--
+-- -- Example: Clamp a Vec2 position within screen bounds
+-- local position = TEN.Vec2(1200, -50)
+-- local minBounds = TEN.Vec2(0, 0)
+-- local maxBounds = TEN.Vec2(1920, 1080)
+-- local clampedPosition = LuaUtil.Clamp(position, minBounds, maxBounds)
+-- -- Result: Vec2(1920, 0)
+--
+-- -- Example: Clamp a Vec3 position within a bounding box
+-- local position = TEN.Vec3(150, -20, 300)
+-- local minBounds = TEN.Vec3(0, 0, 0)
+-- local maxBounds = TEN.Vec3(100, 100, 100)
+-- local clampedPosition = LuaUtil.Clamp(position, minBounds, maxBounds)
+-- -- Result: Vec3(100, 0, 100)
+--
+-- -- Example: Clamp a Color's RGB components
+-- local color = TEN.Color(251, 120, 20, 255)
+-- local minColor = TEN.Color(0, 0, 0, 255)
+-- local maxColor = TEN.Color(255, 100, 10, 255)
+-- local clampedColor = LuaUtil.Clamp(color, minColor, maxColor)
+-- -- Result: TEN.Color(251, 100, 10, 255)
+--
+-- -- Example: Clamp a Time duration between 1 and 5 seconds
+-- local duration = TEN.Time(LuaUtil.SecondsToFrames(7))
+-- local minDuration = TEN.Time(LuaUtil.SecondsToFrames(1))
+-- local maxDuration = TEN.Time(LuaUtil.SecondsToFrames(5))
+-- local clampedDuration = LuaUtil.Clamp(duration, minDuration, maxDuration)
+-- -- Result: TEN.Time.FromSeconds(5)
+--
+-- -- Example: Clamp a Rotation's pitch between -45 and 45 degrees
+-- local rotation = TEN.Rotation(45, 90, 0)
+-- local minRotation = TEN.Rotation(15, 0, 0)
+-- local maxRotation = TEN.Rotation(0, 90, 0)
+-- local clampedRotation = LuaUtil.Clamp(rotation, minRotation, maxRotation)
+-- -- Result: TEN.Rotation(15, 90, 0)
+--
+-- -- Error handling example:
+-- local clampedValue = LuaUtil.Clamp(value, min, max)
+-- if clampedValue == value then
+--     TEN.Util.PrintLog("Failed to clamp value", TEN.Util.LogLevel.ERROR)
+--     return  -- or use a fallback value
+-- end
+-- -- Safe approach with default fallback:
+-- local clampedValue = LuaUtil.Clamp(value, min, max) or defaultValue
 LuaUtil.Clamp = function(value, min, max)
     -- Lazy type checking: check only what's needed
     if C.IsNumber(value) then
@@ -1650,6 +1697,7 @@ end
 -- @tparam table tbl The table to count.
 -- @treturn int The number of elements.
 -- @usage
+-- -- Example with non-sequential table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
 -- local count = LuaUtil.TableCount(tbl) -- Result: 3
 LuaUtil.TableCount = function(tbl)
