@@ -7,6 +7,7 @@
 class Vec3;
 namespace sol { class state; }
 namespace TEN::Scripting { class Rotation; }
+namespace TEN::Scripting { class Static; }
 
 using namespace TEN::Scripting;
 
@@ -44,6 +45,8 @@ public:
 
 	bool GetActive() const;
 	bool IsMoveableInside(const Moveable& mov);
+	bool IsStaticInside(const TEN::Scripting::Static& stat);
+	sol::table GetMoveables(sol::this_state state) const;
 
 	// Utilities
 

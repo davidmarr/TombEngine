@@ -214,9 +214,9 @@ static constexpr char ScriptReserved_AttachObjCamera[]		= "AttachObjCamera";
 static constexpr char ScriptReserved_AnimFromObject[]		= "AnimFromObject";
 static constexpr char ScriptReserved_ClearActivators[]		= "ClearActivators";
 static constexpr char ScriptReserved_IsMoveableInside[]		= "IsMoveableInside";
+static constexpr char ScriptReserved_IsStaticInside[]		= "IsStaticInside";
+static constexpr char ScriptReserved_GetMoveables[]			= "GetMoveables";
 static constexpr char ScriptReserved_GetFlag[]				= "GetFlag";
-static constexpr char ScriptReserved_SetFlag[]				= "SetFlag";
-static constexpr char ScriptReserved_IsTagPresent[]			= "IsTagPresent";
 
 static constexpr char ScriptReserved_GetOnCollidedWithObject[]	= "GetOnCollidedWithObject";
 static constexpr char ScriptReserved_SetOnCollidedWithObject[]	= "SetOnCollidedWithObject";

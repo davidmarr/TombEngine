@@ -5,9 +5,11 @@
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptAssert.h"
 #include "Scripting/Internal/ScriptUtil.h"
+#include "Scripting/Internal/TEN/Objects/Static/StaticObject.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Specific/level.h"
+#include <Scripting/Internal/TEN/Objects/ObjectsHandler.h>
 
 /***
 Activator volume.
@@ -45,7 +47,9 @@ void Volume::Register(sol::table& parent)
 		ScriptReserved_ClearActivators, &Volume::ClearActivators,
 
 		ScriptReserved_GetActive, &Volume::GetActive,
-		ScriptReserved_IsMoveableInside, &Volume::IsMoveableInside);
+		ScriptReserved_IsMoveableInside, &Volume::IsMoveableInside,
+		ScriptReserved_IsStaticInside, & Volume::IsStaticInside,
+		ScriptReserved_GetMoveables, & Volume::GetMoveables);
 }
 
 /// Get the unique string identifier of this volume.
@@ -140,22 +144,82 @@ bool Volume::GetActive() const
 /// Determine if a moveable is inside this volume.
 // @function Volume:IsMoveableInside
 // @tparam Objects.Moveable moveable Moveable to be checked for containment.
-// @treturn bool Boolean representing containment status.
+// @treturn[1] bool Boolean representing containment status.
+// @treturn[2] bool `False` if volume is disabled.
 bool Volume::IsMoveableInside(const Moveable& mov)
 {
+	// Volume must be enabled to detect containment
+	if (!_volume.Enabled)
+		return false;
+
+	// Check StateQueue first
 	for (const auto& entry : _volume.StateQueue)
 	{
 		if (std::holds_alternative<int>(entry.Activator))
 		{
 			int id = std::get<int>(entry.Activator);
-			auto& mov2 = std::make_unique<Moveable>(id);
-
-			if (mov2.get()->GetName() == mov.GetName())
+			if (id == mov.GetIndex())
 				return true;
 		}
 	}
 
-	return false;
+	// Direct geometric test using the moveable's ItemInfo
+	const auto* itemInfo = mov.GetItemInfo();
+	if (itemInfo == nullptr)
+		return false;
+
+	auto moveableBox = itemInfo->GetObb();
+
+	switch (_volume.Type)
+	{
+	case VolumeType::Box:
+		return _volume.Box.Intersects(moveableBox);
+
+	case VolumeType::Sphere:
+		return _volume.Sphere.Intersects(moveableBox);
+
+	default:
+		return false;
+	}
+}
+
+/// Determine if a static is inside this volume.
+// @function Volume:IsStaticInside
+// @tparam Objects.Static static Static to be checked for containment.
+// @treturn[1] bool Boolean representing containment status.
+// @treturn[2] bool `False` if volume is disabled.
+bool Volume::IsStaticInside(const TEN::Scripting::Static& stat)
+{
+	// Volume must be enabled to detect containment
+	if (!_volume.Enabled)
+		return false;
+
+	// Check StateQueue first
+	for (const auto& entry : _volume.StateQueue)
+	{
+		if (std::holds_alternative<StaticMesh*>(entry.Activator))
+		{
+			StaticMesh* staticPtr = std::get<StaticMesh*>(entry.Activator);
+			if (staticPtr->Name == stat.GetName())
+				return true;
+		}
+	}
+
+	// Direct geometric test using the static's mesh
+	const auto& staticMesh = stat.GetStaticMesh();
+	auto staticBox = staticMesh.GetObb();
+
+	switch (_volume.Type)
+	{
+	case VolumeType::Box:
+		return _volume.Box.Intersects(staticBox);
+
+	case VolumeType::Sphere:
+		return _volume.Sphere.Intersects(staticBox);
+
+	default:
+		return false;
+	}
 }
 
 /// Enable this volume.

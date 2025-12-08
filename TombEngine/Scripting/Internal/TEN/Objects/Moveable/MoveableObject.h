@@ -48,6 +48,7 @@ public:
 	// Getters
 
 	int GetIndex() const;
+	ItemInfo* GetItemInfo() const;
 	GAME_OBJECT_ID GetObjectID() const;
 	std::string GetName() const;
 	bool GetValid() const;

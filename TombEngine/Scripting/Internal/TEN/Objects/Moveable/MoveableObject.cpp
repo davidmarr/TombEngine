@@ -314,6 +314,11 @@ int Moveable::GetIndex() const
 	return _moveableID;
 }
 
+ItemInfo* Moveable::GetItemInfo() const
+{
+	return _moveable.Get();
+}
+
 /// Set the name of the function to be called when the moveable is shot by Lara.
 // Note that this will be triggered twice when shot with both pistols at once. 
 // @function Moveable:SetOnHit
