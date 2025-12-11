@@ -16,7 +16,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed original issue with aiming stutter with targets nearly out of sight.
 
 ### Lua API changes
-* Added a safeguard for adding or removing callback functions within the same callback type.
+* Added a safeguard against adding or removing callback functions within the same callback type.
+* Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `DisplayStringOption.VERTICAL_BOTTOM` flag.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 
