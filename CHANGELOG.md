@@ -11,6 +11,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ### Bug fixes
 * Fixed incorrect handling of negative timer values in classic triggers.
 * Fixed interaction highlighter not working for pushable climbable blocks.
+* Fixed CLOCKWORK_BEETLE behaviour.
 * Fixed MERCENARY_UZI behaviour.
 * Fixed CIVVY crashing the game.
 * Fixed incorrect HYDRA rotation on activation and keeping its shadow after destroying it.
