@@ -155,10 +155,6 @@ void UndrawFlare(ItemInfo& laraItem)
 				player.Control.HandStatus = HandStatus::Free;
 
 				InitializeNewWeapon(laraItem);
-
-				player.TargetEntity = nullptr;
-				player.LeftArm.Locked =
-				player.RightArm.Locked = false;
 				SetAnimation(laraItem, LA_STAND_IDLE);
 				player.Flare.Frame = 0;
 				return;
@@ -212,9 +208,6 @@ void UndrawFlare(ItemInfo& laraItem)
 
 			InitializeNewWeapon(laraItem);
 
-			player.TargetEntity = nullptr;
-			player.LeftArm.Locked =
-			player.RightArm.Locked = false;
 			player.Flare.ControlLeft = false;
 			player.Flare.Frame = 0;
 		}
