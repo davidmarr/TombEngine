@@ -18,6 +18,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed weapon unholstering animation when selecting a weapon from the inventory for the first time.
 * Fixed original issue with incorrect arm orientation with unholstered weapons.
 * Fixed original issue with aiming stutter with targets nearly out of sight.
+* Fixed incorrect super grenade projectile orientation.
 * Fixed water resurfacing threshold. The player will now resurface when half of the head is above the surface.
 
 ### Lua API changes
