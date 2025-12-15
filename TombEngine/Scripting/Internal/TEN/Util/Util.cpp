@@ -229,7 +229,7 @@ namespace TEN::Scripting::Util
 	//TEN.Util.PrintLog('test warning log', TEN.Util.LogLevel.WARNING)
 	//TEN.Util.PrintLog('test error log', TEN.Util.LogLevel.ERROR)
 	//-- spammed message
-	//TEN.Util.PrintLog('test spam log', LogLevel.INFO, true)
+	//TEN.Util.PrintLog('test spam log', TEN.Util.LogLevel.INFO, true)
 	static void PrintLog(const std::string& message, const LogLevel& level, TypeOrNil<bool> allowSpam)
 	{
 		TENLog(message, level, LogConfig::All, ValueOr<bool>(allowSpam, false));
