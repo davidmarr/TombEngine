@@ -225,9 +225,9 @@ namespace TEN::Scripting::Util
 	//@tparam[opt] bool allowSpam If true, allows continuous spamming of the message.
 	// 
 	//@usage
-	//TEN.Util.PrintLog('test info log', LogLevel.INFO)
-	//TEN.Util.PrintLog('test warning log', LogLevel.WARNING)
-	//TEN.Util.PrintLog('test error log', LogLevel.ERROR)
+	//TEN.Util.PrintLog('test info log', TEN.Util.LogLevel.INFO)
+	//TEN.Util.PrintLog('test warning log', TEN.Util.LogLevel.WARNING)
+	//TEN.Util.PrintLog('test error log', TEN.Util.LogLevel.ERROR)
 	//-- spammed message
 	//TEN.Util.PrintLog('test spam log', LogLevel.INFO, true)
 	static void PrintLog(const std::string& message, const LogLevel& level, TypeOrNil<bool> allowSpam)
