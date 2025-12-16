@@ -2550,7 +2550,6 @@ namespace TEN::Renderer
 			bool acceptsShadows = moveableObj.ShadowType == ShadowMode::None;
 			BindMoveableLights(item->LightsToDraw, item->RoomNumber, item->PrevRoomNumber, item->LightFade, acceptsShadows);
 
-
 			if (skinMode == SkinningMode::Full)
 			{
 				for (int m = 0; m < moveableObj.AnimationTransforms.size(); m++)
