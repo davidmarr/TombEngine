@@ -877,11 +877,11 @@ namespace TEN::Renderer
 			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
 
 			// Disegna the skin mesh
-			const auto& skinMesh = *moveableObject->ObjectMeshes[object.skinIndex];
+			const auto skinMesh = GetMesh(object.skinIndex);
 		
 			for (int animated = 0; animated < 2; animated++)
 			{
-				for (const auto& bucket : skinMesh.Buckets)
+				for (const auto& bucket : skinMesh->Buckets)
 				{
 					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 						continue;
