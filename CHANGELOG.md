@@ -20,6 +20,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed original issue with aiming stutter with targets nearly out of sight.
 * Fixed incorrect super grenade projectile orientation.
 * Fixed water resurfacing threshold. The player will now resurface when half of the head is above the surface.
+* Fixed animated textures appearing incorrectly when also alpha blended faces were involved.
+* FIxed random textures appearing on enemies gunflashes.
 
 ### Lua API changes
 * Added a safeguard against adding or removing callback functions within the same callback type.
