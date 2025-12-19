@@ -309,12 +309,12 @@ namespace TEN::Entities::TR4
 			item.Pose.Orientation.x += angleV;
 		}
 
+		auto pointColl = GetPointCollision(item);
+
 		// Translate wraith.
 		item.Pose.Position.x += item.Animation.Velocity.z * phd_sin(item.Pose.Orientation.y);
 		item.Pose.Position.y += item.Animation.Velocity.z * phd_sin(item.Pose.Orientation.x);
 		item.Pose.Position.z += item.Animation.Velocity.z * phd_cos(item.Pose.Orientation.y);
-
-		auto pointColl = GetPointCollision(item);
 
 		bool hasHitWall = false;
 		if (pointColl.GetFloorHeight() < item.Pose.Position.y ||
