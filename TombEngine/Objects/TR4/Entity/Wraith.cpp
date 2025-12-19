@@ -323,8 +323,9 @@ namespace TEN::Entities::TR4
 			hasHitWall = true;
 		}
 
-		//Always update room based on camera position. Otherwise object sometimes does not show up in rooms.
-		ItemNewRoom(itemNumber, FindRoomNumber(Vector3i(Camera.pos.x, Camera.pos.y, Camera.pos.z), item.RoomNumber));
+		// Always update room based on camera position. Otherwise object sometimes does not show up in rooms.
+		if (pointColl.GetRoomNumber() != Camera.pos.RoomNumber || item.RoomNumber != Camera.pos.RoomNumber)
+			ItemNewRoom(itemNumber, Camera.pos.RoomNumber);
 
 		for (int linkItemNumber = g_Level.Rooms[item.RoomNumber].itemNumber; linkItemNumber != NO_VALUE; linkItemNumber = g_Level.Items[linkItemNumber].NextItem)
 		{
