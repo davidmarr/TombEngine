@@ -47,6 +47,9 @@ LevelVars.Engine.LuaUtil._Internal = {
     abs = math.abs,
     sin = math.sin,
     asin = math.asin,
+    atan = math.atan,
+    deg = math.deg,
+    sqrt = math.sqrt,
     pi = math.pi,
 
     -- Default frames per second for time-frame conversions
@@ -313,335 +316,6 @@ LuaUtil.SplitString = function(inputStr, delimiter)
         table.insert(t, str)
     end
     return t
-end
-
---- Conversion functions.
--- Utilities for converting between different units and formats.
--- @section conversion
-
---- Convert seconds to frames (assuming 30 FPS).
--- @tparam float seconds Time in seconds. Seconds can be a float value with two decimal places.
--- @tparam[opt=30] int fps Frames per second.
--- @treturn float Number of frames. If an error occurs, returns 0.
--- @usage
--- local frames = LuaUtil.SecondsToFrames(2.0) -- Result: 60
-LuaUtil.SecondsToFrames = function(seconds, fps)
-    fps = fps or I.FPS
-    if not I.IsNumber(seconds) or not I.IsNumber(fps) then
-        TEN.Util.PrintLog("Error in LuaUtil.SecondsToFrames: seconds and fps must be numbers.", TEN.Util.LogLevel.ERROR)
-        return 0
-    end
-
-    -- Check if fps is a float and warn user
-    if fps ~= I.floor(fps) then
-        TEN.Util.PrintLog("Warning in LuaUtil.SecondsToFrames: fps should be an integer. Rounding " .. fps .. " to " .. I.floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
-        fps = I.floor(fps + 0.5)
-    end
-
-    return I.floor(seconds * fps + 0.5)
-end
-
---- Convert frames to seconds (assuming 30 FPS).
--- @tparam int frames Number of frames.
--- @tparam[opt=30] int fps Frames per second.
--- @treturn float Time in seconds. If an error occurs, returns 0.
--- @usage
--- local seconds = LuaUtil.FramesToSeconds(60) -- Result: 2.0
-LuaUtil.FramesToSeconds = function(frames, fps)
-    fps = fps or I.FPS
-    if not I.IsNumber(frames) or (fps and not I.IsNumber(fps)) then
-        TEN.Util.PrintLog("Error in LuaUtil.FramesToSeconds: frames and fps must be numbers.", TEN.Util.LogLevel.ERROR)
-        return 0
-    end
-
-    -- Check if frames is a float and warn user
-    if frames ~= I.floor(frames) then
-        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: frames should be an integer. Rounding " .. frames .. " to " .. I.floor(frames + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
-        frames = I.floor(frames + 0.5)
-    end
-
-    -- Check if fps is a float and warn user
-    if fps ~= I.floor(fps) then
-        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: fps should be an integer. Rounding " .. fps .. " to " .. I.floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
-        fps = I.floor(fps + 0.5)
-    end
-
-    if fps == 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.FramesToSeconds: fps cannot be zero.", TEN.Util.LogLevel.ERROR)
-        return 0
-    end
-
-    return frames / fps
-end
-
---- Convert a hexadecimal color string to a TEN.Color object.
--- @tparam string hex The hexadecimal color string (formats: "#RRGGBB", "RRGGBB", "#RRGGBBAA", "RRGGBBAA").
--- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
--- @usage
--- -- Example with 6-digit hex (RGB):
--- local color = LuaUtil.HexToColor("#FF5733") -- Result: TEN.Color(255, 87, 51, 255)
---
--- -- Example without hash:
--- local color = LuaUtil.HexToColor("00FF00") -- Result: TEN.Color(0, 255, 0, 255)
---
--- -- Example with 8-digit hex (RGBA):
--- local color = LuaUtil.HexToColor("#FF573380") -- Result: TEN.Color(255, 87, 51, 128)
---
--- -- Error handling example:
--- local color = LuaUtil.HexToColor("GHIJKL") -- Result: nil (invalid hex string)
--- if color == nil then
---     TEN.Util.PrintLog("Failed to convert hex to color", TEN.Util.LogLevel.ERROR)
---     return  -- or use a fallback value
--- end
--- -- Apply color to a sprite
--- sprite:SetColor(color)
---
--- -- Safe approach with default fallback:
--- local color = LuaUtil.HexToColor(hexString) or TEN.Color(255, 255, 255, 255)
-LuaUtil.HexToColor = function(hex)
-    if not I.IsString(hex) then
-        TEN.Util.PrintLog("Error in LuaUtil.HexToColor: hex must be a string.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Remove '#' if present
-    hex = hex:gsub("^#", "")
-
-    -- Get length of hex string
-    local hexLen = #hex
-
-    -- Validate length (6 for RGB, 8 for RGBA)
-    if hexLen ~= 6 and hexLen ~= 8 then
-        TEN.Util.PrintLog("Error in LuaUtil.HexToColor: invalid hex string length. Expected 6 or 8 characters.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Extract color components
-    local r = tonumber(hex:sub(1, 2), 16)
-    local g = tonumber(hex:sub(3, 4), 16)
-    local b = tonumber(hex:sub(5, 6), 16)
-    local a = hexLen == 8 and tonumber(hex:sub(7, 8), 16) or 255
-
-    -- Validate conversion
-    if not (r and g and b and a) then
-        TEN.Util.PrintLog("Error in LuaUtil.HexToColor: invalid hexadecimal values.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    return TEN.Color(r, g, b, a)
-end
-
---- Convert HSL (Hue, Saturation, Lightness) values to a TEN.Color object.
--- @tparam float h Hue value (0.0 to 360.0 degrees).
--- @tparam float s Saturation value (0.0 to 1.0).
--- @tparam float l Lightness value (0.0 to 1.0).
--- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
--- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
--- @usage
--- -- Example: Pure red
--- local color = LuaUtil.HSLtoColor(0, 1, 0.5) -- Result: TEN.Color(255, 0, 0, 255)
---
--- -- Example: Cyan
--- local color = LuaUtil.HSLtoColor(180, 1, 0.5) -- Result: TEN.Color(0, 255, 255, 255)
---
--- -- Example: Semi-transparent yellow
--- local color = LuaUtil.HSLtoColor(60, 1, 0.5, 0.5) -- Result: TEN.Color(255, 255, 0, 127)
---
--- -- Example: Desaturated blue (gray-blue)
--- local color = LuaUtil.HSLtoColor(240, 0.3, 0.5) -- Result: TEN.Color(89, 89, 165, 255)
---
--- -- Error handling example:
--- local color = LuaUtil.HSLtoColor(400, 1, 0.5) -- Result: nil (invalid hue)
--- if color == nil then
---     TEN.Util.PrintLog("Failed to convert HSL to color", TEN.Util.LogLevel.ERROR)
---     return  -- or use a fallback value
--- end
--- -- Apply color to a sprite
--- sprite:SetColor(color)
---
--- -- Safe approach with default fallback:
--- local color = LuaUtil.HSLtoColor(hue, saturation, lightness, alpha) or TEN.Color(255, 255, 255, 255)
-LuaUtil.HSLtoColor = function(h, s, l, a)
-    if not (I.IsNumber(h) and I.IsNumber(s) and I.IsNumber(l)) then
-        TEN.Util.PrintLog("Error in LuaUtil.HSLtoColor: h, s, and l must be numbers.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    if a and not I.IsNumber(a) then
-        TEN.Util.PrintLog("Error in LuaUtil.HSLtoColor: a must be a number.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    a = a or 1.0
-
-    -- Clamp values to valid ranges
-    h = h % 360
-    s = I.max(0, I.min(1, s))
-    l = I.max(0, I.min(1, l))
-    a = I.max(0, I.min(1, a))
-
-    -- HSL to RGB conversion
-    local r, g, b
-
-    if s == 0 then
-        -- Achromatic (gray)
-        r, g, b = l, l, l
-    else
-        local q = l < 0.5 and l * (1 + s) or l + s - l * s
-        local p = 2 * l - q
-        local hNorm = h / 360
-
-        r = F.HueToRgb(p, q, hNorm + 1/3)
-        g = F.HueToRgb(p, q, hNorm)
-        b = F.HueToRgb(p, q, hNorm - 1/3)
-    end
-
-    -- Convert to 0-255 range and create TEN.Color
-    return TEN.Color(
-        I.floor(r * 255 + 0.5),
-        I.floor(g * 255 + 0.5),
-        I.floor(b * 255 + 0.5),
-        I.floor(a * 255 + 0.5)
-    )
-end
-
---- Convert a TEN.Color object to HSL (Hue, Saturation, Lightness) values.
--- Uses the Color:GetHue() method for accurate hue extraction.
--- @tparam Color color The TEN.Color object to convert.
--- @treturn[1] table A table with h, s, l, a values { h = float, s = float, l = float, a = float }.
--- @treturn[2] nil If an error occurs.
--- @usage
--- -- Example: Get HSL values from a color
--- local color = TEN.Color(255, 87, 51, 255)
--- local hsl = LuaUtil.ColorToHSL(color)
--- -- Result: { h = 14.0, s = 1.0, l = 0.6, a = 1.0 }
---
--- -- Practical example: Adjust saturation
--- local originalColor = TEN.Color(255, 100, 50, 255)
--- local hsl = LuaUtil.ColorToHSL(originalColor)
--- if hsl then
---     hsl.s = hsl.s * 0.5  -- Reduce saturation by 50%
---     local desaturatedColor = LuaUtil.HSLtoColor(hsl.h, hsl.s, hsl.l, hsl.a)
---     -- Apply color to sprite
---     sprite:SetColor(desaturatedColor)
--- end
---
--- -- Example: Brighten a color
--- local darkColor = TEN.Color(50, 50, 150, 255)
--- local hsl = LuaUtil.ColorToHSL(darkColor)
--- if hsl then
---     hsl.l = math.min(1.0, hsl.l + 0.2)  -- Increase lightness by 20%
---     local brighterColor = LuaUtil.HSLtoColor(hsl.h, hsl.s, hsl.l, hsl.a)
---     sprite:SetColor(brighterColor)
--- end
---
--- -- Error handling example:
--- local hsl = LuaUtil.ColorToHSL(invalidColor)
--- if hsl == nil then
---     TEN.Util.PrintLog("Failed to convert color to HSL", TEN.Util.LogLevel.ERROR)
---     return
--- end
---
--- -- Safe approach with default fallback:
--- local hsl = LuaUtil.ColorToHSL(color) or { h = 0, s = 0, l = 0, a = 1.0 }
-LuaUtil.ColorToHSL = function(color)
-    if not I.IsColor(color) then
-        TEN.Util.PrintLog("Error in LuaUtil.ColorToHSL: color must be a Color object.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Convert RGB to 0-1 range
-    local r = color.r / 255
-    local g = color.g / 255
-    local b = color.b / 255
-    local a = color.a / 255
-
-    -- Get hue directly from Color method
-    local h = color:GetHue()
-
-    -- Calculate saturation and lightness
-    local max = I.max(r, g, b)
-    local min = I.min(r, g, b)
-    local l = (max + min) / 2
-
-    local s
-    if max == min then
-        s = 0  -- Achromatic (gray)
-    else
-        local delta = max - min
-        s = l > 0.5 and delta / (2 - max - min) or delta / (max + min)
-    end
-
-    return { h = h, s = s, l = l, a = a }
-end
-
---- Invert the RGB components of a color (255 - component).
--- Creates a negative/opposite color effect by inverting red, green, and blue channels.
--- Optionally preserves the original alpha channel.
--- @tparam Color color The color to invert.
--- @tparam[opt=false] bool keepAlpha If true, preserves the original alpha value.
--- @treturn[1] Color The inverted color.
--- @treturn[2] nil If an error occurs.
--- @usage
--- -- Example: Simple color inversion
--- local red = TEN.Color(255, 0, 0, 255)
--- local cyan = LuaUtil.InvertColor(red)  
--- -- Result: TEN.Color(0, 255, 255, 0)
---
--- -- Example: Invert while keeping alpha
--- local semiRed = TEN.Color(255, 0, 0, 128)
--- local semiCyan = LuaUtil.InvertColor(semiRed, true)
--- -- Result: TEN.Color(0, 255, 255, 128)
---
--- -- Practical example: Create negative effect on sprite
--- local originalColor = sprite:GetColor()
--- local negativeColor = LuaUtil.InvertColor(originalColor, true)  -- Keep transparency
--- sprite:SetColor(negativeColor)
---
--- -- Example: Toggle between normal and inverted
--- local isInverted = false
--- local baseColor = TEN.Color(100, 150, 200, 255)
--- LevelFuncs.OnLoop = function()
---     if isInverted then
---         sprite:SetColor(LuaUtil.InvertColor(baseColor, true))
---     else
---         sprite:SetColor(baseColor)
---     end
--- end
---
--- -- Error handling example:
--- local inverted = LuaUtil.InvertColor(color, true)
--- if inverted == nil then
---     TEN.Util.PrintLog("Failed to invert color", TEN.Util.LogLevel.ERROR)
---     return
--- end
--- sprite:SetColor(inverted)
---
--- -- Safe approach with default fallback:
--- local invertedColor = LuaUtil.InvertColor(color, true) or TEN.Color(255, 255, 255, 255)
-LuaUtil.InvertColor = function(color, keepAlpha)
-    if not I.IsColor(color) then
-        TEN.Util.PrintLog("Error in LuaUtil.InvertColor: color must be a Color object.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Handle keepAlpha: use default if nil/not provided, warn if wrong type
-    if keepAlpha ~= nil and not I.IsBoolean(keepAlpha) then
-        TEN.Util.PrintLog("Warning in LuaUtil.InvertColor: keepAlpha must be a boolean. Using default value (false).", TEN.Util.LogLevel.WARNING)
-        keepAlpha = false
-    else
-        keepAlpha = keepAlpha or false
-    end
-
-    local inverted = color:Invert()
-    
-    if keepAlpha then
-        inverted.a = color.a
-    end
-
-    return inverted
 end
 
 --- Mathematical functions.
@@ -1179,6 +853,590 @@ LuaUtil.WrapAngle = function(angle, min, max)
     return angle - range * I.floor((angle - min) / range)
 end
 
+--- Get the normalized direction vector from a source position to a target position.
+--
+-- The resulting vector can be used with `DirectionToRotation` to orient objects.
+-- This function calculates the direction vector between two positions and normalizes it to unit length.
+-- The resulting vector can be used for particle emission, lighting effects, raycasting, or combined with DirectionToRotation.
+-- 
+-- **Note on LevelFuncs.OnLoop:**
+-- Some examples below use LevelFuncs.OnLoop for continuous effects (tracking, spotlights, streams).
+-- This function is called every frame and already exists in your level's Lua file.
+-- Important: There can be ONLY ONE LevelFuncs.OnLoop function per level.
+-- If you already have one, add the new code inside the existing function instead of creating a new one.
+--
+-- **Note on targeting Lara:**
+-- Use Lara:GetJointPosition(14) to get the position of Lara's neck/head area.
+-- This is better for aiming than Lara:GetPosition() which returns the floor position (feet).
+--
+-- @tparam Vec3 source The starting position.
+-- @tparam Vec3 target The target position to point towards.
+-- @treturn[1] Vec3 The normalized direction vector from source to target.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example 1: Single fire projectile from enemy towards Lara (one-shot, no loop needed)
+-- local enemy = TEN.Objects.GetMoveableByName("enemy_1")
+-- local enemyPos = enemy:GetPosition()
+-- local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
+-- 
+-- local direction = LuaUtil.GetDirection(enemyPos, laraPos)
+-- if direction then
+--     local speed = 200  -- World units per second
+--     local velocity = direction * speed
+--     TEN.Effects.EmitParticle(
+--         enemyPos,                               -- pos
+--         velocity,                               -- vel
+--         8,                                      -- spriteID (flame sprite)
+--         -10,                                    -- gravity
+--         5,                                      -- rotVel (spinning fire)
+--         TEN.Color(255, 200, 100),              -- startColor (bright orange)
+--         TEN.Color(255, 50, 0),                 -- endColor (dark red)
+--         TEN.Effects.BlendID.ADDITIVE,           -- blendMode
+--         40,                                     -- startSize
+--         10,                                     -- endSize
+--         3                                       -- life (seconds)
+--     )
+-- end
+--
+-- -- Example 2: Lightning arc from trap to Lara (one-shot)
+-- local trap = TEN.Objects.GetMoveableByName("trap_1")
+-- local trapPos = trap:GetPosition()
+-- local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
+-- 
+-- -- Lightning doesn't need direction, just origin and target
+-- TEN.Effects.EmitLightningArc(
+--     trapPos,                    -- origin
+--     laraPos,                    -- target
+--     TEN.Color(100, 150, 255),  -- color (blue)
+--     0.5,                        -- life (seconds)
+--     30,                         -- amplitude
+--     3                           -- beamWidth
+-- )
+--
+-- -- Example 3: Spotlight continuously tracking Lara (security camera effect)
+-- -- This requires LevelFuncs.OnLoop for continuous updates
+-- local camera = TEN.Objects.GetMoveableByName("camera_1")
+-- local cameraPos = camera:GetPosition()
+-- 
+-- LevelFuncs.OnLoop = function()
+--     local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
+--     local direction = LuaUtil.GetDirection(cameraPos, laraPos)
+--     if direction then
+--         TEN.Effects.EmitSpotLight(
+--             cameraPos,                  -- pos
+--             direction,                  -- dir (normalized direction)
+--             TEN.Color(255, 255, 200),  -- color (warm white)
+--             8,                          -- radius (in clicks)
+--             4,                          -- falloff
+--             15,                         -- distance
+--             true,                       -- shadows
+--             "camera_spotlight"          -- name (for interpolation)
+--         )
+--     end
+-- end
+--
+-- -- Example 4: Continuous water stream effect (spray towards target)
+-- local nozzle = TEN.Objects.GetMoveableByName("nozzle_1")
+-- local nozzlePos = nozzle:GetPosition()
+-- 
+-- LevelFuncs.OnLoop = function()
+--     local targetPos = Lara:GetJointPosition(14)  -- Lara's neck position
+--     local direction = LuaUtil.GetDirection(nozzlePos, targetPos)
+--     if direction then
+--         local flowSpeed = 300  -- World units per second
+--         TEN.Effects.EmitFlow(
+--             nozzlePos,                      -- pos
+--             direction * flowSpeed,          -- dir (velocity)
+--             128,                            -- radius
+--             2,                              -- life
+--             50,                             -- friction
+--             20,                             -- maxSize
+--             TEN.Color(200, 220, 255),      -- startColor (light blue)
+--             TEN.Color(150, 180, 200),      -- endColor (darker blue)
+--             TEN.Objects.ObjID.DEFAULT_SPRITES,  -- spriteSeqID
+--             17                              -- spriteID (water droplets sprite)
+--         )
+--     end
+-- end
+--
+-- -- Example 5: Turret continuously tracks and fires energy balls at Lara
+-- local turret = TEN.Objects.GetMoveableByName("turret_1")
+-- local turretPos = turret:GetPosition()
+-- local fireTimer = 0
+-- local fireInterval = 30  -- Fire every 30 frames (1 second at 30fps)
+-- 
+-- LevelFuncs.OnLoop = function()
+--     local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
+--     local direction = LuaUtil.GetDirection(turretPos, laraPos)
+--     if direction then
+--         -- Continuously rotate turret to face target
+--         local rotation = LuaUtil.DirectionToRotation(direction)
+--         turret:SetRotation(rotation)
+--         
+--         -- Fire energy ball at intervals
+--         fireTimer = fireTimer + 1
+--         if fireTimer >= fireInterval then
+--             local velocity = direction * 250
+--             TEN.Effects.EmitParticle(
+--                 turretPos,
+--                 velocity,
+--                 14,                             -- spriteID (white circle - energy ball)
+--                 0,                              -- gravity
+--                 0,                              -- rotVel
+--                 TEN.Color(100, 200, 255),      -- startColor (cyan)
+--                 TEN.Color(50, 100, 200),       -- endColor (dark blue)
+--                 TEN.Effects.BlendID.ADDITIVE,
+--                 50,                             -- startSize
+--                 30,                             -- endSize
+--                 4                               -- life
+--             )
+--             fireTimer = 0  -- Reset timer
+--         end
+--     end
+-- end
+--
+-- -- Example 6: Calculate offset position at distance (one-shot calculation)
+-- local objectPos = object:GetPosition()
+-- local targetPos = target:GetPosition()
+-- local direction = LuaUtil.GetDirection(objectPos, targetPos)
+-- if direction then
+--     local distance = 500  -- 500 units ahead
+--     local offsetPos = objectPos + (direction * distance)
+--     -- Spawn explosion at offset position
+--     TEN.Effects.MakeExplosion(offsetPos, 512, true)
+-- end
+--
+-- -- Error handling example:
+-- local direction = LuaUtil.GetDirection(srcPos, targetPos)
+-- if direction == nil then
+--     TEN.Util.PrintLog("Failed to calculate direction", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Safe approach with default fallback:
+-- local direction = LuaUtil.GetDirection(source, target) or TEN.Vec3(0, 0, 1)
+LuaUtil.GetDirection = function(source, target)
+    if not I.IsVec3(source) then
+        TEN.Util.PrintLog("Error in LuaUtil.GetDirection: source must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    if not I.IsVec3(target) then
+        TEN.Util.PrintLog("Error in LuaUtil.GetDirection: target must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Calculate direction vector and normalize
+    local direction = target - source
+    return direction:Normalize()
+end
+
+--- Conversion functions.
+-- Utilities for converting between different units and formats.
+-- @section conversion
+
+--- Convert a direction vector (Vec3) to a rotation (Rotation).
+-- Often combined with `GetDirection` to make objects face targets.
+--
+-- This function calculates the yaw and pitch angles from a normalized or unnormalized direction vector.
+-- The resulting Rotation can be used to orient objects (like enemies, cameras, or traps) to face a specific direction.
+-- Roll is always set to 0.
+-- Often combined with GetDirection() to make objects face towards targets.
+-- @tparam Vec3 direction The direction vector to convert.
+-- @treturn[1] Rotation The resulting rotation with pitch, yaw, and roll (roll is always 0).
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Make an object face another object (using GetDirection)
+-- local enemy = TEN.Objects.GetMoveableByName("enemy_1")
+-- local target = TEN.Objects.GetMoveableByName("target_1")
+-- local enemyPos = enemy:GetPosition()
+-- local targetPos = target:GetPosition()
+-- 
+-- -- Calculate normalized direction vector
+-- local direction = LuaUtil.GetDirection(enemyPos, targetPos)
+-- 
+-- -- Convert direction to rotation
+-- local rotation = LuaUtil.DirectionToRotation(direction)
+-- if rotation then
+--     enemy:SetRotation(rotation)
+-- end
+--
+-- -- Example: Security camera tracking Lara
+-- local camera = TEN.Objects.GetMoveableByName("camera_1")
+-- local cameraPos = camera:GetPosition()
+-- local laraPos = Lara:GetPosition()
+-- 
+-- local direction = LuaUtil.GetDirection(cameraPos, laraPos)
+-- local rotation = LuaUtil.DirectionToRotation(direction)
+-- if rotation then
+--     camera:SetRotation(rotation)
+-- end
+--
+-- -- Example: Projectile aiming
+-- local turret = TEN.Objects.GetMoveableByName("turret_1")
+-- local turretPos = turret:GetPosition()
+-- local targetPos = Lara:GetPosition()
+-- 
+-- -- Calculate where to aim
+-- local aimDirection = LuaUtil.GetDirection(turretPos, targetPos)
+-- local aimRotation = LuaUtil.DirectionToRotation(aimDirection)
+-- if aimRotation then
+--     turret:SetRotation(aimRotation)
+-- end
+--
+-- -- Error handling example:
+-- local rotation = LuaUtil.DirectionToRotation(directionVec)
+-- if rotation == nil then
+--     TEN.Util.PrintLog("Failed to convert direction to rotation", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Safe approach with default fallback:
+-- local rotation = LuaUtil.DirectionToRotation(direction) or TEN.Rotation(0, 0, 0)
+LuaUtil.DirectionToRotation = function(direction)
+    if not I.IsVec3(direction) then
+        TEN.Util.PrintLog("Error in LuaUtil.DirectionToRotation: direction must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Calculate yaw (rotation around Y axis) from X and Z components
+    local yaw = I.deg(I.atan(direction.x, direction.z))
+    
+    -- Calculate pitch (rotation around X axis) from Y and horizontal distance
+    local horizontalDistance = I.sqrt(direction.x * direction.x + direction.z * direction.z)
+    local pitch = -I.deg(I.atan(direction.y, horizontalDistance))
+    
+    -- Roll is always 0 for direction-based rotations
+    local roll = 0
+
+    return TEN.Rotation(pitch, yaw, roll)
+end
+
+--- Convert seconds to frames (assuming 30 FPS).
+-- @tparam float seconds Time in seconds. Seconds can be a float value with two decimal places.
+-- @tparam[opt=30] int fps Frames per second.
+-- @treturn float Number of frames. If an error occurs, returns 0.
+-- @usage
+-- local frames = LuaUtil.SecondsToFrames(2.0) -- Result: 60
+LuaUtil.SecondsToFrames = function(seconds, fps)
+    fps = fps or I.FPS
+    if not I.IsNumber(seconds) or not I.IsNumber(fps) then
+        TEN.Util.PrintLog("Error in LuaUtil.SecondsToFrames: seconds and fps must be numbers.", TEN.Util.LogLevel.ERROR)
+        return 0
+    end
+
+    -- Check if fps is a float and warn user
+    if fps ~= I.floor(fps) then
+        TEN.Util.PrintLog("Warning in LuaUtil.SecondsToFrames: fps should be an integer. Rounding " .. fps .. " to " .. I.floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
+        fps = I.floor(fps + 0.5)
+    end
+
+    return I.floor(seconds * fps + 0.5)
+end
+
+--- Convert frames to seconds (assuming 30 FPS).
+-- @tparam int frames Number of frames.
+-- @tparam[opt=30] int fps Frames per second.
+-- @treturn float Time in seconds. If an error occurs, returns 0.
+-- @usage
+-- local seconds = LuaUtil.FramesToSeconds(60) -- Result: 2.0
+LuaUtil.FramesToSeconds = function(frames, fps)
+    fps = fps or I.FPS
+    if not I.IsNumber(frames) or (fps and not I.IsNumber(fps)) then
+        TEN.Util.PrintLog("Error in LuaUtil.FramesToSeconds: frames and fps must be numbers.", TEN.Util.LogLevel.ERROR)
+        return 0
+    end
+
+    -- Check if frames is a float and warn user
+    if frames ~= I.floor(frames) then
+        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: frames should be an integer. Rounding " .. frames .. " to " .. I.floor(frames + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
+        frames = I.floor(frames + 0.5)
+    end
+
+    -- Check if fps is a float and warn user
+    if fps ~= I.floor(fps) then
+        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: fps should be an integer. Rounding " .. fps .. " to " .. I.floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
+        fps = I.floor(fps + 0.5)
+    end
+
+    if fps == 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.FramesToSeconds: fps cannot be zero.", TEN.Util.LogLevel.ERROR)
+        return 0
+    end
+
+    return frames / fps
+end
+
+--- Convert a hexadecimal color string to a TEN.Color object.
+-- @tparam string hex The hexadecimal color string (formats: "#RRGGBB", "RRGGBB", "#RRGGBBAA", "RRGGBBAA").
+-- @treturn[1] Color The TEN.Color object.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example with 6-digit hex (RGB):
+-- local color = LuaUtil.HexToColor("#FF5733") -- Result: TEN.Color(255, 87, 51, 255)
+--
+-- -- Example without hash:
+-- local color = LuaUtil.HexToColor("00FF00") -- Result: TEN.Color(0, 255, 0, 255)
+--
+-- -- Example with 8-digit hex (RGBA):
+-- local color = LuaUtil.HexToColor("#FF573380") -- Result: TEN.Color(255, 87, 51, 128)
+--
+-- -- Error handling example:
+-- local color = LuaUtil.HexToColor("GHIJKL") -- Result: nil (invalid hex string)
+-- if color == nil then
+--     TEN.Util.PrintLog("Failed to convert hex to color", TEN.Util.LogLevel.ERROR)
+--     return  -- or use a fallback value
+-- end
+-- -- Apply color to a sprite
+-- sprite:SetColor(color)
+--
+-- -- Safe approach with default fallback:
+-- local color = LuaUtil.HexToColor(hexString) or TEN.Color(255, 255, 255, 255)
+LuaUtil.HexToColor = function(hex)
+    if not I.IsString(hex) then
+        TEN.Util.PrintLog("Error in LuaUtil.HexToColor: hex must be a string.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Remove '#' if present
+    hex = hex:gsub("^#", "")
+
+    -- Get length of hex string
+    local hexLen = #hex
+
+    -- Validate length (6 for RGB, 8 for RGBA)
+    if hexLen ~= 6 and hexLen ~= 8 then
+        TEN.Util.PrintLog("Error in LuaUtil.HexToColor: invalid hex string length. Expected 6 or 8 characters.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Extract color components
+    local r = tonumber(hex:sub(1, 2), 16)
+    local g = tonumber(hex:sub(3, 4), 16)
+    local b = tonumber(hex:sub(5, 6), 16)
+    local a = hexLen == 8 and tonumber(hex:sub(7, 8), 16) or 255
+
+    -- Validate conversion
+    if not (r and g and b and a) then
+        TEN.Util.PrintLog("Error in LuaUtil.HexToColor: invalid hexadecimal values.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    return TEN.Color(r, g, b, a)
+end
+
+--- Convert HSL (Hue, Saturation, Lightness) values to a TEN.Color object.
+-- @tparam float h Hue value (0.0 to 360.0 degrees).
+-- @tparam float s Saturation value (0.0 to 1.0).
+-- @tparam float l Lightness value (0.0 to 1.0).
+-- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
+-- @treturn[1] Color The TEN.Color object.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Pure red
+-- local color = LuaUtil.HSLtoColor(0, 1, 0.5) -- Result: TEN.Color(255, 0, 0, 255)
+--
+-- -- Example: Cyan
+-- local color = LuaUtil.HSLtoColor(180, 1, 0.5) -- Result: TEN.Color(0, 255, 255, 255)
+--
+-- -- Example: Semi-transparent yellow
+-- local color = LuaUtil.HSLtoColor(60, 1, 0.5, 0.5) -- Result: TEN.Color(255, 255, 0, 127)
+--
+-- -- Example: Desaturated blue (gray-blue)
+-- local color = LuaUtil.HSLtoColor(240, 0.3, 0.5) -- Result: TEN.Color(89, 89, 165, 255)
+--
+-- -- Error handling example:
+-- local color = LuaUtil.HSLtoColor(400, 1, 0.5) -- Result: nil (invalid hue)
+-- if color == nil then
+--     TEN.Util.PrintLog("Failed to convert HSL to color", TEN.Util.LogLevel.ERROR)
+--     return  -- or use a fallback value
+-- end
+-- -- Apply color to a sprite
+-- sprite:SetColor(color)
+--
+-- -- Safe approach with default fallback:
+-- local color = LuaUtil.HSLtoColor(hue, saturation, lightness, alpha) or TEN.Color(255, 255, 255, 255)
+LuaUtil.HSLtoColor = function(h, s, l, a)
+    if not (I.IsNumber(h) and I.IsNumber(s) and I.IsNumber(l)) then
+        TEN.Util.PrintLog("Error in LuaUtil.HSLtoColor: h, s, and l must be numbers.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    if a and not I.IsNumber(a) then
+        TEN.Util.PrintLog("Error in LuaUtil.HSLtoColor: a must be a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    a = a or 1.0
+
+    -- Clamp values to valid ranges
+    h = h % 360
+    s = I.max(0, I.min(1, s))
+    l = I.max(0, I.min(1, l))
+    a = I.max(0, I.min(1, a))
+
+    -- HSL to RGB conversion
+    local r, g, b
+
+    if s == 0 then
+        -- Achromatic (gray)
+        r, g, b = l, l, l
+    else
+        local q = l < 0.5 and l * (1 + s) or l + s - l * s
+        local p = 2 * l - q
+        local hNorm = h / 360
+
+        r = F.HueToRgb(p, q, hNorm + 1/3)
+        g = F.HueToRgb(p, q, hNorm)
+        b = F.HueToRgb(p, q, hNorm - 1/3)
+    end
+
+    -- Convert to 0-255 range and create TEN.Color
+    return TEN.Color(
+        I.floor(r * 255 + 0.5),
+        I.floor(g * 255 + 0.5),
+        I.floor(b * 255 + 0.5),
+        I.floor(a * 255 + 0.5)
+    )
+end
+
+--- Convert a TEN.Color object to HSL (Hue, Saturation, Lightness) values.
+-- Uses the Color:GetHue() method for accurate hue extraction.
+-- @tparam Color color The TEN.Color object to convert.
+-- @treturn[1] table A table with h, s, l, a values { h = float, s = float, l = float, a = float }.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Get HSL values from a color
+-- local color = TEN.Color(255, 87, 51, 255)
+-- local hsl = LuaUtil.ColorToHSL(color)
+-- -- Result: { h = 14.0, s = 1.0, l = 0.6, a = 1.0 }
+--
+-- -- Practical example: Adjust saturation
+-- local originalColor = TEN.Color(255, 100, 50, 255)
+-- local hsl = LuaUtil.ColorToHSL(originalColor)
+-- if hsl then
+--     hsl.s = hsl.s * 0.5  -- Reduce saturation by 50%
+--     local desaturatedColor = LuaUtil.HSLtoColor(hsl.h, hsl.s, hsl.l, hsl.a)
+--     -- Apply color to sprite
+--     sprite:SetColor(desaturatedColor)
+-- end
+--
+-- -- Example: Brighten a color
+-- local darkColor = TEN.Color(50, 50, 150, 255)
+-- local hsl = LuaUtil.ColorToHSL(darkColor)
+-- if hsl then
+--     hsl.l = math.min(1.0, hsl.l + 0.2)  -- Increase lightness by 20%
+--     local brighterColor = LuaUtil.HSLtoColor(hsl.h, hsl.s, hsl.l, hsl.a)
+--     sprite:SetColor(brighterColor)
+-- end
+--
+-- -- Error handling example:
+-- local hsl = LuaUtil.ColorToHSL(invalidColor)
+-- if hsl == nil then
+--     TEN.Util.PrintLog("Failed to convert color to HSL", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Safe approach with default fallback:
+-- local hsl = LuaUtil.ColorToHSL(color) or { h = 0, s = 0, l = 0, a = 1.0 }
+LuaUtil.ColorToHSL = function(color)
+    if not I.IsColor(color) then
+        TEN.Util.PrintLog("Error in LuaUtil.ColorToHSL: color must be a Color object.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Convert RGB to 0-1 range
+    local r = color.r / 255
+    local g = color.g / 255
+    local b = color.b / 255
+    local a = color.a / 255
+
+    -- Get hue directly from Color method
+    local h = color:GetHue()
+
+    -- Calculate saturation and lightness
+    local max = I.max(r, g, b)
+    local min = I.min(r, g, b)
+    local l = (max + min) / 2
+
+    local s
+    if max == min then
+        s = 0  -- Achromatic (gray)
+    else
+        local delta = max - min
+        s = l > 0.5 and delta / (2 - max - min) or delta / (max + min)
+    end
+
+    return { h = h, s = s, l = l, a = a }
+end
+
+--- Invert the RGB components of a color (255 - component).
+-- Creates a negative/opposite color effect by inverting red, green, and blue channels.
+-- Optionally preserves the original alpha channel.
+-- @tparam Color color The color to invert.
+-- @tparam[opt=false] bool keepAlpha If true, preserves the original alpha value.
+-- @treturn[1] Color The inverted color.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Simple color inversion
+-- local red = TEN.Color(255, 0, 0, 255)
+-- local cyan = LuaUtil.InvertColor(red)  
+-- -- Result: TEN.Color(0, 255, 255, 0)
+--
+-- -- Example: Invert while keeping alpha
+-- local semiRed = TEN.Color(255, 0, 0, 128)
+-- local semiCyan = LuaUtil.InvertColor(semiRed, true)
+-- -- Result: TEN.Color(0, 255, 255, 128)
+--
+-- -- Practical example: Create negative effect on sprite
+-- local originalColor = sprite:GetColor()
+-- local negativeColor = LuaUtil.InvertColor(originalColor, true)  -- Keep transparency
+-- sprite:SetColor(negativeColor)
+--
+-- -- Example: Toggle between normal and inverted
+-- local isInverted = false
+-- local baseColor = TEN.Color(100, 150, 200, 255)
+-- LevelFuncs.OnLoop = function()
+--     if isInverted then
+--         sprite:SetColor(LuaUtil.InvertColor(baseColor, true))
+--     else
+--         sprite:SetColor(baseColor)
+--     end
+-- end
+--
+-- -- Error handling example:
+-- local inverted = LuaUtil.InvertColor(color, true)
+-- if inverted == nil then
+--     TEN.Util.PrintLog("Failed to invert color", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+-- sprite:SetColor(inverted)
+--
+-- -- Safe approach with default fallback:
+-- local invertedColor = LuaUtil.InvertColor(color, true) or TEN.Color(255, 255, 255, 255)
+LuaUtil.InvertColor = function(color, keepAlpha)
+    if not I.IsColor(color) then
+        TEN.Util.PrintLog("Error in LuaUtil.InvertColor: color must be a Color object.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Handle keepAlpha: use default if nil/not provided, warn if wrong type
+    if keepAlpha ~= nil and not I.IsBoolean(keepAlpha) then
+        TEN.Util.PrintLog("Warning in LuaUtil.InvertColor: keepAlpha must be a boolean. Using default value (false).", TEN.Util.LogLevel.WARNING)
+        keepAlpha = false
+    else
+        keepAlpha = keepAlpha or false
+    end
+
+    local inverted = color:Invert()
+    
+    if keepAlpha then
+        inverted.a = color.a
+    end
+
+    return inverted
+end
+
 --- Interpolation functions.
 -- Utilities for interpolating between values.
 -- Different interpolation methods provide various speed curves and behaviors.
@@ -1443,33 +1701,33 @@ end
 -- --  0.75  | 95    | 5         | ✓ (short path)
 -- --  1.00  | 10    | 10        | ✓
 --
--- Practical example: Object smoothly rotates to face player (shortest path)
--- local object = TEN.Objects.GetMoveableByName("obj_1")
+-- Practical example: Enemy smoothly rotates to face Lara (shortest path)
+-- local enemy = TEN.Objects.GetMoveableByName("enemy_1")
 -- local animationDuration = LuaUtil.SecondsToFrames(2)  -- 2 seconds to turn
 -- local currentFrame = 0
 -- LevelFuncs.OnLoop = function()
 --     if currentFrame <= animationDuration then
 --         local enemyPos = enemy:GetPosition()
---         local laraPos = Lara:GetPosition()
+--         local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
 --
---         -- Calculate angle to Lara
---         local dx = laraPos.x - enemyPos.x
---         local dz = laraPos.z - enemyPos.z
---         local targetYaw = math.deg(math.atan2(dx, dz))  -- -180 to 180
+--         -- Calculate target rotation using GetDirection and DirectionToRotation
+--         local direction = LuaUtil.GetDirection(enemyPos, laraPos)
+--         local targetRotation = LuaUtil.DirectionToRotation(direction)
 --
 --         -- Get current enemy rotation
 --         local enemyRot = enemy:GetRotation()
---         local currentYaw = enemyRot.y
 --
---         -- LerpAngle finds shortest path (handles 350° → 10° correctly)
+--         -- LerpAngle finds shortest path for both yaw and pitch
 --         local t = currentFrame / animationDuration
---         enemyRot.y = LuaUtil.LerpAngle(currentYaw, targetYaw, t, -180, 180)
+--         enemyRot.y = LuaUtil.LerpAngle(enemyRot.y, targetRotation.y, t, -180, 180)
+--         enemyRot.x = LuaUtil.LerpAngle(enemyRot.x, targetRotation.x, t, -90, 90)
 --         enemy:SetRotation(enemyRot)
 --
 --         -- Example scenario:
---         -- - Enemy at 350° (almost North), Lara at 10° (just past North)
+--         -- - Enemy yaw at 350° (almost North), Lara at 10° (just past North)
 --         -- - LerpAngle calculates: 350° → 10° = 20° turn (short path through 0°)
 --         -- - Regular Lerp would: 350° → 10° = -340° turn (long way, wrong!)
+--         -- - Also smoothly adjusts pitch if Lara is above/below enemy
 --
 --         currentFrame = currentFrame + 1
 --     else
