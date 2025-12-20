@@ -3,7 +3,7 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
-## [Version 1.10.2]
+## [Version 1.11]
 
 ### New features
 * Added faster Xorshift32 random number generation method.
