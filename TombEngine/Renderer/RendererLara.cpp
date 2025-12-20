@@ -84,7 +84,7 @@ bool ShouldAnimateUpperBody(const LaraWeaponType& weapon)
 int GetNormalizedArmAnimFrame(GAME_OBJECT_ID animObjectID, int frameNumber)
 {
 	int frameCount = 0;
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		const auto& anim = GetAnimData(animObjectID, i);
 
