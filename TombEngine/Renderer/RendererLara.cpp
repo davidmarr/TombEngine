@@ -84,14 +84,22 @@ bool ShouldAnimateUpperBody(const LaraWeaponType& weapon)
 int GetNormalizedArmAnimFrame(GAME_OBJECT_ID animObjectID, int frameNumber)
 {
 	int frameCount = 0;
-	for (int i = 0; i < 5; i++)
+	int animCount = (int)Objects[animObjectID].Animations.size();
+
+	for (int i = 0; i < animCount; i++)
 	{
 		const auto& anim = GetAnimData(animObjectID, i);
+		
+		int currentAnimFrameCount = (int)anim.Keyframes.size();
+		int nextFrameCount = (frameCount + currentAnimFrameCount);
 
-		if (frameNumber <= (anim.EndFrameNumber + i))
-			return frameNumber;
+		if (frameNumber < nextFrameCount)
+			return frameNumber - frameCount;
 
-		frameNumber -= (i == 0) ? anim.EndFrameNumber : (int)anim.Keyframes.size();
+		if (i == animCount - 1 && frameNumber >= nextFrameCount)
+			return currentAnimFrameCount - 1;
+
+		frameCount = nextFrameCount;
 	}
 
 	return 0;
@@ -212,9 +220,9 @@ void Renderer::UpdateLaraAnimations(bool force)
 			// HACK: Revolver is a special case because its right/left arm orientations aren't symmetrical and get messed up while moving.
 			bool transformLeftUpperArm = (IsCrouching(LaraItem) || Lara.LeftArm.Locked || movingModifier) && sideJumpModifier;
 
-			auto leftAnimData = GetNormalizedArmAnimFrame(Lara.LeftArm.AnimObjectID, Lara.LeftArm.FrameNumber);
+			auto leftFrameNumber = GetNormalizedArmAnimFrame(Lara.LeftArm.AnimObjectID, Lara.LeftArm.FrameNumber);
 			const auto& leftAnim = GetAnimData(Lara.LeftArm.AnimObjectID, Lara.LeftArm.AnimNumber);
-			auto leftFrame = leftAnim.GetKeyframeInterpolationData(leftAnimData).Keyframe0;
+			auto leftFrame = leftAnim.GetKeyframeInterpolationData(leftFrameNumber).Keyframe0;
 
 			int upperArmMask = MESH_BITS(LM_LINARM);
 			mask = MESH_BITS(LM_LOUTARM) | MESH_BITS(LM_LHAND);
@@ -237,9 +245,9 @@ void Renderer::UpdateLaraAnimations(bool force)
 			// HACK: Same as above, but for right arm.
 			bool transformRightUpperArm = IsCrouching(LaraItem) || Lara.RightArm.Locked || movingModifier;
 
-			auto rightAnimData = GetNormalizedArmAnimFrame(Lara.RightArm.AnimObjectID, Lara.RightArm.FrameNumber);
+			auto rightFrameNumber = GetNormalizedArmAnimFrame(Lara.RightArm.AnimObjectID, Lara.RightArm.FrameNumber);
 			const auto& rightAnim = GetAnimData(Lara.RightArm.AnimObjectID, Lara.RightArm.AnimNumber);
-			auto rightFrame = rightAnim.GetKeyframeInterpolationData(rightAnimData).Keyframe0;
+			auto rightFrame = rightAnim.GetKeyframeInterpolationData(rightFrameNumber).Keyframe0;
 
 			upperArmMask = MESH_BITS(LM_RINARM);
 			mask = MESH_BITS(LM_ROUTARM) | MESH_BITS(LM_RHAND);
@@ -263,9 +271,6 @@ void Renderer::UpdateLaraAnimations(bool force)
 		{
 			// Left arm.
 			auto leftFrameNumber = GetNormalizedArmAnimFrame(Lara.LeftArm.AnimObjectID, Lara.LeftArm.FrameNumber);
-			if (Lara.LeftArm.FrameNumber >= 95) // HACK: Hardcoded check for flare anim 4. For some reason, GetNormalizedArmAnimFrame() on its own can't normalize past anim 3.
-				leftFrameNumber = Lara.LeftArm.FrameNumber - 95;
-
 			const auto& leftAnim = GetAnimData(Lara.LeftArm.AnimObjectID, Lara.LeftArm.AnimNumber);
 			auto leftFrame = leftAnim.GetKeyframeInterpolationData(leftFrameNumber).Keyframe0;
 
