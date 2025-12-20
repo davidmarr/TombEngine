@@ -877,7 +877,7 @@ namespace TEN::Renderer
 			
 			_stItem.BoneLightModes[0] = (int)LightMode::Dynamic;
 
-			UpdateConstantBuffer(_stItem, _cbItem);
+			UpdateConstantBuffer(&_stItem, _cbItem.get());
 			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
 			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
 
