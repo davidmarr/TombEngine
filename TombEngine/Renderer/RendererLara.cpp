@@ -262,9 +262,12 @@ void Renderer::UpdateLaraAnimations(bool force)
 		case LaraWeaponType::Torch:
 		{
 			// Left arm.
-			auto leftAnimData = GetNormalizedArmAnimFrame(Lara.LeftArm.AnimObjectID, Lara.LeftArm.FrameNumber);
+			auto leftFrameNumber = GetNormalizedArmAnimFrame(Lara.LeftArm.AnimObjectID, Lara.LeftArm.FrameNumber);
+			if (Lara.LeftArm.FrameNumber >= 95) // HACK: Hardcoded check for flare anim 4. For some reason, GetNormalizedArmAnimFrame() on its own can't normalize past anim 3.
+				leftFrameNumber = Lara.LeftArm.FrameNumber - 95;
+
 			const auto& leftAnim = GetAnimData(Lara.LeftArm.AnimObjectID, Lara.LeftArm.AnimNumber);
-			auto leftFrame = leftAnim.GetKeyframeInterpolationData(leftAnimData).Keyframe0;
+			auto leftFrame = leftAnim.GetKeyframeInterpolationData(leftFrameNumber).Keyframe0;
 
 			mask = MESH_BITS(LM_LINARM) | MESH_BITS(LM_LOUTARM) | MESH_BITS(LM_LHAND);
 

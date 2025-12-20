@@ -271,7 +271,7 @@ void DrawFlare(ItemInfo& laraItem)
 		}
 		else
 		{
-			if (armFrame == 94) // Anim 4, start frame.
+			if (armFrame == 94) // Anim 3, end frame.
 			{
 				ReadyFlare(laraItem);
 				armFrame = 0;
