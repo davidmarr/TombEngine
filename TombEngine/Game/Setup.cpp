@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/Setup.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/collision/collide_item.h"
 #include "Game/control/flipeffect.h"
@@ -27,10 +27,14 @@
 #include "Objects/TR4/Entity/tr4_beetle_swarm.h"
 #include "Objects/Utils/object_helper.h"
 #include "Specific/level.h"
+#include "Objects/Effects/Fireflies.h"
+#include "Specific/trutils.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Effects::Hair;
 using namespace TEN::Entities;
 using namespace TEN::Entities::Switches;
+using namespace TEN::Utils;
 
 ObjectHandler Objects;
 StaticHandler Statics;
@@ -47,8 +51,8 @@ bool ObjectHandler::CheckID(GAME_OBJECT_ID objectID, bool isSilent)
 		if (!isSilent)
 		{
 			TENLog(
-				"Attempted to access unavailable slot ID (" + std::to_string(objectID) + "). " +
-				"Check if last accessed item exists in level.", LogLevel::Warning, LogConfig::Debug);
+				fmt::format("Attempted to access unavailable slot ID {}. Check if the last accessed moveable exists in the level.", objectID),
+				LogLevel::Warning, LogConfig::Debug);
 		}
 
 		return false;
@@ -78,38 +82,38 @@ ObjectInfo& ObjectHandler::GetFirstAvailableObject()
 
 void StaticHandler::Initialize()
 {
-	_lookupTable.resize(0);
-	_lookupTable.reserve(_defaultLUTSize);
+	_lut.resize(0);
+	_lut.reserve(LUT_SIZE);
 	_statics.resize(0);
 }
 
 int StaticHandler::GetIndex(int staticID)
 {
-	if (staticID < 0 || staticID >= _lookupTable.size())
+	if (staticID < 0 || staticID >= _lut.size())
 	{
-		TENLog("Attempt to get nonexistent static mesh ID slot index (" + std::to_string(staticID) + ")", LogLevel::Warning);
-		return _lookupTable.front();
+		TENLog(fmt::format("Attempted to get index of invalid static object {}.", staticID), LogLevel::Warning);
+		return _lut.front();
 	}
 
-	return _lookupTable[staticID];
+	return _lut[staticID];
 }
 
 StaticInfo& StaticHandler::operator [](int staticID)
 {
 	if (staticID < 0)
 	{
-		TENLog("Attempt to access illegal static mesh ID slot info", LogLevel::Warning);
+		TENLog(fmt::format("Attempted to access invalid static object {}.", staticID), LogLevel::Warning);
 		return _statics.front();
 	}
 
-	if (staticID >= _lookupTable.size())
-		_lookupTable.resize(staticID + 1, NO_VALUE);
+	if (staticID >= _lut.size())
+		_lut.resize(staticID + 1, NO_VALUE);
 
-	if (_lookupTable[staticID] != NO_VALUE)
-		return _statics[_lookupTable[staticID]];
+	if (_lut[staticID] != NO_VALUE)
+		return _statics[_lut[staticID]];
 
 	_statics.emplace_back();
-	_lookupTable[staticID] = (int)_statics.size() - 1;
+	_lut[staticID] = (int)_statics.size() - 1;
 
 	return _statics.back();
 }
@@ -120,7 +124,7 @@ void ObjectInfo::SetBoneRotationFlags(int boneID, int flags)
 	int index = boneIndex + (boneID * 4);
 	if (index < 0 || index >= g_Level.Bones.size())
 	{
-		TENLog("Failed to set rotation flag for bone ID " + std::to_string(boneID), LogLevel::Warning);
+		TENLog(fmt::format("Failed to set rotation flag for bone ID {}.", boneID), LogLevel::Warning);
 		return;
 	}
 
@@ -174,6 +178,7 @@ void InitializeGameFlags()
 
 	FlipEffect = NO_VALUE;
 	FlipStatus = false;
+	NumRPickups = 0;
 	Camera.underwater = false;
 }
 
@@ -199,6 +204,7 @@ void InitializeSpecialEffects()
 
 	TEN::Entities::TR4::ClearBeetleSwarm();
 	TEN::Entities::Creatures::TR3::ClearFishSwarm();
+	TEN::Effects::Fireflies::ClearFireflySwarm();
 }
 
 void CustomObjects()
@@ -208,6 +214,8 @@ void CustomObjects()
 
 void InitializeObjects()
 {
+	TENLog("Initializing objects...", LogLevel::Info);
+
 	AllocTR4Objects();
 	AllocTR5Objects();
 
@@ -219,7 +227,6 @@ void InitializeObjects()
 		obj->Initialize = nullptr;
 		obj->collision = nullptr;
 		obj->control = nullptr;
-		obj->drawRoutine = DrawAnimatingItem;
 		obj->HitRoutine = DefaultItemHit;
 		obj->pivotLength = 0;
 		obj->radius = DEFAULT_RADIUS;
@@ -231,7 +238,7 @@ void InitializeObjects()
 		obj->AlwaysActive = false;
 		obj->waterCreature = false;
 		obj->nonLot = false;
-		obj->usingDrawAnimatingItem = true;
+		obj->Hidden = false;
 		obj->damageType = DamageMode::Any;
 		obj->LotType = LotType::Basic;
 		obj->meshSwapSlot = NO_VALUE;
@@ -250,10 +257,6 @@ void InitializeObjects()
 	// User defined objects
 	CustomObjects();
 
-	HairEffect.Initialize();
-	InitializeSpecialEffects();
-
-	NumRPickups = 0;
 	CurrentSequence = 0;
 	SequenceResults[0][1][2] = 0;
 	SequenceResults[0][2][1] = 1;

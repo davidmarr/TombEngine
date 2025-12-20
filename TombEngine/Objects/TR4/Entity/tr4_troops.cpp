@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "Objects/TR4/Entity/tr4_troops.h"
 
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/control/lot.h"
 #include "Game/control/control.h"
@@ -10,12 +11,12 @@
 #include "Game/Lara/lara_fire.h"
 #include "Game/people.h"
 #include "Game/itemdata/creature_info.h"
-#include "Game/animation.h"
 #include "Game/misc.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Math;
 
 namespace TEN::Entities::TR4
@@ -41,11 +42,12 @@ namespace TEN::Entities::TR4
 		TROOP_STATE_FLASHED = 17
 	};
 
-	// TODO
 	enum TroopAnim
 	{
 
 	};
+
+	constexpr auto TROOPS_SHOT_DAMAGE = 23;
 
 	void InitializeTroops(short itemNumber)
 	{
@@ -56,15 +58,15 @@ namespace TEN::Entities::TR4
 		if (item->TriggerFlags == 1)
 		{
 			item->Animation.TargetState = item->Animation.ActiveState = TROOP_STATE_ATTACKED_BY_SCORPION;
-			item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 27;
+			item->Animation.AnimNumber = 27;
 		}
 		else
 		{
 			item->Animation.TargetState = item->Animation.ActiveState = TROOP_STATE_IDLE;
-			item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 12;
+			item->Animation.AnimNumber = 12;
 		}
 
-		item->Animation.FrameNumber = GetAnimData(item).frameBase;
+		item->Animation.FrameNumber = 0;
 	}
 
 	void TroopsControl(short itemNumber)
@@ -99,14 +101,14 @@ namespace TEN::Entities::TR4
 					creature->Enemy->ObjectNumber == ID_BIG_SCORPION &&
 					item->ItemFlags[0] < 80)
 				{
-					if (creature->Enemy->Animation.AnimNumber == Objects[ID_BIG_SCORPION].animIndex + 6)
+					if (creature->Enemy->Animation.AnimNumber == 6)
 					{
-						item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 23;
+						item->Animation.AnimNumber = 23;
 
 						if (item->Animation.ActiveState == TROOP_STATE_ATTACKED_BY_SCORPION)
-							item->Animation.FrameNumber = GetAnimData(item).frameBase + 37;
+							item->Animation.FrameNumber = 37;
 						else
-							item->Animation.FrameNumber = GetAnimData(item).frameBase;
+							item->Animation.FrameNumber = 0;
 
 						item->Animation.ActiveState = TROOP_STATE_KILLED_BY_SCORPION;
 						item->Animation.TargetState = TROOP_STATE_KILLED_BY_SCORPION;
@@ -126,10 +128,16 @@ namespace TEN::Entities::TR4
 				}
 				else
 				{
-					item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 19;
+					item->Animation.AnimNumber = 19;
 					item->Animation.ActiveState = TROOP_STATE_DEATH;
-					item->Animation.FrameNumber = GetAnimData(item).frameBase;
+					item->Animation.FrameNumber = 0;
 				}
+
+				item->ItemFlags[FINAL_SHOT_FLAG_INDEX] = Random::GenerateInt(1, FINAL_SHOT_COUNT);
+			}
+			else
+			{
+				PerformFinalAttack(*item, TroopsBite1, 8, 19, TROOPS_SHOT_DAMAGE, SFX_TR4_HK_FIRE);
 			}
 		}
 		else
@@ -143,8 +151,10 @@ namespace TEN::Entities::TR4
 
 				float minDistance = FLT_MAX;
 
-				for (auto& currentCreature : ActiveCreatures)
+				for (auto creatureIndex : ActiveCreatures)
 				{
+					auto* currentCreature = GetCreatureInfo(&g_Level.Items[creatureIndex]);
+
 					if (currentCreature->ItemNumber != NO_VALUE && currentCreature->ItemNumber != itemNumber)
 					{
 						auto* currentItem = &g_Level.Items[currentCreature->ItemNumber];
@@ -207,7 +217,7 @@ namespace TEN::Entities::TR4
 				creature->Flags = 0;
 				joint2 = rot;
 
-				if (item->Animation.AnimNumber == object->animIndex + 17)
+				if (item->Animation.AnimNumber == 17)
 				{
 					if (abs(AI.angle) >= ANGLE(10.0f))
 					{
@@ -369,7 +379,7 @@ namespace TEN::Entities::TR4
 				}
 				else
 				{
-					ShotLara(item, &AI, TroopsBite1, joint0, 23);
+					ShotLara(item, &AI, TroopsBite1, joint0, TROOPS_SHOT_DAMAGE);
 					creature->MuzzleFlash[0].Bite = TroopsBite1;
 					creature->MuzzleFlash[0].Delay = 2;
 					creature->Flags = 5;
@@ -431,7 +441,7 @@ namespace TEN::Entities::TR4
 				}
 				else
 				{
-					ShotLara(item, &AI, TroopsBite1, joint0, 23);
+					ShotLara(item, &AI, TroopsBite1, joint0, TROOPS_SHOT_DAMAGE);
 					creature->MuzzleFlash[0].Bite = TroopsBite1;
 					creature->MuzzleFlash[0].Delay = 2;
 					creature->Flags = 5;
@@ -458,9 +468,9 @@ namespace TEN::Entities::TR4
 				if (item->Animation.ActiveState != TROOP_STATE_FLASHED &&
 					item->Animation.ActiveState != TROOP_STATE_ATTACKED_BY_SCORPION)
 				{
-					item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 28;
+					item->Animation.AnimNumber = 28;
 					item->Animation.ActiveState = TROOP_STATE_FLASHED;
-					item->Animation.FrameNumber = GetAnimData(item).frameBase + (GetRandomControl() & 7);
+					item->Animation.FrameNumber = (GetRandomControl() & 7);
 					creature->MaxTurn = 0;
 				}
 			}

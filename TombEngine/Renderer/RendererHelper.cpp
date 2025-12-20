@@ -7,7 +7,7 @@
 #include <wincodec.h>
 
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/collision/Sphere.h"
 #include "Game/control/control.h"
@@ -34,6 +34,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Sphere;
 using namespace TEN::Math;
 
@@ -42,7 +43,7 @@ extern ScriptInterfaceFlowHandler *g_GameFlow;
 
 namespace TEN::Renderer
 {
-	void Renderer::UpdateAnimation(RendererItem* rItem, RendererObject& rObject, const AnimFrameInterpData& frameData, int mask, bool useObjectWorldRotation)
+	void Renderer::UpdateAnimation(RendererItem* rItem, RendererObject& rObject, const KeyframeInterpolationData& interpData, int mask, bool useObjectWorldRotation)
 	{
 		static auto boneIndices = std::vector<int>{};
 		boneIndices.clear();
@@ -64,8 +65,8 @@ namespace TEN::Renderer
 			if (bonePtr == nullptr)
 				return;
 
-			if (frameData.FramePtr0->BoneOrientations.size() <= bonePtr->Index ||
-				(frameData.Alpha != 0.0f && frameData.FramePtr0->BoneOrientations.size() <= bonePtr->Index))
+			if (interpData.Keyframe0.BoneOrientations.size() <= bonePtr->Index ||
+				(interpData.Alpha != 0.0f && interpData.Keyframe0.BoneOrientations.size() <= bonePtr->Index))
 			{
 				TENLog(
 					"Attempted to animate object with ID " + GetObjectName((GAME_OBJECT_ID)rItem->ObjectID) +
@@ -78,19 +79,19 @@ namespace TEN::Renderer
 			bool calculateMatrix = (mask >> bonePtr->Index) & 1;
 			if (calculateMatrix)
 			{
-				auto offset0 = frameData.FramePtr0->Offset;
-				auto rotMatrix = Matrix::CreateFromQuaternion(frameData.FramePtr0->BoneOrientations[bonePtr->Index]);
-
-				if (frameData.Alpha != 0.0f)
+				auto offset0 = interpData.Keyframe0.RootOffset;
+				auto rotMatrix = Matrix::CreateFromQuaternion(interpData.Keyframe0.BoneOrientations[bonePtr->Index]);
+				
+				if (interpData.Alpha != 0.0f)
 				{
-					auto offset1 = frameData.FramePtr1->Offset;
-					offset0 = Vector3::Lerp(offset0, offset1, frameData.Alpha);
+					auto offset1 = interpData.Keyframe1.RootOffset;
+					offset0 = Vector3::Lerp(offset0, offset1, interpData.Alpha);
 
-					auto rotMatrix2 = Matrix::CreateFromQuaternion(frameData.FramePtr1->BoneOrientations[bonePtr->Index]);
+					auto rotMatrix2 = Matrix::CreateFromQuaternion(interpData.Keyframe1.BoneOrientations[bonePtr->Index]);
 
 					auto quat1 = Quaternion::CreateFromRotationMatrix(rotMatrix);
 					auto quat2 = Quaternion::CreateFromRotationMatrix(rotMatrix2);
-					auto quat3 = Quaternion::Slerp(quat1, quat2, frameData.Alpha);
+					auto quat3 = Quaternion::Slerp(quat1, quat2, interpData.Alpha);
 
 					rotMatrix = Matrix::CreateFromQuaternion(quat3);
 				}
@@ -176,12 +177,20 @@ namespace TEN::Renderer
 		itemToDraw->DoneAnimations = true;
 
 		auto* obj = &Objects[nativeItem->ObjectNumber];
+
+		if (!obj->loaded)
+		{
+			TENLog("Attempted to animate nonexistent object " + GetObjectName((GAME_OBJECT_ID)nativeItem->ObjectNumber), LogLevel::Error);
+			return;
+		}
+
 		auto& moveableObj = *_moveableObjects[nativeItem->ObjectNumber];
 
 		// Copy meshswaps
-		itemToDraw->MeshIds = nativeItem->Model.MeshIndex;
+		itemToDraw->MeshIndex = nativeItem->Model.MeshIndex;
+		itemToDraw->SkinIndex = nativeItem->Model.SkinIndex;
 
-		if (obj->animIndex == -1)
+		if (obj->Animations.empty())
 			return;
 
 		// Apply extra rotations
@@ -335,7 +344,7 @@ namespace TEN::Renderer
 	void Renderer::BuildHierarchyRecursive(RendererObject *obj, RendererBone *node, RendererBone *parentNode)
 	{
 		node->GlobalTransform = node->Transform * parentNode->GlobalTransform;
-		obj->BindPoseTransforms[node->Index] = node->GlobalTransform;
+		obj->BindPoseTransforms[node->Index] = node->GlobalTransform.Invert();
 		obj->Skeleton->GlobalTranslation = Vector3::Zero;
 		node->GlobalTranslation = node->Translation + parentNode->GlobalTranslation;
 
@@ -346,7 +355,7 @@ namespace TEN::Renderer
 	void Renderer::BuildHierarchy(RendererObject *obj)
 	{
 		obj->Skeleton->GlobalTransform = obj->Skeleton->Transform;
-		obj->BindPoseTransforms[obj->Skeleton->Index] = obj->Skeleton->GlobalTransform;
+		obj->BindPoseTransforms[obj->Skeleton->Index] = obj->Skeleton->GlobalTransform.Invert();
 		obj->Skeleton->GlobalTranslation = Vector3::Zero;
 
 		for (auto* childNode : obj->Skeleton->Children)
@@ -470,6 +479,17 @@ namespace TEN::Renderer
 			auto& obj = *_moveableObjects[nativeItem->ObjectNumber];
 			*outMatrix = obj.AnimationTransforms[jointIndex] * rendererItem->World;
 		}
+	}
+
+	SkinningMode Renderer::GetSkinningMode(const RendererObject& obj, int skinIndex)
+	{
+		if (g_GameFlow->GetSettings()->Graphics.Skinning && skinIndex != NO_VALUE)
+			return SkinningMode::Full;
+
+		if (obj.Id == GAME_OBJECT_ID::ID_LARA || obj.Id == GAME_OBJECT_ID::ID_LARA_SKIN)
+			return SkinningMode::Classic;
+		else
+			return SkinningMode::None;
 	}
 
 	Vector4 Renderer::GetPortalRect(Vector4 v, Vector4 vp) 
@@ -619,7 +639,7 @@ namespace TEN::Renderer
 
 		time(&rawtime);
 		auto time = localtime(&rawtime);
-		strftime(buffer, sizeof(buffer), "/TEN-%d-%m-%Y-%H-%M-%S.png", time);
+		strftime(buffer, sizeof(buffer), "/TEN-%Y-%m-%d_%H-%M-%S.png", time);
 
 		auto screenPath = g_GameFlow->GetGameDir() + "Screenshots";
 

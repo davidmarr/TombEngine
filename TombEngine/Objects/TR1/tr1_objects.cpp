@@ -26,9 +26,10 @@
 
 // Traps
 #include "Objects/TR1/Trap/DamoclesSword.h"
+#include "Objects/TR1/Trap/ElectricBall.h"
+#include "Objects/TR1/Trap/ThorHammer.h"
 #include "Objects/TR1/Trap/SlammingDoors.h"
 #include "Objects/TR1/Trap/SwingingBlade.h"
-#include "Objects/TR1/Trap/ElectricBall.h"
 
 using namespace TEN::Entities::Creatures::TR1;
 using namespace TEN::Entities::Traps;
@@ -133,8 +134,6 @@ static void StartEntity(ObjectInfo* obj)
 	{
 		// NOTE: lara is obviously loaded by default.
 		auto& laraObj = Objects[ID_LARA];
-		obj->animIndex = laraObj.animIndex;
-		obj->frameBase = laraObj.frameBase;
 		obj->Initialize = InitializeCreature;
 		obj->collision = CreatureCollision;
 		obj->control = DoppelgangerControl;
@@ -235,7 +234,7 @@ static void StartObject(ObjectInfo* obj)
 	if (obj->loaded)
 	{
 		obj->collision = AIPickupCollision;
-		obj->drawRoutine = nullptr;
+		obj->Hidden = true;
 	}
 }
 
@@ -247,6 +246,26 @@ static void StartTrap(ObjectInfo* obj)
 		obj->Initialize = InitializeDamoclesSword;
 		obj->control = ControlDamoclesSword;
 		obj->collision = CollideDamoclesSword;
+		obj->shadowType = ShadowMode::All;
+		obj->SetHitEffect(true);
+	}
+	
+	obj = &Objects[ID_THOR_HAMMER_HANDLE];
+	if (obj->loaded)
+	{
+		CheckIfSlotExists(ID_THOR_HAMMER_HEAD, "Thor hammer");
+		obj->Initialize = InitializeThorHammer;
+		obj->collision = CollideThorHammerHandle;
+		obj->control = ControlThorHammer;
+		obj->shadowType = ShadowMode::All;
+		obj->SetHitEffect(true);
+	}
+
+	obj = &Objects[ID_THOR_HAMMER_HEAD];
+	if (obj->loaded)
+	{
+		CheckIfSlotExists(ID_THOR_HAMMER_HANDLE, "Thor hammer");
+		obj->collision = CollideThorHammer;
 		obj->shadowType = ShadowMode::All;
 		obj->SetHitEffect(true);
 	}
@@ -288,8 +307,7 @@ static void StartTrap(ObjectInfo* obj)
 	if (obj->loaded)
 	{
 		obj->Initialize = InitializeElectricBallImpactPoint;
-		obj->drawRoutine = nullptr;
-		obj->usingDrawAnimatingItem = false;
+		obj->Hidden = true;
 	}
 }
 

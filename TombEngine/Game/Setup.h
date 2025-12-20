@@ -1,9 +1,11 @@
 #pragma once
+
 #include "Game/control/box.h"
 #include "Objects/objectslist.h"
 #include "Renderer/RendererEnums.h"
 #include "Specific/level.h"
 
+namespace TEN::Animation { struct AnimData; }
 class Vector3i;
 struct CollisionInfo;
 struct ItemInfo;
@@ -71,10 +73,9 @@ struct ObjectInfo
 	bool loaded = false; // IsLoaded
 
 	int nmeshes; // BoneCount
+	int skinIndex; // Base index in g_Level.Meshes.
 	int meshIndex; // Base index in g_Level.Meshes.
 	int boneIndex; // Base index in g_Level.Bones.
-	int animIndex; // Base index in g_Level.Anims.
-	int frameBase; // Base index in g_Level.Frames.
 
 	LotType LotType;
 	HitEffect hitEffect;
@@ -92,16 +93,16 @@ struct ObjectInfo
 	bool nonLot					= false;
 	bool isPickup				= false;
 	bool isPuzzleHole			= false;
-	bool usingDrawAnimatingItem = false;
+	bool Hidden				= false;
 
 	DWORD explodableMeshbits;
+
+	std::vector<AnimData> Animations = {};
 
 	std::function<void(short itemNumber)> Initialize = nullptr;
 	std::function<void(short itemNumber)> control = nullptr;
 	std::function<void(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)> collision = nullptr;
-
 	std::function<void(ItemInfo& target, ItemInfo& source, std::optional<GameVector> pos, int damage, bool isExplosive, int jointIndex)> HitRoutine = nullptr;
-	std::function<void(ItemInfo* item)> drawRoutine = nullptr;
 
 	void SetBoneRotationFlags(int boneID, int flags);
 	void SetHitEffect(HitEffect hitEffect);
@@ -135,10 +136,10 @@ struct StaticInfo
 class StaticHandler
 {
 private:
-	static const int _defaultLUTSize = 256;
+	static constexpr auto LUT_SIZE = 256;
 
 	std::vector<StaticInfo> _statics = {};
-	std::vector<int> _lookupTable = {};
+	std::vector<int>		_lut	 = {};
 
 public:
 	void Initialize();
@@ -147,6 +148,7 @@ public:
 	StaticInfo& operator [](int staticID);
 
 	// Iterators
+
 	auto begin() { return _statics.begin(); }			// Non-const begin
 	auto end() { return _statics.end(); }				// Non-const end
 	auto begin() const { return _statics.cbegin(); }	// Const begin
