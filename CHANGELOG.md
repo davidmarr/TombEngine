@@ -13,6 +13,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed interaction highlighter not working for pushable climbable blocks.
 * Fixed incorrect CLOCKWORK_BEETLE and MERCENARY_UZI behaviour.
 * Fixed CIVVY crashing the game.
+* Fixed SEARCH_OBJECT4 not always collecting pickup items.
 * Fixed incorrect HYDRA rotation on activation and keeping its shadow after destroying it.
 * Fixed potential issues with PUNA_BOSS, TONY_BOSS, FISH_SWARM and WRAITH objects on savegame reloading.
 * Fixed WRAITH not using effects near walls and occasional issues with room transitions.
