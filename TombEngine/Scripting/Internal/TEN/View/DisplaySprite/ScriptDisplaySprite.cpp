@@ -10,6 +10,7 @@
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/DisplayAnchors/DisplayAnchors.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
+#include "Specific/level.h"
 
 using namespace TEN::Scripting::Types;
 using TEN::Renderer::g_Renderer;
@@ -195,14 +196,27 @@ namespace TEN::Scripting::DisplaySprite
 
 		// Start calculation of the 4 vertices of the sprite with graphic resolution 800x600
 
+		// Get sprite data from g_Level.Sprites instead of renderer
+		const int spriteIndex = object.meshIndex + _spriteID;
+		if (spriteIndex < 0 || spriteIndex >= g_Level.Sprites.size())
+		{
+			TENLog("Invalid sprite index " + std::to_string(spriteIndex) + " for sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
+			return anchors;
+		}
+
+		const auto& spriteData = g_Level.Sprites[spriteIndex];
+		
+		// Calculate sprite dimensions from UV coordinates
+		// The sprite dimensions are encoded in the differences between UV coordinates
+		const float spriteWidth = abs(spriteData.x2 - spriteData.x1);
+		const float spriteHeight = abs(spriteData.y3 - spriteData.y1);
+		const float spriteAspect = (spriteHeight > 0.0f) ? (spriteWidth / spriteHeight) : 1.0f;
+
 		// Screen and sprite data
 		auto screenRes = Vector2(g_Configuration.ScreenWidth, g_Configuration.ScreenHeight);
 		const float screenAspect = screenRes.x / screenRes.y;
 		const float aspectCorrectionBase = screenAspect / DISPLAY_ASPECT;
 		const float aspectCorrectionBaseInv = 1.0f / aspectCorrectionBase;
-
-		const auto& sprite = g_Renderer.GetSprites()[object.meshIndex + _spriteID];
-		const float spriteAspect = (float)sprite.Width / (float)sprite.Height;
 
 		// Scaled values
 		const Vector2 convertedScale = _scale * SCALE_CONVERSION_COEFF;
