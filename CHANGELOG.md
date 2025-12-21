@@ -30,6 +30,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `DisplayStringOption.VERTICAL_BOTTOM` flag.
 * Added optional type argument for inventory item and interaction type for `LaraObject.Interact` function.
 * Added optional type argument for interaction type for `Object.ShowInteractionHighlight` function.
+* Added `Direction` function to `Vec3`.
+* Added direction vector constructor to `Rotation`.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 
 ## [Version 1.10.1]
