@@ -3,6 +3,7 @@
 
 #include "Math/Math.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
+#include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 
 using namespace TEN::Math;
@@ -126,14 +127,26 @@ Vec3 Vec3::Translate(const Rotation& rot, float dist)
 	return Geometry::TranslatePoint(ToVector3(), rot.ToEulerAngles(), dist);
 }
 
-/// Get a copy of this Vec3 translated by an offset, where the input relative offset Vec3 is rotated according to the input Rotation object.
+/// Get a copy of this Vec3 translated by a relative offset rotated according to the input Rotation object.
 // @function Vec3:Translate
-// @tparam Rotation rot Rotation object rotating the input relative offset vector.
+// @tparam Rotation rot Rotation object rotating the relative input offset vector.
 // @tparam Vec3 relOffset Relative offset vector before rotation.
 // @treturn Vec3 Translated vector.
 Vec3 Vec3::Translate(const Rotation& rot, const Vec3& relOffset)
 {
 	return Geometry::TranslatePoint(ToVector3(), rot.ToEulerAngles(), relOffset.ToVector3());
+}
+
+/// Get a copy of this Vec3 translated by a relative offset in the direction of a heading angle, relative to a down axis.
+// @function Vec3:Translate
+// @tparam headingAngle Angle of translation along the 2D plane defined by the down axis.
+// @tparam relOffset Relative offset vector.
+// @tparam axis[opt=Vec3(0, 1, 0)] Normalized direction vector representing the down axis.
+// @treturn Vec3 Translated vector.
+Vec3 Vec3::Translate(float headingAngle, const Vec3& relOffset, TypeOrNil<Vec3> axis)
+{
+	auto convertexAxis = ValueOr<Vec3>(axis, Vec3(0.0f, 1.0f, 0.0f)).ToVector3();
+	return Geometry::TranslatePoint(ToVector3(), ANGLE(headingAngle), relOffset, convertexAxis);
 }
 
 /// Get a copy of this Vec3 rotated by the input Rotation object.
@@ -175,7 +188,7 @@ Vec3 Vec3::Cross(const Vec3& vector) const
 }
 
 /// Get the normalized direction vector from this Vec3 to the input Vec3.
-// @function Vec3:Cross
+// @function Vec3:Direction
 // @tparam Vec3 vector Input vector.
 // @treturn Vec3 Direction vector.
 Vec3 Vec3::Direction(const Vec3& vector) const
