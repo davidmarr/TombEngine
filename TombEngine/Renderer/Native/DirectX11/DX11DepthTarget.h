@@ -3,8 +3,6 @@
 #ifdef SDL_PLATFORM_WIN32
 
 #include <d3d11.h>
-#include <string>
-#include <vector>
 #include <wrl/client.h>
 #include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/IDepthTarget.h"
@@ -16,16 +14,15 @@ namespace TEN::Renderer::Native::DirectX11
 
 	using Microsoft::WRL::ComPtr;
 
+	// NOTE: Texture array is supported and so it's possible to have multiple views.
+	// In most situations, however, the vector of the views is just one element.
 	class DX11DepthTarget : public IDepthTarget
 	{
-		// NOTICE: we support texture array and so we possibly have multiple views.
-		// In most situations, however, the vector of the views is just one element.
-
 	private:
-		int _width;
-		int _height;
-		std::vector<ComPtr<ID3D11DepthStencilView>> _depthStencilViews;
-		ComPtr<ID3D11Texture2D>	_depthStencilTexture;
+		int                                         _width               = 0;
+		int                                         _height              = 0;
+		std::vector<ComPtr<ID3D11DepthStencilView>> _depthStencilViews   = {};
+		ComPtr<ID3D11Texture2D>	                    _depthStencilTexture = {};
 
 	public:
 		DX11DepthTarget() = default;
