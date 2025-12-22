@@ -62,6 +62,10 @@ namespace TEN::Scripting
 		this->z = WrapToUnsignedAngle(z);
 	}
 
+	/// Create a Rotation object from a direction vector.
+	// @function Rotation
+	// @tparam float dir Normalized direction vector.
+	// @treturn Rotation A new Rotation object.
 	Rotation::Rotation(const Vec3& dir)
 	{
 		auto convertedDir = dir.ToVector3();
