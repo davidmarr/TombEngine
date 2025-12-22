@@ -22,6 +22,8 @@ namespace TEN::Renderer::Native::DirectX11
 
 	class DX11SpriteBatch final : public ISpriteBatch
 	{
+		// TODO: rewrite it in the future, after migrating to the new font system, using native DX11 classes.
+
 	private:
 		std::unique_ptr<SpriteBatch> _spriteBatch = nullptr;
 		std::unique_ptr<CommonStates> _renderStates = nullptr;

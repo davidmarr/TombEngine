@@ -17,6 +17,9 @@ namespace TEN::Renderer::Native::DirectX11
 
 	class DX11RenderTarget2D : public IRenderTarget2D
 	{
+		// NOTICE: we support texture array and so we possibly have multiple views.
+		// In most situations, however, the vector of the views is just one element.
+
 	private:
 		int _width;
 		int _height;
