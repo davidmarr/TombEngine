@@ -1345,6 +1345,8 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Physics\Objects\CollisionMesh.cpp" />
     <ClCompile Include="Physics\Objects\CollisionMeshDesc.cpp" />
     <ClCompile Include="Renderer\Frustum.cpp" />
+    <ClCompile Include="Renderer\Native\DirectX11\DX11ConstantBuffer.cpp" />
+    <ClCompile Include="Renderer\Native\DirectX11\DX11DepthTarget.cpp" />
     <ClCompile Include="Renderer\Native\DirectX11\DX11GraphicsDevice.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Renderer\RendererAntialiasing.cpp" />
