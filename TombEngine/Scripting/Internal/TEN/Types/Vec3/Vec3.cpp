@@ -36,7 +36,8 @@ void Vec3::Register(sol::table& parent)
 		ScriptReserved_Vec3Translate, sol::overload(
 			(Vec3(Vec3::*)(const Vec3&, float))(&Vec3::Translate),
 			(Vec3(Vec3::*)(const Rotation&, float))(&Vec3::Translate),
-			(Vec3(Vec3::*)(const Rotation&, const Vec3&))(&Vec3::Translate)),
+			(Vec3(Vec3::*)(const Rotation&, const Vec3&))(&Vec3::Translate),
+			(Vec3(Vec3::*)(float, const Vec3&, TypeOrNil<Vec3>))(&Vec3::Translate)),
 		ScriptReserved_Vec3Rotate, &Vec3::Rotate,
 		ScriptReserved_Vec3Lerp, &Vec3::Lerp,
 		ScriptReserved_Vec3Cross, &Vec3::Cross,
