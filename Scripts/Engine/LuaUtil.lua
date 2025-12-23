@@ -69,7 +69,11 @@ LevelVars.Engine.LuaUtil._Internal = {
     MAX_DEPTH = 10,        -- Maximum nesting depth (prevents stack overflow)
     MAX_ELEMENTS = 1000,   -- Maximum total elements processed (prevents performance issues)
     nextId = 1,            -- Progressive ID for each comparison
-    activeCompares = {}    -- Tracks active comparisons: { [id] = { depth, elementCount, visited } }
+    activeCompares = {},   -- Tracks active comparisons: { [id] = { depth, elementCount, visited } }
+
+    -- Settings for deep table copy (separate from comparison to avoid conflicts)
+    nextCopyId = 1,        -- Progressive ID for each copy operation
+    activeCopies = {}      -- Tracks active copy operations: { [id] = { depth, elementCount, visited } }
 }
 
 -- Local reference to type cache for performance
@@ -146,14 +150,55 @@ F.HueToRgb = function(p, q, t)
     return p
 end
 
+-- Support function for deep table copy
+F.DeepCopyRecursive = function(original, copyId)
+    local context = I.activeCopies[copyId]
+
+    -- Check maximum depth
+    if context.depth >= I.MAX_DEPTH then
+        TEN.Util.PrintLog("Warning in LuaUtil.TableDeepCopy: Maximum depth (" .. 
+            I.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+        return {}
+    end
+
+    -- Check if we've already copied this table (prevents infinite loops)
+    if context.visited[original] then
+        return context.visited[original]
+    end
+
+    -- Create new table and register it immediately
+    local copy = {}
+    context.visited[original] = copy
+    context.depth = context.depth + 1
+
+    for key, value in pairs(original) do
+        context.elementCount = context.elementCount + 1
+
+        -- Check maximum elements
+        if context.elementCount >= I.MAX_ELEMENTS then
+            TEN.Util.PrintLog("Warning in LuaUtil.TableDeepCopy: Maximum elements (" .. I.MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+            return copy
+        end
+
+        -- Deep copy nested tables
+        if I.IsTable(value) then
+            copy[key] = F.DeepCopyRecursive(value, copyId)
+        else
+            copy[key] = value
+        end
+    end
+
+    context.depth = context.depth - 1
+    return copy
+end
+
 -- Support function for recursive comparison
 F.CompareRecursive = function(t1, t2, compareId)
     local context = I.activeCompares[compareId]
 
     -- Check maximum depth
     if context.depth >= I.MAX_DEPTH then
-        TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum depth (" .. 
-            I.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+        TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum depth (" .. I.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
         return false
     end
 
@@ -2106,6 +2151,251 @@ LuaUtil.TableHasKey = function (tbl, key)
             return true
         end
     end
+    return false
+end
+
+--- Create a shallow copy of a table.
+-- Creates a new table with the same key-value pairs. Nested tables are NOT copied (they remain references).
+-- @tparam table tbl The table to copy.
+-- @treturn table A shallow copy of the input table. If the input is not a table, returns an empty table.
+-- @usage
+-- -- Example with simple table:
+-- local original = { a = 1, b = 2, c = 3 }
+-- local copy = LuaUtil.TableCopy(original)
+-- copy.a = 10
+-- -- original.a is still 1, copy.a is 10
+--
+-- -- Example with nested tables (shallow copy limitation):
+-- local original = { name = "Lara", inventory = { sword = 1, shield = 2 } }
+-- local copy = LuaUtil.TableCopy(original)
+-- copy.inventory.sword = 5
+-- -- WARNING: original.inventory.sword is now also 5! (nested table is shared)
+-- -- For nested tables, use TableDeepCopy instead
+--
+-- -- Example with array:
+-- local original = { "red", "green", "blue" }
+-- local copy = LuaUtil.TableCopy(original)
+-- copy[2] = "yellow"
+-- -- original: { "red", "green", "blue" }
+-- -- copy: { "red", "yellow", "blue" }
+--
+-- -- Practical use: backup a table before modification
+-- local backup = LuaUtil.TableCopy(playerStats)
+-- playerStats.health = 0
+-- if needRestore then
+--     playerStats = backup
+-- end
+LuaUtil.TableCopy = function(tbl)
+    if not I.IsTable(tbl) then
+        TEN.Util.PrintLog("Error in LuaUtil.TableCopy: input is not a table.", TEN.Util.LogLevel.ERROR)
+        return {}
+    end
+
+    local copy = {}
+    for key, value in pairs(tbl) do
+        copy[key] = value
+    end
+    return copy
+end
+
+--- Create a deep copy of a table.
+-- Creates a new table with all nested tables recursively copied.
+-- **Limits:** Maximum depth of 10 levels and 1000 total elements to prevent performance issues.
+-- @tparam table tbl The table to copy deeply.
+-- @treturn table A deep copy of the input table. If the input is not a table or limits are exceeded, returns an empty table.
+-- @usage
+-- -- Example with nested tables:
+-- local original = { name = "Lara", inventory = { sword = 1, shield = 2 } }
+-- local copy = LuaUtil.TableDeepCopy(original)
+-- copy.inventory.sword = 5
+-- -- original.inventory.sword is still 1 (independent copy)
+--
+-- -- Example with deeply nested structure:
+-- local config = {
+--     display = { resolution = { width = 1920, height = 1080 }, fullscreen = true },
+--     sound = { volume = { master = 100, effects = 80, music = 60 } }
+-- }
+-- local configCopy = LuaUtil.TableDeepCopy(config)
+-- configCopy.sound.volume.music = 40
+-- -- original config.sound.volume.music is still 60
+--
+-- -- Example with array of tables:
+-- local enemies = {
+--     { name = "Bat", health = 10, pos = { x = 100, y = 200 } },
+--     { name = "Wolf", health = 50, pos = { x = 300, y = 400 } }
+-- }
+-- local enemiesCopy = LuaUtil.TableDeepCopy(enemies)
+-- enemiesCopy[1].health = 0
+-- -- original enemies[1].health is still 10
+--
+-- -- Practical use: save game state
+-- local savedState = LuaUtil.TableDeepCopy(gameState)
+-- -- Later restore from saved state
+-- gameState = LuaUtil.TableDeepCopy(savedState)
+LuaUtil.TableDeepCopy = function(tbl)
+    if not I.IsTable(tbl) then
+        TEN.Util.PrintLog("Error in LuaUtil.TableDeepCopy: input is not a table.", TEN.Util.LogLevel.ERROR)
+        return {}
+    end
+
+    -- Generate unique ID for this copy operation
+    local copyId = I.nextCopyId
+    I.nextCopyId = I.nextCopyId + 1
+
+    -- Initialize context for this copy
+    I.activeCopies[copyId] = {
+        depth = 0,
+        elementCount = 0,
+        visited = {}  -- Prevents infinite loops on circular references
+    }
+
+    -- Execute deep copy
+    local result = F.DeepCopyRecursive(tbl, copyId)
+
+    -- Cleanup: remove context for this copy
+    I.activeCopies[copyId] = nil
+
+    return result
+end
+
+--- Merge two tables into a new table.
+-- Creates a new table combining keys from both tables. If a key exists in both, the value from tbl2 takes precedence.
+-- This is a shallow merge (nested tables are not merged recursively).
+-- @tparam table tbl1 The first table (base table).
+-- @tparam table tbl2 The second table (override table).
+-- @treturn table A new table with merged contents. If inputs are not tables, returns an empty table.
+-- @usage
+-- -- Example with configuration merge:
+-- local defaults = { volume = 100, fullscreen = false, difficulty = "normal" }
+-- local userSettings = { volume = 80, fullscreen = true }
+-- local finalSettings = LuaUtil.TableMerge(defaults, userSettings)
+-- -- finalSettings: { volume = 80, fullscreen = true, difficulty = "normal" }
+--
+-- -- Example with player stats:
+-- local baseStats = { health = 100, stamina = 100, damage = 10 }
+-- local bonuses = { health = 20, damage = 5 }
+-- local totalStats = LuaUtil.TableMerge(baseStats, bonuses)
+-- -- totalStats: { health = 20, stamina = 100, damage = 5 }
+-- -- Note: values are replaced, not added! Use custom logic for addition.
+--
+-- -- Example with arrays (numeric keys):
+-- local array1 = { "a", "b", "c" }
+-- local array2 = { "x", "y" }
+-- local merged = LuaUtil.TableMerge(array1, array2)
+-- -- merged: { "x", "y", "c" } (indices 1 and 2 are overridden)
+--
+-- -- Practical use: apply temporary modifications
+-- local defaultConfig = { speed = 10, color = "blue" }
+-- local nightMode = { color = "black", brightness = 50 }
+-- local activeConfig = LuaUtil.TableMerge(defaultConfig, nightMode)
+-- -- activeConfig: { speed = 10, color = "black", brightness = 50 }
+LuaUtil.TableMerge = function(tbl1, tbl2)
+    if not I.IsTable(tbl1) then
+        TEN.Util.PrintLog("Error in LuaUtil.TableMerge: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
+        return {}
+    end
+    if not I.IsTable(tbl2) then
+        TEN.Util.PrintLog("Error in LuaUtil.TableMerge: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
+        return {}
+    end
+
+    local merged = {}
+    
+    -- Copy all keys from tbl1
+    for key, value in pairs(tbl1) do
+        merged[key] = value
+    end
+    
+    -- Copy all keys from tbl2 (overriding tbl1 if keys match)
+    for key, value in pairs(tbl2) do
+        merged[key] = value
+    end
+    
+    return merged
+end
+
+--- Remove the first occurrence of a value from an array table.
+-- This function searches for the value using pairs() and removes the first match found.
+-- The array is compacted after removal (subsequent elements are shifted down).
+-- @tparam table tbl The array table from which to remove the value.
+-- @tparam any value The value to search for and remove.
+-- @treturn[1] bool True if the value was found and removed, false otherwise.
+-- @treturn[2] bool False if the input is not a table.
+-- @usage
+-- -- Example with array of strings:
+-- local fruits = { "apple", "banana", "cherry", "banana" }
+-- local removed = LuaUtil.RemoveValue(fruits, "banana") -- Result: true
+-- -- fruits is now: { "apple", "cherry", "banana" }
+--
+-- -- Example with array of numbers:
+-- local numbers = { 10, 20, 30, 40 }
+-- local removed = LuaUtil.RemoveValue(numbers, 30) -- Result: true
+-- -- numbers is now: { 10, 20, 40 }
+--
+-- -- Example when value is not found:
+-- local colors = { "red", "green", "blue" }
+-- local removed = LuaUtil.RemoveValue(colors, "yellow") -- Result: false
+-- -- colors remains unchanged: { "red", "green", "blue" }
+--
+-- -- Example with mixed types:
+-- local mixed = { 1, "two", 3, "four" }
+-- local removed = LuaUtil.RemoveValue(mixed, "two") -- Result: true
+-- -- mixed is now: { 1, 3, "four" }
+LuaUtil.RemoveValue = function(tbl, value)
+    if not I.IsTable(tbl) then
+        TEN.Util.PrintLog("Error in LuaUtil.RemoveValue: input is not a table.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    for i, v in pairs(tbl) do
+        if v == value then
+            table.remove(tbl, i)
+            return true
+        end
+    end
+
+    return false
+end
+
+--- Remove a key-value pair from an associative table.
+-- This function removes the specified key and its associated value from the table.
+-- Works with both associative tables and array tables (using numeric indices).
+-- @tparam table tbl The table from which to remove the key.
+-- @tparam any key The key to remove.
+-- @treturn[1] bool True if the key existed and was removed, false if the key was not found.
+-- @treturn[2] bool False if the input is not a table.
+-- @usage
+-- -- Example with associative table:
+-- local player = { name = "Lara", health = 100, ammo = 50 }
+-- local removed = LuaUtil.RemoveKey(player, "ammo") -- Result: true
+-- -- player is now: { name = "Lara", health = 100 }
+--
+-- -- Example when key doesn't exist:
+-- local items = { sword = 1, shield = 2 }
+-- local removed = LuaUtil.RemoveKey(items, "helmet") -- Result: false
+-- -- items remains unchanged: { sword = 1, shield = 2 }
+--
+-- -- Example with array table (using numeric index):
+-- local colors = { "red", "green", "blue" }
+-- local removed = LuaUtil.RemoveKey(colors, 2) -- Result: true
+-- -- colors is now: { "red", "blue" } (but indices are: [1]="red", [3]="blue")
+-- -- Note: For arrays, prefer using RemoveValue or table.remove for proper compacting
+--
+-- -- Example with nested tables:
+-- local config = { display = { width = 1920, height = 1080 }, sound = { volume = 80 } }
+-- local removed = LuaUtil.RemoveKey(config, "sound") -- Result: true
+-- -- config is now: { display = { width = 1920, height = 1080 } }
+LuaUtil.RemoveKey = function(tbl, key)
+    if not I.IsTable(tbl) then
+        TEN.Util.PrintLog("Error in LuaUtil.RemoveKey: input is not a table.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    if tbl[key] ~= nil then
+        tbl[key] = nil
+        return true
+    end
+
     return false
 end
 
