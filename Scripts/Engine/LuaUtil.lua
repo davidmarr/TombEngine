@@ -1232,36 +1232,41 @@ end
 -- Different interpolation methods provide various speed curves and behaviors.
 --
 -- **Interpolation methods comparison:**
---     | Method     | Speed curve        | Behavior                             | Use case                    |
---     |------------|--------------------|--------------------------------------|-----------------------------|
---     | Lerp       | Linear             | Constant speed throughout            | Simple animations           |
---     | LerpAngle  | Linear (shortest)  | Constant speed, wraps around 0°/360° | Rotations, compass, turrets |
---     | Smoothstep | Smooth S-curve     | Gentle ease-in and ease-out          | UI transitions              |
---     | EaseInOut  | Quadratic curve    | Pronounced acceleration/deceleration | Cinematic camera moves      |
---     | Elastic    | Spring oscillation | Overshoot with bounce effect         | Playful UI, cartoon effects |
+-- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
+-- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;} .tableSP tr:hover {background-color: #ddd;}</style>
+-- <table class="tableSP">
+-- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
+-- <tr><td><a href="#Lerp">Lerp</a></td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations</td></tr>
+-- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>Rotations, compass, turrets</td></tr>
+-- <tr><td><a href="#Smoothstep">Smoothstep</a></td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions</td></tr>
+-- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Cinematic camera moves</td></tr>
+-- <tr><td><a href="#Elastic">Elastic</a></td><td>Spring oscillation</td><td>Overshoot with bounce effect</td><td>Playful UI, cartoon effects</td></tr>
+-- </table>
 --
--- **Comparison of interpolation methods (0 to 10):**
---     | t    | Lerp  | LerpAngle¹ | Smoothstep | EaseInOut | Elastic |
---     |------|-------|------------|------------|-----------|---------|
---     | 0.00 | 0.00  | 0.00       | 0.00       | 0.00      | 0.00    |
---     | 0.10 | 1.00  | 1.00       | 0.28       | 0.20      | -0.04   |
---     | 0.25 | 2.50  | 2.50       | 1.56       | 1.25      | 0.44    |
---     | 0.50 | 5.00  | 5.00       | 5.00       | 5.00      | 5.00    |
---     | 0.75 | 7.50  | 7.50       | 8.44       | 8.75      | 9.56    |
---     | 0.90 | 9.00  | 9.00       | 9.72       | 9.80      | 10.04   |
---     | 1.00 | 10.00 | 10.00      | 10.00      | 10.00     | 10.00   |
+-- <br>**Comparison of interpolation methods (0 to 10):**
+-- <table class="tableSP">
+-- <tr><th>t</th><th>Lerp</th><th>LerpAngle¹</th><th>Smoothstep</th><th>EaseInOut</th><th>Elastic</th></tr>
+-- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+-- <tr><td>0.10</td><td>1.00</td><td>1.00</td><td>0.28</td><td>0.20</td><td>-0.04</td></tr>
+-- <tr><td>0.25</td><td>2.50</td><td>2.50</td><td>1.56</td><td>1.25</td><td>0.44</td></tr>
+-- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td></tr>
+-- <tr><td>0.75</td><td>7.50</td><td>7.50</td><td>8.44</td><td>8.75</td><td>9.56</td></tr>
+-- <tr><td>0.90</td><td>9.00</td><td>9.00</td><td>9.72</td><td>9.80</td><td>10.04</td></tr>
+-- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
+-- </table>
 --
 -- ¹ LerpAngle behaves like Lerp when not crossing 0°/360° boundary.
 --
--- **When interpolating angles (rotations, compass, turrets):**
---     | Start | End | Lerp result | LerpAngle result | Which is correct? |
---     |-------|-----|-------------|------------------|-------------------|
---     | 350°  | 10° | 180°        | 0° (crosses 0°)  | LerpAngle         |
---     | 10°   | 350°| 180°        | 0° (crosses 0°)  | LerpAngle         |
---     | 90°   | 270°| 180°        | 180°             | Both same         |
---     | 5°    | 15° | 10°         | 10°              | Both same         |
+-- <br>**When interpolating angles (rotations, compass, turrets):**
+-- <table class="tableSP">
+-- <tr><th>Start</th><th>End</th><th>Lerp result</th><th>LerpAngle result</th><th>Which is correct?</th></tr>
+-- <tr><td>350°</td><td>10°</td><td>180°</td><td>0° (crosses 0°)</td><td>LerpAngle</td></tr>
+-- <tr><td>10°</td><td>350°</td><td>180°</td><td>0° (crosses 0°)</td><td>LerpAngle</td></tr>
+-- <tr><td>90°</td><td>270°</td><td>180°</td><td>180°</td><td>Both same</td></tr>
+-- <tr><td>5°</td><td>15°</td><td>10°</td><td>10°</td><td>Both same</td></tr>
+-- </table>
 --
--- **Rule of thumb:**
+-- <br>**Rule of thumb:**
 --
 -- - Use `Lerp` for: numbers, positions (Vec2/Vec3), colors, sizes
 -- - Use `LerpAngle` for: rotations (Rotation.y), compass headings, turret aiming
@@ -1458,18 +1463,21 @@ end
 -- - Continuous rotation (0° → 1000°)
 --
 -- **Problem with regular Lerp:**
---     | Start | End | Lerp result | Problem                          |
---     |-------|-----|-------------|----------------------------------|
---     | 350°  | 10° | 180°        | Goes the LONG way (340° turn!)   |
---     | 10°   | 350°| 180°        | Goes the LONG way (340° turn!)   |
---     | 270°  | 90° | 180°        | Correct by chance                |
+-- <table class="tableSP">
+-- <tr><th>Start</th><th>End</th><th>Lerp result</th><th>Problem</th></tr>
+-- <tr><td>350°</td><td>10°</td><td>180°</td><td>Goes the LONG way (340° turn!)</td></tr>
+-- <tr><td>10°</td><td>350°</td><td>180°</td><td>Goes the LONG way (340° turn!)</td></tr>
+-- <tr><td>270°</td><td>90°</td><td>180°</td><td>Correct by chance</td></tr>
+-- </table>
 --
--- **Solution with LerpAngle:**
---     | Start | End | LerpAngle   | Correct path                     |
---     |-------|-----|-------------|----------------------------------|
---     | 350°  | 10° | 0° (360°)   | SHORT way (20° turn through 0°)  |
---     | 10°   | 350°| 0° (360°)   | SHORT way (20° turn through 0°)  |
---     | 270°  | 90° | 180°        | SHORT way (180° turn)            |
+-- <br>**Solution with LerpAngle:**
+--
+-- <table class="tableSP">
+-- <tr><th>Start</th><th>End</th><th>LerpAngle result</th><th>Problem</th></tr>
+-- <tr><td>350°</td><td>10°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
+-- <tr><td>10°</td><td>350°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
+-- <tr><td>270°</td><td>90°</td><td>180°</td><td>SHORT way (180° turn)</td></tr>
+-- </table>
 --
 -- @tparam float a Start angle (in degrees).
 -- @tparam float b End angle (in degrees).
