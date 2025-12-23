@@ -2365,6 +2365,57 @@ LuaUtil.RemoveValue = function(tbl, value)
     return false
 end
 
+--- Remove all occurrences of a value from an array table.
+-- This function searches for all instances of the value and removes them.
+-- The array is compacted after each removal (subsequent elements are shifted down).
+-- Iterates backwards to handle index shifts correctly.
+-- @tparam table tbl The array table from which to remove all occurrences of the value.
+-- @tparam any value The value to search for and remove.
+-- @treturn[1] int The number of occurrences removed.
+-- @treturn[2] int 0 if the input is not a table.
+-- @usage
+-- -- Example with multiple occurrences:
+-- local fruits = { "apple", "banana", "apple", "cherry", "apple" }
+-- local count = LuaUtil.RemoveAllValues(fruits, "apple") -- Result: 3
+-- -- fruits is now: { "banana", "cherry" }
+--
+-- -- Example with single occurrence:
+-- local numbers = { 10, 20, 30, 40 }
+-- local count = LuaUtil.RemoveAllValues(numbers, 30) -- Result: 1
+-- -- numbers is now: { 10, 20, 40 }
+--
+-- -- Example when value is not found:
+-- local colors = { "red", "green", "blue" }
+-- local count = LuaUtil.RemoveAllValues(colors, "yellow") -- Result: 0
+-- -- colors remains unchanged: { "red", "green", "blue" }
+--
+-- -- Example with all elements being removed:
+-- local data = { 5, 5, 5, 5 }
+-- local count = LuaUtil.RemoveAllValues(data, 5) -- Result: 4
+-- -- data is now: {} (empty table)
+--
+-- -- Practical use: clean up inventory
+-- local inventory = { "potion", "sword", "potion", "shield", "potion" }
+-- local removed = LuaUtil.RemoveAllValues(inventory, "potion")
+-- -- Removed 3 potions, inventory: { "sword", "shield" }
+LuaUtil.RemoveAllValues = function(tbl, value)
+    if not I.IsTable(tbl) then
+        TEN.Util.PrintLog("Error in LuaUtil.RemoveAllValues: input is not a table.", TEN.Util.LogLevel.ERROR)
+        return 0
+    end
+
+    local count = 0
+    -- Iterate backwards to handle index shifts correctly during removal
+    for i = #tbl, 1, -1 do
+        if tbl[i] == value then
+            table.remove(tbl, i)
+            count = count + 1
+        end
+    end
+
+    return count
+end
+
 --- Remove a key-value pair from an associative table.
 -- This function removes the specified key and its associated value from the table.
 -- Works with both associative tables and array tables (using numeric indices).
