@@ -58,6 +58,18 @@ namespace TEN::Entities::Generic
 		return (PushableInfo&)item.Data;
 	}
 
+	void UpdatePushableFromOCB(ItemInfo& pushableItem)
+	{
+		auto& pushable = GetPushableInfo(pushableItem);
+
+		// Read OCB flags.
+		int ocb = pushableItem.TriggerFlags;
+		pushable.CanFall = (ocb & (1 << 0)) != 0;			  // Bit 0.
+		pushable.DoCenterAlign = (ocb & (1 << 1)) == 0;			  // Bit 1.
+		pushable.IsBuoyant = (ocb & (1 << 2)) != 0;			  // Bit 2.
+		pushable.AnimSetID = ((ocb & (1 << 3)) != 0) ? 1 : 0; // Bit 3.
+	}
+
 	void InitializePushableBlock(int itemNumber)
 	{
 		auto& pushableItem = g_Level.Items[itemNumber];
@@ -94,12 +106,7 @@ namespace TEN::Entities::Generic
 
 		SetPushableStopperFlag(true, pushableItem.Pose.Position, pushableItem.RoomNumber);
 
-		// Read OCB flags.
-		int ocb = pushableItem.TriggerFlags;
-		pushable.CanFall	   = (ocb & (1 << 0)) != 0;			  // Bit 0.
-		pushable.DoCenterAlign = (ocb & (1 << 1)) == 0;			  // Bit 1.
-		pushable.IsBuoyant	   = (ocb & (1 << 2)) != 0;			  // Bit 2.
-		pushable.AnimSetID	   = ((ocb & (1 << 3)) != 0) ? 1 : 0; // Bit 3.
+		UpdatePushableFromOCB(pushableItem);
 
 		pushableItem.Status = ITEM_ACTIVE;
 		AddActiveItem(itemNumber);

@@ -20,6 +20,7 @@
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Specific/level.h"
+#include <Objects/Generic/Object/Pushable/PushableObject.h>
 
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Effects::Items;
@@ -589,6 +590,12 @@ short Moveable::GetOcb() const
 void Moveable::SetOcb(short ocb)
 {
 	_moveable->TriggerFlags = ocb;
+	// Update pushable characteristics if this is a pushable object
+	if (_moveable->ObjectNumber >= ID_PUSHABLE_OBJECT1 && _moveable->ObjectNumber <= ID_PUSHABLE_OBJECT10 ||
+		_moveable->ObjectNumber >= ID_PUSHABLE_OBJECT_CLIMBABLE1 && _moveable->ObjectNumber <= ID_PUSHABLE_OBJECT_CLIMBABLE10)
+	{
+		UpdatePushableFromOCB(*_moveable);
+	}
 }
 
 /// Set the effect for this moveable.
