@@ -2001,9 +2001,9 @@ end
 --
 -- -- Practical example 1: Cinematic camera fly-through (ultra-smooth position change over 6 seconds)
 -- -- This creates a professional, broadcast-quality camera movement
--- local camera = TEN.Objects.GetMoveableByName("camera_1")
--- local waypoint1 = TEN.Vec3(5120, -512, 10240)  -- Starting position
--- local waypoint2 = TEN.Vec3(15360, 2048, 20480) -- Ending position
+-- local camera = TEN.Objects.GetCameraByName("camera_1")
+-- local waypoint1 = TEN.Vec3(5632, 0, 11776)  -- Starting position
+-- local waypoint2 = TEN.Vec3(5632, 0, 13824) -- Ending position
 -- local animationDuration = LuaUtil.SecondsToFrames(6)  -- 6 seconds = 180 frames
 -- local currentFrame = 0
 -- local animationActive = true
