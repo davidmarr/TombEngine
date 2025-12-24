@@ -156,7 +156,7 @@ F.DeepCopyRecursive = function(original, copyId)
 
     -- Check maximum depth
     if context.depth >= I.MAX_DEPTH then
-        TEN.Util.PrintLog("Warning in LuaUtil.TableDeepCopy: Maximum depth (" .. 
+        TEN.Util.PrintLog("Warning in LuaUtil.CloneValue: Maximum depth (" .. 
             I.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
         return {}
     end
@@ -176,7 +176,7 @@ F.DeepCopyRecursive = function(original, copyId)
 
         -- Check maximum elements
         if context.elementCount >= I.MAX_ELEMENTS then
-            TEN.Util.PrintLog("Warning in LuaUtil.TableDeepCopy: Maximum elements (" .. I.MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+            TEN.Util.PrintLog("Warning in LuaUtil.CloneValue: Maximum elements (" .. I.MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
             return copy
         end
 
@@ -257,6 +257,241 @@ F.CompareRecursive = function(t1, t2, compareId)
     -- Decrement depth before returning
     context.depth = context.depth - 1
     return true
+end
+
+--- General utilities.
+-- Generic helper functions that work with multiple data types.
+-- @section general
+
+--- Clone a value, creating an independent copy.
+-- Works with all TEN types (`Vec2`, `Vec3`, `Rotation`, `Color`, `Time`) and Lua tables.
+-- For primitive types (number, string, bool, nil), returns the value itself.
+-- This solves the reference assignment problem where modifying a copy affects the original.
+-- @tparam any value The value to clone (can be any type).
+-- @treturn any An independent copy of the value. Returns nil for unsupported types.
+-- @usage
+-- -- Problem: reference assignment
+-- local row = { TEN.Rotation(244, 90, 276) }
+-- local t1 = { rotation = row[1] }
+-- local t2 = t1.rotation  -- This is a REFERENCE, not a copy!
+-- t2.x = 500
+-- print(row[1].x)  -- Prints 500! Original was modified
+--
+-- -- Solution: use CloneValue
+-- local t2 = LuaUtil.CloneValue(t1.rotation)  -- Independent copy
+-- t2.x = 500
+-- print(row[1].x)  -- Prints 244 (original unchanged)
+--
+-- -- Example with Vec3:
+-- local pos1 = TEN.Vec3(100, 200, 300)
+-- local pos2 = LuaUtil.CloneValue(pos1)
+-- pos2.x = 999
+-- -- pos1.x is still 100
+--
+-- -- Example with Color:
+-- local color1 = TEN.Color(255, 0, 0, 255)
+-- local color2 = LuaUtil.CloneValue(color1)
+-- color2.r = 0
+-- -- color1.r is still 255
+--
+-- -- Example with table:
+-- local config = { speed = 10, enabled = true }
+-- local configCopy = LuaUtil.CloneValue(config)
+-- configCopy.speed = 20
+-- -- config.speed is still 10
+--
+-- -- Example with primitives (returned as-is):
+-- local num = LuaUtil.CloneValue(42)        -- Returns 42
+-- local str = LuaUtil.CloneValue("hello")   -- Returns "hello"
+-- local bool = LuaUtil.CloneValue(true)     -- Returns true
+--
+-- -- Practical use: safe parameter passing
+-- function ModifyPosition(pos)
+--     local safePos = LuaUtil.CloneValue(pos)
+--     safePos.x = safePos.x + 100
+--     return safePos  -- Original pos is unchanged
+-- end
+LuaUtil.CloneValue = function(value)
+    -- Handle primitive types (these are copied by value in Lua)
+    local valueType = type(value)
+    if valueType == "nil" or valueType == "boolean" or valueType == "number" or valueType == "string" then
+        return value
+    end
+
+    -- Handle TEN engine types (userdata)
+    if I.IsVec2(value) then
+        return TEN.Vec2(value.x, value.y)
+    end
+
+    if I.IsVec3(value) then
+        return TEN.Vec3(value.x, value.y, value.z)
+    end
+
+    if I.IsRotation(value) then
+        return TEN.Rotation(value.x, value.y, value.z)
+    end
+
+    if I.IsColor(value) then
+        return TEN.Color(value.r, value.g, value.b, value.a)
+    end
+
+    if I.IsTime(value) then
+        return TEN.Time(value:GetFrameCount())
+    end
+
+    -- Handle Lua tables (deep copy)
+    if I.IsTable(value) then
+        -- Generate unique ID for this copy operation
+        local copyId = I.nextCopyId
+        I.nextCopyId = I.nextCopyId + 1
+
+        -- Initialize context for this copy
+        I.activeCopies[copyId] = {
+            depth = 0,
+            elementCount = 0,
+            visited = {}  -- Prevents infinite loops on circular references
+        }
+
+        -- Execute deep copy
+        local result = F.DeepCopyRecursive(value, copyId)
+
+        -- Cleanup: remove context for this copy
+        I.activeCopies[copyId] = nil
+
+        return result
+    end
+
+    -- Unsupported type
+    TEN.Util.PrintLog("Warning in LuaUtil.CloneValue: unsupported type '" .. valueType .. "'. Returning nil.", TEN.Util.LogLevel.WARNING)
+    return nil
+end
+
+--- Get a value or return a default if the value is nil.
+-- Unlike the Lua `or` operator, this function correctly handles `false` and `0` as valid values.
+-- Only returns defaultValue when value is exactly `nil`.
+-- @tparam any value The value to check.
+-- @tparam any defaultValue The default value to return if value is nil.
+-- @treturn any The value if not nil, otherwise defaultValue.
+-- @usage
+-- -- Problem with Lua's 'or' operator:
+-- local enabled = false
+-- local result = enabled or true  -- Result: true ❌ (wrong! false is treated as falsy)
+--
+-- -- Solution with GetOrDefault:
+-- local enabled = false
+-- local result = LuaUtil.GetOrDefault(enabled, true)  -- Result: false ✅ (correct!)
+--
+-- -- Example with 0 (another falsy value in 'or'):
+-- local damage = 0
+-- local finalDamage = damage or 10  -- Result: 10 ❌ (wrong! 0 is valid)
+-- local finalDamage = LuaUtil.GetOrDefault(damage, 10)  -- Result: 0 ✅ (correct!)
+--
+-- -- Example with nil (works like 'or'):
+-- local speed = nil
+-- local finalSpeed = LuaUtil.GetOrDefault(speed, 100)  -- Result: 100 ✅
+--
+-- -- Example with configuration:
+-- local config = { volume = 0, mute = false }
+-- local volume = LuaUtil.GetOrDefault(config.volume, 100)  -- Result: 0 (not 100!)
+-- local mute = LuaUtil.GetOrDefault(config.mute, true)     -- Result: false (not true!)
+--
+-- -- Practical use: optional function parameters
+-- function SetPlayerSpeed(speed)
+--     speed = LuaUtil.GetOrDefault(speed, 10)  -- Default to 10 if not provided
+--     player.speed = speed
+-- end
+-- SetPlayerSpeed(0)      -- Sets speed to 0 (not 10!)
+-- SetPlayerSpeed(false)  -- Sets speed to false (valid in some contexts)
+-- SetPlayerSpeed(nil)    -- Sets speed to 10 (default)
+--
+-- -- Example with table field:
+-- local settings = { showHUD = false }  -- User explicitly disabled HUD
+-- local showHUD = LuaUtil.GetOrDefault(settings.showHUD, true)  -- Result: false (respects user choice)
+LuaUtil.GetOrDefault = function(value, defaultValue)
+    if value == nil then
+        return defaultValue
+    end
+    return value
+end
+
+--- Check if a value is empty.
+-- Returns true for nil, empty strings, and empty tables. All other values return false.
+-- Numbers (including 0), booleans (including false), and TEN types are never considered empty.
+-- @tparam any value The value to check.
+-- @treturn bool True if the value is nil, empty string, or empty table. False otherwise.
+-- @usage
+-- -- Nil values:
+-- local isEmpty = LuaUtil.IsEmpty(nil)  -- Result: true
+--
+-- -- Empty strings:
+-- local isEmpty = LuaUtil.IsEmpty("")  -- Result: true
+-- local isEmpty = LuaUtil.IsEmpty("   ")  -- Result: false (not empty, contains spaces)
+--
+-- -- Empty tables:
+-- local isEmpty = LuaUtil.IsEmpty({})  -- Result: true
+-- local isEmpty = LuaUtil.IsEmpty({ a = 1 })  -- Result: false
+--
+-- -- Important: Lua doesn't store nil values in tables!
+-- local isEmpty = LuaUtil.IsEmpty({nil, nil, nil})  -- Result: true (table is actually empty!)
+-- local isEmpty = LuaUtil.IsEmpty({1, nil, 3})      -- Result: false (has elements at index 1 and 3)
+-- -- Explanation: In Lua, {nil, nil, nil} creates an empty table because nil values are not stored.
+--
+-- -- Numbers (never empty, even 0):
+-- local isEmpty = LuaUtil.IsEmpty(0)  -- Result: false
+-- local isEmpty = LuaUtil.IsEmpty(-5)  -- Result: false
+--
+-- -- Booleans (never empty, even false):
+-- local isEmpty = LuaUtil.IsEmpty(false)  -- Result: false
+-- local isEmpty = LuaUtil.IsEmpty(true)  -- Result: false
+--
+-- -- TEN types (never empty):
+-- local isEmpty = LuaUtil.IsEmpty(TEN.Vec3(0, 0, 0))  -- Result: false
+-- local isEmpty = LuaUtil.IsEmpty(TEN.Color(0, 0, 0, 0))  -- Result: false
+--
+-- -- Practical use: validate user input
+-- function ProcessName(name)
+--     if LuaUtil.IsEmpty(name) then
+--         TEN.Util.PrintLog("Error: Name cannot be empty!", TEN.Util.LogLevel.ERROR)
+--         return false
+--     end
+--     -- Process name...
+--     return true
+-- end
+--
+-- -- Practical use: check if table has data
+-- local inventory = {}
+-- if LuaUtil.IsEmpty(inventory) then
+--     TEN.Util.PrintLog("Inventory is empty", TEN.Util.LogLevel.INFO)
+-- else
+--     -- Show inventory...
+-- end
+--
+-- -- Practical use: validate configuration
+-- local config = LoadConfig()
+-- if LuaUtil.IsEmpty(config) then
+--     config = GetDefaultConfig()  -- Use defaults if config is empty
+-- end
+LuaUtil.IsEmpty = function(value)
+    -- Check for nil
+    if value == nil then
+        return true
+    end
+
+    -- Check for empty string
+    if I.IsString(value) and value == "" then
+        return true
+    end
+
+    -- Check for empty table
+    if I.IsTable(value) then
+        for _ in pairs(value) do
+            return false  -- Has at least one element
+        end
+        return true  -- No elements
+    end
+
+    -- All other values (numbers, booleans, TEN types, etc.) are not empty
+    return false
 end
 
 --- Comparison and validation functions.
@@ -1219,7 +1454,7 @@ LuaUtil.InvertColor = function(color, keepAlpha)
     end
 
     local inverted = color:Invert()
-    
+
     if keepAlpha then
         inverted.a = color.a
     end
@@ -1238,21 +1473,22 @@ end
 -- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
 -- <tr><td><a href="#Lerp">Lerp</a></td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations</td></tr>
 -- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>Rotations, compass, turrets</td></tr>
--- <tr><td><a href="#Smoothstep">Smoothstep</a></td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions</td></tr>
--- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Cinematic camera moves</td></tr>
+-- <tr><td><a href="#Smoothstep">Smoothstep</a></td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions, standard animations</td></tr>
+-- <tr><td><a href="#Smootherstep">Smootherstep</a></td><td>Ultra-smooth S-curve</td><td>Very gentle ease-in/out (C² continuity)</td><td>Cinematic effects, premium visuals</td></tr>
+-- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Dramatic movements</td></tr>
 -- <tr><td><a href="#Elastic">Elastic</a></td><td>Spring oscillation</td><td>Overshoot with bounce effect</td><td>Playful UI, cartoon effects</td></tr>
 -- </table>
 --
 -- <br>**Comparison of interpolation methods (0 to 10):**
 -- <table class="tableSP">
--- <tr><th>t</th><th>Lerp</th><th>LerpAngle¹</th><th>Smoothstep</th><th>EaseInOut</th><th>Elastic</th></tr>
--- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
--- <tr><td>0.10</td><td>1.00</td><td>1.00</td><td>0.28</td><td>0.20</td><td>-0.04</td></tr>
--- <tr><td>0.25</td><td>2.50</td><td>2.50</td><td>1.56</td><td>1.25</td><td>0.44</td></tr>
--- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td></tr>
--- <tr><td>0.75</td><td>7.50</td><td>7.50</td><td>8.44</td><td>8.75</td><td>9.56</td></tr>
--- <tr><td>0.90</td><td>9.00</td><td>9.00</td><td>9.72</td><td>9.80</td><td>10.04</td></tr>
--- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
+-- <tr><th>t</th><th>Lerp</th><th>LerpAngle¹</th><th>Smoothstep</th><th>Smootherstep</th><th>EaseInOut</th><th>Elastic</th></tr>
+-- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+-- <tr><td>0.10</td><td>1.00</td><td>1.00</td><td>0.28</td><td>0.16</td><td>0.20</td><td>-0.04</td></tr>
+-- <tr><td>0.25</td><td>2.50</td><td>2.50</td><td>1.56</td><td>1.04</td><td>1.25</td><td>0.44</td></tr>
+-- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td></tr>
+-- <tr><td>0.75</td><td>7.50</td><td>7.50</td><td>8.44</td><td>8.96</td><td>8.75</td><td>9.56</td></tr>
+-- <tr><td>0.90</td><td>9.00</td><td>9.00</td><td>9.72</td><td>9.84</td><td>9.80</td><td>10.04</td></tr>
+-- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
 -- </table>
 --
 -- ¹ LerpAngle behaves like Lerp when not crossing 0°/360° boundary.
@@ -1270,8 +1506,9 @@ end
 --
 -- - Use `Lerp` for: numbers, positions (Vec2/Vec3), colors, sizes
 -- - Use `LerpAngle` for: rotations (Rotation.y), compass headings, turret aiming
--- - Use `Smoothstep` for: UI fades, smooth transitions
--- - Use `EaseInOut` for: dramatic movements, cinematics
+-- - Use `Smoothstep` for: UI fades, smooth transitions, general animations
+-- - Use `Smootherstep` for: cinematic camera movements, premium effects, AAA-quality visuals
+-- - Use `EaseInOut` for: dramatic movements, pronounced acceleration/deceleration
 -- - Use `Elastic` for: bouncy UI, cartoon effects, playful feedback
 --
 -- **Note about practical examples:**
@@ -1706,7 +1943,7 @@ LuaUtil.Smoothstep = function (a, b, t, edge0, edge1)
     end
 
     local edgeDelta = edge1 - edge0
-    
+
     -- Check if edge0 and edge1 are equal (division by zero)
     if edgeDelta == 0 then
         TEN.Util.PrintLog("Error in LuaUtil.Smoothstep: edge0 and edge1 cannot be equal.", TEN.Util.LogLevel.ERROR)
@@ -1719,6 +1956,279 @@ LuaUtil.Smoothstep = function (a, b, t, edge0, edge1)
     -- Evaluate polynomial
     local smoothedT = normalizedT * normalizedT * (3 - 2 * normalizedT)
     return F.InterpolateValues(a, b, smoothedT, "LuaUtil.Smoothstep")
+end
+
+--- Smoothly interpolate with smootherstep curve (Ken Perlin's improved version).
+-- Provides an even smoother transition than Smoothstep with zero first and second derivatives at edges.
+-- This creates ultra-smooth animations ideal for high-quality cinematics and professional visual effects.
+-- Uses the polynomial: 6t⁵ - 15t⁴ + 10t³ (Ken Perlin's improved smoothstep formula).
+-- Identical to **LevelFuncs.Engine.Node.Smoothstep** used in the Node Editor.
+-- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
+-- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
+-- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam[opt=0] float edge0 Left edge for custom input range (optional, defaults to 0).
+-- @tparam[opt=1] float edge1 Right edge for custom input range (optional, defaults to 1).
+-- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value. If an error occurs, returns value `a`.
+-- @usage
+-- -- Most common usage (numbers):
+-- local smootherValue = LuaUtil.Smootherstep(0, 10, 0.5) -- Result: 5
+--
+-- -- Comparison: Smoothstep vs Smootherstep (0 to 10):
+-- --   t    | Smoothstep | Smootherstep | Difference
+-- --  ------|------------|--------------|------------
+-- --  0.00  | 0.00       | 0.00         | 0.00
+-- --  0.10  | 0.28       | 0.16         | -0.12 (even slower start)
+-- --  0.25  | 1.56       | 1.04         | -0.52 (more gradual)
+-- --  0.50  | 5.00       | 5.00         | 0.00 (same midpoint)
+-- --  0.75  | 8.44       | 8.96         | +0.52 (more gradual)
+-- --  0.90  | 9.72       | 9.84         | +0.12 (even slower end)
+-- --  1.00  | 10.00      | 10.00        | 0.00
+--
+-- -- Visual comparison of curves:
+-- -- Smoothstep:    starts/ends moderately smooth ━━╱⎺⎺╲━━
+-- -- Smootherstep:  starts/ends VERY smooth       ━━━⎺╲━━━  (flatter at edges)
+--
+-- -- Example with Colors (ultra-smooth fade red → blue):
+-- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
+-- local color2 = TEN.Color(0, 0, 255, 255)  -- Blue
+-- 
+-- --   t    | R   | G | B   (smootherstep color transition)
+-- --  ------|-----|---|-----
+-- --  0.00  | 255 | 0 | 0
+-- --  0.25  | 228 | 0 | 27   (very gradual at start)
+-- --  0.50  | 127 | 0 | 127
+-- --  0.75  | 27  | 0 | 228  (very gradual at end)
+-- --  1.00  | 0   | 0 | 255
+-- local smootherColor = LuaUtil.Smootherstep(color1, color2, 0.5)
+--
+-- -- Example with Vec3 (ultra-smooth camera position movement):
+-- local startPos = TEN.Vec3(0, 1000, 0)
+-- local endPos = TEN.Vec3(2000, 1000, 3000)
+-- 
+-- --   t    | X    | Y    | Z     (smootherstep movement)
+-- --  ------|------|------|-------
+-- --  0.00  | 0    | 1000 | 0
+-- --  0.25  | 209  | 1000 | 313    (very gentle start)
+-- --  0.50  | 1000 | 1000 | 1500
+-- --  0.75  | 1791 | 1000 | 2687   (very gentle end)
+-- --  1.00  | 2000 | 1000 | 3000
+-- local smootherPos = LuaUtil.Smootherstep(startPos, endPos, 0.75)
+--
+-- -- Example with custom range (smooth light intensity fade based on distance):
+-- local distance = 1500  -- Distance from light source
+-- local intensity = LuaUtil.Smootherstep(1.0, 0.0, distance, 1000, 2000)
+-- -- Maps distance 1000-2000 to intensity 1.0-0.0:
+-- --   Distance | Intensity (smootherstep)
+-- --   ---------|-------------------------
+-- --   1000     | 1.00 (full brightness)
+-- --   1250     | 0.90 (very gradual fade)
+-- --   1500     | 0.50 (half)
+-- --   1750     | 0.10 (very gradual fade)
+-- --   2000     | 0.00 (dark)
+--
+-- -- Example with Rotation (ultra-smooth door closing):
+-- local openRot = TEN.Rotation(0, 0, 0)
+-- local closedRot = TEN.Rotation(0, 90, 0)
+-- 
+-- --   t    | X | Y      | Z  (smootherstep rotation)
+-- --  ------|---|--------|----
+-- --  0.00  | 0 | 0      | 0
+-- --  0.25  | 0 | 9.4    | 0   (very slow start)
+-- --  0.50  | 0 | 45     | 0
+-- --  0.75  | 0 | 80.6   | 0   (very slow end)
+-- --  1.00  | 0 | 90     | 0
+-- local smootherRot = LuaUtil.Smootherstep(openRot, closedRot, 0.5)
+--
+-- -- Practical example 1: Cinematic camera fly-through (ultra-smooth position change over 6 seconds)
+-- -- This creates a professional, broadcast-quality camera movement
+-- local camera = TEN.Objects.GetMoveableByName("camera_1")
+-- local waypoint1 = TEN.Vec3(5120, -512, 10240)  -- Starting position
+-- local waypoint2 = TEN.Vec3(15360, 2048, 20480) -- Ending position
+-- local animationDuration = LuaUtil.SecondsToFrames(6)  -- 6 seconds = 180 frames
+-- local currentFrame = 0
+-- local animationActive = true
+-- 
+-- LevelFuncs.OnLoop = function()
+--     if animationActive and currentFrame <= animationDuration then
+--         local t = currentFrame / animationDuration
+--         local cameraPos = LuaUtil.Smootherstep(waypoint1, waypoint2, t)
+--         camera:SetPosition(cameraPos)
+--         camera:Play()  -- Activate camera this frame
+--         currentFrame = currentFrame + 1
+--     else
+--         animationActive = false
+--     end
+-- end
+--
+-- -- Practical example 2: Dynamic fog transition (ultra-smooth fog density change over 8 seconds)
+-- -- Creates a smooth, professional environmental effect
+-- local level = TEN.Flow.GetCurrentLevel()
+-- local clearFog = TEN.Flow.Fog(TEN.Color(220, 230, 255), 15, 25)  -- Light blue, far fog
+-- local denseFog = TEN.Flow.Fog(TEN.Color(60, 70, 90), 2, 8)       -- Dark blue, near fog
+-- local fogDuration = LuaUtil.SecondsToFrames(8)  -- 8 seconds
+-- local fogFrame = 0
+-- local fogActive = true
+-- 
+-- LevelFuncs.OnLoop = function()
+--     if fogActive and fogFrame <= fogDuration then
+--         local t = fogFrame / fogDuration
+--         
+--         -- Interpolate fog color (light blue → dark blue)
+--         local fogColor = LuaUtil.Smootherstep(clearFog.color, denseFog.color, t)
+--         
+--         -- Interpolate fog min distance (15 → 2 sectors, ultra-smooth)
+--         local fogMin = LuaUtil.Smootherstep(clearFog.minDistance, denseFog.minDistance, t)
+--         
+--         -- Interpolate fog max distance (25 → 8 sectors, ultra-smooth)
+--         local fogMax = LuaUtil.Smootherstep(clearFog.maxDistance, denseFog.maxDistance, t)
+--         
+--         level.fog = TEN.Flow.Fog(fogColor, fogMin, fogMax)
+--         
+--         -- Progression visualization:
+--         --   t=0.0  → Light blue (220,230,255), min=15, max=25 (clear)
+--         --   t=0.25 → Bluish (184,204,228), min=11.7, max=20.8 (very gradual)
+--         --   t=0.5  → Medium blue (140,150,172), min=8.5, max=16.5 (smooth)
+--         --   t=0.75 → Dark blue (96,116,145), min=5.3, max=12.2 (very gradual)
+--         --   t=1.0  → Very dark blue (60,70,90), min=2, max=8 (dense)
+--         
+--         fogFrame = fogFrame + 1
+--     else
+--         -- Set final fog state
+--         level.fog = denseFog
+--         fogActive = false
+--     end
+-- end
+--
+-- -- Practical example 3: Ultra-smooth particle color fade (for premium visual effects)
+-- -- Creates particles that smoothly fade from bright yellow to dark red
+-- local particleLifetime = 5.0  -- 5 seconds
+-- local particleAge = 0.0
+-- local startColor = TEN.Color(255, 255, 100, 255)  -- Bright yellow
+-- local endColor = TEN.Color(180, 20, 0, 0)         -- Dark red, transparent
+-- 
+-- LevelFuncs.OnLoop = function()
+--     particleAge = particleAge + (1.0 / 30.0)  -- Assuming 30 FPS
+--     
+--     if particleAge <= particleLifetime then
+--         local t = particleAge / particleLifetime
+--         local currentColor = LuaUtil.Smootherstep(startColor, endColor, t)
+--         
+--         -- Emit particle with smooth color transition
+--         TEN.Effects.EmitParticle(
+--             TEN.Vec3(5120, 512, 10240),  -- Position
+--             TEN.Vec3(0, 50, 0),          -- Velocity (upward)
+--             22,                          -- Sprite ID
+--             -10,                         -- Gravity (descend)
+--             5,                           -- Rotation velocity
+--             currentColor,                -- Start color (interpolated)
+--             currentColor,                -- End color (same for consistency)
+--             TEN.Effects.BlendID.ADDITIVE,
+--             30,                          -- Start size
+--             10,                          -- End size
+--             1.0                          -- Life (1 second per particle)
+--         )
+--         
+--         -- Color progression (ultra-smooth):
+--         --   t=0.0  → Bright yellow (255,255,100,255)
+--         --   t=0.25 → Yellow-orange (238,201,62,199) - very gradual
+--         --   t=0.5  → Orange (217,137,50,127) - smooth midpoint
+--         --   t=0.75 → Red-orange (197,58,12,56) - very gradual
+--         --   t=1.0  → Dark red (180,20,0,0) - invisible
+--     end
+-- end
+--
+-- -- Practical example 4: Smooth dynamic light intensity (pulsing light effect)
+-- -- Creates a smooth, professional breathing light effect
+-- local lightPos = TEN.Vec3(10240, 512, 15360)
+-- local lightColor = TEN.Color(255, 180, 100)  -- Warm orange
+-- local minRadius = 5   -- Minimum light radius (in sectors)
+-- local maxRadius = 12  -- Maximum light radius (in sectors)
+-- local pulseDuration = LuaUtil.SecondsToFrames(3)  -- 3 seconds per pulse
+-- local pulseFrame = 0
+-- local pulseDirection = 1  -- 1 = expanding, -1 = contracting
+-- 
+-- LevelFuncs.OnLoop = function()
+--     local t = pulseFrame / pulseDuration
+--     
+--     -- Use smootherstep for ultra-smooth radius transition
+--     local currentRadius = LuaUtil.Smootherstep(minRadius, maxRadius, t)
+--     
+--     -- Emit light this frame with smooth radius
+--     TEN.Effects.EmitLight(
+--         lightPos,
+--         lightColor,
+--         currentRadius,
+--         false,           -- No shadows for performance
+--         "pulsing_light"  -- Name for interpolation
+--     )
+--     
+--     -- Update pulse
+--     pulseFrame = pulseFrame + pulseDirection
+--     
+--     -- Reverse direction at edges (create continuous pulse)
+--     if pulseFrame >= pulseDuration then
+--         pulseDirection = -1
+--     elseif pulseFrame <= 0 then
+--         pulseDirection = 1
+--     end
+--     
+--     -- Radius progression (ultra-smooth breathing):
+--     --   t=0.0  → radius=5 (dim)
+--     --   t=0.25 → radius=6.3 (very gradual expansion)
+--     --   t=0.5  → radius=8.5 (half brightness)
+--     --   t=0.75 → radius=10.7 (very gradual expansion)
+--     --   t=1.0  → radius=12 (full brightness)
+--     -- Then reverses smoothly back to radius=5
+-- end
+--
+-- -- When to use Smootherstep vs Smoothstep:
+-- -- 
+-- -- Use Smootherstep for:
+-- -- ✓ Cinematic camera movements (broadcast quality)
+-- -- ✓ Premium particle effects (AAA game quality)
+-- -- ✓ Professional environmental transitions (fog, lighting)
+-- -- ✓ High-end UI animations (luxury feel)
+-- -- ✓ Any effect where you need the SMOOTHEST possible transition
+-- -- 
+-- -- Use Smoothstep for:
+-- -- ✓ Standard game animations (good quality)
+-- -- ✓ UI transitions (normal smoothness)
+-- -- ✓ General-purpose smooth interpolation
+-- -- ✓ When performance matters more than ultra-smoothness
+-- --
+-- -- Smootherstep is ~15% more expensive computationally than Smoothstep
+-- -- (requires evaluating a degree-5 polynomial vs degree-3)
+LuaUtil.Smootherstep = function (a, b, t, edge0, edge1)
+    -- Default edge0 and edge1 if not provided
+    edge0 = edge0 or 0
+    edge1 = edge1 or 1
+
+    if not I.IsNumber(t) then
+        TEN.Util.PrintLog("Error in LuaUtil.Smootherstep: t must be a number.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    if not (I.IsNumber(edge0) and I.IsNumber(edge1)) then
+        TEN.Util.PrintLog("Error in LuaUtil.Smootherstep: edge0 and edge1 must be numbers.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    local edgeDelta = edge1 - edge0
+    
+    -- Check if edge0 and edge1 are equal (division by zero)
+    if edgeDelta == 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.Smootherstep: edge0 and edge1 cannot be equal.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    -- Scale, bias and saturate t to 0..1 range
+    local normalizedT = I.max(0, I.min(1, (t - edge0) / edgeDelta))
+
+    -- Ken Perlin's smootherstep polynomial: 6t⁵ - 15t⁴ + 10t³
+    -- This is identical to LevelFuncs.Engine.Node.Smoothstep
+    local smootherT = (normalizedT ^ 3) * (normalizedT * (normalizedT * 6 - 15) + 10)
+    
+    return F.InterpolateValues(a, b, smootherT, "LuaUtil.Smootherstep")
 end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
@@ -2003,34 +2513,6 @@ LuaUtil.TableCount = function(tbl)
     return count
 end
 
---- Check if a table is empty (has no elements).
--- More efficient than TableCount(tbl) == 0 because it stops at the first element.
--- @tparam table tbl The table to check.
--- @treturn bool True if the table is empty, false otherwise. If the input is not a table, returns true.
--- @usage
--- local emptyTable = {}
--- local nonEmptyTable = { a = 1 }
---
--- local isEmpty1 = LuaUtil.TableIsEmpty(emptyTable)    -- Result: true
--- local isEmpty2 = LuaUtil.TableIsEmpty(nonEmptyTable) -- Result: false
---
--- -- Practical example: Check if player has items
--- if not LuaUtil.TableIsEmpty(playerInventory) then
---     TEN.Util.PrintLog("Player has items!", TEN.Util.LogLevel.INFO)
--- end
-LuaUtil.TableIsEmpty = function(tbl)
-    if not I.IsTable(tbl) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableIsEmpty: input must be a table.", TEN.Util.LogLevel.ERROR)
-        return true  -- Consider non-table as "empty"
-    end
-
-    -- More efficient check for emptiness
-    for _ in pairs(tbl) do
-        return false  -- Has at least 1 element
-    end
-    return true  -- No elements found
-end
-
 --- Compare two tables for equality.
 --- This function checks if both tables have the same keys and corresponding values. Works for shallow comparisons only.
 --- @tparam table tbl1 The first table to compare.
@@ -2178,7 +2660,7 @@ end
 -- local copy = LuaUtil.TableCopy(original)
 -- copy.inventory.sword = 5
 -- -- WARNING: original.inventory.sword is now also 5! (nested table is shared)
--- -- For nested tables, use TableDeepCopy instead
+-- -- For nested tables, use LuaUtil.CloneValue instead
 --
 -- -- Example with array:
 -- local original = { "red", "green", "blue" }
@@ -2204,66 +2686,6 @@ LuaUtil.TableCopy = function(tbl)
         copy[key] = value
     end
     return copy
-end
-
---- Create a deep copy of a table.
--- Creates a new table with all nested tables recursively copied.
--- **Limits:** Maximum depth of 10 levels and 1000 total elements to prevent performance issues.
--- @tparam table tbl The table to copy deeply.
--- @treturn table A deep copy of the input table. If the input is not a table or limits are exceeded, returns an empty table.
--- @usage
--- -- Example with nested tables:
--- local original = { name = "Lara", inventory = { sword = 1, shield = 2 } }
--- local copy = LuaUtil.TableDeepCopy(original)
--- copy.inventory.sword = 5
--- -- original.inventory.sword is still 1 (independent copy)
---
--- -- Example with deeply nested structure:
--- local config = {
---     display = { resolution = { width = 1920, height = 1080 }, fullscreen = true },
---     sound = { volume = { master = 100, effects = 80, music = 60 } }
--- }
--- local configCopy = LuaUtil.TableDeepCopy(config)
--- configCopy.sound.volume.music = 40
--- -- original config.sound.volume.music is still 60
---
--- -- Example with array of tables:
--- local enemies = {
---     { name = "Bat", health = 10, pos = { x = 100, y = 200 } },
---     { name = "Wolf", health = 50, pos = { x = 300, y = 400 } }
--- }
--- local enemiesCopy = LuaUtil.TableDeepCopy(enemies)
--- enemiesCopy[1].health = 0
--- -- original enemies[1].health is still 10
---
--- -- Practical use: save game state
--- local savedState = LuaUtil.TableDeepCopy(gameState)
--- -- Later restore from saved state
--- gameState = LuaUtil.TableDeepCopy(savedState)
-LuaUtil.TableDeepCopy = function(tbl)
-    if not I.IsTable(tbl) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableDeepCopy: input is not a table.", TEN.Util.LogLevel.ERROR)
-        return {}
-    end
-
-    -- Generate unique ID for this copy operation
-    local copyId = I.nextCopyId
-    I.nextCopyId = I.nextCopyId + 1
-
-    -- Initialize context for this copy
-    I.activeCopies[copyId] = {
-        depth = 0,
-        elementCount = 0,
-        visited = {}  -- Prevents infinite loops on circular references
-    }
-
-    -- Execute deep copy
-    local result = F.DeepCopyRecursive(tbl, copyId)
-
-    -- Cleanup: remove context for this copy
-    I.activeCopies[copyId] = nil
-
-    return result
 end
 
 --- Merge two tables into a new table.
