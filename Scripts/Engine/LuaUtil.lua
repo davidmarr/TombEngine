@@ -1736,33 +1736,27 @@ end
 -- --  0.75  | 95    | 5         | ✓ (short path)
 -- --  1.00  | 10    | 10        | ✓
 --
--- -- Practical example: Enemy smoothly rotates to face Lara (shortest path)
--- local enemy = TEN.Objects.GetMoveableByName("enemy_1")
+-- -- Practical example: Object rotates smoothly towards the player (like a surveillance camera)
+-- local obj = TEN.Objects.GetMoveableByName("enemy_1")
 -- local animationDuration = LuaUtil.SecondsToFrames(2)  -- 2 seconds to turn
 -- local currentFrame = 0
 -- LevelFuncs.OnLoop = function()
 --     if currentFrame <= animationDuration then
---         local enemyPos = enemy:GetPosition()
+--         local objPos = obj:GetPosition()
 --         local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
 --
---         -- Calculate target rotation using GetDirection and DirectionToRotation
---         local direction = LuaUtil.GetDirection(enemyPos, laraPos)
---         local targetRotation = LuaUtil.DirectionToRotation(direction)
+--         -- Calculate target rotation using Vec3:Direction and Rotation(direction)
+--         local direction = objPos:Direction(laraPos)
+--         local targetRotation = TEN.Rotation(direction)
 --
 --         -- Get current enemy rotation
---         local enemyRot = enemy:GetRotation()
+--         local objRot = obj:GetRotation()
 --
 --         -- LerpAngle finds shortest path for both yaw and pitch
 --         local t = currentFrame / animationDuration
---         enemyRot.y = LuaUtil.LerpAngle(enemyRot.y, targetRotation.y, t, -180, 180)
---         enemyRot.x = LuaUtil.LerpAngle(enemyRot.x, targetRotation.x, t, -90, 90)
---         enemy:SetRotation(enemyRot)
---
---         -- Example scenario:
---         -- - Enemy yaw at 350° (almost North), Lara at 10° (just past North)
---         -- - LerpAngle calculates: 350° → 10° = 20° turn (short path through 0°)
---         -- - Regular Lerp would: 350° → 10° = -340° turn (long way, wrong!)
---         -- - Also smoothly adjusts pitch if Lara is above/below enemy
+--         objRot.y = LuaUtil.LerpAngle(objRot.y, targetRotation.y, t, -180, 180)
+--         objRot.x = LuaUtil.LerpAngle(objRot.x, targetRotation.x, t, -90, 90)
+--         obj:SetRotation(objRot)
 --
 --         currentFrame = currentFrame + 1
 --     else
