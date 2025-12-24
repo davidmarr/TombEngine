@@ -1609,18 +1609,14 @@ end
 -- --  1.00  | 200 | 400 | 600
 -- local interpolatedVec3 = LuaUtil.Lerp(vec3_1, vec3_2, 0.5) -- Result: Vec3(150, 300, 450)
 --
--- -- Practical animation example (fog fading in/out over 5 seconds):
--- local level = TEN.Flow.GetCurrentLevel()
+-- -- Practical animation example (moving platform with constant speed over 4 seconds):
+-- -- Lerp is perfect for mechanical movements that should be predictable and constant
+-- local platform = TEN.Objects.GetMoveableByName("moving_platform_1")
+-- local startPos = TEN.Vec3(8704, -384, 15872)     -- Starting position
+-- local endPos = TEN.Vec3(8704, -384, 13824)      -- Ending position
+--                                                  -- Total distance: 2048 units (2 sectors horizontal)
 --
--- -- Define fog states: clear (no fog) → dense (heavy fog)
--- local clearFogColor = TEN.Color(200, 200, 255)  -- Light blue (clear sky)
--- local denseFogColor = TEN.Color(80, 80, 100)    -- Dark gray (heavy fog)
--- local clearFogMin = 10                          -- Fog starts far away (10 sectors)
--- local clearFogMax = 20                          -- Fog max far away (20 sectors)
--- local denseFogMin = 1                           -- Fog starts close (1 sector)
--- local denseFogMax = 6                           -- Fog max close (6 sectors)
---
--- local animationDuration = LuaUtil.SecondsToFrames(5)  -- 5 seconds = 150 frames @ 30fps
+-- local animationDuration = LuaUtil.SecondsToFrames(4)  -- 4 seconds = 120 frames @ 30fps
 -- local currentFrame = 0
 -- local animationComplete = false
 --
@@ -1629,32 +1625,39 @@ end
 --         if currentFrame <= animationDuration then
 --             local t = currentFrame / animationDuration  -- 0.0 to 1.0
 --
---             -- Interpolate fog color (clear blue → dark gray)
---             local fogColor = LuaUtil.Lerp(clearFogColor, denseFogColor, t)
---
---             -- Interpolate fog distances (far → close)
---             local fogMin = LuaUtil.Lerp(clearFogMin, denseFogMin, t)
---             local fogMax = LuaUtil.Lerp(clearFogMax, denseFogMax, t)
---
---             -- Apply interpolated fog to level
---             level.fog = TEN.Flow.Fog(fogColor, fogMin, fogMax)
---
---             -- Visual progression:
---             --   t=0.0  → Light blue fog, starts at 10240, max at 20480 (barely visible)
---             --   t=0.25 → Bluish-gray fog, starts at 7936, max at 16896 (light fog)
---             --   t=0.5  → Medium gray fog, starts at 5632, max at 13312 (medium fog)
---             --   t=0.75 → Dark gray fog, starts at 3328, max at 9728 (heavy fog)
---             --   t=1.0  → Very dark gray fog, starts at 1024, max at 6144 (dense fog)
+--             -- Linear interpolation creates constant speed movement (perfect for platforms!)
+--             local currentPos = LuaUtil.Lerp(startPos, endPos, t)
+--             platform:SetPosition(currentPos)
+
+--             -- Visual progression (linear, constant speed):
+--             --   t=0.0   → Z=15872  (start position)
+--             --   t=0.25  → Z=15360  (moved 512 units)
+--             --   t=0.50  → Z=14848  (moved 1024 units = 1 sector) - halfway, perfect timing
+--             --   t=0.75  → Z=14336  (moved 1536 units)
+--             --   t=1.0   → Z=13824  (moved 2048 units = 2 sectors) - arrived
+--             --
+--             -- Notice: each 25% of time = same distance traveled (512 units)
+--             -- This is CONSTANT SPEED, perfect for platforms and mechanical objects
 --
 --             currentFrame = currentFrame + 1
 --         else
---             -- Animation complete, set final fog state
---             level.fog = TEN.Flow.Fog(denseFogColor, denseFogMin, denseFogMax)
+--             -- Animation complete, set final position
+--             platform:SetPosition(endPos)
 --             animationComplete = true
 --         end
 --     end
---     -- After animation completes, fog remains at final state (no loop)
+--     -- After animation completes, platform remains at final position
 -- end
+--
+-- -- Why Lerp for platforms?
+-- -- ✓ Constant speed is predictable for players (they can time jumps)
+-- -- ✓ Mechanical feel matches physical platforms/trains/elevators
+-- -- ✓ No acceleration/deceleration = industrial, mechanical movement
+-- --
+-- -- When NOT to use Lerp:
+-- -- ✗ Organic movements (use Smoothstep)
+-- -- ✗ Cinematic camera (use Smootherstep)
+-- -- ✗ Natural phenomena like fog, wind (use Smoothstep/Smootherstep)
 LuaUtil.Lerp = function(a, b, t)
     if not I.IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.Lerp: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
