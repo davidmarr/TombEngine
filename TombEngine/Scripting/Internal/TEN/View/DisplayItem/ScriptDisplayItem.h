@@ -61,21 +61,22 @@ namespace TEN::Scripting::DisplayItem
 		sol::optional <int> GetEndFrame() const;
 		sol::optional<std::pair<Vec2, Vec2>> GetBounds() const;
 
-		//functions
+		// Functions
 		static ScriptDisplayItem GetItemByName(const std::string& itemName);
 		static void RemoveItem(const std::string& itemName);
 		static void ClearItems();
 		static bool IfItemExists(const std::string& itemName);
 		static bool IfObjectIDExists(const GAME_OBJECT_ID objectID);
 
-		//camera static functions
-		//Setters
+		// Static camera functions
+
+		// Setters
 		static void SetAmbientLight(const ScriptColor& lightColor);
 		static void SetCameraPosition(const Vec3& pos, TypeOrNil<bool> disableInterpolation);
 		static void SetCameraTargetPosition(const Vec3& target, TypeOrNil<bool> disableInterpolation);
 		static void ResetCamera(TypeOrNil<bool> disableInterpolation);
 
-		//Getters
+		// Getters
 		static ScriptColor GetAmbientLight();
 		static Vec3 GetCameraPosition();
 		static Vec3 GetCameraTargetPosition();

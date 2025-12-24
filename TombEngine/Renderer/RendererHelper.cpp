@@ -693,13 +693,13 @@ namespace TEN::Renderer
 	{
 		float t = GetInterpolationFactor();
 
-		// World transforms
+		// World transforms.
 		auto pos    = item.GetInterpolatedPosition(t);
 		auto orient = item.GetInterpolatedOrientation(t);
 		float scale = item.GetInterpolatedScale(t).x;
 		auto objectNumber = item.GetObjectID();
 
-		// find largest visible mesh sphere
+		// Find largest visible mesh sphere.
 		auto& moveable = _moveableObjects[item.GetObjectID()];
 
 		float maxRadius = 0.0f;
@@ -707,7 +707,7 @@ namespace TEN::Renderer
 
 		const auto& object = Objects[objectNumber];
 
-		// Loop through meshes
+		// Loop through meshes.
 		for (int i = 0; i < moveable->ObjectMeshes.size(); ++i)
 		{
 			if (item.GetMeshBits() && !item.GetMeshVisibility(i))
@@ -715,18 +715,18 @@ namespace TEN::Renderer
 
 			const auto& s = moveable->ObjectMeshes[i]->Sphere;
 
-			// World matrix per mesh (animation or bind-pose)
+			// World matrix per mesh (animation or bind-pose).
 			Matrix meshWorld;
 			if (!object.Animations.empty())
 				meshWorld = moveable->AnimationTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
 			else
 				meshWorld = moveable->BindPoseTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
 
-			// Transform center
+			// Transform center.
 			auto meshWorldCenter = Vector3::Transform(s.Center, meshWorld);
 			float meshWorldRadius = s.Radius * scale;
 
-			// Keep largest for bounding approximation
+			// Keep largest for bounding approximation.
 			if (meshWorldRadius > maxRadius)
 			{
 				maxRadius = meshWorldRadius;
@@ -734,11 +734,11 @@ namespace TEN::Renderer
 			}
 		}
 
-		// Use a default minimal radius if none found
+		// Use a default minimal radius if none found.
 		if (maxRadius <= 0.0f)
 			maxRadius = 10.0f;
 
-		// Build camera matrices
+		// Build camera matrices.
 		auto camPos = g_DrawItems.GetInterpolatedCameraPosition(t);
 		auto camTarget = g_DrawItems.GetInterpolatedCameraTargetPosition(t);
 		auto camForward = (camTarget - camPos);
@@ -749,33 +749,33 @@ namespace TEN::Renderer
 		auto camUp = camRight.Cross(camForward);
 		camUp.Normalize();
 
-		// Calculate distance from camera
+		// Calculate distance from camera.
 		float distance = (worldCenter - camPos).Length();
 
-		// Build view-projection matrix
+		// Build view-projection matrix.
 		float aspectRatio = (float)_screenWidth / _screenHeight;
 		auto viewMatrix = Matrix::CreateLookAt(camPos, camTarget, Vector3::Up);
 		auto projMatrix = Matrix::CreatePerspectiveFieldOfView(CurrentFOV, aspectRatio, DISPLAY_ITEM_NEAR_PLANE, DISPLAY_ITEM_FAR_PLANE);
 		auto viewProj = viewMatrix * projMatrix;
 
-		// Helper lambda to project point and clamp to extended screen bounds
+		// Helper lambda to project point and clamp to extended screen bounds.
 		auto projectPointClamped = [&](const Vector3& worldPos) -> Vector2
 		{
 			auto p = Vector4(worldPos.x, worldPos.y, worldPos.z, 1.0f);
 			p = Vector4::Transform(p, viewProj);
 
-			// Handle behind camera or w near zero
+			// Handle behind camera or w near zero.
 			if (p.w <= 0.01f)
 			{
-				// Use estimated position based on direction
+				// Use estimated position based on direction.
 				auto dir = worldPos - camPos;
 				dir.Normalize();
 				
-				// Project direction onto screen plane
+				// Project direction onto screen plane.
 				float rightDot = dir.Dot(camRight);
 				float upDot = dir.Dot(camUp);
 				
-				// Convert to screen coordinates with large offset for off-screen
+				// Convert to screen coordinates with large offset for off-screen.
 				float screenX = rightDot * _screenWidth * 2.0f + (_screenWidth * 0.5f);
 				float screenY = -upDot * _screenHeight * 2.0f + (_screenHeight * 0.5f);
 				
@@ -784,7 +784,7 @@ namespace TEN::Renderer
 
 			p /= p.w;
 
-			// Clamp NDC with extended margin for better size estimation
+			// Clamp NDC with extended margin for better size estimation.
 			p.x = std::clamp(p.x, -3.0f, 3.0f);
 			p.y = std::clamp(p.y, -3.0f, 3.0f);
 
@@ -794,10 +794,10 @@ namespace TEN::Renderer
 			return Vector2(screenX, screenY);
 		};
 
-		// Project center
+		// Project center.
 		auto center2D = projectPointClamped(worldCenter);
 
-		// Sample points along camera right/up directions
+		// Sample points along camera right/up directions.
 		auto rightWorld = worldCenter + camRight * maxRadius;
 		auto leftWorld = worldCenter - camRight * maxRadius;
 		auto upWorld = worldCenter + camUp * maxRadius;
@@ -808,21 +808,21 @@ namespace TEN::Renderer
 		auto upProj = projectPointClamped(upWorld);
 		auto downProj = projectPointClamped(downWorld);
 
-		// Calculate half extents from projected points
+		// Calculate half extents from projected points.
 		float halfWidth = std::max(std::abs(rightProj.x - center2D.x), std::abs(leftProj.x - center2D.x));
 		float halfHeight = std::max(std::abs(upProj.y - center2D.y), std::abs(downProj.y - center2D.y));
 
-		// Ensure reasonable minimum size based on screen-space estimation
-		// Calculate expected pixel size based on FOV and distance
+		// Ensure reasonable minimum size based on screen-space estimation.
+		// Calculate expected pixel size based on FOV and distance.
 		float angularSize = 2.0f * atan(maxRadius / std::max(distance, 1.0f));
 		float expectedPixelHeight = (angularSize / CurrentFOV) * _screenHeight;
 		float expectedPixelWidth = expectedPixelHeight * aspectRatio;
 
-		// Use the larger of projected size or estimated size
+		// Use the larger of projected size or estimated size.
 		halfWidth = std::max(halfWidth, expectedPixelWidth * 0.5f);
 		halfHeight = std::max(halfHeight, expectedPixelHeight * 0.5f);
 
-		// Ensure absolute minimum size
+		// Ensure absolute minimum size.
 		halfWidth = std::max(halfWidth, 1.0f);
 		halfHeight = std::max(halfHeight, 1.0f);
 

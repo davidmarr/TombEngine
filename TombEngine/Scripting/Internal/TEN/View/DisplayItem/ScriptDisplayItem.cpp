@@ -186,7 +186,7 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.IfObjectIDExists(objectID);
 	}
 
-	//Camera functions
+	// Camera functions
 
 	/// Set the ambient color for all DisplayItems.
 	// @function SetAmbientLight
