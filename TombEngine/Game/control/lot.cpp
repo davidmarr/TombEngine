@@ -211,10 +211,15 @@ void TargetNearestEntity(ItemInfo& item, const std::vector<GAME_OBJECT_ID>& keyO
 	float closestDistSqr = FLT_MAX;
 	for (auto creatureIndex : ActiveCreatures)
 	{
+		// Don't target itself.
 		if (creatureIndex == item.Index)
 			continue;
 
 		auto& targetItem = g_Level.Items[creatureIndex];
+
+		// Don't target same object type.
+		if (item.ObjectNumber == targetItem.ObjectNumber)
+			continue;
 
 		// Ignore or specifically target key object IDs.
 		if (!keyObjectIds.empty() && (ignoreKeyObjectIds ? Contains(keyObjectIds, targetItem.ObjectNumber) : !Contains(keyObjectIds, targetItem.ObjectNumber)))

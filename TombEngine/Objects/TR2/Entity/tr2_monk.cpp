@@ -15,7 +15,6 @@
 namespace TEN::Entities::Creatures::TR2
 {
 	const auto MonkBite = CreatureBiteInfo(Vector3(-23, 16, 265), 14);
-	const std::vector<GAME_OBJECT_ID> MonkIgnoredObjectIds = { ID_LARA, ID_TROOPS, ID_CIVVY, ID_GUIDE, ID_VON_CROY, ID_SCIENTIST, ID_MONK1, ID_MONK2 };
 
 	// TODO
 	enum MonkState
@@ -52,7 +51,7 @@ namespace TEN::Entities::Creatures::TR2
 		}
 		else
 		{
-			TargetNearestEntity(*item, MonkIgnoredObjectIds);
+			TargetNearestEntity(*item, FriendlyCreatures);
 
 			AI_INFO AI;
 			CreatureAIInfo(item, &AI);

@@ -22,7 +22,6 @@ using namespace TEN::Math;
 namespace TEN::Entities::TR4
 {
 	const auto TroopsBite1 = CreatureBiteInfo(Vector3(0, 270, 40), 7);
-	const std::vector<GAME_OBJECT_ID> TroopsIgnoredObjectIds = { ID_LARA, ID_TROOPS, ID_CIVVY, ID_GUIDE, ID_VON_CROY, ID_SCIENTIST, ID_MONK1, ID_MONK2 };
 
 	enum TroopState
 	{
@@ -146,7 +145,7 @@ namespace TEN::Entities::TR4
 			if (item->AIBits)
 				GetAITarget(creature);
 			else
-				TargetNearestEntity(*item, TroopsIgnoredObjectIds);
+				TargetNearestEntity(*item, FriendlyCreatures);
 
 			AI_INFO AI;
 			CreatureAIInfo(item, &AI);
