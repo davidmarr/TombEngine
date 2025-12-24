@@ -1628,7 +1628,7 @@ end
 --             -- Linear interpolation creates constant speed movement (perfect for platforms!)
 --             local currentPos = LuaUtil.Lerp(startPos, endPos, t)
 --             platform:SetPosition(currentPos)
-
+--
 --             -- Visual progression (linear, constant speed):
 --             --   t=0.0   → Z=15872  (start position)
 --             --   t=0.25  → Z=15360  (moved 512 units)
