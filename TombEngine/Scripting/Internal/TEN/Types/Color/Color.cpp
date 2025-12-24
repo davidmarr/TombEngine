@@ -60,9 +60,9 @@ namespace TEN::Scripting::Types
 	// @int[opt=255] A Alpha (transparency) component.
 	// @treturn Color A new Color object.
 	// @usage
-	// local color = TEN.Color()                -- Default gray color (128, 128, 128, 255)
-	// local color1 = TEN.Color(255, 0, 0)      -- Red color with full opacity
-	// local color2 = TEN.Color(0, 255, 0, 128) -- Green color with 50% opacity
+	// local color1 = TEN.Color()               -- Default gray color (128, 128, 128, 255)
+	// local color2 = TEN.Color(255, 0, 0)      -- Red color with full opacity (255, 0, 0, 255)
+	// local color3 = TEN.Color(0, 255, 0, 128) -- Green color with 50% opacity
 	ScriptColor::ScriptColor() :
 		_color(128, 128, 128, 255)
 	{
