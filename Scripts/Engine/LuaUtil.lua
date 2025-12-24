@@ -2099,7 +2099,7 @@ end
 --
 -- -- Practical example 4: Smooth dynamic light intensity (pulsing light effect)
 -- -- Creates a smooth, professional breathing light effect
--- local lightPos = TEN.Vec3(10240, 512, 15360)
+-- local lightPos = TEN.Vec3(5632, -768, 11776)
 -- local lightColor = TEN.Color(255, 180, 100)  -- Warm orange
 -- local minRadius = 5   -- Minimum light radius (in sectors)
 -- local maxRadius = 12  -- Maximum light radius (in sectors)
