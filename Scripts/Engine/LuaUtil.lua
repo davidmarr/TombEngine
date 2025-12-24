@@ -2075,9 +2075,9 @@ end
 --         
 --         -- Emit particle with smooth color transition
 --         TEN.Effects.EmitParticle(
---             TEN.Vec3(5120, 512, 10240),  -- Position
+--             TEN.Vec3(5632, -768, 11776),  -- Position
 --             TEN.Vec3(0, 50, 0),          -- Velocity (upward)
---             22,                          -- Sprite ID
+--             14,                          -- Sprite ID
 --             -10,                         -- Gravity (descend)
 --             5,                           -- Rotation velocity
 --             currentColor,                -- Start color (interpolated)
