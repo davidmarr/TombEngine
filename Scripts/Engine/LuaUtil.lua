@@ -2214,7 +2214,7 @@ LuaUtil.Smootherstep = function (a, b, t, edge0, edge1)
     end
 
     local edgeDelta = edge1 - edge0
-    
+
     -- Check if edge0 and edge1 are equal (division by zero)
     if edgeDelta == 0 then
         TEN.Util.PrintLog("Error in LuaUtil.Smootherstep: edge0 and edge1 cannot be equal.", TEN.Util.LogLevel.ERROR)
@@ -2227,7 +2227,7 @@ LuaUtil.Smootherstep = function (a, b, t, edge0, edge1)
     -- Ken Perlin's smootherstep polynomial: 6t⁵ - 15t⁴ + 10t³
     -- This is identical to LevelFuncs.Engine.Node.Smoothstep
     local smootherT = (normalizedT ^ 3) * (normalizedT * (normalizedT * 6 - 15) + 10)
-    
+
     return F.InterpolateValues(a, b, smootherT, "LuaUtil.Smootherstep")
 end
 
