@@ -691,56 +691,60 @@ namespace TEN::Renderer
 
 	std::optional<std::pair<Vector2, Vector2>> Renderer::GetDisplayItemBounds(const DisplayItem& item) const
 	{
-		float t = GetInterpolationFactor();
+		float alpha = GetInterpolationFactor();
 
 		// World transforms.
-		auto pos    = item.GetInterpolatedPosition(t);
-		auto orient = item.GetInterpolatedOrientation(t);
-		float scale = item.GetInterpolatedScale(t).x;
-		auto objectNumber = item.GetObjectID();
+		auto pos    = item.GetInterpolatedPosition(alpha);
+		auto orient = item.GetInterpolatedOrientation(alpha);
+		float scale = item.GetInterpolatedScale(alpha).x;
+		auto objectID = item.GetObjectID();
 
 		// Find largest visible mesh sphere.
 		auto& moveable = _moveableObjects[item.GetObjectID()];
 
-		float maxRadius = 0.0f;
+		float radiusMax = 0.0f;
 		auto worldCenter = Vector3::Zero;
 
-		const auto& object = Objects[objectNumber];
+		const auto& object = Objects[objectID];
 
 		// Loop through meshes.
 		for (int i = 0; i < moveable->ObjectMeshes.size(); ++i)
 		{
-			if (item.GetMeshBits() && !item.GetMeshVisibility(i))
+			if (item.GetMeshBits() && !item.IsMeshVisible(i))
 				continue;
 
 			const auto& s = moveable->ObjectMeshes[i]->Sphere;
 
 			// World matrix per mesh (animation or bind-pose).
-			Matrix meshWorld;
+			auto meshWorldMatrix = Matrix::Identity;
 			if (!object.Animations.empty())
-				meshWorld = moveable->AnimationTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+			{
+				meshWorldMatrix = moveable->AnimationTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+			}
 			else
-				meshWorld = moveable->BindPoseTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+			{
+				meshWorldMatrix = moveable->BindPoseTransforms[i] * Matrix::CreateScale(scale) * orient.ToRotationMatrix() * Matrix::CreateTranslation(pos);
+			}
 
 			// Transform center.
-			auto meshWorldCenter = Vector3::Transform(s.Center, meshWorld);
+			auto meshWorldCenter = Vector3::Transform(s.Center, meshWorldMatrix);
 			float meshWorldRadius = s.Radius * scale;
 
 			// Keep largest for bounding approximation.
-			if (meshWorldRadius > maxRadius)
+			if (meshWorldRadius > radiusMax)
 			{
-				maxRadius = meshWorldRadius;
+				radiusMax = meshWorldRadius;
 				worldCenter = meshWorldCenter;
 			}
 		}
 
-		// Use a default minimal radius if none found.
-		if (maxRadius <= 0.0f)
-			maxRadius = 10.0f;
+		// Use default minimum radius if none found.
+		if (radiusMax <= 0.0f)
+			radiusMax = 10.0f;
 
 		// Build camera matrices.
-		auto camPos = g_DrawItems.GetInterpolatedCameraPosition(t);
-		auto camTarget = g_DrawItems.GetInterpolatedCameraTargetPosition(t);
+		auto camPos = g_DrawItems.GetInterpolatedCameraPosition(alpha);
+		auto camTarget = g_DrawItems.GetInterpolatedCameraTargetPosition(alpha);
 		auto camForward = (camTarget - camPos);
 		camForward.Normalize();
 		auto worldUp = Vector3::Up;
@@ -750,7 +754,7 @@ namespace TEN::Renderer
 		camUp.Normalize();
 
 		// Calculate distance from camera.
-		float distance = (worldCenter - camPos).Length();
+		float dist = (worldCenter - camPos).Length();
 
 		// Build view-projection matrix.
 		float aspectRatio = (float)_screenWidth / _screenHeight;
@@ -761,11 +765,11 @@ namespace TEN::Renderer
 		// Helper lambda to project point and clamp to extended screen bounds.
 		auto projectPointClamped = [&](const Vector3& worldPos) -> Vector2
 		{
-			auto p = Vector4(worldPos.x, worldPos.y, worldPos.z, 1.0f);
-			p = Vector4::Transform(p, viewProj);
+			auto pos = Vector4(worldPos.x, worldPos.y, worldPos.z, 1.0f);
+			pos = Vector4::Transform(pos, viewProj);
 
 			// Handle behind camera or w near zero.
-			if (p.w <= 0.01f)
+			if (pos.w <= 0.01f)
 			{
 				// Use estimated position based on direction.
 				auto dir = worldPos - camPos;
@@ -782,15 +786,14 @@ namespace TEN::Renderer
 				return Vector2(screenX, screenY);
 			}
 
-			p /= p.w;
+			pos /= pos.w;
 
 			// Clamp NDC with extended margin for better size estimation.
-			p.x = std::clamp(p.x, -3.0f, 3.0f);
-			p.y = std::clamp(p.y, -3.0f, 3.0f);
+			pos.x = std::clamp(pos.x, -3.0f, 3.0f);
+			pos.y = std::clamp(pos.y, -3.0f, 3.0f);
 
-			float screenX = (p.x + 1.0f) * _screenWidth * 0.5f;
-			float screenY = (1.0f - p.y) * _screenHeight * 0.5f;
-
+			float screenX = (pos.x + 1.0f) * _screenWidth * 0.5f;
+			float screenY = (1.0f - pos.y) * _screenHeight * 0.5f;
 			return Vector2(screenX, screenY);
 		};
 
@@ -798,10 +801,10 @@ namespace TEN::Renderer
 		auto center2D = projectPointClamped(worldCenter);
 
 		// Sample points along camera right/up directions.
-		auto rightWorld = worldCenter + camRight * maxRadius;
-		auto leftWorld = worldCenter - camRight * maxRadius;
-		auto upWorld = worldCenter + camUp * maxRadius;
-		auto downWorld = worldCenter - camUp * maxRadius;
+		auto rightWorld = worldCenter + camRight * radiusMax;
+		auto leftWorld = worldCenter - camRight * radiusMax;
+		auto upWorld = worldCenter + camUp * radiusMax;
+		auto downWorld = worldCenter - camUp * radiusMax;
 
 		auto rightProj = projectPointClamped(rightWorld);
 		auto leftProj = projectPointClamped(leftWorld);
@@ -814,7 +817,7 @@ namespace TEN::Renderer
 
 		// Ensure reasonable minimum size based on screen-space estimation.
 		// Calculate expected pixel size based on FOV and distance.
-		float angularSize = 2.0f * atan(maxRadius / std::max(distance, 1.0f));
+		float angularSize = 2.0f * atan(radiusMax / std::max(dist, 1.0f));
 		float expectedPixelHeight = (angularSize / CurrentFOV) * _screenHeight;
 		float expectedPixelWidth = expectedPixelHeight * aspectRatio;
 

@@ -1,18 +1,19 @@
 #include "framework.h"
 #include "Scripting/Internal/TEN/View/DisplayItem/ScriptDisplayItem.h"
+
 #include "Game/Animation/animation.h"
+#include "Game/effects/DisplaySprite.h"
 #include "Game/Hud/DrawItems/DrawItems.h"
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
+#include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
-#include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Specific/configuration.h"
-#include "Game/effects/DisplaySprite.h"
-using namespace TEN::Effects::DisplaySprite;
 
+using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Animation;
 using namespace TEN::Hud;
 using namespace TEN::Scripting::Types;
@@ -37,6 +38,7 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_DrawItem,
 			ctors(),
 			sol::call_constructor, ctors(),
+
 			ScriptReserved_DrawItemRemove, &ScriptDisplayItem::Remove,
 			ScriptReserved_DrawItemExists, &ScriptDisplayItem::Exists,
 			ScriptReserved_SetObjectID, &ScriptDisplayItem::SetObjectID,
@@ -44,7 +46,9 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_SetRotation, &ScriptDisplayItem::SetRotation,
 			ScriptReserved_SetScale, &ScriptDisplayItem::SetScale,
 			ScriptReserved_SetColor, &ScriptDisplayItem::SetColor,
+
 			ScriptReserved_DrawItemSetMeshBits, &ScriptDisplayItem::SetMeshBits,
+
 			ScriptReserved_SetMeshVisible, &ScriptDisplayItem::SetMeshVisibility,
 			ScriptReserved_SetJointRotation, &ScriptDisplayItem::SetMeshRotation,
 			ScriptReserved_SetVisible, &ScriptDisplayItem::SetVisibility,
@@ -72,88 +76,89 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_DrawItemResetCamera, &ScriptDisplayItem::ResetCamera,
 			ScriptReserved_DrawItemGetAmbientLight, &ScriptDisplayItem::GetAmbientLight,
 			ScriptReserved_DrawItemGetCamera, &ScriptDisplayItem::GetCameraPosition,
-			ScriptReserved_DrawItemGetTarget, &ScriptDisplayItem::GetCameraTargetPosition
-			);
+			ScriptReserved_DrawItemGetTarget, &ScriptDisplayItem::GetCameraTargetPosition);
 	}
 
 	/// Create a DisplayItem object.
 	// @function DisplayItem
-	// @tparam string itemName Lua name of the display item.
+	// @tparam string name Lua name of the display item.
 	// @tparam Objects.ObjID objectID ID of the object.
-	// @tparam[opt=Vec3(0&#44; 0&#44; 0)] Vec3 position Position in 3d screen sapce.
-	// @tparam[opt=Rotation(0&#44; 0&#44; 0)] Rotation rotation Rotation about x, y, and z axes.
-	// @tparam[opt=Vec3(1&#44; 1&#44; 1)] Vec3 scale Set the visual scale.
+	// @tparam[opt=Vec3(0&#44; 0&#44; 0)] Vec3 pos Position in 3D display space.
+	// @tparam[opt=Rotation(0&#44; 0&#44; 0)] Rotation rot Rotation on the XYZ axes.
+	// @tparam[opt=Vec3(1&#44; 1&#44; 1)] Vec3 scale Visual scale.
 	// @tparam[opt] int meshBits Packed meshbits.
 	// @treturn DisplayItem A new DisplayItem object.
 	// @usage
 	// local item = TEN.View.DisplayItem("item1", -- name
-	//	TEN.Objects.ObjID.PISTOLS_ITEM, -- object id) 
+	//	TEN.Objects.ObjID.PISTOLS_ITEM, -- object ID) 
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, const Vec3& scale, int meshBits)
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot, const Vec3& scale, int meshBits)
 	{
-		auto rot = rotation.ToEulerAngles();
-		_itemName = itemName;
-		g_DrawItems.AddItem(itemName, objectID, position, rot, scale, meshBits);
+		_name = name;
+
+		auto convertedRot = rot.ToEulerAngles();
+		g_DrawItems.AddItem(name, objectID, pos, convertedRot, scale, meshBits);
 	}
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position, const Rotation& rotation, const Vec3& scale)
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot, const Vec3& scale)
 	{
-		auto rot = rotation.ToEulerAngles();
-		_itemName = itemName;
-		g_DrawItems.AddItem(itemName, objectID, position, rot, scale, ALL_JOINT_BITS);
+		_name = name;
+
+		auto convertedRot = rot.ToEulerAngles();
+		g_DrawItems.AddItem(name, objectID, pos, convertedRot, scale, ALL_JOINT_BITS);
 	}
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID, const Vec3& position)
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos)
 	{
+		_name = name;
+
 		auto rot = Rotation().ToEulerAngles();
-		_itemName = itemName;
-		g_DrawItems.AddItem(itemName, objectID, position, rot, Vector3::One, ALL_JOINT_BITS);
+		g_DrawItems.AddItem(name, objectID, pos, rot, Vector3::One, ALL_JOINT_BITS);
 	}
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName, GAME_OBJECT_ID objectID)
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID)
 	{
-		auto rot = Rotation().ToEulerAngles();
-		_itemName = itemName;
-		g_DrawItems.AddItem(itemName, objectID, Vector3(), rot, Vector3::One, ALL_JOINT_BITS);
+		_name = name;
+		g_DrawItems.AddItem(name, objectID, Vector3::Zero, EulerAngles::Identity, Vector3::One, ALL_JOINT_BITS);
 	}
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& itemName)
+	ScriptDisplayItem::ScriptDisplayItem(const std::string& name)
 	{
-		if (!g_DrawItems.IfItemExists(itemName))
+		if (!g_DrawItems.TestItemExists(name))
 		{
-			// Mark as invalid
-			_itemName.clear();
+			// Mark as invalid.
+			_name.clear();
 			return;
 		}
 
-		_itemName = itemName;
+		_name = name;
 	}
 
 	/// Get a DisplayItem by its name.
 	// @function GetItemByName
-	// @tparam string name The unique name of the DisplayItem as set when creating it.
-	// @treturn DisplayItem A DisplayItem referencing the item.
+	// @tparam string name The unique name of the DisplayItem.
+	// @treturn DisplayItem A DisplayItem reference.
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
-	ScriptDisplayItem ScriptDisplayItem::GetItemByName(const std::string& itemName)
+	ScriptDisplayItem ScriptDisplayItem::GetItemByName(const std::string& name)
 	{
-		return ScriptDisplayItem(itemName);
+		return ScriptDisplayItem(name);
 	}
 
 	/// Removes a DisplayItem by its name.
 	// @function RemoveItem
-	// @tparam string name The unique name of the DisplayItem as set when creating it.
+	// @tparam string name The unique name of the DisplayItem.
 	// @usage
 	// local item = TEN.View.DisplayItem.RemoveItem("item1")
-	void ScriptDisplayItem::RemoveItem(const std::string& itemName)
+	void ScriptDisplayItem::RemoveItem(const std::string& name)
 	{
-		if (!g_DrawItems.IfItemExists(itemName))
+		if (!g_DrawItems.TestItemExists(name))
 			return;
 
-		g_DrawItems.RemoveItem(itemName);
+		g_DrawItems.RemoveItem(name);
 	}
 
-	/// Clears all DisplayItems.
+	/// Clear all DisplayItems.
 	// @function ClearAllItems
 	// @usage
 	// TEN.View.DisplayItem.ClearAllItems()
@@ -162,19 +167,19 @@ namespace TEN::Scripting::DisplayItem
 		g_DrawItems.Clear();
 	}
 
-	///Check if a given name is in use by a DisplayItem.
+	/// Check if a given name is used by a DisplayItem.
 	// @function IsNameInUse
 	// @tparam string name The name to check.
-	// @treturn bool True if name is in use and a DisplayItem with a given name is present, false if not.
+	// @treturn bool True if the name is used and a DisplayItem with a given name is present, false if otherwise.
 	// @usage
 	// local test = TEN.View.DisplayItem.IsNameInUse("item1")
 	// print(test)
-	bool ScriptDisplayItem::IfItemExists(const std::string& itemName)
+	bool ScriptDisplayItem::IfItemExists(const std::string& name)
 	{
-		return g_DrawItems.IfItemExists(itemName);
+		return g_DrawItems.TestItemExists(name);
 	}
 
-	///Check if a given ObjectID is in use by a DisplayItem. It will only check for the first matching DisplayItem and return true immediately once found.
+	/// Check if an object ID is in use by a DisplayItem. It will only check for the first matching DisplayItem and return true immediately once found.
 	// @function IsObjectIDInUse
 	// @tparam Objects.ObjID objectID A number representing the object ID to find.
 	// @treturn bool True if ObjectID is in use by a DisplayItem, false if not.
@@ -183,10 +188,8 @@ namespace TEN::Scripting::DisplayItem
 	// print(test)
 	bool ScriptDisplayItem::IfObjectIDExists(const GAME_OBJECT_ID objectID)
 	{
-		return g_DrawItems.IfObjectIDExists(objectID);
+		return g_DrawItems.TestObjectIDExists(objectID);
 	}
-
-	// Camera functions
 
 	/// Set the ambient color for all DisplayItems.
 	// @function SetAmbientLight
@@ -215,7 +218,7 @@ namespace TEN::Scripting::DisplayItem
 	// @tparam Vec3 newPos The new position for the camera target.
 	// @bool[opt=false] disableInterpolation Disables interpolation to allow for snap movements.
 	// @usage
-	// TEN.View.DisplayItem.SetTargetPosition(TEN.Vec3(0,0,1024))
+	// TEN.View.DisplayItem.SetTargetPosition(TEN.Vec3(0, 0, 1024))
 	void ScriptDisplayItem::SetCameraTargetPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
 		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
@@ -232,7 +235,7 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetAmbientLight();
 	}
 
-	///Get the position of the camera. This single camera is used for all DisplayItems.
+	/// Get the position of the camera. This single camera is used for all DisplayItems.
 	// @function GetCameraPosition
 	// @treturn Vec3 The camera position for all of the DisplayItems.
 	// @usage
@@ -252,7 +255,7 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetCameraTargetPosition();
 	}
 
-	/// Resets the position of the camera and camera target.
+	/// Reset the position of the camera and camera target.
 	// @function ResetCamera
 	// @usage
 	// local targetPosition = TEN.View.DisplayItem.ResetCamera()
@@ -333,7 +336,7 @@ namespace TEN::Scripting::DisplayItem
 	// <br><b>3. Common Mistakes</b>
 	// Not checking if item exists:
 	//	local pos = item:GetPosition()
-	//	print(pos.x)  -- ERROR if item doesn't exist!
+	//	print(pos.x)  -- ERROR if the item doesn't exist.
 	//
 	// Always check first:
 	//	if item:Exists() then
@@ -341,18 +344,18 @@ namespace TEN::Scripting::DisplayItem
 	//	    if pos then print(pos.x) end
 	//	end
 
-	/// Removes the Display Item.
+	/// Remove the Display Item.
 	// @function DisplayItem:Remove
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// item:Remove()
 	void ScriptDisplayItem::Remove()
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		g_DrawItems.RemoveItem(_itemName);
-		_itemName.clear();
+		g_DrawItems.RemoveItem(_name);
+		_name.clear();
 	}
 
 	/// Test if the Display Item exists.
@@ -364,7 +367,7 @@ namespace TEN::Scripting::DisplayItem
 	// print(test)
 	bool ScriptDisplayItem::Exists() const
 	{
-		return g_DrawItems.IfItemExists(_itemName);
+		return g_DrawItems.TestItemExists(_name);
 	}
 
 	/// Change the DisplayItem's object ID. 
@@ -375,12 +378,11 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetObjectID(TEN.Objects.ObjID.BIGMEDI_ITEM)
 	void ScriptDisplayItem::SetObjectID(GAME_OBJECT_ID objectID)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetObjectID(objectID);
 	}
 
@@ -390,15 +392,14 @@ namespace TEN::Scripting::DisplayItem
 	// @bool[opt=false] disableInterpolation Disables interpolation to allow for snap movements.
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
-	// item:SetPosition(TEN.Vec3(0,200,1024))
+	// item:SetPosition(TEN.Vec3(0, 200, 1024))
 	void ScriptDisplayItem::SetPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetPosition(newPos, ValueOr<bool>(disableInterpolation, false));
 	}
 
@@ -408,16 +409,15 @@ namespace TEN::Scripting::DisplayItem
 	// @bool[opt=false] disableInterpolation Disables interpolation to allow for snap movements.
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
-	// item:SetRotation(TEN.Rotation(0,200,1024))
+	// item:SetRotation(TEN.Rotation(0, 200, 1024))
 	void ScriptDisplayItem::SetRotation(const Rotation& newRot, TypeOrNil<bool> disableInterpolation)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
-			item->SetRotation(newRot.ToEulerAngles(), ValueOr<bool>(disableInterpolation, false));
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
+			item->SetOrientation(newRot.ToEulerAngles(), ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the DisplayItem's scale.
@@ -429,12 +429,11 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetScale(2))
 	void ScriptDisplayItem::SetScale(const Vec3& newScale, TypeOrNil<bool> disableInterpolation)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetScale(newScale, ValueOr<bool>(disableInterpolation, false));
 	}
 
@@ -447,12 +446,11 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetColor(TEN.Color(128,200,255))
 	void ScriptDisplayItem::SetColor(const ScriptColor& color, TypeOrNil<bool> disableInterpolation)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetColor(Color(color), ValueOr<bool>(disableInterpolation, false));
 	}
 
@@ -464,16 +462,15 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetMeshBits(3)
 	void ScriptDisplayItem::SetMeshBits(int meshBits)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetMeshBits(meshBits);
 	}
 
-	/// Makes specified mesh visible or invisible.
+	/// Make the specified mesh visible or invisible.
 	// Use this to show or hide a specified mesh of a DisplayItem.
 	// @function DisplayItem:SetMeshVisible
 	// @tparam int meshIndex Index of a mesh.
@@ -483,12 +480,11 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetMeshVisible(1, false)
 	void ScriptDisplayItem::SetMeshVisibility(int meshIndex, bool visible)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetMeshVisibility(meshIndex, visible);
 	}
 
@@ -499,16 +495,15 @@ namespace TEN::Scripting::DisplayItem
 	// @bool[opt=false] disableInterpolation Disables interpolation to allow for snap movements.
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
-	// item:SetJointRotation(1, TEN.Rotation(0,200,0))
+	// item:SetJointRotation(1, TEN.Rotation(0, 200, 0))
 	void ScriptDisplayItem::SetMeshRotation(int meshIndex, Rotation rotation, TypeOrNil<bool> disableInterpolation)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
-			item->SetMeshRotation(meshIndex, rotation.ToEulerAngles(), ValueOr<bool>(disableInterpolation, false));
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
+			item->SetMeshOrientation(meshIndex, rotation.ToEulerAngles(), ValueOr<bool>(disableInterpolation, false));
 	}
 
 	/// Set the DisplayItems's visibility.
@@ -519,16 +514,15 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetVisible(true)
 	void ScriptDisplayItem::SetVisibility(bool visible)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			item->SetVisibility(visible);
 	}
 
-	/// Set frame number from an animation.
+	/// Set the frame number from an animation.
 	// This will set the specified animation to the given frame.
 	// The number of frames in an animation can be seen under the heading "End frame" in
 	// the WadTool animation editor.
@@ -540,12 +534,11 @@ namespace TEN::Scripting::DisplayItem
 	// item:SetFrame(2, 10)
 	void ScriptDisplayItem::SetFrame(int animIndex, int frame)
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 		{
 			item->SetAnimation(animIndex);
 			item->SetFrame(frame);
@@ -563,9 +556,8 @@ namespace TEN::Scripting::DisplayItem
 	// end
 	GAME_OBJECT_ID ScriptDisplayItem::GetObjectID() const
 	{
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-
-		if (item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item != nullptr)
 			return item->GetObjectID();
 
 		return ID_NO_OBJECT;
@@ -579,13 +571,13 @@ namespace TEN::Scripting::DisplayItem
 	// if item:Exists() then
 	//    local objectPosition = item:GetPosition()
 	// end
-	sol::optional <Vec3> ScriptDisplayItem::GetPosition() const
+	sol::optional<Vec3> ScriptDisplayItem::GetPosition() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
 		return Vec3(item->GetPosition());
@@ -600,13 +592,13 @@ namespace TEN::Scripting::DisplayItem
 	// if item:Exists() then
 	//    local objectRotation = item:GetRotation()
 	// end
-	sol::optional <Rotation> ScriptDisplayItem::GetRotation() const
+	sol::optional<Rotation> ScriptDisplayItem::GetRotation() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
 		return Rotation(item->GetRotation());
@@ -621,13 +613,13 @@ namespace TEN::Scripting::DisplayItem
 	// if item:Exists() then
 	//    local objectScale = item:GetScale()
 	// end
-	sol::optional <Vec3> ScriptDisplayItem::GetScale() const
+	sol::optional<Vec3> ScriptDisplayItem::GetScale() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
 		return item->GetScale();
@@ -640,19 +632,19 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// local objectColor = item:GetColor()
-	sol::optional <ScriptColor> ScriptDisplayItem::GetColor() const
+	sol::optional<ScriptColor> ScriptDisplayItem::GetColor() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
 		return ScriptColor(item->GetColor());
 	}
 
-	///Get visibility state of a specified mesh of a DisplayItem.
+	/// Get the visibility state of a specified mesh of the DisplayItem.
 	// Returns true if specified mesh is visible on a DisplayItem, and false
 	// if it is not visible.
 	// @function DisplayItem:GetMeshVisible
@@ -667,14 +659,14 @@ namespace TEN::Scripting::DisplayItem
 	// end
 	bool ScriptDisplayItem::GetMeshVisibility(int meshIndex) const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return false;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return false;
 
-		return item->GetMeshVisibility(meshIndex);
+		return item->IsMeshVisible(meshIndex);
 	}
 
 	/// Get the DisplayItem's joint rotation.
@@ -687,17 +679,17 @@ namespace TEN::Scripting::DisplayItem
 	// if item:Exists() then
 	//    local jointRotation = item:GetJointRotation(1)
 	// end
-	sol::optional <Rotation> ScriptDisplayItem::GetMeshRotation(int meshIndex) const
+	sol::optional<Rotation> ScriptDisplayItem::GetMeshRotation(int meshIndex) const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
-		auto rotation = item->GetMeshRotation(meshIndex);
-		return Rotation(rotation);
+		auto orient = item->GetMeshOrientation(meshIndex);
+		return Rotation(orient);
 	}
 
 	/// Get the DisplayItem's visibility state.
@@ -712,17 +704,17 @@ namespace TEN::Scripting::DisplayItem
 	// end
 	bool ScriptDisplayItem::GetVisibility() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return false;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return false;
 
-		return item->GetVisibility();
+		return item->IsVisible();
 	}
 
-	///Retrieve the index of the current animation.
+	/// Retrieve the number of the current animation.
 	// This corresponds to the number shown in the item's animation list in WadTool.
 	// @function DisplayItem:GetAnim
 	// @treturn[1] int The index of the active animation.
@@ -730,21 +722,21 @@ namespace TEN::Scripting::DisplayItem
 	// @usage
 	// local item = TEN.View.DisplayItem.GetItemByName("item1")
 	// if item:Exists() then
-	//    local animIndex = item:GetAnim()
+	//    local animNumber = item:GetAnim()
 	// end
-	sol::optional <int> ScriptDisplayItem::GetAnimNumber() const
+	sol::optional<int> ScriptDisplayItem::GetAnimNumber() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
-		return item->GetAnimation();
+		return item->GetAnimNumber();
 	}
 
-	/// Retrieve frame number.
+	/// Get the current frame number.
 	// This is the current frame of the DisplayItems's active animation.
 	// @function DisplayItem:GetFrame
 	// @treturn[1] int The current frame of the active animation.
@@ -754,19 +746,19 @@ namespace TEN::Scripting::DisplayItem
 	// if item:Exists() then
 	//    local frameNumber = item:GetFrame()
 	// end
-	sol::optional <int> ScriptDisplayItem::GetFrameNumber() const
+	sol::optional<int> ScriptDisplayItem::GetFrameNumber() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
-		return item->GetFrame();
+		return item->GetFrameNumber();
 	}
 
-	///Get the end frame number of the DisplayItems's active animation.
+	/// Get the end frame number of the DisplayItems's active animation.
 	// This is the "End Frame" set in WADTool for the animation.
 	// @function DisplayItem:GetEndFrame()
 	// @treturn[1] int End frame number of the active animation.
@@ -776,19 +768,19 @@ namespace TEN::Scripting::DisplayItem
 	// if item:Exists() then
 	//    local endFrame = item:GetEndFrame()
 	// end
-	sol::optional <int> ScriptDisplayItem::GetEndFrame() const
+	sol::optional<int> ScriptDisplayItem::GetEndFrame() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 		
-		return item->GetEndFrame();
+		return item->GetEndFrameNumber();
 	}
 
-	///Get the 2D projected bounding box of this DisplayItem.
+	/// Get the 2D projected bounding box of this DisplayItem.
 	// This function projects the DisplayItem into screen space and returns two Vec2 values:
 	// @function DisplayItem:GetBounds
 	// @treturn[1] Vec2 center The projected center position(percent of screen space).
@@ -803,32 +795,28 @@ namespace TEN::Scripting::DisplayItem
 	//        print("Size: ", bounds[2].x, bounds[2].y)
 	//      end
 	// end
-	sol::optional <std::pair<Vec2, Vec2>> ScriptDisplayItem::GetBounds() const
+	sol::optional<std::pair<Vec2, Vec2>> ScriptDisplayItem::GetBounds() const
 	{
-		if (_itemName.empty())
+		if (_name.empty())
 			return sol::nullopt;
 
-		auto* item = g_DrawItems.GetItemByName(_itemName);
-		if (!item)
+		auto* item = g_DrawItems.GetItemByName(_name);
+		if (item == nullptr)
 			return sol::nullopt;
 
 		auto bounds = item->GetBounds();
 		if (!bounds.has_value())
 			return sol::nullopt;
 
-		const float fWidth = g_Configuration.ScreenWidth;
-		const float fHeight = g_Configuration.ScreenHeight;
+		float screenWidth = g_Configuration.ScreenWidth;
+		float screnHeight = g_Configuration.ScreenHeight;
 
-		const Vector2& center = bounds->first;
-		const Vector2& size = bounds->second;
+		const auto& center = bounds->first;
+		const auto& size = bounds->second;
 
-		// Convert to percent-based resolution
-		Vec2 centerPercent(center.x / fWidth * 100.0f,
-			center.y / fHeight * 100.0f);
-
-		Vec2 sizePercent(size.x / fWidth * 100.0f,
-			size.y / fHeight * 100.0f);
-
+		// Convert to percent-based resolution.
+		auto centerPercent = Vec2(center.x / screenWidth, center.y / screnHeight) * 100.0f;
+		auto sizePercent = Vec2(size.x / screenWidth, size.y / screnHeight) * 100.0f;
 		return std::pair<Vec2, Vec2>(centerPercent, sizePercent);
 	}
 }

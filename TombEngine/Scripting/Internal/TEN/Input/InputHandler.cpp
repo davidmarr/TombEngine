@@ -160,7 +160,7 @@ namespace TEN::Scripting::Input
 	// @treturn string Name of keyboard key that has been assigned to the ActionID.
 	static std::string GetActionBinding(int actionID)
 	{
-		return g_Bindings.GetBindingKeyName((ActionID)actionID);
+		return g_Bindings.GetBoundKeyName((ActionID)actionID);
 	}
 
 	/// Returns the time for which a key has been held.

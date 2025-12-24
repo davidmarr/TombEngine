@@ -963,7 +963,7 @@ namespace TEN::Renderer
 
 	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
 	{
-		if (!item.GetVisibility())
+		if (!item.IsVisible())
 			return;
 
 		float t = GetInterpolationFactor();
@@ -991,9 +991,9 @@ namespace TEN::Renderer
 		const auto& object = Objects[objectNumber];
 		if (!object.Animations.empty())
 		{
-			int anim = item.GetAnimation();
-			int frame = item.GetFrame();
-			int prevFrame = item.GetPreviousFrame();
+			int anim = item.GetAnimNumber();
+			int frame = item.GetFrameNumber();
+			int prevFrame = item.GetPrevFrameNumber();
 
 			auto interpData = KeyframeInterpolationData(
 				GetAnimData(object, anim).Keyframes[prevFrame],
@@ -1080,7 +1080,7 @@ namespace TEN::Renderer
 
 		for (int i = 0; i < moveableObject->ObjectMeshes.size(); i++)
 		{
-			if (meshBits && !item.GetMeshVisibility(i))
+			if (meshBits && !item.IsMeshVisible(i))
 				continue;
 
 			if (skinMode == SkinningMode::Full && g_Level.Meshes[object.meshIndex + i].hidden)
