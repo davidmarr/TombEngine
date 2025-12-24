@@ -1736,7 +1736,7 @@ end
 -- --  0.75  | 95    | 5         | ✓ (short path)
 -- --  1.00  | 10    | 10        | ✓
 --
--- Practical example: Enemy smoothly rotates to face Lara (shortest path)
+-- -- Practical example: Enemy smoothly rotates to face Lara (shortest path)
 -- local enemy = TEN.Objects.GetMoveableByName("enemy_1")
 -- local animationDuration = LuaUtil.SecondsToFrames(2)  -- 2 seconds to turn
 -- local currentFrame = 0
