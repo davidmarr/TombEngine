@@ -1763,29 +1763,6 @@ end
 --         currentFrame = 0  -- Reset
 --     end
 -- end
---
--- -- Practical animation example (custom door opening at constant speed over 2 seconds):
--- local customDoor = TEN.Objects.GetStaticByName("static_mesh_7")
--- local animationDuration = LuaUtil.SecondsToFrames(2)  -- 2 seconds = 60 frames @ 30fps
--- local currentFrame = 0
--- local animationComplete = false
--- LevelFuncs.OnLoop = function()
---     if not animationComplete then
---         if currentFrame <= animationDuration then
---             local t = currentFrame / animationDuration
---             local angle = LuaUtil.LerpAngle(0, 90, t)  -- 0° to 90° with constant speed
---             -- Note: For 0° → 90°, Lerp and LerpAngle give the same result.
---             -- LerpAngle is used here to ensure consistency (if you later change
---             --the start/end angles to cross boundaries, it will still work correctly).
---             customDoor:SetRotation(TEN.Rotation(0, angle, 0))
---             currentFrame = currentFrame + 1
---         else
---             -- Animation complete, set final rotation
---             customDoor:SetRotation(TEN.Rotation(0, 90, 0))
---             animationComplete = true
---         end
---     end
--- end
 LuaUtil.LerpAngle = function(a, b, t, min, max)
     min = min or 0
     max = max or 360
