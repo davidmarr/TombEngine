@@ -467,10 +467,10 @@ int ObjectOnLOS2(GameVector* origin, GameVector* target, Vector3i* vec, StaticMe
 			if (priorityObjectID != GAME_OBJECT_ID::ID_NO_OBJECT && item.ObjectNumber != priorityObjectID)
 				continue;
 
-			if (priorityObjectID != GAME_OBJECT_ID::ID_NO_OBJECT && priorityObjectID != ID_LARA && item.ObjectNumber == ID_LARA)
+			if (item.ObjectNumber != ID_LARA && (Objects[item.ObjectNumber].collision == nullptr || Objects[item.ObjectNumber].Hidden || !item.Collidable))
 				continue;
 
-			if (item.ObjectNumber != ID_LARA && (Objects[item.ObjectNumber].collision == nullptr || Objects[item.ObjectNumber].Hidden || !item.Collidable))
+			if (item.ObjectNumber == ID_LARA && priorityObjectID != ID_LARA)
 				continue;
 
 			auto bounds = GameBoundingBox(&item);

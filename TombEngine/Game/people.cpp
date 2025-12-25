@@ -146,7 +146,7 @@ bool Targetable(ItemInfo* item, AI_INFO* ai)
 
 	StaticMesh* mesh = nullptr;
 	Vector3i vector = {};
-	int losItemIndex = ObjectOnLOS2(&origin, &target, &vector, &mesh);
+	int losItemIndex = ObjectOnLOS2(&origin, &target, &vector, &mesh, GAME_OBJECT_ID::ID_LARA);
 
 	// Restore collidability.
 	item->Collidable = collidable;
