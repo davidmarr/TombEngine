@@ -117,7 +117,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed HUD elements being drawn during cinematic flybys or in title level.
 
 ### Lua API changes
-=======
 * Added detection and recovery of infinite loops and deadlocks caused by mistakes in user scripts.
 * Added `Moveable:GetVisible` and `Moveable:ShowInteractionHighlight` methods.
 * Added `DisplaySprite:GetFlags` method.

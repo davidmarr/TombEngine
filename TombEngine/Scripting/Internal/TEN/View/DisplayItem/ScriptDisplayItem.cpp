@@ -73,10 +73,12 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_DrawItemSetAmbientLight, &ScriptDisplayItem::SetAmbientLight,
 			ScriptReserved_DrawItemSetCamera, &ScriptDisplayItem::SetCameraPosition,
 			ScriptReserved_DrawItemSetTarget, &ScriptDisplayItem::SetCameraTargetPosition,
+			ScriptReserved_SetFOV, & ScriptDisplayItem::SetFOV,
 			ScriptReserved_DrawItemResetCamera, &ScriptDisplayItem::ResetCamera,
 			ScriptReserved_DrawItemGetAmbientLight, &ScriptDisplayItem::GetAmbientLight,
 			ScriptReserved_DrawItemGetCamera, &ScriptDisplayItem::GetCameraPosition,
-			ScriptReserved_DrawItemGetTarget, &ScriptDisplayItem::GetCameraTargetPosition);
+			ScriptReserved_DrawItemGetTarget, &ScriptDisplayItem::GetCameraTargetPosition,
+			ScriptReserved_GetFOV, & ScriptDisplayItem::GetFOV);
 	}
 
 	/// Create a DisplayItem object.
@@ -209,7 +211,7 @@ namespace TEN::Scripting::DisplayItem
 	// TEN.View.DisplayItem.SetCameraPosition(TEN.Vec3(0,0,1024))
 	void ScriptDisplayItem::SetCameraPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		auto convertedBool = ValueOr<bool>(disableInterpolation, false);
 		g_DrawItems.SetCameraPosition(newPos, convertedBool);
 	}
 
@@ -221,8 +223,22 @@ namespace TEN::Scripting::DisplayItem
 	// TEN.View.DisplayItem.SetTargetPosition(TEN.Vec3(0, 0, 1024))
 	void ScriptDisplayItem::SetCameraTargetPosition(const Vec3& newPos, TypeOrNil<bool> disableInterpolation)
 	{
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		auto convertedBool = ValueOr<bool>(disableInterpolation, false);
 		g_DrawItems.SetCameraTargetPosition(newPos, convertedBool);
+	}
+
+	///Set field of view for DisplayItems.
+	//@function SetFOV
+	//@tparam[opt=80] float angle Angle in degrees (clamped to [10, 170]).
+	//@bool[opt=false] disableInterpolation Disables interpolation to allow for snap movements.
+	//@usage
+	//TEN.View.DisplayItem.SetFOV(80)
+	void ScriptDisplayItem::SetFOV(TypeOrNil<float> fov, TypeOrNil<bool> disableInterpolation)
+	{
+		auto convertedFOV = ValueOr<float>(fov, 80.0f);
+		auto convertedBool = ValueOr<bool>(disableInterpolation, false);
+		auto clampedFOV = ANGLE(std::clamp(abs(convertedFOV), 10.0f, 170.0f));
+		g_DrawItems.SetFOV(clampedFOV, convertedBool);
 	}
 
 	/// Get the DisplayItems' ambient color.
@@ -255,13 +271,23 @@ namespace TEN::Scripting::DisplayItem
 		return g_DrawItems.GetCameraTargetPosition();
 	}
 
-	/// Reset the position of the camera and camera target.
+	/// Get field of view for DisplayItems.
+	// @function GetFOV
+	// @treturn float Current FOV angle in degrees.
+	// @usage
+	// local fieldOfView = TEN.View.DisplayItem.GetFOV()
+	float ScriptDisplayItem::GetFOV()
+	{
+		return TO_DEGREES(g_DrawItems.GetFOV());
+	}
+
+	/// Reset the position of the camera, camera target and FOV.
 	// @function ResetCamera
 	// @usage
 	// local targetPosition = TEN.View.DisplayItem.ResetCamera()
 	void ScriptDisplayItem::ResetCamera(TypeOrNil<bool> disableInterpolation)
 	{
-		bool convertedBool = ValueOr<bool>(disableInterpolation, false);
+		auto convertedBool = ValueOr<bool>(disableInterpolation, false);
 		g_DrawItems.ResetCamera(convertedBool);
 	}
 
