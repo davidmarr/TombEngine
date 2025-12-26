@@ -1,4 +1,5 @@
 #include "framework.h"
+#include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
 
 #include "Game/collision/floordata.h"
 #include "Game/control/lot.h"
@@ -19,7 +20,6 @@
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Specific/level.h"
-#include <Objects/Generic/Object/Pushable/PushableObject.h>
 
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Effects::Items;
