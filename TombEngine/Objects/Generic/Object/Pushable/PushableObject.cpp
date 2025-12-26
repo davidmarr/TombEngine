@@ -68,6 +68,8 @@ namespace TEN::Entities::Generic
 		pushable.DoCenterAlign = (ocb & (1 << 1)) == 0;			  // Bit 1.
 		pushable.IsBuoyant = (ocb & (1 << 2)) != 0;			  // Bit 2.
 		pushable.AnimSetID = ((ocb & (1 << 3)) != 0) ? 1 : 0; // Bit 3.
+
+		pushable.PreviousTriggerFlags = ocb;
 	}
 
 	void InitializePushableBlock(int itemNumber)
@@ -120,6 +122,12 @@ namespace TEN::Entities::Generic
 
 		if (player.Context.InteractedItem == itemNumber && player.Control.IsMoving)
 			return;
+
+		// Check if OCB has changed and update characteristics if needed.
+		if (pushableItem.TriggerFlags != pushable.PreviousTriggerFlags)
+		{
+			UpdatePushableFromOCB(pushableItem);
+		}
 
 		auto prevPos = pushableItem.Pose.Position;
 

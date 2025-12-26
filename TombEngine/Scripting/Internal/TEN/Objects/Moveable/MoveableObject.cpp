@@ -1,5 +1,4 @@
 #include "framework.h"
-#include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
 
 #include "Game/collision/floordata.h"
 #include "Game/control/lot.h"
@@ -590,12 +589,6 @@ short Moveable::GetOcb() const
 void Moveable::SetOcb(short ocb)
 {
 	_moveable->TriggerFlags = ocb;
-	// Update pushable characteristics if this is a pushable object
-	if (_moveable->ObjectNumber >= ID_PUSHABLE_OBJECT1 && _moveable->ObjectNumber <= ID_PUSHABLE_OBJECT10 ||
-		_moveable->ObjectNumber >= ID_PUSHABLE_OBJECT_CLIMBABLE1 && _moveable->ObjectNumber <= ID_PUSHABLE_OBJECT_CLIMBABLE10)
-	{
-		UpdatePushableFromOCB(*_moveable);
-	}
 }
 
 /// Set the effect for this moveable.
