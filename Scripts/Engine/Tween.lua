@@ -9,29 +9,6 @@ LevelFuncs.Engine.Tween = {}
 -- Storage
 LevelVars.Engine.Tween = { tweens = {} }
 
-Tween.Mode = LuaUtil.SetTableReadOnly({
-    ONCE = 0,              -- from → to (stop)
-    RESTART = 1,           -- from → to - from → to
-    PING_PONG = 2,         -- from → to → from
-})
-
-Tween.Easing = LuaUtil.SetTableReadOnly({
-    LERP = 1,
-    SMOOTHSTEP = 2,
-    SMOOTHERSTEP = 3,
-    EASE_IN_OUT = 4,
-    ELASTIC = 5
-})
-
-Tween.CallbackType = LuaUtil.SetTableReadOnly({
-    ON_START = "onStart",
-    ON_COMPLETE = "onComplete",
-    ON_LOOP = "onLoop",
-    ON_UPDATE = "onUpdate",
-    ON_TO = "onTo",      -- Quando raggiunge to
-    ON_FROM = "onFrom"   -- Quando raggiunge from
-})
-
 LevelVars.Engine.Tween.Interpolations = {
     LuaUtil.Lerp,
     LuaUtil.Smoothstep,
@@ -39,6 +16,35 @@ LevelVars.Engine.Tween.Interpolations = {
     LuaUtil.EaseInOut,
     LuaUtil.Elastic
 }
+
+Tween.Mode = {
+    ONCE = 0,              -- from → to (stop)
+    RESTART = 1,           -- from → to - from → to
+    PING_PONG = 2,         -- from → to → from
+}
+
+Tween.Mode = LuaUtil.SetTableReadOnly(Tween.Mode)
+
+Tween.Easing = {
+    LERP = 1,
+    SMOOTHSTEP = 2,
+    SMOOTHERSTEP = 3,
+    EASE_IN_OUT = 4,
+    ELASTIC = 5
+}
+
+Tween.Easing = LuaUtil.SetTableReadOnly(Tween.Easing)
+
+Tween.CallbackType = {
+    ON_START = "onStart",
+    ON_COMPLETE = "onComplete",
+    ON_LOOP = "onLoop",
+    ON_UPDATE = "onUpdate",
+    ON_TO = "onTo",      -- Quando raggiunge to
+    ON_FROM = "onFrom"   -- Quando raggiunge from
+}
+
+Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 
 Tween.Create = function(parameters)
     LevelVars.Engine.Tween.tweens[parameters.name] = {}
