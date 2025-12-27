@@ -10,10 +10,12 @@
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_fire.h"
 #include "Game/misc.h"
+#include "Math/Geometry.h"
 #include "Specific/level.h"
 
 using namespace TEN::Animation;
 using namespace TEN::Collision::Point;
+using namespace TEN::Math::Geometry;
 
 namespace TEN::Entities::Creatures::TR1
 {
@@ -133,9 +135,8 @@ namespace TEN::Entities::Creatures::TR1
 			{
 				if (item.Animation.AnimNumber != LA_FREEFALL_DEATH)
 				{
-					item.Pose.Position.x = pointColl.GetSector().Position.x + BLOCK(0.5f);
+					item.Pose.Position = GetNearestSectorCenter(item.Pose.Position);
 					item.Pose.Position.y = item.Floor;
-					item.Pose.Position.z = pointColl.GetSector().Position.y + BLOCK(0.5f);
 
 					TestTriggers(&item, true);
 
