@@ -47,6 +47,7 @@ Tween.Create = function(parameters)
     thisTween.active = parameters.autoStart and true or false
     thisTween.pause = parameters.autoStart and true or false
 
+    thisTween.value = thisTween.from
     thisTween.progress = 0
     local self = { name = parameters.name }
     return setmetatable(self, Tween)
