@@ -27,7 +27,7 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly({
     ON_START = "onStart",
     ON_COMPLETE = "onComplete",
     ON_LOOP = "onLoop",
-    ON_FRAMES = "onFrames",
+    ON_UPDATE = "onUpdate",
     ON_TO = "onTo",      -- Quando raggiunge to
     ON_FROM = "onFrom"   -- Quando raggiunge from
 })
@@ -62,6 +62,7 @@ Tween.Create = function(parameters)
     thisTween.interpolationDuration = LuaUtil.SecondsToFrames(thisTween.period)
 
     -- Interpolation state
+    thisTween.shouldDeactivateNextFrame = false
     thisTween.elapsed = 0
     thisTween.progress = 0.0
     thisTween.value = thisTween.from
@@ -168,74 +169,61 @@ function Tween:SetCallback(callbackType, func) end
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
     for name, t in pairs(LevelVars.Engine.Tween.tweens) do
-        -- Salta se non attivo, in pausa, o completato
+        -- Prima: gestisci deactivazione ritardata
+        if t.shouldDeactivateNextFrame then
+            t.active = false
+            t.shouldDeactivateNextFrame = false
+        end
+        
         if t.active and not t.paused and not t.completed then
-
-            -- Incrementa frame trascorsi
-            t.elapsed = t.elapsed + 1
-
-            -- Calcola progress normalizzato (0.0 - 1.0)
+            -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
             t.progress = t.elapsed / t.interpolationDuration
-
-            -- Clamp per sicurezza
+            
             if t.progress > 1.0 then
                 t.progress = 1.0
             end
-
-            -- Calcola valore interpolato
+            
             local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
             t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
-
-            -- Gestione fine ciclo
+            
+            -- Incrementa DOPO aver calcolato il valore
+            t.elapsed = t.elapsed + 1
+            
             if t.progress >= 1.0 then
+                -- Forza valore finale esatto (per sicurezza)
+                t.value = t.direction == 1 and t.to or t.from
+                
                 if t.mode == Tween.Mode.ONCE then
-                    -- ONCE: ferma e completa
-                    t.active = false
+                    t.shouldDeactivateNextFrame = true
                     t.completed = true
                     -- TODO: callback ON_COMPLETE, ON_TO
-
+                
                 elseif t.mode == Tween.Mode.RESTART then
-                    -- RESTART: riparte da from
                     t.elapsed = 0
                     t.progress = 0.0
-
+                    -- Forza valore iniziale per prossimo ciclo
+                    t.value = t.from
+                    
                     if t.loopCount then
-                        -- Loop finito: incrementa e controlla
                         t.currentLoopIndex = t.currentLoopIndex + 1
                         if t.currentLoopIndex >= t.loopCount then
-                            t.active = false
+                            t.shouldDeactivateNextFrame = true
                             t.completed = true
-                            -- TODO: callback ON_COMPLETE
-                        else
-                            -- TODO: callback ON_LOOP, ON_TO
                         end
-                    else
-                        -- Loop infinito: continua senza contare
-                        -- TODO: callback ON_LOOP, ON_TO
                     end
-
+                
                 elseif t.mode == Tween.Mode.PING_PONG then
-                    -- PING_PONG: inverte direzione
                     t.elapsed = 0
                     t.progress = 0.0
                     t.direction = -t.direction
-
-                    -- TODO: callback ON_TO o ON_FROM (in base a direction)
-
-                    -- Conta ciclo completo solo quando torna a from
+                    
                     if t.direction == 1 then
                         if t.loopCount then
                             t.currentLoopIndex = t.currentLoopIndex + 1
                             if t.currentLoopIndex >= t.loopCount then
-                                t.active = false
+                                t.shouldDeactivateNextFrame = true
                                 t.completed = true
-                                -- TODO: callback ON_COMPLETE
-                            else
-                                -- TODO: callback ON_LOOP
                             end
-                        else
-                            -- Loop infinito: continua senza contare
-                            -- TODO: callback ON_LOOP
                         end
                     end
                 end
