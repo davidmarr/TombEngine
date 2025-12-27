@@ -38,41 +38,73 @@ Tween.Create = function(parameters)
     thisTween.from = parameters.from
     thisTween.to = parameters.to
     thisTween.period = parameters.period
+
     thisTween.mode = parameters.mode or Tween.Mode.ONCE
     thisTween.easing = parameters.easing or Tween.Easing.LERP
     thisTween.easingParams = parameters.easingParams or nil
     thisTween.loopCount = parameters.loopCount or nil
     thisTween.autoStart = parameters.autoStart or false
-
     thisTween.active = parameters.autoStart and true or false
     thisTween.pause = parameters.autoStart and true or false
+
+    thisTween.progress = 0
     local self = { name = parameters.name }
     return setmetatable(self, Tween)
 end
 
 Tween.Delete = function (name)
+    if not Type.IsString(name) then
+        TEN.Util.PrintLog("Error in Tween.Delete(): invalid name", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
     if LevelVars.Engine.Tween.tweens[name] then
         LevelVars.Engine.Tween.tweens[name] = nil
     end
 end
 
-Tween.Get = function (name)
-    if LevelVars.Engine.Tween.tweens[name] then
-        return setmetatable({ name = name }, Tween)
+Tween.Get = function(name)
+    if not Type.IsString(name) then
+        TEN.Util.PrintLog("Error in Tween.Get(): invalid name", TEN.Util.LogLevel.ERROR)
+        return nil
     end
+    if not LevelVars.Engine.Tween.tweens[name] then
+        TEN.Util.PrintLog("Error in Tween.Get(): tween '" .. name .. "' does not exist. Use Tween.Create() first or check Tween.IfExists()", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    return setmetatable({ name = name }, Tween)
 end
 
 Tween.IfExists = function(name)
+    if not Type.IsString(name) then
+        TEN.Util.PrintLog("Error in Tween.IfExists(): invalid name", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
     return LevelVars.Engine.Tween.tweens[name] and true or false
 end
 
 --- Methods
 
 --- Lifecycle (tutti separati, chiari)
-function Tween:Start() end    -- Avvia o riprendi da pausa
-function Tween:Restart() end  -- Riavvia da zero (progress = 0)
-function Tween:Pause() end    -- Pausa, mantiene posizione
-function Tween:Stop() end     -- Ferma, mantiene posizione (non attivo)
+
+-- Avvia o riprendi da pausa
+function Tween:Start()
+    LevelVars.Engine.Tween.tweens[self.name].active = true
+end
+
+-- Riavvia da zero (progress = 0)
+function Tween:Restart()
+    
+end
+
+-- Pausa, mantiene posizione
+function Tween:Pause()
+    LevelVars.Engine.Tween.tweens[self.name].pause = true
+end
+
+-- Ferma, mantiene posizione (non attivo)
+function Tween:Stop()
+    LevelVars.Engine.Tween.tweens[self.name].active = false
+end
 function Tween:Reset() end    -- Riporta a from, progress = 0 (non avvia)
 
 --- State query
@@ -80,6 +112,11 @@ function Tween:IsActive() end
 function Tween:IsPaused() end
 function Tween:GetDirection() end
 function Tween:GetCurrentLoop() end
+
+--- Value/Progress
+function Tween:GetValue() end        -- Valore corrente interpolato
+function Tween:GetProgress() end     -- 0.0 - 1.0
+function Tween:SetProgress(t) end    -- Salta a posizione (avanzato)
 
 --- Time
 function Tween:GetTimeRemaining() end
