@@ -6,27 +6,27 @@ local Tween = {}
 Tween.__index = Tween
 LevelFuncs.Engine.Tween = {}
 
-Tween.Mode ={
+Tween.Mode = LuaUtil.SetTableReadOnly({
     ONCE = 0,              -- from → to (stop)
     RESTART = 1,           -- from → to - from → to
     PING_PONG = 2,         -- from → to → from
-}
+})
 
-Tween.Easing = {
+Tween.Easing = LuaUtil.SetTableReadOnly({
     LERP = 0,
     SMOOTHSTEP = 1,
     SMOOTHERSTEP = 2,
     EASE_IN_OUT = 3,
     ELASTIC = 4
-}
+})
 
-Tween.CallbackType = {
+Tween.CallbackType = LuaUtil.SetTableReadOnly({
     ON_START = "onStart",
     ON_COMPLETE = "onComplete",
     ON_LOOP = "onLoop",
-    ON_PEAK = "onPeak",      -- Quando raggiunge max
-    ON_VALLEY = "onValley"   -- Quando raggiunge min
-}
+    ON_TO = "onTo",      -- Quando raggiunge to
+    ON_FROM = "onFrom"   -- Quando raggiunge from
+})
 
 -- Storage
 LevelVars.Engine.Tween = { tweens = {} }
@@ -67,23 +67,38 @@ Tween.IfExists = function(name)
 end
 
 --- Methods
-function Tween:Start() end
-function Tween:Stop() end
-function Tween:Pause() end
-function Tween:Reset() end
-function Tween:GetValue() end
-function Tween:SetValue(value) end
-function Tween:GetPeriod() end
-function Tween:SetPeriod(period) end
-function Tween:GetFrom() end
-function Tween:SetFrom(min) end
-function Tween:GetTo() end
-function Tween:SetTo(min) end
-function Tween:SetEasing(easing) end
-function Tween:SetCallback(callbackType, func) end
-function Tween:Reverse() end
+
+--- Lifecycle (tutti separati, chiari)
+function Tween:Start() end    -- Avvia o riprendi da pausa
+function Tween:Restart() end  -- Riavvia da zero (progress = 0)
+function Tween:Pause() end    -- Pausa, mantiene posizione
+function Tween:Stop() end     -- Ferma, mantiene posizione (non attivo)
+function Tween:Reset() end    -- Riporta a from, progress = 0 (non avvia)
+
+--- State query
 function Tween:IsActive() end
 function Tween:IsPaused() end
+function Tween:GetDirection() end
+function Tween:GetCurrentLoop() end
+
+--- Time
+function Tween:GetTimeRemaining() end
+function Tween:GetPeriod() end
+function Tween:SetPeriod(period) end
+
+--- Parameters (modificabili a runtime)
+function Tween:GetFrom() end
+function Tween:SetFrom(value) end
+function Tween:GetTo() end
+function Tween:SetTo(value) end
+function Tween:SetEasing(easing) end
+function Tween:SetEasingParams(params) end  -- Opzionale, per utenti avanzati
+function Tween:SetLoopCount(count) end      -- Utile
+function Tween:Reverse() end                -- Scambia from <-> to
+
+--- Callbacks
+function Tween:SetCallback(callbackType, func) end
+
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
     for _, t in pairs(LevelVars.Engine.Tween.tweens) do
