@@ -196,7 +196,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
             local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
             t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
 
-            -- Callback ON_UPDATE DOPO aver calcolato il valore (così vede anche l'ultimo frame)
+            -- Callback ON_UPDATE
             if t.callbacks.onUpdate then
                 t.callbacks.onUpdate(t.value, t.progress)
             end
