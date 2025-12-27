@@ -16,11 +16,11 @@ Tween.Mode = LuaUtil.SetTableReadOnly({
 })
 
 Tween.Easing = LuaUtil.SetTableReadOnly({
-    LERP = 0,
-    SMOOTHSTEP = 1,
-    SMOOTHERSTEP = 2,
-    EASE_IN_OUT = 3,
-    ELASTIC = 4
+    LERP = 1,
+    SMOOTHSTEP = 2,
+    SMOOTHERSTEP = 3,
+    EASE_IN_OUT = 4,
+    ELASTIC = 5
 })
 
 Tween.CallbackType = LuaUtil.SetTableReadOnly({
