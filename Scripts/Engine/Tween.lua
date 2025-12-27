@@ -200,26 +200,26 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
             if t.callbacks.onUpdate then
                 t.callbacks.onUpdate(t.value, t.progress)
             end
-            
+
             -- Incrementa DOPO aver calcolato il valore
             t.elapsed = t.elapsed + 1
-            
+
             if t.progress >= 1.0 then
                 -- Forza valore finale esatto (per sicurezza)
                 t.value = t.direction == 1 and t.to or t.from
-                
+
                 if t.mode == Tween.Mode.ONCE then
                     t.shouldDeactivateNextFrame = true
                     t.completed = true
                     -- TODO: callback ON_TO
                     -- TODO: callback ON_COMPLETE
-                
+
                 elseif t.mode == Tween.Mode.RESTART then
                     t.elapsed = 0
                     t.progress = 0.0
                     -- Forza valore iniziale per prossimo ciclo
                     t.value = t.from
-                    
+
                     if t.loopCount then
                         t.currentLoopIndex = t.currentLoopIndex + 1
                         if t.currentLoopIndex >= t.loopCount then
@@ -236,14 +236,14 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         -- TODO: callback ON_TO
                         -- TODO: callback ON_LOOP
                     end
-                
+
                 elseif t.mode == Tween.Mode.PING_PONG then
                     t.elapsed = 0
                     t.progress = 0.0
                     t.direction = -t.direction
-                    
+
                     -- TODO: callback ON_TO (se direction=-1) o ON_FROM (se direction=1)
-                    
+
                     if t.direction == 1 then
                         if t.loopCount then
                             t.currentLoopIndex = t.currentLoopIndex + 1
