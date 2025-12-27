@@ -6,6 +6,9 @@ local Tween = {}
 Tween.__index = Tween
 LevelFuncs.Engine.Tween = {}
 
+-- Storage
+LevelVars.Engine.Tween = { tweens = {} }
+
 Tween.Mode = LuaUtil.SetTableReadOnly({
     ONCE = 0,              -- from → to (stop)
     RESTART = 1,           -- from → to - from → to
@@ -28,27 +31,43 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly({
     ON_FROM = "onFrom"   -- Quando raggiunge from
 })
 
--- Storage
-LevelVars.Engine.Tween = { tweens = {} }
-
+LevelVars.Engine.Tween.Interpolations = {
+    LuaUtil.Lerp,
+    LuaUtil.Smoothstep,
+    LuaUtil.Smootherstep,
+    LuaUtil.EaseInOut,
+    LuaUtil.Elastic
+}
 
 Tween.Create = function(parameters)
     LevelVars.Engine.Tween.tweens[parameters.name] = {}
     local thisTween = LevelVars.Engine.Tween.tweens[parameters.name]
+
+
     thisTween.from = parameters.from
     thisTween.to = parameters.to
     thisTween.period = parameters.period
-
     thisTween.mode = parameters.mode or Tween.Mode.ONCE
     thisTween.easing = parameters.easing or Tween.Easing.LERP
     thisTween.easingParams = parameters.easingParams or nil
     thisTween.loopCount = parameters.loopCount or nil
     thisTween.autoStart = parameters.autoStart or false
-    thisTween.active = parameters.autoStart and true or false
-    thisTween.pause = parameters.autoStart and true or false
 
+    -- State management
+    thisTween.active = parameters.autoStart and true or false
+    thisTween.paused = false
+
+    thisTween.interpolation = LevelVars.Engine.Tween.Interpolations[thisTween.easing]
+    thisTween.interpolationDuration = LuaUtil.SecondsToFrames(thisTween.period)
+
+    -- Interpolation state
+    thisTween.elapsed = 0
+    thisTween.progress = 0.0
     thisTween.value = thisTween.from
-    thisTween.progress = 0
+    thisTween.direction = 1
+    thisTween.currentLoopIndex = 0
+    thisTween.completed = false
+
     local self = { name = parameters.name }
     return setmetatable(self, Tween)
 end
@@ -99,7 +118,7 @@ end
 
 -- Pausa, mantiene posizione
 function Tween:Pause()
-    LevelVars.Engine.Tween.tweens[self.name].pause = true
+    LevelVars.Engine.Tween.tweens[self.name].paused = true
 end
 
 -- Ferma, mantiene posizione (non attivo)
@@ -139,9 +158,79 @@ function Tween:SetCallback(callbackType, func) end
 
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
-    for _, t in pairs(LevelVars.Engine.Tween.tweens) do
-        if t.active then
-            
+    for name, t in pairs(LevelVars.Engine.Tween.tweens) do
+        -- Salta se non attivo, in pausa, o completato
+        if t.active and not t.paused and not t.completed then
+
+            -- Incrementa frame trascorsi
+            t.elapsed = t.elapsed + 1
+
+            -- Calcola progress normalizzato (0.0 - 1.0)
+            t.progress = t.elapsed / t.interpolationDuration
+
+            -- Clamp per sicurezza
+            if t.progress > 1.0 then
+                t.progress = 1.0
+            end
+
+            -- Calcola valore interpolato
+            local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
+            t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
+
+            -- Gestione fine ciclo
+            if t.progress >= 1.0 then
+                if t.mode == Tween.Mode.ONCE then
+                    -- ONCE: ferma e completa
+                    t.active = false
+                    t.completed = true
+                    -- TODO: callback ON_COMPLETE, ON_TO
+
+                elseif t.mode == Tween.Mode.RESTART then
+                    -- RESTART: riparte da from
+                    t.elapsed = 0
+                    t.progress = 0.0
+
+                    if t.loopCount then
+                        -- Loop finito: incrementa e controlla
+                        t.currentLoopIndex = t.currentLoopIndex + 1
+                        if t.currentLoopIndex >= t.loopCount then
+                            t.active = false
+                            t.completed = true
+                            -- TODO: callback ON_COMPLETE
+                        else
+                            -- TODO: callback ON_LOOP, ON_TO
+                        end
+                    else
+                        -- Loop infinito: continua senza contare
+                        -- TODO: callback ON_LOOP, ON_TO
+                    end
+
+                elseif t.mode == Tween.Mode.PING_PONG then
+                    -- PING_PONG: inverte direzione
+                    t.elapsed = 0
+                    t.progress = 0.0
+                    t.direction = -t.direction
+
+                    -- TODO: callback ON_TO o ON_FROM (in base a direction)
+
+                    -- Conta ciclo completo solo quando torna a from
+                    if t.direction == 1 then
+                        if t.loopCount then
+                            t.currentLoopIndex = t.currentLoopIndex + 1
+                            if t.currentLoopIndex >= t.loopCount then
+                                t.active = false
+                                t.completed = true
+                                -- TODO: callback ON_COMPLETE
+                            else
+                                -- TODO: callback ON_LOOP
+                            end
+                        else
+                            -- Loop infinito: continua senza contare
+                            -- TODO: callback ON_LOOP
+                        end
+                    end
+                end
+            end
         end
     end
 end
