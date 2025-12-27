@@ -128,13 +128,21 @@ end
 function Tween:Reset() end    -- Riporta a from, progress = 0 (non avvia)
 
 --- State query
-function Tween:IsActive() end
-function Tween:IsPaused() end
+function Tween:IsActive()
+    return LevelVars.Engine.Tween.tweens[self.name].active
+end
+function Tween:IsPaused()
+    return LevelVars.Engine.Tween.tweens[self.name].paused
+end
 function Tween:GetDirection() end
 function Tween:GetCurrentLoop() end
 
 --- Value/Progress
-function Tween:GetValue() end        -- Valore corrente interpolato
+
+-- Valore corrente interpolato
+function Tween:GetValue()
+    return LevelVars.Engine.Tween.tweens[self.name].value
+end        
 function Tween:GetProgress() end     -- 0.0 - 1.0
 function Tween:SetProgress(t) end    -- Salta a posizione (avanzato)
 
