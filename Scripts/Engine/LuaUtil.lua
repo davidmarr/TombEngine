@@ -2847,8 +2847,8 @@ end
 -- @tparam table tbl The table to make read-only.
 -- @treturn table A read-only version of the input table. If the input is not a table, returns an empty table.
 -- @usage
--- local readOnlyTable = LuaUtil.SetTableReadonly(originalTable)
-LuaUtil.SetTableReadonly = function(tbl)
+-- local readOnlyTable = LuaUtil.SetTableReadOnly(originalTable)
+LuaUtil.SetTableReadOnly = function(tbl)
     if not I.IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.SetTableReadonly: input is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
