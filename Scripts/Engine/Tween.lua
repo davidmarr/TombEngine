@@ -40,8 +40,8 @@ Tween.CallbackType = {
     ON_COMPLETE = "onComplete",
     ON_LOOP = "onLoop",
     ON_UPDATE = "onUpdate",
-    ON_TO = "onTo",      -- Quando raggiunge to
-    ON_FROM = "onFrom"   -- Quando raggiunge from
+    ON_TO = "onTo",
+    ON_FROM = "onFrom"
 }
 
 Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
@@ -160,9 +160,22 @@ function Tween:GetCurrentLoop() end
 -- Valore corrente interpolato
 function Tween:GetValue()
     return LevelVars.Engine.Tween.tweens[self.name].value
-end        
-function Tween:GetProgress() end     -- 0.0 - 1.0
-function Tween:SetProgress(t) end    -- Salta a posizione (avanzato)
+end
+
+-- 0.0 - 1.0
+function Tween:GetProgress()
+    return LevelVars.Engine.Tween.tweens[self.name].progress
+end
+
+-- Salta a posizione (avanzato)
+function Tween:SetProgress(t)
+    if not Type.IsNumber(t) then
+        TEN.Util.PrintLog("Error", TEN.Util.LogLevel.ERROR)
+        return
+    end
+    local clampT = LuaUtil.Clamp(t, 0, 1)
+    LevelVars.Engine.Tween.tweens[self.name].progress = clampT
+end
 
 --- Time
 function Tween:GetTimeRemaining() end
