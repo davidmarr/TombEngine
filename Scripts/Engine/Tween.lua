@@ -71,7 +71,14 @@ Tween.Create = function(parameters)
     thisTween.completed = false
 
     -- Callbacks
-    thisTween.callbacks = {}
+    thisTween.callbacks = {
+        onStart = Type.IsLevelFunc(parameters.onStart) and parameters.onStart or nil,
+        onComplete = Type.IsLevelFunc(parameters.onComplete) and parameters.onComplete or nil,
+        onLoop = Type.IsLevelFunc(parameters.onLoop) and parameters.onLoop or nil,
+        onUpdate = Type.IsLevelFunc(parameters.onUpdate) and parameters.onUpdate or nil,
+        onTo = Type.IsLevelFunc(parameters.onTo) and parameters.onTo or nil,
+        onFrom = Type.IsLevelFunc(parameters.onFrom) and parameters.onFrom or nil,
+    }
 
     local self = { name = parameters.name }
     return setmetatable(self, Tween)
@@ -181,6 +188,9 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
         
         if t.active and not t.paused and not t.completed then
             -- TODO: callback ON_UPDATE (ogni frame)
+            if t.callbacks.onUpdate then
+                t.callbacks.onUpdate(t.value, t.progress)
+            end
             
             -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
             t.progress = t.elapsed / t.interpolationDuration
