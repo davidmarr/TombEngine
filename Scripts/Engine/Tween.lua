@@ -70,6 +70,9 @@ Tween.Create = function(parameters)
     thisTween.currentLoopIndex = 0
     thisTween.completed = false
 
+    -- Callbacks
+    thisTween.callbacks = {}
+
     local self = { name = parameters.name }
     return setmetatable(self, Tween)
 end
@@ -111,6 +114,7 @@ end
 -- Avvia o riprendi da pausa
 function Tween:Start()
     LevelVars.Engine.Tween.tweens[self.name].active = true
+    -- TODO: callback ON_START
 end
 
 -- Riavvia da zero (progress = 0)
@@ -176,6 +180,8 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
         end
         
         if t.active and not t.paused and not t.completed then
+            -- TODO: callback ON_UPDATE (ogni frame)
+            
             -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
             t.progress = t.elapsed / t.interpolationDuration
             
@@ -196,7 +202,8 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                 if t.mode == Tween.Mode.ONCE then
                     t.shouldDeactivateNextFrame = true
                     t.completed = true
-                    -- TODO: callback ON_COMPLETE, ON_TO
+                    -- TODO: callback ON_TO
+                    -- TODO: callback ON_COMPLETE
                 
                 elseif t.mode == Tween.Mode.RESTART then
                     t.elapsed = 0
@@ -209,7 +216,16 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         if t.currentLoopIndex >= t.loopCount then
                             t.shouldDeactivateNextFrame = true
                             t.completed = true
+                            -- TODO: callback ON_TO
+                            -- TODO: callback ON_COMPLETE
+                        else
+                            -- TODO: callback ON_TO
+                            -- TODO: callback ON_LOOP
                         end
+                    else
+                        -- Loop infinito: continua senza contare
+                        -- TODO: callback ON_TO
+                        -- TODO: callback ON_LOOP
                     end
                 
                 elseif t.mode == Tween.Mode.PING_PONG then
@@ -217,13 +233,21 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     t.progress = 0.0
                     t.direction = -t.direction
                     
+                    -- TODO: callback ON_TO (se direction=-1) o ON_FROM (se direction=1)
+                    
                     if t.direction == 1 then
                         if t.loopCount then
                             t.currentLoopIndex = t.currentLoopIndex + 1
                             if t.currentLoopIndex >= t.loopCount then
                                 t.shouldDeactivateNextFrame = true
                                 t.completed = true
+                                -- TODO: callback ON_COMPLETE
+                            else
+                                -- TODO: callback ON_LOOP
                             end
+                        else
+                            -- Loop infinito: continua senza contare
+                            -- TODO: callback ON_LOOP
                         end
                     end
                 end
