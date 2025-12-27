@@ -44,7 +44,6 @@ Tween.Create = function(parameters)
     LevelVars.Engine.Tween.tweens[parameters.name] = {}
     local thisTween = LevelVars.Engine.Tween.tweens[parameters.name]
 
-
     thisTween.from = parameters.from
     thisTween.to = parameters.to
     thisTween.period = parameters.period
