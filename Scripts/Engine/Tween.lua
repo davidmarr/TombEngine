@@ -153,7 +153,9 @@ function Tween:IsPaused()
     return LevelVars.Engine.Tween.tweens[self.name].paused
 end
 function Tween:GetDirection() end
-function Tween:GetCurrentLoop() end
+function Tween:GetCurrentLoop()
+    return LevelVars.Engine.Tween.tweens[self.name].loopCount
+end
 
 --- Value/Progress
 
@@ -179,14 +181,26 @@ end
 
 --- Time
 function Tween:GetTimeRemaining() end
-function Tween:GetPeriod() end
+
+function Tween:GetPeriod()
+    return LevelVars.Engine.Tween.tweens[self.name].period
+end
 function Tween:SetPeriod(period) end
 
 --- Parameters (modificabili a runtime)
-function Tween:GetFrom() end
+function Tween:GetFrom()
+    return LevelVars.Engine.Tween.tweens[self.name].from
+end
 function Tween:SetFrom(value) end
-function Tween:GetTo() end
+function Tween:GetTo()
+    return LevelVars.Engine.Tween.tweens[self.name].to
+end
 function Tween:SetTo(value) end
+
+function Tween:GetEasing()
+    return LevelVars.Engine.Tween.tweens[self.name].easing
+end
+
 function Tween:SetEasing(easing) end
 function Tween:SetEasingParams(params) end  -- Opzionale, per utenti avanzati
 function Tween:SetLoopCount(count) end      -- Utile
