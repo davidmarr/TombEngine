@@ -184,22 +184,22 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
             t.active = false
             t.shouldDeactivateNextFrame = false
         end
-        
+
         if t.active and not t.paused and not t.completed then
-            -- TODO: callback ON_UPDATE (ogni frame)
-            if t.callbacks.onUpdate then
-                t.callbacks.onUpdate(t.value, t.progress)
-            end
-            
             -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
             t.progress = t.elapsed / t.interpolationDuration
-            
+
             if t.progress > 1.0 then
                 t.progress = 1.0
             end
-            
+
             local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
             t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
+
+            -- Callback ON_UPDATE DOPO aver calcolato il valore (così vede anche l'ultimo frame)
+            if t.callbacks.onUpdate then
+                t.callbacks.onUpdate(t.value, t.progress)
+            end
             
             -- Incrementa DOPO aver calcolato il valore
             t.elapsed = t.elapsed + 1
