@@ -27,6 +27,7 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly({
     ON_START = "onStart",
     ON_COMPLETE = "onComplete",
     ON_LOOP = "onLoop",
+    ON_FRAMES = "onFrames",
     ON_TO = "onTo",      -- Quando raggiunge to
     ON_FROM = "onFrom"   -- Quando raggiunge from
 })
