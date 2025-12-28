@@ -153,6 +153,31 @@ Tween.Create = function(parameters)
     thisTween.period = parameters.period
     thisTween.mode = LuaUtil.TableHasValue(Tween.Mode, parameters.mode) and parameters.mode or Tween.Mode.ONCE
     thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, parameters.easing) and  parameters.easing or Tween.Easing.LERP
+
+    if parameters.easingParams and thisTween.easing == Tween.Easing.SMOOTHSTEP then
+        if not parameters.easingParams.edge0 then
+            parameters.easingParams.edge0 = 0
+        end
+        if not parameters.easingParams.edge1 then
+            parameters.easingParams.edge1 = 1
+        end
+    end
+    if parameters.easingParams and thisTween.easing == Tween.Easing.SMOOTHERSTEP then
+        if not parameters.easingParams.edge0 then
+            parameters.easingParams.edge0 = 0
+        end
+        if not parameters.easingParams.edge1 then
+            parameters.easingParams.edge1 = 1
+        end
+    end
+    if parameters.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
+        if not parameters.easingParams.amplitude then
+            parameters.easingParams.amplitude = 1.0
+        end
+        if not parameters.easingParams.period then
+            parameters.easingParams.period = 0.3
+        end
+    end
     thisTween.easingParams = parameters.easingParams or nil
     thisTween.loopCount = parameters.loopCount or nil
     thisTween.autoStart = Type.IsBoolean(parameters.autoStart) and parameters.autoStart or false
