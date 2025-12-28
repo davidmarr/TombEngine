@@ -67,7 +67,6 @@ Tween.Create = function(parameters)
     thisTween.interpolationDuration = LuaUtil.SecondsToFrames(thisTween.period)
 
     -- Interpolation state
-    thisTween.shouldDeactivateNextFrame = false
     thisTween.elapsed = 0
     thisTween.progress = 0.0
     thisTween.value = thisTween.from
@@ -211,12 +210,6 @@ function Tween:SetCallback(callbackType, func) end
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
     for name, t in pairs(LevelVars.Engine.Tween.tweens) do
-        -- Prima: gestisci deactivazione ritardata
-        if t.shouldDeactivateNextFrame then
-            t.active = false
-            t.shouldDeactivateNextFrame = false
-        end
-
         if t.active and not t.paused and not t.completed then
             -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
             t.progress = t.elapsed / t.interpolationDuration
@@ -241,7 +234,6 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                 t.value = t.direction == 1 and t.to or t.from
 
                 if t.mode == Tween.Mode.ONCE then
-                    t.shouldDeactivateNextFrame = true
                     t.completed = true
                     -- TODO: callback ON_TO
                     -- TODO: callback ON_COMPLETE
@@ -255,7 +247,6 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     if t.loopCount then
                         t.currentLoopIndex = t.currentLoopIndex + 1
                         if t.currentLoopIndex >= t.loopCount then
-                            t.shouldDeactivateNextFrame = true
                             t.completed = true
                             -- TODO: callback ON_TO
                             -- TODO: callback ON_COMPLETE
@@ -280,7 +271,6 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         if t.loopCount then
                             t.currentLoopIndex = t.currentLoopIndex + 1
                             if t.currentLoopIndex >= t.loopCount then
-                                t.shouldDeactivateNextFrame = true
                                 t.completed = true
                                 -- TODO: callback ON_COMPLETE
                             else
