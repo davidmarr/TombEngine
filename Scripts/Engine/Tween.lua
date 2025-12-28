@@ -58,7 +58,8 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 
 --- Create tween instance
 -- @tparam TweenParameters parameters Table with parameters
--- @treturn Tween instance
+-- @treturn[1] Tween instance
+-- @treturn[2] nil If error occurs
 -- @usage
 -- -- Create a tween from 0 to 100 over 2 seconds
 -- local myTween = Tween.Create{
@@ -67,7 +68,6 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 --     to = 100,
 --     period = 2.0,
 -- }
--- myTween:Start()
 --
 -- -- Create a ping-pong tween from Vec3(0,0,0) to Vec3(10,10,10) over 3 seconds, looping 5 times
 -- local myVecTween = Tween.Create{
@@ -80,6 +80,71 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 --     autoStart = true,
 -- }
 Tween.Create = function(parameters)
+
+    -- Validate parameters
+    if not Type.IsTable(parameters) then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters must be a table", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not Type.IsString(parameters.name) then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters.name must be a string", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if LevelVars.Engine.Tween.tweens[parameters.name] then
+        TEN.Util.PrintLog("Warning in Tween.Create(): tween with name '" .. parameters.name .. "' already exists. Overwriting.", TEN.Util.LogLevel.WARNING)
+    end
+    if not LevelFuncs.Engine.Tween.IsValidTweenValue(parameters.from) then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters.from has invalid type", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not LevelFuncs.Engine.Tween.IsValidTweenValue(parameters.to) then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters.to has invalid type", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if getmetatable(parameters.from) ~= getmetatable(parameters.to) then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters.from and parameters.to must be of the same type", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not Type.IsNumber(parameters.period) or parameters.period <= 0 then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters.period must be a positive number", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if parameters.loopCount and (not Type.IsNumber(parameters.loopCount) or parameters.loopCount <= 0) then
+        TEN.Util.PrintLog("Error in Tween.Create(): parameters.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if parameters.loopCount and (parameters.loopCount % 1) ~= 0 then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
+        parameters.loopCount = math.floor(parameters.loopCount)
+    end
+    if parameters.autoStart and not Type.IsBoolean(parameters.autoStart) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.autoStart must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.mode and not LuaUtil.TableHasValue(Tween.Mode, parameters.mode) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.mode has invalid value. Using default value 'ONCE'", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.easing and not LuaUtil.TableHasValue(Tween.Easing, parameters.easing) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.easing has invalid value. Using default value 'LERP'", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.onStart and not Type.IsLevelFunc(parameters.onStart) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onStart must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.onComplete and not Type.IsLevelFunc(parameters.onComplete) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onComplete must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.onLoop and not Type.IsLevelFunc(parameters.onLoop) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onLoop must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.onUpdate and not Type.IsLevelFunc(parameters.onUpdate) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onUpdate must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.onTo and not Type.IsLevelFunc(parameters.onTo) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onTo must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    end
+    if parameters.onFrom and not Type.IsLevelFunc(parameters.onFrom) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onFrom must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    end
+    -- Create tween
     LevelVars.Engine.Tween.tweens[parameters.name] = {}
     local thisTween = LevelVars.Engine.Tween.tweens[parameters.name]
 
