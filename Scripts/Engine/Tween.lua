@@ -1,5 +1,45 @@
---- Advanced Tweening System.
--- Supports multiple tweens with different parameters
+--- Advanced Tweening System. This module provides a flexible way to create and manage tweens (interpolation) for various data types such as numbers, Colors, Rotations, Vec2, and Vec3.
+-- It supports different easing functions, modes (once, restart, ping-pong), looping, and callbacks for various events.
+-- Supports multiple tweens with different parameters.
+--
+-- To use Tween inside scripts you need to call the module:
+--	local Tween = require("Engine.Tween")
+--
+-- Example usage:
+--	-- Create a tween from 0 to 100 over 2 seconds
+--	local myTween = Tween.Create{
+--	    name = "myTween",
+--	    from = 0,
+--	    to = 100,
+--	    period = 2.0,
+--	}
+--	-- Start the tween
+--	myTween:Start()
+--	-- In your update loop, get the current value
+--	local currentValue = myTween:GetValue()
+--
+-- Advanced usage with ping-pong mode and callbacks for updating object position:
+--
+--	-- Get the object to move
+--	local bridge = TEN.Objects.GetMoveableByName("bridge_flat_6")
+--
+--	-- Define callback functions in LevelFuncs 
+--	LevelFuncs.MyTweenOnUpdate = function(value, progress)
+--	    bridge:SetPosition(value)
+--      -- Optional: print progress to log
+--	    TEN.Util.PrintLog("Tween Update: Value=" .. tostring(value) .. " Progress=" .. tostring(progress))
+--	end
+--
+--	local myVecTween = Tween.Create{
+--	    name = "myVecTween",
+--	    from = Vec3.New(8704, -384, 14848),
+--	    to = Vec3.New(8704, -384, 13824),
+--	    period = 3.0,
+--	    mode = Tween.Mode.PING_PONG,
+--	    loopCount = 5,
+--	    autoStart = true,
+--	    onUpdate = LevelFuncs.MyTweenOnUpdate,
+--	}
 -- @luautil Tween
 
 local Type = require("Engine.Type")
