@@ -57,7 +57,7 @@ Tween.CallbackType = {
 Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 
 --- Create tween instance
--- @tparam TweenParameters parameters Table with parameters
+-- @tparam TweenParameters params Table with parameters
 -- @treturn[1] Tween instance
 -- @treturn[2] nil If error occurs
 -- @usage
