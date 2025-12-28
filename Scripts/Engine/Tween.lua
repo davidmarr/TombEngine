@@ -172,8 +172,7 @@ end
 -- Salta a posizione (avanzato)
 function Tween:SetProgress(t)
     if not Type.IsNumber(t) then
-        TEN.Util.PrintLog("Error", TEN.Util.LogLevel.ERROR)
-        return
+        return TEN.Util.PrintLog("Error in Tween:SetProgress(t): t must be a number", TEN.Util.LogLevel.ERROR)
     end
     local clampT = LuaUtil.Clamp(t, 0, 1)
     LevelVars.Engine.Tween.tweens[self.name].progress = clampT
@@ -271,7 +270,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     end
 
                 elseif t.mode == Tween.Mode.PING_PONG then
-                    t.elapsed = 0
+                    t.elapsed = 1
                     t.progress = 0.0
                     t.direction = -t.direction
 
