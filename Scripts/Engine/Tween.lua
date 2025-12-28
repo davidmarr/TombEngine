@@ -154,15 +154,7 @@ Tween.Create = function(parameters)
     thisTween.mode = LuaUtil.TableHasValue(Tween.Mode, parameters.mode) and parameters.mode or Tween.Mode.ONCE
     thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, parameters.easing) and  parameters.easing or Tween.Easing.LERP
 
-    if parameters.easingParams and thisTween.easing == Tween.Easing.SMOOTHSTEP then
-        if not parameters.easingParams.edge0 then
-            parameters.easingParams.edge0 = 0
-        end
-        if not parameters.easingParams.edge1 then
-            parameters.easingParams.edge1 = 1
-        end
-    end
-    if parameters.easingParams and thisTween.easing == Tween.Easing.SMOOTHERSTEP then
+    if parameters.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
         if not parameters.easingParams.edge0 then
             parameters.easingParams.edge0 = 0
         end
