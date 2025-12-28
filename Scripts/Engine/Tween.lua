@@ -58,6 +58,27 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 
 --- Create tween instance
 -- @tparam TweenParameters parameters Table with parameters
+-- @treturn Tween instance
+-- @usage
+-- -- Create a tween from 0 to 100 over 2 seconds
+-- local myTween = Tween.Create{
+--     name = "myTween",
+--     from = 0,
+--     to = 100,
+--     period = 2.0,
+-- }
+-- myTween:Start()
+--
+-- -- Create a ping-pong tween from Vec3(0,0,0) to Vec3(10,10,10) over 3 seconds, looping 5 times
+-- local myVecTween = Tween.Create{
+--     name = "myVecTween",
+--     from = Vec3.New(0, 0, 0),
+--     to = Vec3.New(10, 10, 10),
+--     period = 3.0,
+--     mode = Tween.Mode.PING_PONG,
+--     loopCount = 5,
+--     autoStart = true,
+-- }
 Tween.Create = function(parameters)
     LevelVars.Engine.Tween.tweens[parameters.name] = {}
     local thisTween = LevelVars.Engine.Tween.tweens[parameters.name]
@@ -428,10 +449,8 @@ end
 -- @tfield 4 EASE_IN_OUT Ease in-out interpolation
 -- @tfield 5 ELASTIC Elastic interpolation
 
-
-
 LevelFuncs.Engine.Tween.UpdateAll = function()
-    for name, t in pairs(LevelVars.Engine.Tween.tweens) do
+    for _, t in pairs(LevelVars.Engine.Tween.tweens) do
         if t.active and not t.paused and not t.completed then
             -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
             t.progress = t.elapsed / t.interpolationDuration
