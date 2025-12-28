@@ -79,103 +79,102 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 --     loopCount = 5,
 --     autoStart = true,
 -- }
-Tween.Create = function(parameters)
+Tween.Create = function(params)
 
     -- Validate parameters
-    if not Type.IsTable(parameters) then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters must be a table", TEN.Util.LogLevel.ERROR)
+    if not Type.IsTable(params) then
+        TEN.Util.PrintLog("Error in Tween.Create(): params must be a table", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not Type.IsString(parameters.name) then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters.name must be a string", TEN.Util.LogLevel.ERROR)
+    if not Type.IsString(params.name) then
+        TEN.Util.PrintLog("Error in Tween.Create(): params.name must be a string", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if LevelVars.Engine.Tween.tweens[parameters.name] then
-        TEN.Util.PrintLog("Warning in Tween.Create(): tween with name '" .. parameters.name .. "' already exists. Overwriting.", TEN.Util.LogLevel.WARNING)
+    if LevelVars.Engine.Tween.tweens[params.name] then
+        TEN.Util.PrintLog("Warning in Tween.Create(): tween with name '" .. params.name .. "' already exists. Overwriting.", TEN.Util.LogLevel.WARNING)
     end
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(parameters.from) then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters.from has invalid type", TEN.Util.LogLevel.ERROR)
+    if not LevelFuncs.Engine.Tween.IsValidTweenValue(params.from) then
+        TEN.Util.PrintLog("Error in Tween.Create(): params.from has invalid type", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(parameters.to) then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters.to has invalid type", TEN.Util.LogLevel.ERROR)
+    if not LevelFuncs.Engine.Tween.IsValidTweenValue(params.to) then
+        TEN.Util.PrintLog("Error in Tween.Create(): params.to has invalid type", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if getmetatable(parameters.from) ~= getmetatable(parameters.to) then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters.from and parameters.to must be of the same type", TEN.Util.LogLevel.ERROR)
+    if getmetatable(params.from) ~= getmetatable(params.to) then
+        TEN.Util.PrintLog("Error in Tween.Create(): params.from and params.to must be of the same type", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not Type.IsNumber(parameters.period) or parameters.period <= 0 then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters.period must be a positive number", TEN.Util.LogLevel.ERROR)
+    if not Type.IsNumber(params.period) or params.period <= 0 then
+        TEN.Util.PrintLog("Error in Tween.Create(): params.period must be a positive number", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if parameters.loopCount and (not Type.IsNumber(parameters.loopCount) or parameters.loopCount <= 0) then
-        TEN.Util.PrintLog("Error in Tween.Create(): parameters.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
+    if params.loopCount and (not Type.IsNumber(params.loopCount) or params.loopCount <= 0) then
+        TEN.Util.PrintLog("Error in Tween.Create(): params.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if parameters.loopCount and (parameters.loopCount % 1) ~= 0 then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
-        parameters.loopCount = math.floor(parameters.loopCount)
+    if params.loopCount and (params.loopCount % 1) ~= 0 then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
+        params.loopCount = math.floor(params.loopCount)
     end
-    if parameters.autoStart and not Type.IsBoolean(parameters.autoStart) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.autoStart must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
+    if params.autoStart and not Type.IsBoolean(params.autoStart) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.autoStart must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.mode and not LuaUtil.TableHasValue(Tween.Mode, parameters.mode) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.mode has invalid value. Using default value 'ONCE'", TEN.Util.LogLevel.WARNING)
+    if params.mode and not LuaUtil.TableHasValue(Tween.Mode, params.mode) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.mode has invalid value. Using default value 'ONCE'", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.easing and not LuaUtil.TableHasValue(Tween.Easing, parameters.easing) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.easing has invalid value. Using default value 'LERP'", TEN.Util.LogLevel.WARNING)
+    if params.easing and not LuaUtil.TableHasValue(Tween.Easing, params.easing) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.easing has invalid value. Using default value 'LERP'", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.onStart and not Type.IsLevelFunc(parameters.onStart) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onStart must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    if params.onStart and not Type.IsLevelFunc(params.onStart) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.onStart must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.onComplete and not Type.IsLevelFunc(parameters.onComplete) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onComplete must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    if params.onComplete and not Type.IsLevelFunc(params.onComplete) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.onComplete must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.onLoop and not Type.IsLevelFunc(parameters.onLoop) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onLoop must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    if params.onLoop and not Type.IsLevelFunc(params.onLoop) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.onLoop must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.onUpdate and not Type.IsLevelFunc(parameters.onUpdate) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onUpdate must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    if params.onUpdate and not Type.IsLevelFunc(params.onUpdate) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.onUpdate must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.onTo and not Type.IsLevelFunc(parameters.onTo) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onTo must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    if params.onTo and not Type.IsLevelFunc(params.onTo) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.onTo must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if parameters.onFrom and not Type.IsLevelFunc(parameters.onFrom) then
-        TEN.Util.PrintLog("Warning in Tween.Create(): parameters.onFrom must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
+    if params.onFrom and not Type.IsLevelFunc(params.onFrom) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.onFrom must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
     -- Create tween
-    LevelVars.Engine.Tween.tweens[parameters.name] = {}
-    local thisTween = LevelVars.Engine.Tween.tweens[parameters.name]
+    LevelVars.Engine.Tween.tweens[params.name] = {}
+    local thisTween = LevelVars.Engine.Tween.tweens[params.name]
+    thisTween.from = params.from
+    thisTween.to = params.to
+    thisTween.period = params.period
+    thisTween.mode = LuaUtil.TableHasValue(Tween.Mode, params.mode) and params.mode or Tween.Mode.ONCE
+    thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
 
-    thisTween.from = parameters.from
-    thisTween.to = parameters.to
-    thisTween.period = parameters.period
-    thisTween.mode = LuaUtil.TableHasValue(Tween.Mode, parameters.mode) and parameters.mode or Tween.Mode.ONCE
-    thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, parameters.easing) and  parameters.easing or Tween.Easing.LERP
-
-    if parameters.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
-        if not parameters.easingParams.edge0 then
-            parameters.easingParams.edge0 = 0
+    if params.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
+        if not params.easingParams.edge0 then
+            params.easingParams.edge0 = 0
         end
-        if not parameters.easingParams.edge1 then
-            parameters.easingParams.edge1 = 1
+        if not params.easingParams.edge1 then
+            params.easingParams.edge1 = 1
         end
     end
-    if parameters.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
-        if not parameters.easingParams.amplitude then
-            parameters.easingParams.amplitude = 1.0
+    if params.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
+        if not params.easingParams.amplitude then
+            params.easingParams.amplitude = 1.0
         end
-        if not parameters.easingParams.period then
-            parameters.easingParams.period = 0.3
+        if not params.easingParams.period then
+            params.easingParams.period = 0.3
         end
     end
-    thisTween.easingParams = parameters.easingParams or nil
-    thisTween.loopCount = parameters.loopCount or nil
-    thisTween.autoStart = Type.IsBoolean(parameters.autoStart) and parameters.autoStart or false
+    thisTween.easingParams = params.easingParams or nil
+    thisTween.loopCount = params.loopCount or nil
+    thisTween.autoStart = Type.IsBoolean(params.autoStart) and params.autoStart or false
 
     -- State management
-    thisTween.active = parameters.autoStart and true or false
+    thisTween.active = params.autoStart and true or false
     thisTween.paused = false
 
     thisTween.interpolation = LevelVars.Engine.Tween.Interpolations[thisTween.easing]
@@ -191,15 +190,15 @@ Tween.Create = function(parameters)
 
     -- Callbacks
     thisTween.callbacks = {
-        onStart = Type.IsLevelFunc(parameters.onStart) and parameters.onStart or nil,
-        onComplete = Type.IsLevelFunc(parameters.onComplete) and parameters.onComplete or nil,
-        onLoop = Type.IsLevelFunc(parameters.onLoop) and parameters.onLoop or nil,
-        onUpdate = Type.IsLevelFunc(parameters.onUpdate) and parameters.onUpdate or nil,
-        onTo = Type.IsLevelFunc(parameters.onTo) and parameters.onTo or nil,
-        onFrom = Type.IsLevelFunc(parameters.onFrom) and parameters.onFrom or nil,
+        onStart = Type.IsLevelFunc(params.onStart) and params.onStart or nil,
+        onComplete = Type.IsLevelFunc(params.onComplete) and params.onComplete or nil,
+        onLoop = Type.IsLevelFunc(params.onLoop) and params.onLoop or nil,
+        onUpdate = Type.IsLevelFunc(params.onUpdate) and params.onUpdate or nil,
+        onTo = Type.IsLevelFunc(params.onTo) and params.onTo or nil,
+        onFrom = Type.IsLevelFunc(params.onFrom) and params.onFrom or nil,
     }
 
-    local self = { name = parameters.name }
+    local self = { name = params.name }
     return setmetatable(self, Tween)
 end
 
