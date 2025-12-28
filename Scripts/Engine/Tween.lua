@@ -382,19 +382,19 @@ function Tween:GetTimeRemaining()
     if remainingFrames < 0 then
         remainingFrames = 0
     end
-    return remainingFrames / TEN.Logic.GetFramesPerSecond()
+    return LuaUtil.Round(LuaUtil.FramesToSeconds(remainingFrames), 2)  -- Assuming 30 FPS
 end
 
 --- Get the period of the tween (in seconds)
--- @treturn number Period in seconds
+-- @treturn number Period in seconds (duration of one direction; for PING_PONG, full cycle is period * 2)
 -- @usage local period = myTween:GetPeriod()
 function Tween:GetPeriod()
     return LevelVars.Engine.Tween.tweens[self.name].period
 end
 
 --- Set the period of the tween (in seconds)
--- @tparam number period Period in seconds. Must be positive.
--- @usage myTween:SetPeriod(2.0)  -- Set period to 2 seconds
+-- @tparam number period Period in seconds (duration of one direction; for PING_PONG, full cycle is period * 2). Must be positive.
+-- @usage myTween:SetPeriod(2.0)  -- Set period to 2 seconds (4 seconds for full PING_PONG cycle)
 function Tween:SetPeriod(period)
     if not Type.IsNumber(period) or period <= 0 then
         return TEN.Util.PrintLog("Error in Tween:SetPeriod(period): period must be a positive number", TEN.Util.LogLevel.ERROR)
@@ -539,7 +539,7 @@ end
 -- @tfield string name Name of the tween (unique identifier)
 -- @tfield float|Color|Rotation|Vec2|Vec3 from Starting value
 -- @tfield float|Color|Rotation|Vec2|Vec3 to Ending value. `from` and `to` must be the same type!
--- @tfield float period Duration of the tween in seconds
+-- @tfield float period Duration of ONE DIRECTION in seconds. For PING_PONG mode, a complete cycle (from→to→from) takes `period * 2` seconds. This follows the standard convention used by professional tween libraries (DOTween, GSAP, etc.).
 -- @tfield[opt=Tween.Mode.ONCE] int mode Tween mode (use `Tween.Mode`)
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt] table easingParams parameters for easing function
@@ -566,8 +566,8 @@ end
 -- Costants for tween modes.
 -- @table Mode
 -- @tfield 0 ONCE Tween runs once from 'from' to 'to'
--- @tfield 1 RESTART Tween restarts from 'from' to 'to' repeatedly
--- @tfield 2 PING_PONG Tween goes from 'from' to 'to' and back repeatedly
+-- @tfield 1 RESTART Tween restarts from 'from' to 'to' repeatedly. Each loop takes `period` seconds.
+-- @tfield 2 PING_PONG Tween goes from 'from' to 'to' and back repeatedly. Each complete cycle (from→to→from) takes `period * 2` seconds, as `period` represents the duration of ONE DIRECTION only.
 
 ---
 -- Constants for tween easing functions.
