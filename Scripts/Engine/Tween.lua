@@ -286,6 +286,7 @@ end
 
 ----
 -- List of all methods of the Tween object. For proper error handling, before calling the method, we recommend that you always check whether the tween exists with `Tween.IfExists`.
+-- Also to avoid errors when loading a save game it is recommended to use `Tween.Get` to retrieve the tween at any time.
 -- @usage
 -- if Tween.IfExists("myTween") then
 --     local myTween = Tween.Get("myTween")
@@ -298,7 +299,10 @@ end
 -- @type Tween
 
 --- Start or resume the tween
---- @usage myTween:Start()
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Start()
+-- end
 function Tween:Start()
     local t = LevelVars.Engine.Tween.tweens[self.name]
     if t.completed then
@@ -309,7 +313,10 @@ function Tween:Start()
 end
 
 --- Restart the tween from the beginning
--- @usage myTween:Restart()
+-- @usage 
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Restart()
+-- end
 function Tween:Restart()
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.active = true
@@ -323,19 +330,28 @@ function Tween:Restart()
 end
 
 --- Pause the tween
--- @usage myTween:Pause()
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Pause()
+-- end
 function Tween:Pause()
     LevelVars.Engine.Tween.tweens[self.name].paused = true
 end
 
 --- Stop the tween
--- @usage myTween:Stop()
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Stop()
+-- end
 function Tween:Stop()
     LevelVars.Engine.Tween.tweens[self.name].active = false
 end
 
 --- Reset the tween to the initial state
--- @usage myTween:Reset()
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Reset()
+-- end
 function Tween:Reset()
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.active = false
@@ -350,24 +366,44 @@ end
 
 --- Get the current direction of the tween
 -- @treturn int 1 for from→to, -1 for to→from
+-- @usage
+-- local direction
+-- if Tween.IfExists("myTween") then
+--     direction = Tween.Get("myTween"):GetDirection()
+-- end
 function Tween:GetDirection()
     return LevelVars.Engine.Tween.tweens[self.name].direction
 end
 
 --- Get the current loop index (0-based)
 -- @treturn int Current loop index
+-- @usage
+-- local currentLoop
+-- if Tween.IfExists("myTween") then
+--     currentLoop = Tween.Get("myTween"):GetCurrentLoop()
+-- end
 function Tween:GetCurrentLoop()
     return LevelVars.Engine.Tween.tweens[self.name].loopCount
 end
 
 --- Get the current value of the tween
 -- @treturn float|Color|Rotation|Vec2|Vec3 Current tweened value
+-- @usage
+-- local currentValue
+-- if Tween.IfExists("myTween") then
+--     currentValue = Tween.Get("myTween"):GetValue()
+-- end
 function Tween:GetValue()
     return LevelVars.Engine.Tween.tweens[self.name].value
 end
 
 --- Get the current progress of the tween (0.0 to 1.0)
 -- @treturn number Current progress (0.0 to 1.0)
+-- @usage
+-- local progress
+-- if Tween.IfExists("myTween") then
+--     progress = Tween.Get("myTween"):GetProgress()
+-- end
 function Tween:GetProgress()
     return LevelVars.Engine.Tween.tweens[self.name].progress
 end
@@ -385,6 +421,11 @@ end
 
 --- Get the time remaining for the tween to complete (in seconds)
 -- @treturn number Time remaining in seconds
+-- @usage
+-- local timeRemaining
+-- if Tween.IfExists("myTween") then
+--     timeRemaining = Tween.Get("myTween"):GetTimeRemaining()
+-- end
 function Tween:GetTimeRemaining()
     local t = LevelVars.Engine.Tween.tweens[self.name]
     local remainingFrames = t.interpolationDuration - t.elapsed
@@ -396,14 +437,21 @@ end
 
 --- Get the period of the tween (in seconds)
 -- @treturn number Period in seconds (duration of one direction; for PING_PONG, full cycle is period * 2)
--- @usage local period = myTween:GetPeriod()
+-- @usage
+-- local period
+-- if Tween.IfExists("myTween") then
+--     period = Tween.Get("myTween"):GetPeriod()
+-- end
 function Tween:GetPeriod()
     return LevelVars.Engine.Tween.tweens[self.name].period
 end
 
 --- Set the period of the tween (in seconds)
--- @tparam number period Period in seconds (duration of one direction; for PING_PONG, full cycle is period * 2). Must be positive.
--- @usage myTween:SetPeriod(2.0)  -- Set period to 2 seconds (4 seconds for full PING_PONG cycle)
+-- @tparam float period Period in seconds (duration of one direction; for PING_PONG, full cycle is period * 2). Must be positive.
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetPeriod(3.0)  -- Set period to 3 seconds
+-- end
 function Tween:SetPeriod(period)
     if not Type.IsNumber(period) or period <= 0 then
         return TEN.Util.PrintLog("Error in Tween:SetPeriod(period): period must be a positive number", TEN.Util.LogLevel.ERROR)
@@ -415,14 +463,21 @@ end
 
 --- Get the 'from' value of the tween
 -- @treturn float|Color|Rotation|Vec2|Vec3 'from' value
--- @usage local fromValue = myTween:GetFrom()
+-- @usage
+-- local fromValue
+-- if Tween.IfExists("myTween") then
+--     fromValue = Tween.Get("myTween"):GetFrom()
+-- end
 function Tween:GetFrom()
     return LevelVars.Engine.Tween.tweens[self.name].from
 end
 
 --- Set the 'from' value of the tween
 -- @tparam float|Color|Rotation|Vec2|Vec3 value 'from' value to set. Remember that 'from' and 'to' must be the same type!
--- @usage myTween:SetFrom(0)  -- Set 'from' value to 0
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetFrom(0)  -- Set 'from' value to 0
+-- end
 function Tween:SetFrom(value)
     if not LevelFuncs.Engine.Tween.IsValidTweenValue(value) then
         return TEN.Util.PrintLog("Error in Tween:SetFrom(value): invalid value type", TEN.Util.LogLevel.ERROR)
@@ -435,14 +490,21 @@ end
 
 --- Get the 'to' value of the tween
 -- @treturn float|Color|Rotation|Vec2|Vec3 'to' value.
--- @usage local toValue = myTween:GetTo()
+-- @usage
+-- local toValue
+-- if Tween.IfExists("myTween") then
+--     toValue = Tween.Get("myTween"):GetTo()
+-- end
 function Tween:GetTo()
     return LevelVars.Engine.Tween.tweens[self.name].to
 end
 
 --- Set the 'to' value of the tween
 -- @tparam float|Color|Rotation|Vec2|Vec3 value 'to' value to set. Remember that 'from' and 'to' must be the same type!
--- @usage myTween:SetTo(100)  -- Set 'to' value to 100
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetTo(100)  -- Set 'to' value to 100
+-- end
 function Tween:SetTo(value)
     if not LevelFuncs.Engine.Tween.IsValidTweenValue(value) then
         return TEN.Util.PrintLog("Error in Tween:SetTo(value): invalid value type", TEN.Util.LogLevel.ERROR)
@@ -456,7 +518,11 @@ end
 --- Get both 'from' and 'to' values of the tween
 -- @treturn float|Color|Rotation|Vec2|Vec3 'from' values
 -- @treturn float|Color|Rotation|Vec2|Vec3 'to' values
--- @usage local fromValue, toValue = myTween:GetFromAndTo()
+-- @usage
+-- local fromValue, toValue
+-- if Tween.IfExists("myTween") then
+--     fromValue, toValue = Tween.Get("myTween"):GetFromAndTo()
+-- end
 function Tween:GetFromAndTo()
     local t = LevelVars.Engine.Tween.tweens[self.name]
     return t.from, t.to
@@ -465,7 +531,10 @@ end
 --- Set both 'from' and 'to' values of the tween. Remember that 'from' and 'to' must be the same type!
 -- @tparam float|Color|Rotation|Vec2|Vec3 from 'from' value to set
 -- @tparam float|Color|Rotation|Vec2|Vec3 to 'to' value to set
--- @usage myTween:SetFromAndTo(0, 100)  -- Set 'from' to 0 and 'to' to 100
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetFromAndTo(0, 100)  -- Set 'from' to 0 and 'to' to 100
+-- end
 function Tween:SetFromAndTo(from, to)
     if not LevelFuncs.Engine.Tween.IsValidTweenValue(from) then
         return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): invalid 'from' value type", TEN.Util.LogLevel.ERROR)
@@ -482,14 +551,21 @@ end
 
 --- Get the easing function of the tween
 -- @treturn int Easing function (use Tween.Easing)
--- @usage local easing = myTween:GetEasing()
+-- @usage
+-- local easing
+-- if Tween.IfExists("myTween") then
+--     easing = Tween.Get("myTween"):GetEasing()
+-- end
 function Tween:GetEasing()
     return LevelVars.Engine.Tween.tweens[self.name].easing
 end
 
 --- Set the easing function of the tween
 -- @tparam Easing easing Easing function to set (use Tween.Easing)
--- @usage myTween:SetEasing(Tween.Easing.SMOOTHSTEP)
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetEasing(Tween.Easing.SMOOTHSTEP)
+-- end
 function Tween:SetEasing(easing)
     if not LuaUtil.TableHasValue(Tween.Easing, easing) then
         return TEN.Util.PrintLog("Error in Tween:SetEasing(easing): invalid easing value", TEN.Util.LogLevel.ERROR)
@@ -501,21 +577,32 @@ end
 
 --- Set the easing parameters of the tween
 -- @tparam table params Easing parameters table
--- @usage myTween:SetEasingParams({ amplitude = 1.0, period = 0.3 })
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetEasing(Tween.Easing.SMOOTHSTEP)
+--     Tween.Get("myTween"):SetEasingParams({edge0 = 0, edge1 = 1})
+-- end
 function Tween:SetEasingParams(params)
     LevelVars.Engine.Tween.tweens[self.name].easingParams = params
 end
 
 --- Get the loop count of the tween
 -- @treturn int|nil Loop count, or nil for infinite loops
--- @usage local loopCount = myTween:GetLoopCount()
+-- @usage
+-- local loopCount
+-- if Tween.IfExists("myTween") then
+--     loopCount = Tween.Get("myTween"):GetLoopCount()
+-- end
 function Tween:GetLoopCount()
     return LevelVars.Engine.Tween.tweens[self.name].loopCount
 end
 
---- Set the loop count of the tween
+--- Set the loop count of the tween. Remember that nil means infinite loops! Not a zero value.
 -- @tparam int|nil count Loop count to set, or nil for infinite loops
--- @usage myTween:SetLoopCount(5)  -- Set loop count to 5
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetLoopCount(5)  -- Set loop count to 5
+-- end
 function Tween:SetLoopCount(count)
     if not (Type.IsNil(count) or (Type.IsInteger(count) and count > 0)) then
         return TEN.Util.PrintLog("Error in Tween:SetLoopCount(): count must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
@@ -528,7 +615,10 @@ function Tween:SetLoopCount(count)
 end
 
 --- Reverse the tween direction
--- @usage myTween:Reverse()
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Reverse()
+-- end
 function Tween:Reverse()
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.direction = -t.direction
@@ -537,6 +627,15 @@ end
 --- Set callback function
 -- @tparam CallbackType callbackType Type of callback (use Tween.CallbackType)
 -- @tparam function func Callback function in LevelFuncs hierarchy
+-- @usage
+-- -- Define callback function in LevelFuncs
+-- LevelFuncs.MyTweenOnUpdate = function(value, progress)
+--     TEN.Util.PrintLog("Tween Update: Value=" .. tostring(value) .. " Progress=" .. tostring(progress))
+-- end
+-- -- Set the callback
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetCallback(Tween.CallbackType.ON_UPDATE, LevelFuncs.MyTweenOnUpdate)
+-- end
 function Tween:SetCallback(callbackType, func)
     if not LuaUtil.TableHasValue(Tween.CallbackType, callbackType) then
         return TEN.Util.PrintLog("Error in Tween:SetCallback(callbackType, func): invalid callbackType", TEN.Util.LogLevel.ERROR)
@@ -549,9 +648,9 @@ end
 
 --- Check if the tween is currently active
 -- @treturn bool True if active, false otherwise
--- @usage 
--- if myTween:IsActive() then
---  ... 
+-- @usage
+-- if Tween.IfExists("myTween") and Tween.Get("myTween"):IsActive() then
+--  ...
 -- end
 function Tween:IsActive()
     return LevelVars.Engine.Tween.tweens[self.name].active
@@ -560,7 +659,7 @@ end
 --- Check if the tween is currently paused
 -- @treturn bool True if paused, false otherwise
 -- @usage
--- if myTween:IsPaused() then
+-- if Tween.IfExists("myTween") and Tween.Get("myTween"):IsPaused() then
 --  ... 
 -- end
 function Tween:IsPaused()
@@ -570,7 +669,7 @@ end
 --- Check if the tween has completed
 -- @treturn bool True if completed, false otherwise
 -- @usage
--- if myTween:IsCompleted() then
+-- if Tween.IfExists("myTween") and Tween.Get("myTween"):IsCompleted() then
 --  ... 
 -- end
 function Tween:IsCompleted()
