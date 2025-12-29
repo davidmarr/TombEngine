@@ -286,16 +286,40 @@ end
 
 ----
 -- List of all methods of the Tween object. For proper error handling, before calling the method, we recommend that you always check whether the tween exists with `Tween.IfExists`.
--- Also to avoid errors when loading a save game it is recommended to use `Tween.Get` to retrieve the tween at any time.
+-- Also to avoid errors when loading a save game it is recommended to use `Tween.Get` to retrieve the tween at any time. Be careful when saving the tween to a **local variable**. Loading a save file resets the local variables. Use this approach with caution.
 -- @usage
+-- -- Warning: This approach, if handled poorly, can cause errors after loading a save game
+-- local myTween
 -- if Tween.IfExists("myTween") then
---     local myTween = Tween.Get("myTween")
+--     myTween = Tween.Get("myTween")
 --     myTween:Start()
 -- end
--- -- or
+-- -- ... later in the code
+-- myTween:Reverse()
+--
+-- -- Recommended approach: Check for the existence of a tween and retrieve it with the Get() method
 -- if Tween.IfExists("myTween") then
 --     Tween.Get("myTween"):Start()
 -- end
+-- -- ... later in the code
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Reverse()
+-- end
+--
+-- -- if you need to use it multiple times in a function, you can store it in a local variable safely
+-- local function UpdateMyTween()
+--     if Tween.IfExists("myTween") then
+--         local myTween = Tween.Get("myTween")
+--         myTween:Start()
+--         -- ... other operations
+--         myTween:Reverse()
+--     end
+-- end
+--
+-- -- If you are sure that the tween exists, then you can just use the Get() method
+-- Tween.Get("myTween"):Start()
+-- -- ... later in the code
+-- Tween.Get("myTween"):Reverse()
 -- @type Tween
 
 --- Start or resume the tween
