@@ -525,6 +525,12 @@ function Tween:IsPaused()
     return LevelVars.Engine.Tween.tweens[self.name].paused
 end
 
+--- Check if the tween has completed
+-- @treturn bool True if completed, false otherwise
+-- @usage
+-- if myTween:IsCompleted() then
+--  ... 
+-- end
 function Tween:IsCompleted()
     return LevelVars.Engine.Tween.tweens[self.name].completed
 end
