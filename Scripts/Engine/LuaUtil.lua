@@ -1133,6 +1133,25 @@ LuaUtil.WrapAngle = function(angle, min, max)
     return angle - range * I.floor((angle - min) / range)
 end
 
+--- Checks if a value is an integer (a number without fractional part).
+-- @tparam number n The value to check
+-- @treturn[1] boolean: true if the value is an integer, false otherwise
+-- @treturn[2] boolean: false if the input is not a number
+-- @usage
+-- LuaUtil.IsInteger(10)      -- true
+-- LuaUtil.IsInteger(10.0)    -- true
+-- LuaUtil.IsInteger(10.5)    -- false
+-- LuaUtil.IsInteger(-5)      -- true
+-- LuaUtil.IsInteger("10")    -- false
+-- LuaUtil.IsInteger(nil)     -- false
+LuaUtil.IsInteger = function(n)
+    if not I.IsNumber(n) then
+        TEN.Util.PrintLog("Error in LuaUtil.IsInteger: parameter must be a number.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    return (n % 1) == 0
+end
+
 --- Conversion functions.
 -- Utilities for converting between different units and formats.
 -- @section conversion
@@ -2847,7 +2866,7 @@ end
 -- @tparam table tbl The table to make read-only.
 -- @treturn table A read-only version of the input table. If the input is not a table, returns an empty table.
 -- @usage
--- local readOnlyTable = LuaUtil.SetTableReadonly(originalTable)
+-- local readOnlyTable = LuaUtil.SetTableReadOnly(originalTable)
 LuaUtil.SetTableReadOnly = function(tbl)
     if not I.IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.SetTableReadonly: input is not a table.", TEN.Util.LogLevel.ERROR)
