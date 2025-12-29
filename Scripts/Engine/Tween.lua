@@ -453,7 +453,7 @@ function Tween:GetFromAndTo()
     return t.from, t.to
 end
 
---- Set both 'from' and 'to' values of the tween
+--- Set both 'from' and 'to' values of the tween. Remember that 'from' and 'to' must be the same type!
 -- @tparam float|Color|Rotation|Vec2|Vec3 from 'from' value to set
 -- @tparam float|Color|Rotation|Vec2|Vec3 to 'to' value to set
 -- @usage myTween:SetFromAndTo(0, 100)  -- Set 'from' to 0 and 'to' to 100
