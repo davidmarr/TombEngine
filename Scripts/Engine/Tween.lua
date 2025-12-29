@@ -285,7 +285,16 @@ Tween.IfExists = function(name)
 end
 
 ----
--- List of all methods of the Tween object
+-- List of all methods of the Tween object. For proper error handling, before calling the method, we recommend that you always check whether the tween exists with `Tween.IfExists`.
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     local myTween = Tween.Get("myTween")
+--     myTween:Start()
+-- end
+-- -- or
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):Start()
+-- end
 -- @type Tween
 
 --- Start or resume the tween
