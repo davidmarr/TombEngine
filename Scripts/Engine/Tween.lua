@@ -444,6 +444,33 @@ function Tween:SetTo(value)
     LevelVars.Engine.Tween.tweens[self.name].to = value
 end
 
+--- Get both 'from' and 'to' values of the tween
+-- @treturn float|Color|Rotation|Vec2|Vec3 'from' values
+-- @treturn float|Color|Rotation|Vec2|Vec3 'to' values
+-- @usage local fromValue, toValue = myTween:GetFromAndTo()
+function Tween:GetFromAndTo()
+    local t = LevelVars.Engine.Tween.tweens[self.name]
+    return t.from, t.to
+end
+
+--- Set both 'from' and 'to' values of the tween
+-- @tparam float|Color|Rotation|Vec2|Vec3 from 'from' value to set
+-- @tparam float|Color|Rotation|Vec2|Vec3 to 'to' value to set
+-- @usage myTween:SetFromAndTo(0, 100)  -- Set 'from' to 0 and 'to' to 100
+function Tween:SetFromAndTo(from, to)
+    if not LevelFuncs.Engine.Tween.IsValidTweenValue(from) then
+        return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): invalid 'from' value type", TEN.Util.LogLevel.ERROR)
+    end
+    if not LevelFuncs.Engine.Tween.IsValidTweenValue(to) then
+        return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): invalid 'to' value type", TEN.Util.LogLevel.ERROR)
+    end
+    if getmetatable(from) ~= getmetatable(to) then
+        return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): 'from' and 'to' value types must match", TEN.Util.LogLevel.ERROR)
+    end
+    LevelVars.Engine.Tween.tweens[self.name].from = from
+    LevelVars.Engine.Tween.tweens[self.name].to = to
+end
+
 --- Get the easing function of the tween
 -- @treturn int Easing function (use Tween.Easing)
 -- @usage local easing = myTween:GetEasing()
