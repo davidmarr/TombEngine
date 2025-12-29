@@ -257,9 +257,9 @@ end
 
 --- Get tween instance
 -- @tparam string name Name of the tween to get
--- @treturn Tween instance
+-- @treturn[1] Tween instance
+-- @treturn[2] nil If tween does not exist
 -- @usage local myTween = Tween.Get("myTween")
--- @see Tween.IfExists
 Tween.Get = function(name)
     if not Type.IsString(name) then
         TEN.Util.PrintLog("Error in Tween.Get(): invalid name", TEN.Util.LogLevel.ERROR)
