@@ -966,13 +966,13 @@ namespace TEN::Renderer
 		if (!item.IsVisible())
 			return;
 
-		float t = GetInterpolationFactor();
+		float alpha = GetInterpolationFactor();
 
 		auto objectNumber = item.GetObjectID();
-		auto pos3D = item.GetInterpolatedPosition(t);
-		auto orient = item.GetInterpolatedOrientation(t);
-		auto scale = item.GetInterpolatedScale(t);
-		auto color = item.GetInterpolatedColor(t);
+		auto pos = item.GetInterpolatedPosition(alpha);
+		auto orient = item.GetInterpolatedOrientation(alpha);
+		auto scale = item.GetInterpolatedScale(alpha);
+		auto color = item.GetInterpolatedColor(alpha);
 		int meshBits = item.GetMeshBits();
 
 		unsigned int stride = sizeof(Vertex);
@@ -980,9 +980,9 @@ namespace TEN::Renderer
 
 		float aspectRatio = (float)(_screenWidth) / _screenHeight;
 
-		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(t), g_DrawItems.GetInterpolatedCameraTargetPosition(t), Vector3::Up);
+		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(alpha), g_DrawItems.GetInterpolatedCameraTargetPosition(alpha), Vector3::Up);
 		auto projMatrix = Matrix::CreatePerspectiveFieldOfView(
-			CurrentFOV, aspectRatio, DISPLAY_ITEM_NEAR_PLANE, DISPLAY_ITEM_FAR_PLANE);
+			g_DrawItems.GetInterpolatedFov(alpha), aspectRatio, DISPLAY_ITEM_NEAR_PLANE, DISPLAY_ITEM_FAR_PLANE);
 
 		auto& moveableObject = _moveableObjects[objectNumber];
 		if (!moveableObject.has_value())
@@ -991,19 +991,19 @@ namespace TEN::Renderer
 		const auto& object = Objects[objectNumber];
 		if (!object.Animations.empty())
 		{
-			int anim = item.GetAnimNumber();
-			int frame = item.GetFrameNumber();
-			int prevFrame = item.GetPrevFrameNumber();
+			int animNumber = item.GetAnimNumber();
+			int frameNumber = item.GetFrameNumber();
+			int prevFrameNumber = item.GetPrevFrameNumber();
 
 			auto interpData = KeyframeInterpolationData(
-				GetAnimData(object, anim).Keyframes[prevFrame],
-				GetAnimData(object, anim).Keyframes[frame],
-				t);
+				GetAnimData(object, animNumber).Keyframes[prevFrameNumber],
+				GetAnimData(object, animNumber).Keyframes[frameNumber],
+				alpha);
 			UpdateAnimation(nullptr, *moveableObject, interpData, UINT_MAX);
 		}
 
 		SetBlendMode(BlendMode::Opaque);
-		SetCullMode(CullMode::CounterClockwise); //CounterClockwise
+		SetCullMode(CullMode::CounterClockwise);
 		SetDepthState(DepthState::Write);
 
 		// Set vertex buffer.
@@ -1025,7 +1025,7 @@ namespace TEN::Renderer
 		_shaders.Bind(Shader::Inventory);
 
 		// Construct world matrix. // pos.x, pos.y, pos.z
-		auto translationMatrix = Matrix::CreateTranslation(pos3D.x, pos3D.y, pos3D.z);
+		auto translationMatrix = Matrix::CreateTranslation(pos.x, pos.y, pos.z);
 		auto rotMatrix = orient.ToRotationMatrix();
 		auto scaleMatrix = Matrix::CreateScale(scale);
 		auto worldMatrix = scaleMatrix * rotMatrix * translationMatrix;
@@ -1040,7 +1040,7 @@ namespace TEN::Renderer
 		{
 			_stItem.World = worldMatrix;
 
-			// Calculate bones matrices for skinning
+			// Calculate bones matrices for skinning.
 			for (int m = 0; m < moveableObject->AnimationTransforms.size(); m++)
 				_stItem.BonesMatrices[m] = moveableObject->BindPoseTransforms[m] * moveableObject->AnimationTransforms[m];
 
@@ -1050,13 +1050,14 @@ namespace TEN::Renderer
 			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
 			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
 
-			// Disegna the skin mesh
-			const auto skinMesh = GetMesh(object.skinIndex);
+			// Get skin mesh.
+			const auto* skinMesh = GetMesh(object.skinIndex);
 
 			for (int animated = 0; animated < 2; animated++)
 			{
 				for (const auto& bucket : skinMesh->Buckets)
 				{
+					// TODO: Remove ^.
 					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 						continue;
 
@@ -1086,7 +1087,7 @@ namespace TEN::Renderer
 			if (skinMode == SkinningMode::Full && g_Level.Meshes[object.meshIndex + i].hidden)
 				continue;
 
-			auto rotOverride = item.GetInterpolatedMeshRotation(i, t);
+			auto rotOverride = item.GetInterpolatedMeshRotation(i, alpha);
 			moveableObject->LinearizedBones[i]->ExtraRotation = rotOverride.ToQuaternion();
 
 			if (!object.Animations.empty())
@@ -1110,6 +1111,7 @@ namespace TEN::Renderer
 			{
 				for (const auto& bucket : mesh.Buckets)
 				{
+					// TODO: Remove ^.
 					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 						continue;
 
@@ -1131,7 +1133,7 @@ namespace TEN::Renderer
 
 	void Renderer::RenderTitleImage()
 	{
-		Texture2D texture;
+		auto texture = Texture2D{};
 		SetTextureOrDefault(texture, TEN::Utils::ToWString(g_GameFlow->GetGameDir() + g_GameFlow->IntroImagePath.c_str()));
 
 		if (!texture.Texture)
@@ -1145,9 +1147,13 @@ namespace TEN::Renderer
 			if (timeout)
 			{
 				if (currentFade < 1.0f)
+				{
 					currentFade = std::clamp(currentFade += FADE_FACTOR, 0.0f, 1.0f);
+				}
 				else
+				{
 					timeout--;
+				}
 			}
 			else
 			{
