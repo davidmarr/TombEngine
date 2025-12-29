@@ -418,6 +418,9 @@ function Tween:SetFrom(value)
     if not LevelFuncs.Engine.Tween.IsValidTweenValue(value) then
         return TEN.Util.PrintLog("Error in Tween:SetFrom(value): invalid value type", TEN.Util.LogLevel.ERROR)
     end
+    if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].to) then
+        return TEN.Util.PrintLog("Error in Tween:SetFrom(value): 'from' value type must match 'to' value type", TEN.Util.LogLevel.ERROR)
+    end
     LevelVars.Engine.Tween.tweens[self.name].from = value
 end
 
@@ -434,6 +437,9 @@ end
 function Tween:SetTo(value)
     if not LevelFuncs.Engine.Tween.IsValidTweenValue(value) then
         return TEN.Util.PrintLog("Error in Tween:SetTo(value): invalid value type", TEN.Util.LogLevel.ERROR)
+    end
+    if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].from) then
+        return TEN.Util.PrintLog("Error in Tween:SetTo(value): 'to' value type must match 'from' value type", TEN.Util.LogLevel.ERROR)
     end
     LevelVars.Engine.Tween.tweens[self.name].to = value
 end
