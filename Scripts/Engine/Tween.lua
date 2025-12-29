@@ -153,7 +153,7 @@ Tween.Create = function(params)
         TEN.Util.PrintLog("Error in Tween.Create(): params.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if params.loopCount and (params.loopCount % 1) ~= 0 then
+    if params.loopCount and not LuaUtil.IsInteger(params.loopCount) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
         params.loopCount = math.floor(params.loopCount)
     end
@@ -478,7 +478,7 @@ function Tween:SetLoopCount(count)
     if not (Type.IsNil(count) or (Type.IsInteger(count) and count > 0)) then
         return TEN.Util.PrintLog("Error in Tween:SetLoopCount(): count must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
     end
-    if (count % 1) ~= 0 then
+    if not LuaUtil.IsInteger(count) then
         TEN.Util.PrintLog("Warning in Tween:SetLoopCount(): count is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
         count = math.floor(count)
     end
