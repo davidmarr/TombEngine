@@ -5,7 +5,6 @@
 #include "Game/control/flipeffect.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
-#include "Math/Geometry.h"
 #include "Objects/Generic/Object/Pushable/PushableBridge.h"
 #include "Objects/Generic/Object/Pushable/PushableCollision.h"
 #include "Objects/Generic/Object/Pushable/PushableEffects.h"
@@ -16,8 +15,8 @@
 #include "Specific/trutils.h"
 
 using namespace TEN::Animation;
+using namespace TEN::Collision::Floordata;
 using namespace TEN::Input;
-using namespace TEN::Math::Geometry;
 using namespace TEN::Utils;
 
 namespace TEN::Entities::Generic
