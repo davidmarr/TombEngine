@@ -36,6 +36,8 @@ namespace TEN::Entities::Generic
 
 	struct PushableInfo
 	{
+		short PreviousTriggerFlags = 0;
+
 		PushableBehaviorState BehaviorState = PushableBehaviorState::Idle;
 		PushableSoundState	  SoundState	= PushableSoundState::None;
 		int AnimSetID = 0;
@@ -48,8 +50,6 @@ namespace TEN::Entities::Generic
 		bool  IsOnEdge			 = false;
 		float Gravity			 = 0.0f;
 		float Oscillation		 = 0.0f; // Used when floating on water surface. Recomended range: (0.0f, 2.0f].
-
-		int PreviousTriggerFlags = 0;
 
 		bool CanFall			= false; // OCB 0.
 		bool DoCenterAlign		= false; // OCB 1.
