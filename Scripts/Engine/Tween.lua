@@ -194,18 +194,18 @@ Tween.Create = function(params)
     thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
 
     if params.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
-        if not params.easingParams.edge0 then
+        if not params.easingParams.edge0 or not Type.IsNumber(params.easingParams.edge0) then
             params.easingParams.edge0 = 0
         end
-        if not params.easingParams.edge1 then
+        if not params.easingParams.edge1 or not Type.IsNumber(params.easingParams.edge1) then
             params.easingParams.edge1 = 1
         end
     end
     if params.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
-        if not params.easingParams.amplitude then
+        if not params.easingParams.amplitude or not Type.IsNumber(params.easingParams.amplitude) then
             params.easingParams.amplitude = 1.0
         end
-        if not params.easingParams.period then
+        if not params.easingParams.period or not Type.IsNumber(params.easingParams.period) then
             params.easingParams.period = 0.3
         end
     end
@@ -227,6 +227,8 @@ Tween.Create = function(params)
     thisTween.direction = 1
     thisTween.currentLoopIndex = 0
     thisTween.completed = false
+    thisTween.shouldResetNextFrame = false
+    thisTween.shouldFlipNextFrame = false
 
     -- Callbacks
     thisTween.callbacks = {
@@ -351,6 +353,8 @@ function Tween:Restart()
     t.direction = 1
     t.currentLoopIndex = 0
     t.completed = false
+    t.shouldResetNextFrame = false
+    t.shouldFlipNextFrame = false
 end
 
 --- Pause the tween
@@ -386,6 +390,8 @@ function Tween:Reset()
     t.direction = 1
     t.currentLoopIndex = 0
     t.completed = false
+    t.shouldResetNextFrame = false
+    t.shouldFlipNextFrame = false
 end
 
 --- Get the current direction of the tween
@@ -713,7 +719,7 @@ end
 -- @tfield float period Duration of ONE DIRECTION in seconds. For PING_PONG mode, a complete cycle (from→to→from) takes `period * 2` seconds. This follows the standard convention used by professional tween libraries (DOTween, GSAP, etc.).
 -- @tfield[opt=Tween.Mode.ONCE] int mode Tween mode (use `Tween.Mode`)
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
--- @tfield[opt] table easingParams parameters for easing function
+-- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
 -- @tfield[opt=nil] int loopCount Number of loops (nil for infinite)
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
@@ -743,11 +749,11 @@ end
 ---
 -- Constants for tween easing functions.
 -- @table Easing
--- @tfield 1 LERP Linear interpolation
--- @tfield 2 SMOOTHSTEP Smoothstep interpolation
--- @tfield 3 SMOOTHERSTEP Smootherstep interpolation
--- @tfield 4 EASE_IN_OUT Ease in-out interpolation
--- @tfield 5 ELASTIC Elastic interpolation
+-- @tfield 1 LERP Linear interpolation. See `LuaUtil.Lerp`.
+-- @tfield 2 SMOOTHSTEP Smoothstep interpolation. See `LuaUtil.Smoothstep`.
+-- @tfield 3 SMOOTHERSTEP Smootherstep interpolation. See `LuaUtil.Smootherstep`.
+-- @tfield 4 EASE_IN_OUT Ease in-out interpolation. See `LuaUtil.EaseInOut`.
+-- @tfield 5 ELASTIC Elastic interpolation. See `LuaUtil.Elastic`.
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
     for _, t in pairs(LevelVars.Engine.Tween.tweens) do
@@ -756,6 +762,21 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
             if t.completed then
                 t.active = false
             else
+                -- Applica reset/flip differiti dal frame precedente (PRIMA di calcolare il nuovo valore)
+                if t.shouldResetNextFrame then
+                    t.elapsed = 0
+                    t.progress = 0.0
+                    t.value = t.from
+                    t.shouldResetNextFrame = false
+                end
+                
+                if t.shouldFlipNextFrame then
+                    t.elapsed = 1
+                    t.progress = 0.0
+                    t.direction = -t.direction
+                    t.shouldFlipNextFrame = false
+                end
+                
                 -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
                 t.progress = t.elapsed / t.interpolationDuration
 
@@ -784,13 +805,14 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         -- TODO: callback ON_COMPLETE
 
                     elseif t.mode == Tween.Mode.RESTART then
-                        t.elapsed = 0
-                        t.progress = 0.0
+                        -- Differisci reset al prossimo frame (così OnLoop vede progress=1.0)
+                        t.shouldResetNextFrame = true
 
                         if t.loopCount then
                             t.currentLoopIndex = t.currentLoopIndex + 1
                             if t.currentLoopIndex >= t.loopCount then
                                 t.completed = true
+                                t.shouldResetNextFrame = false  -- Annulla reset se completato
                                 -- TODO: callback ON_TO
                                 -- TODO: callback ON_COMPLETE
                             else
@@ -804,9 +826,8 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         end
 
                     elseif t.mode == Tween.Mode.PING_PONG then
-                        t.elapsed = 1
-                        t.progress = 0.0
-                        t.direction = -t.direction
+                        -- Differisci flip al prossimo frame (così OnLoop vede progress=1.0)
+                        t.shouldFlipNextFrame = true
 
                         -- TODO: callback ON_TO (se direction=-1) o ON_FROM (se direction=1)
 
@@ -815,6 +836,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                                 t.currentLoopIndex = t.currentLoopIndex + 1
                                 if t.currentLoopIndex >= t.loopCount then
                                     t.completed = true
+                                    t.shouldFlipNextFrame = false  -- Annulla flip se completato
                                     -- TODO: callback ON_COMPLETE
                                 else
                                     -- TODO: callback ON_LOOP
