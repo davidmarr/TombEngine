@@ -754,10 +754,10 @@ end
 -- @tfield float|Color|Rotation|Vec2|Vec3 to Ending value. `from` and `to` must be the same type!
 -- @tfield float period Duration of ONE DIRECTION in seconds. For PING_PONG mode, a complete cycle (from→to→from) takes `period * 2` seconds. This follows the standard convention used by professional tween libraries (DOTween, GSAP, etc.).
 -- @tfield[opt=Tween.Mode.ONCE] int mode Tween mode (use `Tween.Mode`)
--- @tfield[opt=Tween.UpdateMode.GAMEPLAY_ONLY] int updateMode When the tween should update (use `Tween.UpdateMode`). GAMEPLAY_ONLY: updates only during normal gameplay. FREEZE_ONLY: updates only during freeze/pause. ALWAYS: updates in both contexts.
+-- @tfield[opt=Tween.UpdateMode.GAMEPLAY_ONLY] int updateMode When the tween should update (use `Tween.UpdateMode`).<br>
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
--- @tfield[opt=nil] int loopCount Number of loops (nil for infinite)
+-- @tfield[opt=nil] int loopCount Number of loops (nil for infinite) for RESTART and PING_PONG modes.
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete
