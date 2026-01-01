@@ -1,3 +1,5 @@
+--- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
+--- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;}</style>
 --- Advanced Tweening System. This module provides a flexible way to create and manage tweens (interpolation) for various data types such as numbers, Colors, Rotations, Vec2, and Vec3.
 -- It supports different easing functions, modes (once, restart, ping-pong), looping, and callbacks for various events.
 -- Supports multiple tweens with different parameters.
@@ -34,7 +36,7 @@
 --	    name = "myVecTween",
 --	    from = Vec3.New(8704, -384, 14848),
 --	    to = Vec3.New(8704, -384, 13824),
---	    period = 3.0, -- 3 seconds duration for one direction
+--	    period = 3.0, -- 3 seconds duration for one direction. Full cycle (from → to → from) is 6 seconds
 --	    mode = Tween.Mode.PING_PONG,
 --	    loopCount = 6, -- Loop 6 times (3 full cycles)
 --	    autoStart = true, -- Start immediately
@@ -770,6 +772,23 @@ end
 
 ---
 -- Table setup for creating Tween.
+--
+-- For PING_PONG mode:
+--
+-- each period is ONE DIRECTION (from→to or to→from).
+-- <table class="tableSP">
+-- <tr><td>period = 1.0s</td><td>from → to → from 2.0s</td></tr>
+-- <tr><td>period = 2.0s</td><td>from → to → from (4.0s)</td></tr>
+-- <tr><td>period = 0.5s</td><td>from → to → from (1.0s)</td></tr>
+-- </table>
+--
+-- each loop is ONE DIRECTION.
+-- <table class="tableSP">
+-- <tr><td>loopCount = 1</td><td>from → to</td></tr>
+-- <tr><td>loopCount = 2</td><td>from → to → from</td></tr>
+-- <tr><td>loopCount = 3</td><td>from → to → from → to</td></tr>
+-- <tr><td>loopCount = 4</td><td>from → to → from → to → from</td></tr>
+-- </table>
 -- @table TweenParameters
 -- @tfield string name Name of the tween (unique identifier)
 -- @tfield float|Color|Rotation|Vec2|Vec3 from Starting value
@@ -779,7 +798,7 @@ end
 -- @tfield[opt=Tween.UpdateMode.GAMEPLAY_ONLY] int updateMode When the tween should update (use `Tween.UpdateMode`).<br>
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
--- @tfield[opt=nil] int loopCount Number of loops (nil for infinite). In RESTART mode, each loop is a complete from→to cycle. In PING_PONG mode, each loop is ONE DIRECTION (from→to or to→from), so loopCount=2 means from→to→from (one complete ping-pong cycle). This follows DOTween/GSAP conventions.
+-- @tfield[opt=nil] int loopCount Number of loops (nil for infinite). In RESTART mode, each loop is a complete from→to cycle. In PING_PONG mode, each loop is ONE DIRECTION (from→to or to→from). This follows DOTween/GSAP conventions.
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete
