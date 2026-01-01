@@ -34,10 +34,10 @@
 --	    name = "myVecTween",
 --	    from = Vec3.New(8704, -384, 14848),
 --	    to = Vec3.New(8704, -384, 13824),
---	    period = 3.0,
+--	    period = 3.0, -- 3 seconds duration for one direction
 --	    mode = Tween.Mode.PING_PONG,
---	    loopCount = 5,
---	    autoStart = true,
+--	    loopCount = 6, -- Loop 6 times (3 full cycles)
+--	    autoStart = true, -- Start immediately
 --	    onUpdate = LevelFuncs.MyTweenOnUpdate,
 --	}
 -- @luautil Tween
@@ -789,16 +789,6 @@ end
 -- @tfield[opt] function onFrom function in LevelFuncs hierarchy called on reaching 'from' value
 
 ---
--- Constants for tween callback types.
--- @table CallbackType
--- @tfield "onStart" ON_START Called when the tween starts
--- @tfield "onComplete" ON_COMPLETE Called when the tween completes
--- @tfield "onLoop" ON_LOOP Called when the tween loops. For RESTART mode, called after reaching 'to' value. For PING_PONG mode, called after reaching 'to' or 'from' value.
--- @tfield "onUpdate" ON_UPDATE Called on each update/frame
--- @tfield "onTo" ON_TO Called when reaching the 'to' value
--- @tfield "onFrom" ON_FROM Called when reaching the 'from' value
-
----
 -- Costants for tween modes.
 -- @table Mode
 -- @tfield 0 ONCE Tween runs once from 'from' to 'to'. Default mode.
@@ -820,6 +810,16 @@ end
 -- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRELOOP callback). Use for gameplay animations like moving platforms, doors, etc. Default mode.
 -- @tfield 2 FREEZE_ONLY Update only during freeze/pause (PRE_FREEZE callback). Use for UI animations during pause, loading screens, etc.
 -- @tfield 3 ALWAYS Update in both gameplay and freeze contexts. Use for cross-context effects like audio fades, screen transitions, etc.
+
+---
+-- Constants for tween callback types.
+-- @table CallbackType
+-- @tfield "onStart" ON_START Called when the tween starts
+-- @tfield "onComplete" ON_COMPLETE Called when the tween completes
+-- @tfield "onLoop" ON_LOOP Called when the tween loops. For RESTART mode, called after reaching 'to' value. For PING_PONG mode, called after reaching 'to' or 'from' value.
+-- @tfield "onUpdate" ON_UPDATE Called on each update/frame
+-- @tfield "onTo" ON_TO Called when reaching the 'to' value
+-- @tfield "onFrom" ON_FROM Called when reaching the 'from' value
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
     local freezeMode = TEN.Flow.GetFreezeMode()
@@ -873,101 +873,48 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         -- Force exact final value (for safety)
                         t.value = t.direction == 1 and t.to or t.from
 
+                        -- Callback ON_TO or ON_FROM based on direction (common to all modes)
+                        local dirCallback = t.direction == 1 and t.callbacks.onTo or t.callbacks.onFrom
+                        if dirCallback then
+                            dirCallback(t.value)
+                        end
+
                         if t.mode == Tween.Mode.ONCE then
                             t.completed = true
-                            -- Callback ON_TO or ON_FROM based on direction
-                            if t.direction == 1 then
-                                if t.callbacks.onTo then
-                                    t.callbacks.onTo(t.value)
-                                end
-                            else
-                                if t.callbacks.onFrom then
-                                    t.callbacks.onFrom(t.value)
-                                end
-                            end
-                            -- Callback ON_COMPLETE
                             if t.callbacks.onComplete then
                                 t.callbacks.onComplete(t.value)
                             end
-
-                        elseif t.mode == Tween.Mode.RESTART then
-                            -- Defer reset to next frame (so OnLoop sees progress=1.0)
-                            t.shouldResetNextFrame = true
-
-                            -- Callback ON_TO or ON_FROM based on current direction
-                            if t.direction == 1 then
-                                if t.callbacks.onTo then
-                                    t.callbacks.onTo(t.value)
-                                end
-                            else
-                                if t.callbacks.onFrom then
-                                    t.callbacks.onFrom(t.value)
-                                end
+                        else
+                            -- RESTART or PING_PONG: set deferred action
+                            if t.mode == Tween.Mode.RESTART then
+                                t.shouldResetNextFrame = true
+                            else -- PING_PONG
+                                t.shouldFlipNextFrame = true
                             end
 
+                            -- Loop counting logic (identical for RESTART and PING_PONG)
                             if t.loopCount then
                                 t.currentLoopIndex = t.currentLoopIndex + 1
                                 if t.currentLoopIndex >= t.loopCount then
                                     t.completed = true
-                                    t.shouldResetNextFrame = false  -- Cancel reset if completed
-                                    -- Callback ON_COMPLETE
+                                    -- Cancel deferred action if completed
+                                    t.shouldResetNextFrame = false
+                                    t.shouldFlipNextFrame = false
                                     if t.callbacks.onComplete then
                                         t.callbacks.onComplete(t.value)
                                     end
                                 else
-                                    -- Callback ON_LOOP
                                     if t.callbacks.onLoop then
                                         t.callbacks.onLoop(t.value)
                                     end
                                 end
                             else
                                 -- Infinite loop: continue without counting
-                                -- Callback ON_LOOP
                                 if t.callbacks.onLoop then
                                     t.callbacks.onLoop(t.value)
                                 end
                             end
-
-                        elseif t.mode == Tween.Mode.PING_PONG then
-                            -- Defer flip to next frame (so OnLoop sees progress=1.0)
-                            t.shouldFlipNextFrame = true
-
-                            -- Callback ON_TO or ON_FROM based on current direction
-                            if t.direction == 1 then
-                                if t.callbacks.onTo then
-                                    t.callbacks.onTo(t.value)
-                                end
-                            else
-                                if t.callbacks.onFrom then
-                                    t.callbacks.onFrom(t.value)
-                                end
-                            end
-
-                            -- Count EVERY direction change (each "leg" = 1 loop)
-                            -- This matches DOTween/GSAP convention: loopCount=2 means from→to→from
-                            if t.loopCount then
-                                t.currentLoopIndex = t.currentLoopIndex + 1
-                                if t.currentLoopIndex >= t.loopCount then
-                                    t.completed = true
-                                    t.shouldFlipNextFrame = false  -- Cancel flip if completed
-                                    -- Callback ON_COMPLETE
-                                    if t.callbacks.onComplete then
-                                        t.callbacks.onComplete(t.value)
-                                    end
-                                else
-                                    -- Callback ON_LOOP
-                                    if t.callbacks.onLoop then
-                                        t.callbacks.onLoop(t.value)
-                                    end
-                                end
-                            else
-                                -- Infinite loop: continue without counting
-                                -- Callback ON_LOOP
-                                if t.callbacks.onLoop then
-                                    t.callbacks.onLoop(t.value)
-                                end
-                            end
-                        end -- close tween mode
+                        end -- close mode check
                     end -- close if progress >= 1.0
                 end -- closes if not completed
             end  -- close if shouldUpdate
