@@ -239,6 +239,7 @@ Tween.Create = function(params)
     thisTween.direction = 1
     thisTween.currentLoopIndex = 0
     thisTween.completed = false
+    thisTween.hasStarted = false
     thisTween.shouldResetNextFrame = false
     thisTween.shouldFlipNextFrame = false
 
@@ -253,8 +254,11 @@ Tween.Create = function(params)
     }
 
     -- Callback ON_START if autoStart is true
-    if thisTween.autoStart and thisTween.callbacks.onStart then
-        thisTween.callbacks.onStart()
+    if thisTween.autoStart then
+        thisTween.hasStarted = true
+        if thisTween.callbacks.onStart then
+            thisTween.callbacks.onStart()
+        end
     end
 
     local self = { name = params.name }
@@ -352,9 +356,13 @@ function Tween:Start()
         self:Reset()
     end
     t.active = true
-    -- TODO: callback ON_START
-    if t.callbacks.onStart then
-        t.callbacks.onStart()
+    t.paused = false
+    -- Callback ON_START only if not already started
+    if not t.hasStarted then
+        t.hasStarted = true
+        if t.callbacks.onStart then
+            t.callbacks.onStart()
+        end
     end
 end
 
@@ -373,8 +381,10 @@ function Tween:Restart()
     t.direction = 1
     t.currentLoopIndex = 0
     t.completed = false
+    t.hasStarted = true
     t.shouldResetNextFrame = false
     t.shouldFlipNextFrame = false
+    -- Callback ON_START (Restart always triggers onStart)
     if t.callbacks.onStart then
         t.callbacks.onStart()
     end
@@ -413,6 +423,7 @@ function Tween:Reset()
     t.direction = 1
     t.currentLoopIndex = 0
     t.completed = false
+    t.hasStarted = false
     t.shouldResetNextFrame = false
     t.shouldFlipNextFrame = false
 end
