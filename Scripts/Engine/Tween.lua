@@ -894,24 +894,35 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                             -- Defer reset to next frame (so OnLoop sees progress=1.0)
                             t.shouldResetNextFrame = true
 
+                            -- Callback ON_TO or ON_FROM based on current direction
+                            if t.direction == 1 then
+                                if t.callbacks.onTo then
+                                    t.callbacks.onTo(t.value)
+                                end
+                            else
+                                if t.callbacks.onFrom then
+                                    t.callbacks.onFrom(t.value)
+                                end
+                            end
+
                             if t.loopCount then
                                 t.currentLoopIndex = t.currentLoopIndex + 1
                                 if t.currentLoopIndex >= t.loopCount then
                                     t.completed = true
                                     t.shouldResetNextFrame = false  -- Cancel reset if completed
-                                    -- TODO: callback ON_TO
-                                    -- TODO: callback ON_COMPLETE
+                                    -- Callback ON_COMPLETE
+                                    if t.callbacks.onComplete then
+                                        t.callbacks.onComplete(t.value)
+                                    end
                                 else
-                                    -- TODO: callback ON_TO
-                                    -- TODO: callback ON_LOOP
+                                    -- Callback ON_LOOP
                                     if t.callbacks.onLoop then
                                         t.callbacks.onLoop(t.value)
                                     end
                                 end
                             else
                                 -- Infinite loop: continue without counting
-                                -- TODO: callback ON_TO
-                                -- TODO: callback ON_LOOP
+                                -- Callback ON_LOOP
                                 if t.callbacks.onLoop then
                                     t.callbacks.onLoop(t.value)
                                 end
@@ -939,16 +950,19 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                                 if t.currentLoopIndex >= t.loopCount then
                                     t.completed = true
                                     t.shouldFlipNextFrame = false  -- Cancel flip if completed
+                                    -- Callback ON_COMPLETE
                                     if t.callbacks.onComplete then
                                         t.callbacks.onComplete(t.value)
                                     end
                                 else
+                                    -- Callback ON_LOOP
                                     if t.callbacks.onLoop then
                                         t.callbacks.onLoop(t.value)
                                     end
                                 end
                             else
                                 -- Infinite loop: continue without counting
+                                -- Callback ON_LOOP
                                 if t.callbacks.onLoop then
                                     t.callbacks.onLoop(t.value)
                                 end
