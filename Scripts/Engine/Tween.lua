@@ -841,8 +841,7 @@ end
 -- @tfield "onFrom" ON_FROM Called when reaching the 'from' value
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
-    local freezeMode = TEN.Flow.GetFreezeMode()
-    local isInFreeze = freezeMode ~= TEN.Flow.FreezeMode.NONE
+    local isInFreeze = TEN.Flow.GetFreezeMode() ~= TEN.Flow.FreezeMode.NONE
 
     for _, t in pairs(LevelVars.Engine.Tween.tweens) do
         if t.active and not t.paused then
