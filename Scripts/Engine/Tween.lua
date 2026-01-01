@@ -805,109 +805,105 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
 
     for _, t in pairs(LevelVars.Engine.Tween.tweens) do
         if t.active and not t.paused then
-            -- Verifica se il tween deve essere aggiornato nel contesto corrente
-            if t.updateMode == Tween.UpdateMode.GAMEPLAY_ONLY and isInFreeze then
-                goto continue
-            end
-            if t.updateMode == Tween.UpdateMode.FREEZE_ONLY and not isInFreeze then
-                goto continue
-            end
+            -- Check if should update based on updateMode and current freeze state
+            local shouldUpdate = (t.updateMode == Tween.UpdateMode.ALWAYS) or
+                                 (t.updateMode == Tween.UpdateMode.GAMEPLAY_ONLY and not isInFreeze) or
+                                 (t.updateMode == Tween.UpdateMode.FREEZE_ONLY and isInFreeze)
 
-            -- Se completato nel frame precedente, disattiva ora (dopo che OnLoop ha visto il valore finale)
-            if t.completed then
-                t.active = false
-            else
-                -- Applica reset/flip differiti dal frame precedente (PRIMA di calcolare il nuovo valore)
-                if t.shouldResetNextFrame then
-                    t.elapsed = 0
-                    t.progress = 0.0
-                    t.value = t.from
-                    t.shouldResetNextFrame = false
-                end
+            if shouldUpdate then
+                -- If completed in the previous frame, deactivate now (after OnLoop has seen the final value)
+                if t.completed then
+                    t.active = false
+                else
+                    -- Apply reset/flip deferred from the previous frame (BEFORE calculating the new value)
+                    if t.shouldResetNextFrame then
+                        t.elapsed = 0
+                        t.progress = 0.0
+                        t.value = t.from
+                        t.shouldResetNextFrame = false
+                    end
 
-                if t.shouldFlipNextFrame then
-                    t.elapsed = 1
-                    t.progress = 0.0
-                    t.direction = -t.direction
-                    t.shouldFlipNextFrame = false
-                end
+                    if t.shouldFlipNextFrame then
+                        t.elapsed = 1
+                        t.progress = 0.0
+                        t.direction = -t.direction
+                        t.shouldFlipNextFrame = false
+                    end
+                    -- Calculate progress BEFORE incrementing (to show initial value)
+                    t.progress = t.elapsed / t.interpolationDuration
 
-                -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
-                t.progress = t.elapsed / t.interpolationDuration
+                    if t.progress > 1.0 then
+                        t.progress = 1.0
+                    end
 
-                if t.progress > 1.0 then
-                    t.progress = 1.0
-                end
+                    local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
+                    t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
 
-                local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
-                t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
+                    -- Callback ON_UPDATE
+                    if t.callbacks.onUpdate then
+                        t.callbacks.onUpdate(t.value, t.progress)
+                    end
 
-                -- Callback ON_UPDATE
-                if t.callbacks.onUpdate then
-                    t.callbacks.onUpdate(t.value, t.progress)
-                end
+                    -- Increment AFTER calculating the value
+                    t.elapsed = t.elapsed + 1
 
-                -- Incrementa DOPO aver calcolato il valore
-                t.elapsed = t.elapsed + 1
+                    if t.progress >= 1.0 then
+                        -- Force exact final value (for safety)
+                        t.value = t.direction == 1 and t.to or t.from
 
-                if t.progress >= 1.0 then
-                    -- Forza valore finale esatto (per sicurezza)
-                    t.value = t.direction == 1 and t.to or t.from
-
-                    if t.mode == Tween.Mode.ONCE then
-                        t.completed = true
-                        -- TODO: callback ON_TO
-                        -- TODO: callback ON_COMPLETE
-
-                    elseif t.mode == Tween.Mode.RESTART then
-                        -- Differisci reset al prossimo frame (così OnLoop vede progress=1.0)
-                        t.shouldResetNextFrame = true
-
-                        if t.loopCount then
-                            t.currentLoopIndex = t.currentLoopIndex + 1
-                            if t.currentLoopIndex >= t.loopCount then
-                                t.completed = true
-                                t.shouldResetNextFrame = false  -- Annulla reset se completato
-                                -- TODO: callback ON_TO
-                                -- TODO: callback ON_COMPLETE
-                            else
-                                -- TODO: callback ON_TO
-                                -- TODO: callback ON_LOOP
-                            end
-                        else
-                            -- Loop infinito: continua senza contare
+                        if t.mode == Tween.Mode.ONCE then
+                            t.completed = true
                             -- TODO: callback ON_TO
-                            -- TODO: callback ON_LOOP
-                        end
+                            -- TODO: callback ON_COMPLETE
 
-                    elseif t.mode == Tween.Mode.PING_PONG then
-                        -- Differisci flip al prossimo frame (così OnLoop vede progress=1.0)
-                        t.shouldFlipNextFrame = true
+                        elseif t.mode == Tween.Mode.RESTART then
+                            -- Defer reset to next frame (so OnLoop sees progress=1.0)
+                            t.shouldResetNextFrame = true
 
-                        -- TODO: callback ON_TO (se direction=-1) o ON_FROM (se direction=1)
-
-                        if t.direction == 1 then
                             if t.loopCount then
                                 t.currentLoopIndex = t.currentLoopIndex + 1
                                 if t.currentLoopIndex >= t.loopCount then
                                     t.completed = true
-                                    t.shouldFlipNextFrame = false  -- Annulla flip se completato
+                                    t.shouldResetNextFrame = false  -- Cancel reset if completed
+                                    -- TODO: callback ON_TO
                                     -- TODO: callback ON_COMPLETE
                                 else
+                                    -- TODO: callback ON_TO
                                     -- TODO: callback ON_LOOP
                                 end
                             else
-                                -- Loop infinito: continua senza contare
+                                -- Infinite loop: continue without counting
+                                -- TODO: callback ON_TO
                                 -- TODO: callback ON_LOOP
                             end
-                        end
-                    end
-                end
-            end
 
-            ::continue::
-        end
-    end
+                        elseif t.mode == Tween.Mode.PING_PONG then
+                            -- Defer flip to next frame (so OnLoop sees progress=1.0)
+                            t.shouldFlipNextFrame = true
+
+                            -- TODO: callback ON_TO (if direction=-1) or ON_FROM (if direction=1)
+
+                            if t.direction == 1 then
+                                if t.loopCount then
+                                    t.currentLoopIndex = t.currentLoopIndex + 1
+                                    if t.currentLoopIndex >= t.loopCount then
+                                        t.completed = true
+                                        t.shouldFlipNextFrame = false  -- Cancel flip if completed
+                                        -- TODO: callback ON_COMPLETE
+                                    else
+                                    -- TODO: callback ON_LOOP
+                                    end
+                                else
+                                    -- Infinite loop: continue without counting
+                                    -- TODO: callback ON_LOOP
+                                end
+                            end
+                        end -- close tween mode
+                    end -- close if progress >= 1.0
+                end -- closes if not completed
+            end  -- close if shouldUpdate
+        end -- close if active and not paused
+    end -- close for each tween
 end
 
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Tween.UpdateAll)
