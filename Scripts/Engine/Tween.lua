@@ -161,7 +161,7 @@ Tween.Create = function(params)
         TEN.Util.PrintLog("Error in Tween.Create(): params.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if params.loopCount and not LuaUtil.IsInteger(params.loopCount) then
+    if params.loopCount and not (params.loopCount % 1 == 0) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
         params.loopCount = math.floor(params.loopCount)
     end
@@ -251,6 +251,11 @@ Tween.Create = function(params)
         onTo = Type.IsLevelFunc(params.onTo) and params.onTo or nil,
         onFrom = Type.IsLevelFunc(params.onFrom) and params.onFrom or nil,
     }
+
+    -- Callback ON_START if autoStart is true
+    if thisTween.autoStart and thisTween.callbacks.onStart then
+        thisTween.callbacks.onStart()
+    end
 
     local self = { name = params.name }
     return setmetatable(self, Tween)
@@ -348,6 +353,9 @@ function Tween:Start()
     end
     t.active = true
     -- TODO: callback ON_START
+    if t.callbacks.onStart then
+        t.callbacks.onStart()
+    end
 end
 
 --- Restart the tween from the beginning
@@ -367,6 +375,9 @@ function Tween:Restart()
     t.completed = false
     t.shouldResetNextFrame = false
     t.shouldFlipNextFrame = false
+    if t.callbacks.onStart then
+        t.callbacks.onStart()
+    end
 end
 
 --- Pause the tween
@@ -757,7 +768,7 @@ end
 -- @tfield[opt=Tween.UpdateMode.GAMEPLAY_ONLY] int updateMode When the tween should update (use `Tween.UpdateMode`).<br>
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
--- @tfield[opt=nil] int loopCount Number of loops (nil for infinite) for RESTART and PING_PONG modes.
+-- @tfield[opt=nil] int loopCount Number of loops (nil for infinite). In RESTART mode, each loop is a complete from→to cycle. In PING_PONG mode, each loop is ONE DIRECTION (from→to or to→from), so loopCount=2 means from→to→from (one complete ping-pong cycle). This follows DOTween/GSAP conventions.
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete
@@ -771,7 +782,7 @@ end
 -- @table CallbackType
 -- @tfield "onStart" ON_START Called when the tween starts
 -- @tfield "onComplete" ON_COMPLETE Called when the tween completes
--- @tfield "onLoop" ON_LOOP Called when the tween loops
+-- @tfield "onLoop" ON_LOOP Called when the tween loops. For RESTART mode, called after reaching 'to' value. For PING_PONG mode, called after reaching 'to' or 'from' value.
 -- @tfield "onUpdate" ON_UPDATE Called on each update/frame
 -- @tfield "onTo" ON_TO Called when reaching the 'to' value
 -- @tfield "onFrom" ON_FROM Called when reaching the 'from' value
@@ -779,14 +790,14 @@ end
 ---
 -- Costants for tween modes.
 -- @table Mode
--- @tfield 0 ONCE Tween runs once from 'from' to 'to'
--- @tfield 1 RESTART Tween restarts from 'from' to 'to' repeatedly. Each loop takes `period` seconds.
--- @tfield 2 PING_PONG Tween goes from 'from' to 'to' and back repeatedly. Each complete cycle (from→to→from) takes `period * 2` seconds, as `period` represents the duration of ONE DIRECTION only.
+-- @tfield 0 ONCE Tween runs once from 'from' to 'to'. Default mode.
+-- @tfield 1 RESTART Tween restarts from 'from' to 'to' repeatedly. Each loop takes `period` seconds. loopCount=N means N complete from→to cycles.
+-- @tfield 2 PING_PONG Tween oscillates between 'from' and 'to'. Each direction takes `period` seconds. loopCount counts EACH DIRECTION: loopCount=1 means from→to only, loopCount=2 means from→to→from, loopCount=4 means from→to→from→to→from (2 complete cycles). This follows DOTween/GSAP conventions.
 
 ---
 -- Constants for tween easing functions.
 -- @table Easing
--- @tfield 1 LERP Linear interpolation. See `LuaUtil.Lerp`.
+-- @tfield 1 LERP Linear interpolation. See `LuaUtil.Lerp`. Default easing.
 -- @tfield 2 SMOOTHSTEP Smoothstep interpolation. See `LuaUtil.Smoothstep`.
 -- @tfield 3 SMOOTHERSTEP Smootherstep interpolation. See `LuaUtil.Smootherstep`.
 -- @tfield 4 EASE_IN_OUT Ease in-out interpolation. See `LuaUtil.EaseInOut`.
@@ -795,7 +806,7 @@ end
 ---
 -- Constants for tween update modes.
 -- @table UpdateMode
--- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRELOOP callback). Use for gameplay animations like moving platforms, doors, etc.
+-- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRELOOP callback). Use for gameplay animations like moving platforms, doors, etc. Default mode.
 -- @tfield 2 FREEZE_ONLY Update only during freeze/pause (PRE_FREEZE callback). Use for UI animations during pause, loading screens, etc.
 -- @tfield 3 ALWAYS Update in both gameplay and freeze contexts. Use for cross-context effects like audio fades, screen transitions, etc.
 
@@ -853,8 +864,20 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
 
                         if t.mode == Tween.Mode.ONCE then
                             t.completed = true
-                            -- TODO: callback ON_TO
-                            -- TODO: callback ON_COMPLETE
+                            -- Callback ON_TO or ON_FROM based on direction
+                            if t.direction == 1 then
+                                if t.callbacks.onTo then
+                                    t.callbacks.onTo(t.value)
+                                end
+                            else
+                                if t.callbacks.onFrom then
+                                    t.callbacks.onFrom(t.value)
+                                end
+                            end
+                            -- Callback ON_COMPLETE
+                            if t.callbacks.onComplete then
+                                t.callbacks.onComplete(t.value)
+                            end
 
                         elseif t.mode == Tween.Mode.RESTART then
                             -- Defer reset to next frame (so OnLoop sees progress=1.0)
@@ -870,32 +893,53 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                                 else
                                     -- TODO: callback ON_TO
                                     -- TODO: callback ON_LOOP
+                                    if t.callbacks.onLoop then
+                                        t.callbacks.onLoop(t.value)
+                                    end
                                 end
                             else
                                 -- Infinite loop: continue without counting
                                 -- TODO: callback ON_TO
                                 -- TODO: callback ON_LOOP
+                                if t.callbacks.onLoop then
+                                    t.callbacks.onLoop(t.value)
+                                end
                             end
 
                         elseif t.mode == Tween.Mode.PING_PONG then
                             -- Defer flip to next frame (so OnLoop sees progress=1.0)
                             t.shouldFlipNextFrame = true
 
-                            -- TODO: callback ON_TO (if direction=-1) or ON_FROM (if direction=1)
-
+                            -- Callback ON_TO or ON_FROM based on current direction
                             if t.direction == 1 then
-                                if t.loopCount then
-                                    t.currentLoopIndex = t.currentLoopIndex + 1
-                                    if t.currentLoopIndex >= t.loopCount then
-                                        t.completed = true
-                                        t.shouldFlipNextFrame = false  -- Cancel flip if completed
-                                        -- TODO: callback ON_COMPLETE
-                                    else
-                                    -- TODO: callback ON_LOOP
+                                if t.callbacks.onTo then
+                                    t.callbacks.onTo(t.value)
+                                end
+                            else
+                                if t.callbacks.onFrom then
+                                    t.callbacks.onFrom(t.value)
+                                end
+                            end
+
+                            -- Count EVERY direction change (each "leg" = 1 loop)
+                            -- This matches DOTween/GSAP convention: loopCount=2 means from→to→from
+                            if t.loopCount then
+                                t.currentLoopIndex = t.currentLoopIndex + 1
+                                if t.currentLoopIndex >= t.loopCount then
+                                    t.completed = true
+                                    t.shouldFlipNextFrame = false  -- Cancel flip if completed
+                                    if t.callbacks.onComplete then
+                                        t.callbacks.onComplete(t.value)
                                     end
                                 else
-                                    -- Infinite loop: continue without counting
-                                    -- TODO: callback ON_LOOP
+                                    if t.callbacks.onLoop then
+                                        t.callbacks.onLoop(t.value)
+                                    end
+                                end
+                            else
+                                -- Infinite loop: continue without counting
+                                if t.callbacks.onLoop then
+                                    t.callbacks.onLoop(t.value)
                                 end
                             end
                         end -- close tween mode
