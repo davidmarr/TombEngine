@@ -802,7 +802,7 @@ end
 LevelFuncs.Engine.Tween.UpdateAll = function()
     local freezeMode = TEN.Flow.GetFreezeMode()
     local isInFreeze = freezeMode ~= TEN.Flow.FreezeMode.NONE
-    
+
     for _, t in pairs(LevelVars.Engine.Tween.tweens) do
         if t.active and not t.paused then
             -- Verifica se il tween deve essere aggiornato nel contesto corrente
@@ -812,7 +812,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
             if t.updateMode == Tween.UpdateMode.FREEZE_ONLY and not isInFreeze then
                 goto continue
             end
-            
+
             -- Se completato nel frame precedente, disattiva ora (dopo che OnLoop ha visto il valore finale)
             if t.completed then
                 t.active = false
@@ -824,14 +824,14 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     t.value = t.from
                     t.shouldResetNextFrame = false
                 end
-                
+
                 if t.shouldFlipNextFrame then
                     t.elapsed = 1
                     t.progress = 0.0
                     t.direction = -t.direction
                     t.shouldFlipNextFrame = false
                 end
-                
+
                 -- Calcola progress PRIMA di incrementare (per mostrare valore iniziale)
                 t.progress = t.elapsed / t.interpolationDuration
 
@@ -904,7 +904,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     end
                 end
             end
-            
+
             ::continue::
         end
     end
