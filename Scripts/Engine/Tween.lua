@@ -85,6 +85,14 @@ Tween.Easing = {
 
 Tween.Easing = LuaUtil.SetTableReadOnly(Tween.Easing)
 
+Tween.UpdateMode = {
+    GAMEPLAY_ONLY = 1,  -- Update only during normal gameplay (PRELOOP)
+    FREEZE_ONLY = 2,    -- Update only during freeze/pause (PRE_FREEZE)
+    ALWAYS = 3          -- Update in both contexts
+}
+
+Tween.UpdateMode = LuaUtil.SetTableReadOnly(Tween.UpdateMode)
+
 Tween.CallbackType = {
     ON_START = "onStart",
     ON_COMPLETE = "onComplete",
@@ -163,6 +171,9 @@ Tween.Create = function(params)
     if params.mode and not LuaUtil.TableHasValue(Tween.Mode, params.mode) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.mode has invalid value. Using default value 'ONCE'", TEN.Util.LogLevel.WARNING)
     end
+    if params.updateMode and not LuaUtil.TableHasValue(Tween.UpdateMode, params.updateMode) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.updateMode has invalid value. Using default value 'GAMEPLAY_ONLY'", TEN.Util.LogLevel.WARNING)
+    end
     if params.easing and not LuaUtil.TableHasValue(Tween.Easing, params.easing) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.easing has invalid value. Using default value 'LERP'", TEN.Util.LogLevel.WARNING)
     end
@@ -191,6 +202,7 @@ Tween.Create = function(params)
     thisTween.to = params.to
     thisTween.period = params.period
     thisTween.mode = LuaUtil.TableHasValue(Tween.Mode, params.mode) and params.mode or Tween.Mode.ONCE
+    thisTween.updateMode = LuaUtil.TableHasValue(Tween.UpdateMode, params.updateMode) and params.updateMode or Tween.UpdateMode.GAMEPLAY_ONLY
     thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
 
     if params.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
@@ -644,6 +656,30 @@ function Tween:SetLoopCount(count)
     LevelVars.Engine.Tween.tweens[self.name].loopCount = count
 end
 
+--- Get the update mode of the tween
+-- @treturn int Update mode (use Tween.UpdateMode)
+-- @usage
+-- local updateMode
+-- if Tween.IfExists("myTween") then
+--     updateMode = Tween.Get("myTween"):GetUpdateMode()
+-- end
+function Tween:GetUpdateMode()
+    return LevelVars.Engine.Tween.tweens[self.name].updateMode
+end
+
+--- Set the update mode of the tween
+-- @tparam UpdateMode mode Update mode to set (use Tween.UpdateMode)
+-- @usage
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetUpdateMode(Tween.UpdateMode.ALWAYS)
+-- end
+function Tween:SetUpdateMode(mode)
+    if not LuaUtil.TableHasValue(Tween.UpdateMode, mode) then
+        return TEN.Util.PrintLog("Error in Tween:SetUpdateMode(mode): invalid updateMode value", TEN.Util.LogLevel.ERROR)
+    end
+    LevelVars.Engine.Tween.tweens[self.name].updateMode = mode
+end
+
 --- Reverse the tween direction
 -- @usage
 -- if Tween.IfExists("myTween") then
@@ -718,6 +754,7 @@ end
 -- @tfield float|Color|Rotation|Vec2|Vec3 to Ending value. `from` and `to` must be the same type!
 -- @tfield float period Duration of ONE DIRECTION in seconds. For PING_PONG mode, a complete cycle (from→to→from) takes `period * 2` seconds. This follows the standard convention used by professional tween libraries (DOTween, GSAP, etc.).
 -- @tfield[opt=Tween.Mode.ONCE] int mode Tween mode (use `Tween.Mode`)
+-- @tfield[opt=Tween.UpdateMode.GAMEPLAY_ONLY] int updateMode When the tween should update (use `Tween.UpdateMode`). GAMEPLAY_ONLY: updates only during normal gameplay. FREEZE_ONLY: updates only during freeze/pause. ALWAYS: updates in both contexts.
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
 -- @tfield[opt=nil] int loopCount Number of loops (nil for infinite)
@@ -755,9 +792,27 @@ end
 -- @tfield 4 EASE_IN_OUT Ease in-out interpolation. See `LuaUtil.EaseInOut`.
 -- @tfield 5 ELASTIC Elastic interpolation. See `LuaUtil.Elastic`.
 
+---
+-- Constants for tween update modes.
+-- @table UpdateMode
+-- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRELOOP callback). Use for gameplay animations like moving platforms, doors, etc.
+-- @tfield 2 FREEZE_ONLY Update only during freeze/pause (PRE_FREEZE callback). Use for UI animations during pause, loading screens, etc.
+-- @tfield 3 ALWAYS Update in both gameplay and freeze contexts. Use for cross-context effects like audio fades, screen transitions, etc.
+
 LevelFuncs.Engine.Tween.UpdateAll = function()
+    local freezeMode = TEN.Flow.GetFreezeMode()
+    local isInFreeze = freezeMode ~= TEN.Flow.FreezeMode.NONE
+    
     for _, t in pairs(LevelVars.Engine.Tween.tweens) do
         if t.active and not t.paused then
+            -- Verifica se il tween deve essere aggiornato nel contesto corrente
+            if t.updateMode == Tween.UpdateMode.GAMEPLAY_ONLY and isInFreeze then
+                goto continue
+            end
+            if t.updateMode == Tween.UpdateMode.FREEZE_ONLY and not isInFreeze then
+                goto continue
+            end
+            
             -- Se completato nel frame precedente, disattiva ora (dopo che OnLoop ha visto il valore finale)
             if t.completed then
                 t.active = false
@@ -849,6 +904,8 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     end
                 end
             end
+            
+            ::continue::
         end
     end
 end
