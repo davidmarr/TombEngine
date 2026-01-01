@@ -899,6 +899,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
 
                         if t.mode == Tween.Mode.ONCE then
                             t.completed = true
+                            -- Callback ON_COMPLETE
                             if t.callbacks.onComplete then
                                 t.callbacks.onComplete(t.value)
                             end
@@ -906,7 +907,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                             -- RESTART or PING_PONG: set deferred action
                             if t.mode == Tween.Mode.RESTART then
                                 t.shouldResetNextFrame = true
-                            else -- PING_PONG
+                            else -- PING_PONG mode
                                 t.shouldFlipNextFrame = true
                             end
 
@@ -918,16 +919,18 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                                     -- Cancel deferred action if completed
                                     t.shouldResetNextFrame = false
                                     t.shouldFlipNextFrame = false
+                                    -- Callback ON_COMPLETE
                                     if t.callbacks.onComplete then
                                         t.callbacks.onComplete(t.value)
                                     end
                                 else
+                                    -- Not completed yet: call ON_LOOP
                                     if t.callbacks.onLoop then
                                         t.callbacks.onLoop(t.value)
                                     end
                                 end
                             else
-                                -- Infinite loop: continue without counting
+                                -- Infinite loop: continue without counting. Call ON_LOOP
                                 if t.callbacks.onLoop then
                                     t.callbacks.onLoop(t.value)
                                 end
