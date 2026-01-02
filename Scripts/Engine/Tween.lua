@@ -897,6 +897,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                             dirCallback(t.value)
                         end
 
+                        -- Handle completion based on mode
                         if t.mode == Tween.Mode.ONCE then
                             t.completed = true
                             -- Callback ON_COMPLETE
