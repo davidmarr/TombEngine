@@ -809,6 +809,13 @@ end
 
 ---
 -- Costants for tween modes.
+--
+-- **Important for RESTART mode with cyclic rotations (0-360°):**<br>
+-- When tweening a full rotation (e.g., `from=0, to=360`), use `to=356` instead to avoid a 1-frame pause at loop restart.<br>
+-- Reason: 0° and 360° are the same angle, so the object appears stationary for one frame when resetting.<br>
+-- Example: `from=0, to=356` creates seamless continuous rotation in RESTART mode.<br>
+-- This only applies to RESTART with full 360° rotations. PING_PONG mode doesn't have this issue.
+--
 -- @table Mode
 -- @tfield 0 ONCE Tween runs once from 'from' to 'to'. Default mode.
 -- @tfield 1 RESTART Tween restarts from 'from' to 'to' repeatedly. Each loop takes `period` seconds. loopCount=N means N complete from→to cycles.
@@ -892,9 +899,14 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         t.value = t.direction == 1 and t.to or t.from
 
                         -- Callback ON_TO or ON_FROM based on direction (common to all modes)
-                        local dirCallback = t.direction == 1 and t.callbacks.onTo or t.callbacks.onFrom
-                        if dirCallback then
-                            dirCallback(t.value)
+                        if t.direction == 1 then
+                            if t.callbacks.onTo then
+                                t.callbacks.onTo(t.value)
+                            end
+                        else
+                            if t.callbacks.onFrom then
+                                t.callbacks.onFrom(t.value)
+                            end
                         end
 
                         -- Handle completion based on mode
