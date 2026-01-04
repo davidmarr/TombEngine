@@ -1485,6 +1485,38 @@ end
 -- Utilities for interpolating between values.
 -- Different interpolation methods provide various speed curves and behaviors.
 --
+-- **IMPORTANT: Using interpolation functions with TEN primitives**
+--
+-- When you use `LuaUtil.Lerp`, `LuaUtil.Smoothstep`, `LuaUtil.Smootherstep`, `LuaUtil.EaseInOut`, and `LuaUtil.Elastic`
+-- with TEN primitives (`Rotation`, `Vec2`, `Vec3`, `Color`), these functions automatically call the native methods
+-- of those primitives (e.g., `Rotation:Lerp()`, `Vec3:Lerp()`, `Color:Lerp()`).
+--
+-- **For Rotation primitives specifically:**
+--
+-- - `Rotation:Lerp()` already calculates the **shortest angular distance** for each component (x, y, z)
+-- - `LuaUtil.LerpAngle()` is **NOT needed** when working with `Rotation` primitives
+-- - Use `Rotation:Lerp()` directly instead of interpolating individual rotation components
+--
+-- **Example - CORRECT approach with Rotation:**
+--
+--     local currentRot = obj:GetRotation()
+--     local targetRot = TEN.Rotation(0, 350, 0)
+--     local newRot = currentRot:Lerp(targetRot, 0.5)  -- Automatically takes shortest path
+--     obj:SetRotation(newRot)
+--
+-- **Example - INCORRECT (redundant) approach:**
+--
+--     local currentRot = obj:GetRotation()
+--     local targetRot = TEN.Rotation(0, 350, 0)
+--     currentRot.y = LuaUtil.LerpAngle(currentRot.y, targetRot.y, 0.5)  -- Redundant!
+--     obj:SetRotation(currentRot)
+--
+-- **When to use LerpAngle:**
+--
+-- - Only when interpolating **single float values** that represent angles (not `Rotation` primitives)
+-- - When you need custom angle ranges (e.g., -180 to 180 instead of 0-360)
+-- - External data where you only have float values
+--
 -- **Interpolation methods comparison:**
 -- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
 -- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;} .tableSP tr:hover {background-color: #ddd;}</style>
@@ -1732,7 +1764,7 @@ end
 -- <br>**Solution with LerpAngle:**
 --
 -- <table class="tableSP">
--- <tr><th>Start</th><th>End</th><th>LerpAngle result</th><th>Problem</th></tr>
+-- <tr><th>Start</th><th>End</th><th>LerpAngle result</th><th>Result</th></tr>
 -- <tr><td>350°</td><td>10°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
 -- <tr><td>10°</td><td>350°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
 -- <tr><td>270°</td><td>90°</td><td>180°</td><td>SHORT way (180° turn)</td></tr>
@@ -1758,32 +1790,48 @@ end
 -- --  0.75  | 95    | 5         | ✓ (short path)
 -- --  1.00  | 10    | 10        | ✓
 --
--- -- Practical example: Object rotates smoothly towards the player (like a surveillance camera)
--- local obj = TEN.Objects.GetMoveableByName("enemy_1")
--- local animationDuration = LuaUtil.SecondsToFrames(2)  -- 2 seconds to turn
--- local currentFrame = 0
+-- -- Real-world example 1: 2D sprite pointing towards mouse cursor
+-- -- DisplaySprite uses single float for rotation, perfect use case for LerpAngle!
+-- local arrowSprite = TEN.View.DisplaySprite(1354, 16, TEN.Vec2(400, 300), 0, TEN.Vec2(3, 3))
+-- local rotationSpeed = 0.1  -- How fast the arrow rotates (0.0-1.0)
+--
 -- LevelFuncs.OnLoop = function()
---     if currentFrame <= animationDuration then
---         local objPos = obj:GetPosition()
---         local laraPos = Lara:GetJointPosition(14)  -- Lara's neck position
+--     local mousePos = TEN.Input.GetMouseDisplayPosition()
+--     local arrowPos = arrowSprite:GetPosition()
+--     
+--     -- Calculate angle from arrow to mouse
+--     local dx = mousePos.x - arrowPos.x
+--     local dy = mousePos.y - arrowPos.y
+--     local targetAngle = math.atan(dy, dx) * (180 / math.pi)  -- Convert radians to degrees
+--     
+--     -- Smoothly rotate arrow towards mouse using shortest path
+--     local currentAngle = arrowSprite:GetRotation()
+--     local newAngle = LuaUtil.LerpAngle(currentAngle, targetAngle, rotationSpeed)
+--     arrowSprite:SetRotation(newAngle)
+--     
+--     arrowSprite:Draw()
+-- end
 --
---         -- Calculate target rotation using Vec3:Direction and Rotation(direction)
---         local direction = objPos:Direction(laraPos)
---         local targetRotation = TEN.Rotation(direction)
+-- -- Real-world example 2: HUD compass needle rotating to point north
+-- -- Perfect for 2D UI elements that need smooth rotation
+-- -- Uses speedometer needle sprite from base WAD (points down by default, so we add 180° offset)
+-- local objID = TEN.Objects.ObjID.SPEEDOMETER_GRAPHICS
+-- local compassNeedle = TEN.View.DisplaySprite(objID, 1, TEN.Vec2(80, 80), 0, TEN.Vec2(20, 20))
 --
---         -- Get current enemy rotation
---         local objRot = obj:GetRotation()
---
---         -- LerpAngle finds shortest path for both yaw and pitch
---         local t = currentFrame / animationDuration
---         objRot.y = LuaUtil.LerpAngle(objRot.y, targetRotation.y, t, -180, 180)
---         objRot.x = LuaUtil.LerpAngle(objRot.x, targetRotation.x, t, -90, 90)
---         obj:SetRotation(objRot)
---
---         currentFrame = currentFrame + 1
---     else
---         currentFrame = 0  -- Reset
---     end
+-- LevelFuncs.OnLoop = function()
+--     -- Get player's current yaw (facing direction)
+--     local playerYaw = Lara:GetRotation().y
+--     
+--     -- Calculate angle to north
+--     -- Add 180° offset because the sprite points down by default
+--     local needleTargetAngle = playerYaw + 180
+--     
+--     -- Smoothly rotate needle towards north using shortest path
+--     local currentNeedleAngle = compassNeedle:GetRotation()
+--     local newNeedleAngle = LuaUtil.LerpAngle(currentNeedleAngle, needleTargetAngle, 0.15)
+--     compassNeedle:SetRotation(newNeedleAngle)
+--     
+--     compassNeedle:Draw()
 -- end
 LuaUtil.LerpAngle = function(a, b, t, min, max)
     min = min or 0
