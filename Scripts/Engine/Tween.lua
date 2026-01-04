@@ -837,7 +837,7 @@ end
 -- Constants for tween update modes.
 -- @table UpdateMode
 -- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRELOOP callback). Use for gameplay animations like moving platforms, doors, etc. Default mode.
--- @tfield 2 FREEZE_ONLY Update only during freeze mode(PRE_FREEZE callback). Use for UI animations during pause, loading screens, etc.
+-- @tfield 2 FREEZE_ONLY Update only during freeze mode (PRE_FREEZE callback). Use for UI animations during pause, loading screens, etc.
 -- @tfield 3 ALWAYS Update in both gameplay and freeze contexts. Use for cross-context effects like audio fades, screen transitions, etc.
 
 ---
