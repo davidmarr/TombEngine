@@ -1,6 +1,6 @@
 --- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
 --- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;}</style>
---- Advanced Tweening System. This module provides a flexible way to create and manage tweens (interpolation) for various data types such as numbers, Colors, Rotations, Vec2, and Vec3.
+--- Advanced interpolation system. This module offers a flexible way to create and manage interpolations (tweens) for the following data types: numbers, Color, Rotation, Vec2 and Vec3..
 -- It supports different easing functions, modes (once, restart, ping-pong), looping, and callbacks for various events.
 -- Supports multiple tweens with different parameters.
 --
