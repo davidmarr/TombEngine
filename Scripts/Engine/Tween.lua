@@ -1,9 +1,13 @@
 --- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
 --- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;}</style>
---- Advanced interpolation system. This module offers a flexible way to create and manage interpolations (tweens) for the following data types: numbers, Color, Rotation, Vec2 and Vec3..
+--- Advanced interpolation system. This module offers a flexible way to create and manage interpolations (tweens) for the following data types: numbers, Color, Rotation, Vec2 and Vec3.
 -- It supports different easing functions, modes (once, restart, ping-pong), looping, and callbacks for various events.
--- Supports multiple tweens with different parameters.
---
+-- Supports multiple tweens with different parameters.<br><br>
+-- **Important note about Rotation interpolation:**<br>
+-- TombEngine's Rotation:Lerp() uses the **shortest angular path**. This means:<br>
+-- - Rotation(10,0,0):Lerp(Rotation(350,0,0), 0.5) → Rotation(0,0,0) (not 180°)<br>
+-- - Cannot create gradual rotations like 0°→90°→180°→270°→360° using Rotation primitives<br>
+-- - The tween will always interpolate via the shortest route between angles<br><br>
 -- To use Tween inside scripts you need to call the module:
 --	local Tween = require("Engine.Tween")
 --
@@ -22,12 +26,13 @@
 --
 -- Advanced usage with ping-pong mode and callbacks for updating object position:
 --
---	-- Get the object to move
---	local bridge = TEN.Objects.GetMoveableByName("bridge_flat_6")
---
 --	-- Define callback functions in LevelFuncs 
 --	LevelFuncs.MyTweenOnUpdate = function(value, progress)
+--
+--      -- Get the object to move
+--	    local bridge = TEN.Objects.GetMoveableByName("bridge_flat_6")
 --	    bridge:SetPosition(value)
+--
 --      -- Optional: print progress to log
 --	    TEN.Util.PrintLog("Tween Update: Value=" .. tostring(value) .. " Progress=" .. tostring(progress))
 --	end
@@ -170,6 +175,9 @@ Tween.Create = function(params)
     if params.autoStart and not Type.IsBoolean(params.autoStart) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.autoStart must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
     end
+    if params.seamlessLoop and not Type.IsBoolean(params.seamlessLoop) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.seamlessLoop must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
+    end
     if params.mode and not LuaUtil.TableHasValue(Tween.Mode, params.mode) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.mode has invalid value. Using default value 'ONCE'", TEN.Util.LogLevel.WARNING)
     end
@@ -226,6 +234,7 @@ Tween.Create = function(params)
     thisTween.easingParams = params.easingParams or nil
     thisTween.loopCount = params.loopCount or nil
     thisTween.autoStart = Type.IsBoolean(params.autoStart) and params.autoStart or false
+    thisTween.seamlessLoop = Type.IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
 
     -- State management
     thisTween.active = params.autoStart and true or false
@@ -797,9 +806,10 @@ end
 -- @tfield[opt=Tween.Mode.ONCE] int mode Tween mode (use `Tween.Mode`)
 -- @tfield[opt=Tween.UpdateMode.GAMEPLAY_ONLY] int updateMode When the tween should update (use `Tween.UpdateMode`).<br>
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
--- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
 -- @tfield[opt=nil] int loopCount Number of loops (nil for infinite). In RESTART mode, each loop is a complete from→to cycle. In PING_PONG mode, each loop is ONE DIRECTION (from→to or to→from). This follows DOTween/GSAP conventions.
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
+-- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
+-- @tfield[opt=false] bool seamlessLoop When true, RESTART mode uses seamless loop transitions for cyclic values like rotations (0-360°). When false (default), uses precise reset for better accuracy with Vec3/Color. Only affects RESTART mode - PING_PONG always uses seamless transitions. Use true for smooth infinite rotations, false for precise positional loops.
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete
 -- @tfield[opt] function onLoop function in LevelFuncs hierarchy called on loop
@@ -809,13 +819,6 @@ end
 
 ---
 -- Costants for tween modes.
---
--- **Important for RESTART mode with cyclic rotations (0-360°):**<br>
--- When tweening a full rotation (e.g., `from=0, to=360`), use `to=356` instead to avoid a 1-frame pause at loop restart.<br>
--- Reason: 0° and 360° are the same angle, so the object appears stationary for one frame when resetting.<br>
--- Example: `from=0, to=356` creates seamless continuous rotation in RESTART mode.<br>
--- This only applies to RESTART with full 360° rotations. PING_PONG mode doesn't have this issue.
---
 -- @table Mode
 -- @tfield 0 ONCE Tween runs once from 'from' to 'to'. Default mode.
 -- @tfield 1 RESTART Tween restarts from 'from' to 'to' repeatedly. Each loop takes `period` seconds. loopCount=N means N complete from→to cycles.
@@ -864,7 +867,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                 else
                     -- Apply reset/flip deferred from the previous frame (BEFORE calculating the new value)
                     if t.shouldResetNextFrame then
-                        t.elapsed = 0
+                        t.elapsed = t.seamlessLoop and 1 or 0
                         t.progress = 0.0
                         t.value = t.from
                         t.shouldResetNextFrame = false
