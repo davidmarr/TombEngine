@@ -1522,24 +1522,26 @@ end
 -- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;} .tableSP tr:hover {background-color: #ddd;}</style>
 -- <table class="tableSP">
 -- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
--- <tr><td><a href="#Lerp">Lerp</a></td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations</td></tr>
--- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>Rotations, compass, turrets</td></tr>
+-- <tr><td><a href="#Lerp">Lerp</a></td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations, mechanical movements</td></tr>
+-- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>2D UI sprites (compass, indicators)</td></tr>
 -- <tr><td><a href="#Smoothstep">Smoothstep</a></td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions, standard animations</td></tr>
 -- <tr><td><a href="#Smootherstep">Smootherstep</a></td><td>Ultra-smooth S-curve</td><td>Very gentle ease-in/out (C² continuity)</td><td>Cinematic effects, premium visuals</td></tr>
--- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Dramatic movements</td></tr>
--- <tr><td><a href="#Elastic">Elastic</a></td><td>Spring oscillation</td><td>Overshoot with bounce effect</td><td>Playful UI, cartoon effects</td></tr>
+-- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Dramatic movements, elevators</td></tr>
+-- <tr><td><a href="#Elastic">Elastic</a></td><td>Spring oscillation</td><td>Overshoot with smooth bounce back</td><td>Playful UI, cartoon effects</td></tr>
+-- <tr><td><a href="#Bounce">Bounce</a></td><td>Damped oscillation</td><td>Smooth bounces with energy decay</td><td>Falling objects, ball physics</td></tr>
+-- <tr><td><a href="#Impact">Impact</a></td><td>Sawtooth wave</td><td>Sharp collisions with separation</td><td>Slamming doors, collision effects</td></tr>
 -- </table>
 --
 -- <br>**Comparison of interpolation methods (0 to 10):**
 -- <table class="tableSP">
--- <tr><th>t</th><th>Lerp</th><th>LerpAngle¹</th><th>Smoothstep</th><th>Smootherstep</th><th>EaseInOut</th><th>Elastic</th></tr>
--- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
--- <tr><td>0.10</td><td>1.00</td><td>1.00</td><td>0.28</td><td>0.16</td><td>0.20</td><td>-0.04</td></tr>
--- <tr><td>0.25</td><td>2.50</td><td>2.50</td><td>1.56</td><td>1.04</td><td>1.25</td><td>0.44</td></tr>
--- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td></tr>
--- <tr><td>0.75</td><td>7.50</td><td>7.50</td><td>8.44</td><td>8.96</td><td>8.75</td><td>9.56</td></tr>
--- <tr><td>0.90</td><td>9.00</td><td>9.00</td><td>9.72</td><td>9.84</td><td>9.80</td><td>10.04</td></tr>
--- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
+-- <tr><th>t</th><th>Lerp</th><th>LerpAngle¹</th><th>Smoothstep</th><th>Smootherstep</th><th>EaseInOut</th><th>Elastic</th><th>Bounce</th><th>Impact</th></tr>
+-- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+-- <tr><td>0.10</td><td>1.00</td><td>1.00</td><td>0.28</td><td>0.16</td><td>0.20</td><td>-0.04</td><td>0.95</td><td>1.00</td></tr>
+-- <tr><td>0.25</td><td>2.50</td><td>2.50</td><td>1.56</td><td>1.04</td><td>1.25</td><td>0.44</td><td>3.75</td><td>3.00</td></tr>
+-- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>7.50</td><td>8.50</td></tr>
+-- <tr><td>0.75</td><td>7.50</td><td>7.50</td><td>8.44</td><td>8.96</td><td>8.75</td><td>9.56</td><td>9.82</td><td>9.40</td></tr>
+-- <tr><td>0.90</td><td>9.00</td><td>9.00</td><td>9.72</td><td>9.84</td><td>9.80</td><td>10.04</td><td>9.98</td><td>9.95</td></tr>
+-- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
 -- </table>
 --
 -- ¹ LerpAngle behaves like Lerp when not crossing 0°/360° boundary.
@@ -1555,12 +1557,14 @@ end
 --
 -- <br>**Rule of thumb:**
 --
--- - Use `Lerp` for: numbers, positions (Vec2/Vec3), colors, sizes
--- - Use `LerpAngle` for: rotations (Rotation.y), compass headings, turret aiming
+-- - Use `Lerp` for: numbers, positions (Vec2/Vec3), colors, sizes, mechanical movements
+-- - Use `LerpAngle` for: 2D UI sprite rotations (DisplaySprite with single float angles)
 -- - Use `Smoothstep` for: UI fades, smooth transitions, general animations
 -- - Use `Smootherstep` for: cinematic camera movements, premium effects, AAA-quality visuals
 -- - Use `EaseInOut` for: dramatic movements, pronounced acceleration/deceleration
--- - Use `Elastic` for: bouncy UI, cartoon effects, playful feedback
+-- - Use `Elastic` for: bouncy UI, cartoon effects, playful feedback, spring animations
+-- - Use `Bounce` for: falling objects, ball physics, realistic bouncing with energy decay
+-- - Use `Impact` for: slamming doors, collision effects, sharp impact sequences
 --
 -- **Note about practical examples:**
 -- All examples below use `LevelFuncs.OnLoop` to demonstrate the interpolation logic.
@@ -2518,6 +2522,425 @@ LuaUtil.Elastic = function(a, b, t, amplitude, period)
     end
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.Elastic")
+end
+
+--- Bounce interpolation with collision-like impact effects.
+-- Creates a bouncing animation that simulates objects hitting surfaces with decreasing intensity.
+-- Perfect for ball bounces, door slams, impact effects, and collision animations.
+-- Uses an exponential decay curve with sine waves to create realistic bounce physics.
+-- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
+-- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
+-- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam[opt=4] float bounces Number of bounces (default: 4). Higher values = more bounces before settling.
+-- @tparam[opt=0.5] float damping Bounce intensity/energy loss (default: 0.5, range: 0.0-1.0). Lower values = faster decay, higher values = longer bounces.
+-- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value with bounce effect. If an error occurs, returns value `a`.
+-- @usage
+-- -- Most common usage (numbers with default parameters):
+-- local bounceValue = LuaUtil.Bounce(0, 100, 0.75) -- Result: ~100 with bounce oscillations
+--
+-- -- Demonstration of bounce progression (0 to 10, bounces=4, damping=0.5):
+-- --   t    | result
+-- --  ------|--------
+-- --  0.00  | 0.00
+-- --  0.10  | 0.95   (accelerating toward target)
+-- --  0.25  | 3.75   (moving toward target)
+-- --  0.50  | 7.50   (approaching target)
+-- --  0.70  | 9.70   (first impact, slight overshoot)
+-- --  0.75  | 9.82   (small bounce back)
+-- --  0.85  | 9.95   (second smaller bounce)
+-- --  0.95  | 9.99   (tiny final bounce)
+-- --  1.00  | 10.00  (settled at target)
+--
+-- -- Example with more bounces (energetic ball):
+-- local energeticBounce = LuaUtil.Bounce(0, 100, 0.8, 6, 0.6)
+-- -- More bounces with slower decay:
+-- --   t    | result (bounces=6, damping=0.6)
+-- --  ------|--------------------------------
+-- --  0.70  | 97.2   (first bounce)
+-- --  0.80  | 99.5   (second bounce)
+-- --  0.90  | 99.9   (third bounce)
+-- --  0.95  | 100.0  (still bouncing slightly)
+--
+-- -- Example with fewer bounces (heavy object):
+-- local heavyBounce = LuaUtil.Bounce(0, 100, 0.8, 2, 0.3)
+-- -- Fewer, sharper bounces with fast decay:
+-- --   t    | result (bounces=2, damping=0.3)
+-- --  ------|--------------------------------
+-- --  0.75  | 98.5   (quick first bounce)
+-- --  0.90  | 99.8   (small second bounce)
+-- --  1.00  | 100.0  (settled quickly)
+--
+-- -- Example with Colors (bouncing color transition red → blue):
+-- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
+-- local color2 = TEN.Color(0, 0, 255, 255)  -- Blue
+-- 
+-- --   t    | R   | G | B   (bouncing color)
+-- --  ------|-----|---|-----
+-- --  0.00  | 255 | 0 | 0
+-- --  0.50  | 127 | 0 | 127
+-- --  0.75  | 5   | 0 | 250  (approaching blue with bounce)
+-- --  0.85  | 10  | 0 | 245  (bounce back slightly)
+-- --  1.00  | 0   | 0 | 255  (settled at blue)
+-- local bounceColor = LuaUtil.Bounce(color1, color2, 0.75, 4, 0.5)
+--
+-- -- Example with Vec3 (ball bouncing toward ground):
+-- local startPos = TEN.Vec3(0, 1000, 0)  -- High in air
+-- local endPos = TEN.Vec3(0, 0, 0)       -- Ground level
+-- 
+-- --   t    | X | Y     | Z (bouncing ball)
+-- --  ------|---|-------|---
+-- --  0.00  | 0 | 1000  | 0
+-- --  0.50  | 0 | 500   | 0   (falling)
+-- --  0.75  | 0 | 20    | 0   (first bounce up)
+-- --  0.85  | 0 | 5     | 0   (second smaller bounce)
+-- --  0.95  | 0 | 1     | 0   (tiny final bounce)
+-- --  1.00  | 0 | 0     | 0   (settled on ground)
+-- local bouncePos = LuaUtil.Bounce(startPos, endPos, 0.75, 4, 0.5)
+--
+-- -- Example with Rotation (door slamming with bounces):
+-- local rot1 = TEN.Rotation(0, 90, 0)   -- Door open
+-- local rot2 = TEN.Rotation(0, 0, 0)    -- Door closed
+-- 
+-- --   t    | X | Y    | Z (door slamming)
+-- --  ------|---|------|---
+-- --  0.00  | 0 | 90   | 0
+-- --  0.50  | 0 | 45   | 0   (closing)
+-- --  0.75  | 0 | 2    | 0   (first impact, bounces open slightly)
+-- --  0.85  | 0 | 0.5  | 0   (second bounce)
+-- --  0.95  | 0 | 0.1  | 0   (final tiny bounce)
+-- --  1.00  | 0 | 0    | 0   (fully closed)
+-- local bounceRot = LuaUtil.Bounce(rot1, rot2, 0.75, 3, 0.4)
+--
+-- -- Practical example: Dropping item with realistic bounce physics
+-- local item = TEN.Objects.GetMoveableByName("dropped_item")
+-- local startPos = item:GetPosition()
+-- local groundY = 0  -- Ground level Y coordinate
+-- local endPos = TEN.Vec3(startPos.x, groundY, startPos.z)
+-- local animationDuration = LuaUtil.SecondsToFrames(2.0)  -- 2 second drop
+-- local currentFrame = 0
+-- LevelFuncs.OnLoop = function()
+--     if currentFrame <= animationDuration then
+--         local t = currentFrame / animationDuration
+--         -- Item falls and bounces realistically on impact:
+--         -- - Falls smoothly toward ground
+--         -- - First impact creates largest bounce
+--         -- - Each subsequent bounce is smaller
+--         -- - Eventually settles on ground
+--         local pos = LuaUtil.Bounce(startPos, endPos, t, 5, 0.6)
+--         item:SetPosition(pos)
+--         
+--         -- Optional: Play impact sound on each bounce peak
+--         -- (detect when position Y changes direction)
+--         
+--         currentFrame = currentFrame + 1
+--     end
+-- end
+LuaUtil.Bounce = function(a, b, t, bounces, damping)
+    if not I.IsNumber(t) then
+        TEN.Util.PrintLog("Error in LuaUtil.Bounce: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    -- Set default values and validate optional parameters
+    bounces = bounces or 4
+    damping = damping or 0.5
+
+    if not I.IsNumber(bounces) or not I.IsNumber(damping) then
+        TEN.Util.PrintLog("Error in LuaUtil.Bounce: bounces and damping must be numbers.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    -- Validate bounces (must be positive integer)
+    if bounces < 1 then
+        TEN.Util.PrintLog("Warning in LuaUtil.Bounce: bounces should be >= 1. Using 1.", TEN.Util.LogLevel.WARNING)
+        bounces = 1
+    end
+
+    -- Validate damping (0.0 to 1.0 range)
+    if damping < 0.0 or damping > 1.0 then
+        TEN.Util.PrintLog("Warning in LuaUtil.Bounce: damping should be between 0.0 and 1.0. Clamping.", TEN.Util.LogLevel.WARNING)
+        damping = I.max(0.0, I.min(1.0, damping))
+    end
+
+    -- Clamp t to [0, 1]
+    t = I.max(0, I.min(1, t))
+
+    -- Handle edge cases
+    if t == 0 then
+        return a
+    elseif t == 1 then
+        return b
+    end
+
+    -- Bounce formula:
+    -- Uses exponential decay combined with sine wave for bounce oscillations
+    -- Formula: easedT = 1 - (cos(t * π * bounces) * (1 - t)^(1/damping))
+    -- 
+    -- The formula works as follows:
+    -- 1. cos(t * π * bounces): Creates oscillations (bounces)
+    -- 2. (1 - t)^(1/damping): Exponential decay envelope
+    --    - damping controls decay speed
+    --    - Lower damping = faster energy loss
+    --    - Higher damping = longer bounces
+    -- 3. Multiply them: Bounces that decrease in amplitude
+    -- 4. (1 - result): Invert so we approach target value instead of 0
+    
+    local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
+    local oscillation = I.abs(math.cos(t * I.pi * bounces))
+    local easedT = 1 - (oscillation * decay)
+
+    return F.InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
+end
+
+--- Impact interpolation for collision effects between surfaces.
+-- Creates sharp, repeating collision animations ideal for objects hitting each other.
+-- Perfect for slamming doors, colliding objects, shutters closing, and impact sequences.
+-- Unlike Bounce (which simulates falling/bouncing with energy decay), Impact simulates
+-- two surfaces repeatedly colliding with controlled oscillations and sharp transitions.
+-- Uses a sawtooth wave pattern with exponential decay for realistic collision physics.
+-- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
+-- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
+-- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam[opt=3] float impacts Number of collision impacts (default: 3). Higher values = more collisions before settling.
+-- @tparam[opt=0.6] float intensity Impact strength/separation distance (default: 0.6, range: 0.0-1.0). Higher values = surfaces separate more between impacts.
+-- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value with impact effect. If an error occurs, returns value `a`.
+-- @usage
+-- -- Most common usage (numbers with default parameters):
+-- local impactValue = LuaUtil.Impact(0, 100, 0.75) -- Result: ~100 with sharp collision oscillations
+--
+-- -- Demonstration of impact progression (0 to 10, impacts=3, intensity=0.6):
+-- --   t    | result
+-- --  ------|--------
+-- --  0.00  | 0.00
+-- --  0.30  | 3.00   (moving toward target)
+-- --  0.60  | 8.50   (approaching fast)
+-- --  0.70  | 10.00  (FIRST IMPACT - reaches target)
+-- --  0.75  | 9.40   (surfaces separate)
+-- --  0.78  | 10.00  (SECOND IMPACT)
+-- --  0.82  | 9.80   (smaller separation)
+-- --  0.88  | 10.00  (THIRD IMPACT)
+-- --  0.95  | 9.95   (tiny separation)
+-- --  1.00  | 10.00  (locked in place)
+--
+-- -- Comparison: Bounce vs Impact behavior
+-- -- Bounce: Smooth oscillations with gradual decay (like a ball)
+-- --   0.70 → 9.70 (smooth approach)
+-- --   0.75 → 9.82 (gentle bounce)
+-- --   0.85 → 9.95 (smooth decay)
+-- --
+-- -- Impact: Sharp transitions with controlled collisions (like doors)
+-- --   0.70 → 10.00 (hits target)
+-- --   0.75 → 9.40 (sharp rebound)
+-- --   0.78 → 10.00 (hits again)
+--
+-- -- Example with more impacts (mechanical shutters):
+-- local mechanicalImpact = LuaUtil.Impact(0, 100, 0.8, 5, 0.5)
+-- -- More collisions with medium intensity:
+-- --   t    | result (impacts=5, intensity=0.5)
+-- --  ------|-----------------------------------
+-- --  0.65  | 95.0   (approaching)
+-- --  0.70  | 100.0  (impact 1)
+-- --  0.73  | 97.5   (separate)
+-- --  0.76  | 100.0  (impact 2)
+-- --  0.82  | 99.0   (impact 3)
+-- --  0.90  | 99.7   (impact 4)
+-- --  0.95  | 99.9   (impact 5)
+-- --  1.00  | 100.0  (locked)
+--
+-- -- Example with fewer impacts (heavy metal doors):
+-- local heavyImpact = LuaUtil.Impact(0, 100, 0.8, 2, 0.8)
+-- -- Fewer collisions but stronger separation:
+-- --   t    | result (impacts=2, intensity=0.8)
+-- --  ------|-----------------------------------
+-- --  0.70  | 100.0  (first impact)
+-- --  0.75  | 92.0   (strong rebound!)
+-- --  0.85  | 100.0  (second impact)
+-- --  0.92  | 96.0   (medium rebound)
+-- --  1.00  | 100.0  (settled)
+--
+-- -- Example with Vec3 (sliding doors slamming together):
+-- local leftStartPos = TEN.Vec3(-500, 0, 0)   -- Left door open
+-- local leftEndPos = TEN.Vec3(0, 0, 0)        -- Left door closed (center)
+-- local rightStartPos = TEN.Vec3(500, 0, 0)   -- Right door open
+-- local rightEndPos = TEN.Vec3(0, 0, 0)       -- Right door closed (center)
+-- 
+-- --   t    | Left X | Right X (doors colliding)
+-- --  ------|--------|----------
+-- --  0.00  | -500   | 500      (doors open)
+-- --  0.60  | -100   | 100      (closing fast)
+-- --  0.70  | 0      | 0        (FIRST COLLISION!)
+-- --  0.75  | -15    | 15       (bounce apart)
+-- --  0.80  | 0      | 0        (SECOND COLLISION!)
+-- --  0.90  | -3     | 3        (tiny separation)
+-- --  1.00  | 0      | 0        (locked together)
+-- local leftPos = LuaUtil.Impact(leftStartPos, leftEndPos, 0.75, 3, 0.6)
+-- local rightPos = LuaUtil.Impact(rightStartPos, rightEndPos, 0.75, 3, 0.6)
+--
+-- -- Example with Rotation (trap door slamming shut):
+-- local rot1 = TEN.Rotation(0, 90, 0)   -- Door vertical (open)
+-- local rot2 = TEN.Rotation(0, 0, 0)    -- Door horizontal (closed)
+-- 
+-- --   t    | X | Y    | Z (trap door slamming)
+-- --  ------|---|------|---
+-- --  0.00  | 0 | 90   | 0   (open)
+-- --  0.60  | 0 | 20   | 0   (falling fast)
+-- --  0.70  | 0 | 0    | 0   (SLAMS onto frame)
+-- --  0.75  | 0 | 5    | 0   (bounces up)
+-- --  0.82  | 0 | 0    | 0   (hits frame again)
+-- --  0.90  | 0 | 1    | 0   (tiny bounce)
+-- --  1.00  | 0 | 0    | 0   (locked shut)
+-- local impactRot = LuaUtil.Impact(rot1, rot2, 0.75, 3, 0.7)
+--
+-- -- Example with Color (flickering light on impact):
+-- local color1 = TEN.Color(0, 0, 0, 255)      -- Light off (black)
+-- local color2 = TEN.Color(255, 200, 100, 255) -- Light on (warm white)
+-- 
+-- --   t    | R   | G   | B   (light flickering on impact)
+-- --  ------|-----|-----|-----
+-- --  0.00  | 0   | 0   | 0   (off)
+-- --  0.70  | 255 | 200 | 100 (turns on)
+-- --  0.75  | 200 | 150 | 70  (flickers)
+-- --  0.82  | 255 | 200 | 100 (bright again)
+-- --  0.90  | 240 | 190 | 95  (tiny flicker)
+-- --  1.00  | 255 | 200 | 100 (stable)
+-- local impactColor = LuaUtil.Impact(color1, color2, 0.75, 3, 0.5)
+--
+-- -- Practical example: Stone door slamming with impacts
+-- local stoneDoor = TEN.Objects.GetMoveableByName("stone_door")
+-- local startPos = stoneDoor:GetPosition()
+-- local endPos = startPos + TEN.Vec3(0, -512, 0)  -- Door drops 512 units
+-- local animationDuration = LuaUtil.SecondsToFrames(1.5)  -- 1.5 second slam
+-- local currentFrame = 0
+-- local soundPlayed = {}  -- Track which impacts played sounds
+-- LevelFuncs.OnLoop = function()
+--     if currentFrame <= animationDuration then
+--         local t = currentFrame / animationDuration
+--         
+--         -- Door slams down with multiple impacts on the frame:
+--         -- 1. Falls rapidly toward closed position
+--         -- 2. First impact when it hits the frame (loud sound)
+--         -- 3. Bounces up slightly and hits again (medium sound)
+--         -- 4. Final small bounce (quiet sound)
+--         -- 5. Locks in closed position
+--         local pos = LuaUtil.Impact(startPos, endPos, t, 3, 0.7)
+--         stoneDoor:SetPosition(pos)
+--         
+--         -- Detect impacts by checking when door reaches endPos
+--         -- (can detect by comparing current Y with previous frame)
+--         -- Play sound effect on each impact
+--         
+--         currentFrame = currentFrame + 1
+--     end
+-- end
+--
+-- -- Practical example: Double doors slamming shut from both sides
+-- local leftDoor = TEN.Objects.GetMoveableByName("door_left")
+-- local rightDoor = TEN.Objects.GetMoveableByName("door_right")
+-- local leftStart = leftDoor:GetPosition()
+-- local rightStart = rightDoor:GetPosition()
+-- 
+-- -- Calculate center point where doors meet
+-- local centerX = (leftStart.x + rightStart.x) / 2
+-- local leftEnd = TEN.Vec3(centerX, leftStart.y, leftStart.z)
+-- local rightEnd = TEN.Vec3(centerX, rightStart.y, rightStart.z)
+-- 
+-- local animationDuration = LuaUtil.SecondsToFrames(2.0)
+-- local currentFrame = 0
+-- local impactCount = 4  -- 4 collisions between doors
+-- local impactIntensity = 0.6  -- Medium separation on impact
+-- 
+-- LevelFuncs.OnLoop = function()
+--     if currentFrame <= animationDuration then
+--         local t = currentFrame / animationDuration
+--         
+--         -- Both doors move toward center using Impact interpolation:
+--         -- 1. Doors accelerate toward each other
+--         -- 2. First collision at center (BANG!)
+--         -- 3. Doors separate slightly and collide again
+--         -- 4. Multiple impacts with decreasing separation
+--         -- 5. Finally lock together at center
+--         
+--         local leftPos = LuaUtil.Impact(leftStart, leftEnd, t, impactCount, impactIntensity)
+--         local rightPos = LuaUtil.Impact(rightStart, rightEnd, t, impactCount, impactIntensity)
+--         
+--         leftDoor:SetPosition(leftPos)
+--         rightDoor:SetPosition(rightPos)
+--         
+--         -- Optional: Calculate distance between doors to detect collisions
+--         local distance = math.abs(leftPos.x - rightPos.x)
+--         -- When distance is very small, doors are colliding - play sound
+--         
+--         currentFrame = currentFrame + 1
+--     end
+-- end
+LuaUtil.Impact = function(a, b, t, impacts, intensity)
+    if not I.IsNumber(t) then
+        TEN.Util.PrintLog("Error in LuaUtil.Impact: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    -- Set default values and validate optional parameters
+    impacts = impacts or 3
+    intensity = intensity or 0.6
+
+    if not I.IsNumber(impacts) or not I.IsNumber(intensity) then
+        TEN.Util.PrintLog("Error in LuaUtil.Impact: impacts and intensity must be numbers.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    -- Validate impacts (must be positive integer)
+    if impacts < 1 then
+        TEN.Util.PrintLog("Warning in LuaUtil.Impact: impacts should be >= 1. Using 1.", TEN.Util.LogLevel.WARNING)
+        impacts = 1
+    end
+
+    -- Validate intensity (0.0 to 1.0 range)
+    if intensity < 0.0 or intensity > 1.0 then
+        TEN.Util.PrintLog("Warning in LuaUtil.Impact: intensity should be between 0.0 and 1.0. Clamping.", TEN.Util.LogLevel.WARNING)
+        intensity = I.max(0.0, I.min(1.0, intensity))
+    end
+
+    -- Clamp t to [0, 1]
+    t = I.max(0, I.min(1, t))
+
+    -- Handle edge cases
+    if t == 0 then
+        return a
+    elseif t == 1 then
+        return b
+    end
+
+    -- Impact formula:
+    -- Uses sawtooth wave for sharp collision transitions
+    -- Formula: easedT = 1 - (sawtoothWave * decay * intensity)
+    -- 
+    -- The formula works as follows:
+    -- 1. Base progress: Linear interpolation toward target
+    -- 2. Sawtooth wave: Creates sharp peaks/valleys for collision points
+    --    - Ramps up quickly (surfaces approaching)
+    --    - Drops sharply (impact and separation)
+    -- 3. Exponential decay: Reduces impact amplitude over time
+    -- 4. Intensity: Controls how far surfaces separate after impact
+    
+    -- Calculate sawtooth wave (0 to 1 repeating with sharp drops)
+    local phase = (t * impacts) % 1
+    
+    -- Create decay envelope (impacts weaken over time)
+    local decay = (1 - t) ^ 2  -- Quadratic decay for smooth reduction
+    
+    -- Sawtooth creates sharp transitions:
+    -- - phase approaches 1: surfaces coming together
+    -- - phase resets to 0: IMPACT (sharp transition)
+    -- - phase rises again: surfaces separating
+    local sawtoothWave = phase
+    
+    -- Apply impact oscillation with decay
+    local oscillation = sawtoothWave * decay * intensity
+    
+    -- Final eased value: approach target (1) with impact oscillations
+    local easedT = 1 - oscillation
+
+    return F.InterpolateValues(a, b, easedT, "LuaUtil.Impact")
 end
 
 --- Table functions.
