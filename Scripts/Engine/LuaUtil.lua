@@ -46,6 +46,7 @@ LevelVars.Engine.LuaUtil._Internal = {
     randomseed = math.randomseed,
     abs = math.abs,
     sin = math.sin,
+    cos = math.cos,
     asin = math.asin,
     atan = math.atan,
     deg = math.deg,
@@ -2686,7 +2687,7 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     -- 4. (1 - result): Invert so we approach target value instead of 0
     
     local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
-    local oscillation = I.abs(math.cos(t * I.pi * bounces))
+    local oscillation = I.abs(I.cos(t * I.pi * bounces))
     local easedT = 1 - (oscillation * decay)
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
