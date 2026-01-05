@@ -777,15 +777,19 @@ namespace TEN::Renderer
 		int invObjectID = g_Gui.ConvertObjectToInventoryItem(pickup.ObjectID);
 
 		// Draw display pickup.
-		DrawObjectIn2DSpace(pickup.ObjectID, pos, orient, scale, 1.0f, InventoryObjectTable[invObjectID].MeshBits);
+		DrawObjectIn2DSpace(pickup.ObjectID, pos, orient, scale, opacity, InventoryObjectTable[invObjectID].MeshBits);
 
 		// Draw count string.
 		if (pickup.Count != 1)
 		{
 			auto countString = (pickup.Count != NO_VALUE) ? std::to_string(pickup.Count) : COUNT_STRING_INF;
-			auto countStringPos = pos + COUNT_STRING_OFFSET;
+			auto countStringPos = pickup.Position + COUNT_STRING_OFFSET;
+			auto countStringPrevPos = pickup.PrevPosition + COUNT_STRING_OFFSET;
+			
+			auto color = Color(PRINTSTRING_COLOR_WHITE);
+			color.w = opacity;
 
-			AddString(countString, countStringPos, Color(PRINTSTRING_COLOR_WHITE), pickup.StringScale, SF());
+			AddString(countString, countStringPos, countStringPrevPos, Vector2::Zero, color, pickup.StringScale, SF());
 		}
 	}
 
@@ -830,6 +834,7 @@ namespace TEN::Renderer
 		}
 
 		auto pos = _viewportToolkit.Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
+		auto color = Vector4(1.0f, 1.0f, 1.0f, opacity);
 
 		// Set vertex buffer.
 		_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
@@ -856,7 +861,7 @@ namespace TEN::Renderer
 
 		auto skinMode = GetSkinningMode(*moveableObject, object.skinIndex);
 
-		_stItem.Color = Vector4::One;
+		_stItem.Color = color;
 		_stItem.AmbientLight = g_DrawItems.GetAmbientLight();;
 		_stItem.Skinned = (int)skinMode;
 
@@ -874,7 +879,7 @@ namespace TEN::Renderer
 			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
 			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
 
-			// Disegna the skin mesh
+			// Draw the skin mesh.
 			const auto skinMesh = GetMesh(object.skinIndex);
 
 			for (int animated = 0; animated < 2; animated++)
@@ -884,15 +889,12 @@ namespace TEN::Renderer
 					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 						continue;
 
-					SetBlendMode(BlendMode::Opaque);
+					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
 					SetCullMode(CullMode::CounterClockwise);
 					SetDepthState(DepthState::Write);
 
 					BindBucketTextures(bucket, TextureSource::Moveables, animated);
 					BindMaterial(bucket.MaterialIndex, false);
-
-					if (bucket.BlendMode != BlendMode::Opaque)
-						SetBlendMode(bucket.BlendMode, true);
 
 					SetAlphaTest((bucket.BlendMode == BlendMode::AlphaTest) ? AlphaTestMode::GreatherThan : AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 
@@ -942,15 +944,12 @@ namespace TEN::Renderer
 					if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
 						continue;
 
-					SetBlendMode(BlendMode::Opaque);
+					SetBlendMode(GetBlendModeFromAlpha((bucket.BlendMode == BlendMode::AlphaTest) ? BlendMode::AlphaBlend : bucket.BlendMode, color.w));
 					SetCullMode(CullMode::CounterClockwise);
 					SetDepthState(DepthState::Write);
 
 					BindBucketTextures(bucket, TextureSource::Moveables, animated);
 					BindMaterial(bucket.MaterialIndex, false);
-
-					if (bucket.BlendMode != BlendMode::Opaque)
-						SetBlendMode(bucket.BlendMode, true);
 
 					SetAlphaTest((bucket.BlendMode == BlendMode::AlphaTest) ? AlphaTestMode::GreatherThan : AlphaTestMode::None, ALPHA_TEST_THRESHOLD);
 

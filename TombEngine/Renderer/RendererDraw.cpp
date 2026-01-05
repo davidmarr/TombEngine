@@ -1993,10 +1993,10 @@ namespace TEN::Renderer
 
 		// Draw 3D HUD elements separately here because objects may use emissive materials and require glow.
 		if (renderMode == SceneRenderMode::Full && g_GameFlow->LastGameStatus == GameStatus::Normal)
-			{
-				g_Hud.Draw3D();
-				g_DrawItems.Draw();
-			}
+		{
+			g_Hud.Draw3D();
+			g_DrawItems.Draw();
+		}
 
 		_doingFullscreenPass = true;
 
