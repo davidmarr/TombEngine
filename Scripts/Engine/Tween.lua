@@ -27,14 +27,16 @@
 -- Advanced usage with ping-pong mode and callbacks for updating object position:
 --
 --	-- Define callback functions in LevelFuncs 
---	LevelFuncs.MyTweenOnUpdate = function(value, progress)
+--	LevelFuncs.MyTweenOnUpdate = function(value, progress, tween)
 --
 --      -- Get the object to move
 --	    local bridge = TEN.Objects.GetMoveableByName("bridge_flat_6")
 --	    bridge:SetPosition(value)
 --
---      -- Optional: print progress to log
---	    TEN.Util.PrintLog("Tween Update: Value=" .. tostring(value) .. " Progress=" .. tostring(progress))
+--      -- Optional: use tween parameter for advanced control
+--	    if progress > 0.5 then
+--	        tween:SetEasing(Tween.Easing.BOUNCE)
+--	    end
 --	end
 --
 --	local myVecTween = Tween.Create{
@@ -271,6 +273,9 @@ Tween.Create = function(params)
     thisTween.shouldResetNextFrame = false
     thisTween.shouldFlipNextFrame = false
 
+    -- Cache wrapper to avoid runtime allocations
+    thisTween.wrapper = setmetatable({ name = params.name }, Tween)
+
     -- Callbacks
     thisTween.callbacks = {
         onStart = Type.IsLevelFunc(params.onStart) and params.onStart or nil,
@@ -285,7 +290,7 @@ Tween.Create = function(params)
     if thisTween.autoStart then
         thisTween.hasStarted = true
         if thisTween.callbacks.onStart then
-            thisTween.callbacks.onStart()
+            thisTween.callbacks.onStart(thisTween.wrapper)
         end
     end
 
@@ -389,7 +394,7 @@ function Tween:Start()
     if not t.hasStarted then
         t.hasStarted = true
         if t.callbacks.onStart then
-            t.callbacks.onStart()
+            t.callbacks.onStart(self)
         end
     end
 end
@@ -414,7 +419,7 @@ function Tween:Restart()
     t.shouldFlipNextFrame = false
     -- Callback ON_START (Restart always triggers onStart)
     if t.callbacks.onStart then
-        t.callbacks.onStart()
+        t.callbacks.onStart(self)
     end
 end
 
@@ -745,8 +750,12 @@ end
 -- @tparam function func Callback function in LevelFuncs hierarchy
 -- @usage
 -- -- Define callback function in LevelFuncs
--- LevelFuncs.MyTweenOnUpdate = function(value, progress)
+-- LevelFuncs.MyTweenOnUpdate = function(value, progress, tween)
 --     TEN.Util.PrintLog("Tween Update: Value=" .. tostring(value) .. " Progress=" .. tostring(progress))
+--     -- Optional: use tween parameter for dynamic control
+--     if value > 50 then
+--         tween:SetTo(Lara:GetAir())
+--     end
 -- end
 -- -- Set the callback
 -- if Tween.IfExists("myTween") then
@@ -827,12 +836,12 @@ end
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
 -- @tfield[opt] table easingParams Optional parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used. For BOUNCE expects `bounces` (integer) and `damping` (number) fields, see `LuaUtil.Bounce`.
 -- @tfield[opt=false] bool seamlessLoop When true, RESTART mode uses seamless loop transitions for cyclic values like rotations (0-360°). When false (default), uses precise reset for better accuracy with Vec3/Color. Only affects RESTART mode - PING_PONG always uses seamless transitions. Use true for smooth infinite rotations, false for precise positional loops.
--- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
--- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete
--- @tfield[opt] function onLoop function in LevelFuncs hierarchy called on loop
--- @tfield[opt] function onUpdate function in LevelFuncs hierarchy called on update
--- @tfield[opt] function onTo function in LevelFuncs hierarchy called on reaching 'to' value
--- @tfield[opt] function onFrom function in LevelFuncs hierarchy called on reaching 'from' value
+-- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start. Signature: `function(tween)`
+-- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete. Signature: `function(value, tween)`
+-- @tfield[opt] function onLoop function in LevelFuncs hierarchy called on loop. Signature: `function(value, tween)`
+-- @tfield[opt] function onUpdate function in LevelFuncs hierarchy called on update. Signature: `function(value, progress, tween)`
+-- @tfield[opt] function onTo function in LevelFuncs hierarchy called on reaching 'to' value. Signature: `function(value, tween)`
+-- @tfield[opt] function onFrom function in LevelFuncs hierarchy called on reaching 'from' value. Signature: `function(value, tween)`
 
 ---
 -- Costants for tween modes.
@@ -861,17 +870,17 @@ end
 ---
 -- Constants for tween callback types.
 -- @table CallbackType
--- @tfield "onStart" ON_START Called when the tween starts
--- @tfield "onComplete" ON_COMPLETE Called when the tween completes
--- @tfield "onLoop" ON_LOOP Called when the tween loops. For RESTART mode, called after reaching 'to' value. For PING_PONG mode, called after reaching 'to' or 'from' value.
--- @tfield "onUpdate" ON_UPDATE Called on each update/frame
--- @tfield "onTo" ON_TO Called when reaching the 'to' value
--- @tfield "onFrom" ON_FROM Called when reaching the 'from' value
+-- @tfield "onStart" ON_START Called when the tween starts. Signature: `function(tween)`
+-- @tfield "onComplete" ON_COMPLETE Called when the tween completes. Signature: `function(value, tween)`
+-- @tfield "onLoop" ON_LOOP Called when the tween loops. For RESTART mode, called after reaching 'to' value. For PING_PONG mode, called after reaching 'to' or 'from' value. Signature: `function(value, tween)`
+-- @tfield "onUpdate" ON_UPDATE Called on each update/frame. Signature: `function(value, progress, tween)`
+-- @tfield "onTo" ON_TO Called when reaching the 'to' value. Signature: `function(value, tween)`
+-- @tfield "onFrom" ON_FROM Called when reaching the 'from' value. Signature: `function(value, tween)`
 
 LevelFuncs.Engine.Tween.UpdateAll = function()
     local isInFreeze = TEN.Flow.GetFreezeMode() ~= TEN.Flow.FreezeMode.NONE
 
-    for _, t in pairs(LevelVars.Engine.Tween.tweens) do
+    for name, t in pairs(LevelVars.Engine.Tween.tweens) do
         if t.active and not t.paused then
             -- Check if should update based on updateMode and current freeze state
             local shouldUpdate = (t.updateMode == Tween.UpdateMode.ALWAYS) or
@@ -909,7 +918,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
 
                     -- Callback ON_UPDATE
                     if t.callbacks.onUpdate then
-                        t.callbacks.onUpdate(t.value, t.progress)
+                        t.callbacks.onUpdate(t.value, t.progress, t.wrapper)
                     end
 
                     -- Increment AFTER calculating the value
@@ -922,11 +931,11 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         -- Callback ON_TO or ON_FROM based on direction (common to all modes)
                         if t.direction == 1 then
                             if t.callbacks.onTo then
-                                t.callbacks.onTo(t.value)
+                                t.callbacks.onTo(t.value, t.wrapper)
                             end
                         else
                             if t.callbacks.onFrom then
-                                t.callbacks.onFrom(t.value)
+                                t.callbacks.onFrom(t.value, t.wrapper)
                             end
                         end
 
@@ -935,7 +944,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                             t.completed = true
                             -- Callback ON_COMPLETE
                             if t.callbacks.onComplete then
-                                t.callbacks.onComplete(t.value)
+                                t.callbacks.onComplete(t.value, t.wrapper)
                             end
                         else -- RESTART or PING_PONG
                             -- set deferred action
@@ -955,18 +964,18 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                                     t.shouldFlipNextFrame = false
                                     -- Callback ON_COMPLETE
                                     if t.callbacks.onComplete then
-                                        t.callbacks.onComplete(t.value)
+                                        t.callbacks.onComplete(t.value, t.wrapper)
                                     end
                                 else
                                     -- Not completed yet: call ON_LOOP
                                     if t.callbacks.onLoop then
-                                        t.callbacks.onLoop(t.value)
+                                        t.callbacks.onLoop(t.value, t.wrapper)
                                     end
                                 end
                             else
                                 -- Infinite loop: continue without counting. Call ON_LOOP
                                 if t.callbacks.onLoop then
-                                    t.callbacks.onLoop(t.value)
+                                    t.callbacks.onLoop(t.value, t.wrapper)
                                 end
                             end
                         end -- close mode check
