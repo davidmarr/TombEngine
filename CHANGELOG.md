@@ -32,7 +32,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Added new `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
-* Added `ambientOcclusion` parameter to graphics settings to force-disable ambient occlusion option.
+* Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
+* Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `DisplayStringOption.VERTICAL_BOTTOM` flag.
