@@ -20,6 +20,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect HYDRA rotation on activation and keeping its shadow after destroying it.
 * Fixed potential issues with PUNA_BOSS, TONY_BOSS, FISH_SWARM and WRAITH objects on savegame reloading.
 * Fixed WRAITH not using effects near walls and occasional issues with room transitions.
+* Fixed broken hardcoded camera when using the TURN_SWITCH.
 * Fixed weapon unholstering animation when selecting a weapon from the inventory for the first time.
 * Fixed original issue with incorrect arm orientation with unholstered weapons.
 * Fixed original issue with aiming stutter with targets nearly out of sight.
@@ -27,9 +28,11 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed water resurfacing threshold. The player will now resurface when half of the head is above the surface.
 * Fixed animated textures appearing incorrectly when also alpha blended faces were involved.
 * Fixed random textures appearing on enemy gunflashes.
+* Fixed flickering pickup highlighter item count in high FPS mode.
 
 ### Lua API changes
 * Added new `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
+* Added `ambientOcclusion` parameter to graphics settings to force-disable ambient occlusion option.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `DisplayStringOption.VERTICAL_BOTTOM` flag.

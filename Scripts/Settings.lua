@@ -29,6 +29,7 @@ local settings = Flow.Settings.new()
 	settings.Gameplay.targetObjectOcclusion = true
 	settings.Gameplay.enableInventory = true
 
+	settings.Graphics.ambientOcclusion = true
 	settings.Graphics.skinning = true
 	
 	settings.Hud.statusBars = true
