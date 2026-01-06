@@ -241,7 +241,7 @@ Tween.Create = function(params)
     end
     if params.easingParams and thisTween.easing == Tween.Easing.BOUNCE then
         -- bounces , damping
-        if not params.easingParams.bounces or not Type.IsInteger(params.easingParams.bounces) then
+        if not params.easingParams.bounces or params.easingParams.bounces % 1 ~= 0 then
             TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.bounces must be an integer. Using default value '4'", TEN.Util.LogLevel.WARNING)
             params.easingParams.bounces = 4
         end
@@ -914,7 +914,11 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     end
 
                     local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
-                    t.value = t.interpolation(t.from, t.to, effectiveProgress, t.easingParams)
+                    if t.easingParams then
+                        t.value = t.interpolation(t.from, t.to, effectiveProgress, table.unpack(t.easingParams))
+                    else
+                        t.value = t.interpolation(t.from, t.to, effectiveProgress)
+                    end
 
                     -- Callback ON_UPDATE
                     if t.callbacks.onUpdate then
