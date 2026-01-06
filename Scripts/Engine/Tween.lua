@@ -71,7 +71,8 @@ LevelVars.Engine.Tween.Interpolations = {
     LuaUtil.Smoothstep,
     LuaUtil.Smootherstep,
     LuaUtil.EaseInOut,
-    LuaUtil.Elastic
+    LuaUtil.Elastic,
+    LuaUtil.Bounce
 }
 
 Tween.Mode = {
@@ -87,7 +88,8 @@ Tween.Easing = {
     SMOOTHSTEP = 2,
     SMOOTHERSTEP = 3,
     EASE_IN_OUT = 4,
-    ELASTIC = 5
+    ELASTIC = 5,
+    BOUNCE = 6
 }
 
 Tween.Easing = LuaUtil.SetTableReadOnly(Tween.Easing)
@@ -217,18 +219,33 @@ Tween.Create = function(params)
 
     if params.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
         if not params.easingParams.edge0 or not Type.IsNumber(params.easingParams.edge0) then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge0 must be a number. Using default value '0'", TEN.Util.LogLevel.WARNING)
             params.easingParams.edge0 = 0
         end
         if not params.easingParams.edge1 or not Type.IsNumber(params.easingParams.edge1) then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge1 must be a number. Using default value '1'", TEN.Util.LogLevel.WARNING)
             params.easingParams.edge1 = 1
         end
     end
     if params.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
         if not params.easingParams.amplitude or not Type.IsNumber(params.easingParams.amplitude) then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.amplitude must be a number. Using default value '1.0'", TEN.Util.LogLevel.WARNING)
             params.easingParams.amplitude = 1.0
         end
         if not params.easingParams.period or not Type.IsNumber(params.easingParams.period) then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.period must be a number. Using default value '0.3'", TEN.Util.LogLevel.WARNING)
             params.easingParams.period = 0.3
+        end
+    end
+    if params.easingParams and thisTween.easing == Tween.Easing.BOUNCE then
+        -- bounces , damping
+        if not params.easingParams.bounces or not Type.IsInteger(params.easingParams.bounces) then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.bounces must be an integer. Using default value '4'", TEN.Util.LogLevel.WARNING)
+            params.easingParams.bounces = 4
+        end
+        if not params.easingParams.damping or not Type.IsNumber(params.easingParams.damping) then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.damping must be a number. Using default value '0.5'", TEN.Util.LogLevel.WARNING)
+            params.easingParams.damping = 0.5
         end
     end
     thisTween.easingParams = params.easingParams or nil
@@ -808,7 +825,7 @@ end
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt=nil] int loopCount Number of loops (nil for infinite). In RESTART mode, each loop is a complete from→to cycle. In PING_PONG mode, each loop is ONE DIRECTION (from→to or to→from). This follows DOTween/GSAP conventions.
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
--- @tfield[opt] table easingParams parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used.
+-- @tfield[opt] table easingParams Optional parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used. For BOUNCE expects `bounces` (integer) and `damping` (number) fields, see `LuaUtil.Bounce`.
 -- @tfield[opt=false] bool seamlessLoop When true, RESTART mode uses seamless loop transitions for cyclic values like rotations (0-360°). When false (default), uses precise reset for better accuracy with Vec3/Color. Only affects RESTART mode - PING_PONG always uses seamless transitions. Use true for smooth infinite rotations, false for precise positional loops.
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete
@@ -832,6 +849,7 @@ end
 -- @tfield 3 SMOOTHERSTEP Smootherstep interpolation. See `LuaUtil.Smootherstep`.
 -- @tfield 4 EASE_IN_OUT Ease in-out interpolation. See `LuaUtil.EaseInOut`.
 -- @tfield 5 ELASTIC Elastic interpolation. See `LuaUtil.Elastic`.
+-- @tfield 6 BOUNCE Bounce interpolation. See `LuaUtil.Bounce`.
 
 ---
 -- Constants for tween update modes.
