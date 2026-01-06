@@ -214,7 +214,7 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(GraphicsSettings, ScriptReserved_GraphicsSettings),
 
 			/// Enable ambient occlusion.
-			// @tfield bool ambientOcclusion If disabled, ambient occlusion setting will be forced to off, and corresponding menu entry will disappear from the display settings dialog.
+			// @tfield bool ambientOcclusion If disabled, ambient occlusion setting will be forced to off, and corresponding menu entry in the Display Settings dialog will be grayed out.
 			"ambientOcclusion", &GraphicsSettings::AmbientOcclusion,
 
 			/// Enable skinning.
