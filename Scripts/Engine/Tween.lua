@@ -913,7 +913,10 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         t.progress = 1.0
                     end
 
+                    -- Determine effective progress based on direction
                     local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
+
+                    -- Calculate value
                     if t.easingParams then
                         t.value = t.interpolation(t.from, t.to, effectiveProgress, table.unpack(t.easingParams))
                     else
