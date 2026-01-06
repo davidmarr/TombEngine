@@ -213,6 +213,10 @@ namespace TEN::Scripting
 			sol::call_constructor, sol::constructors<GraphicsSettings()>(),
 			sol::meta_function::new_index, NewIndexErrorMaker(GraphicsSettings, ScriptReserved_GraphicsSettings),
 
+			/// Enable ambient occlusion.
+			// @tfield bool ambientOcclusion If disabled, ambient occlusion setting will be forced to off, and corresponding menu entry will disappear from the display settings dialog.
+			"ambientOcclusion", &GraphicsSettings::AmbientOcclusion,
+
 			/// Enable skinning.
 			// @tfield bool skinning If enabled, skinning will be used for animated objects with skinned mesh. Disable to force classic TR workflow.
 			"skinning", &GraphicsSettings::Skinning);

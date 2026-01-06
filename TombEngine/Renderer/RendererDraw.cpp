@@ -1921,7 +1921,7 @@ namespace TEN::Renderer
 			cameraConstantBuffer.FogColor = Vector4::Zero;
 		}
 
-		cameraConstantBuffer.AmbientOcclusion = g_Configuration.EnableAmbientOcclusion ? 1 : 0;
+		cameraConstantBuffer.AmbientOcclusion = (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Configuration.EnableAmbientOcclusion) ? 1 : 0;
 		cameraConstantBuffer.AmbientOcclusionExponent = 2;
 
 		// Set fog bulbs.
@@ -1959,7 +1959,7 @@ namespace TEN::Renderer
 		DoRenderPass(RendererPass::GBuffer, view, true);
 
 		// Calculate ambient occlusion.
-		if (g_Configuration.EnableAmbientOcclusion)
+		if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Configuration.EnableAmbientOcclusion)
 			CalculateSSAO(view);
 
 		_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -2427,7 +2427,7 @@ namespace TEN::Renderer
 				_shaders.Bind(Shader::Items);
 			}
 
-			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
+			if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
 				BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
 			}
@@ -2601,7 +2601,7 @@ namespace TEN::Renderer
 			_context->IASetVertexBuffers(0, 1, _staticsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
 			_context->IASetIndexBuffer(_staticsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
-			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
+			if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
 				BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
 			}
@@ -2687,7 +2687,7 @@ namespace TEN::Renderer
 			_context->IASetVertexBuffers(0, 1, _staticsVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
 			_context->IASetIndexBuffer(_staticsIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 			
-			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
+			if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
 				BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
 			}
@@ -2918,7 +2918,7 @@ namespace TEN::Renderer
 				UpdateConstantBuffer(_stShadowMap, _cbShadowMap);
 			}
 
-			if (g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
+			if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Configuration.EnableAmbientOcclusion && rendererPass != RendererPass::GBuffer)
 			{
 				BindRenderTargetAsTexture(TextureRegister::SSAO, &_SSAOBlurredRenderTarget, SamplerStateRegister::PointWrap);
 			}

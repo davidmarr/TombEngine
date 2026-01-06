@@ -552,8 +552,14 @@ namespace TEN::Gui
 				break;
 
 			case DisplaySettingsOption::AmbientOcclusion:
-				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
-				CurrentSettings.Configuration.EnableAmbientOcclusion = !CurrentSettings.Configuration.EnableAmbientOcclusion;
+				if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion)
+				{
+					SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+					CurrentSettings.Configuration.EnableAmbientOcclusion = !CurrentSettings.Configuration.EnableAmbientOcclusion;
+				}
+				else
+					SoundEffect(SFX_TR4_LARA_NO_ENGLISH, nullptr, SoundEnvironment::Always);
+
 				break;
 
 			case DisplaySettingsOption::HighFramerate:
@@ -610,8 +616,14 @@ namespace TEN::Gui
 				break;
 
 			case DisplaySettingsOption::AmbientOcclusion:
-				SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
-				CurrentSettings.Configuration.EnableAmbientOcclusion = !CurrentSettings.Configuration.EnableAmbientOcclusion;
+				if (g_GameFlow->GetSettings()->Graphics.AmbientOcclusion)
+				{
+					SoundEffect(SFX_TR4_MENU_CHOOSE, nullptr, SoundEnvironment::Always);
+					CurrentSettings.Configuration.EnableAmbientOcclusion = !CurrentSettings.Configuration.EnableAmbientOcclusion;
+				}
+				else
+					SoundEffect(SFX_TR4_LARA_NO_ENGLISH, nullptr, SoundEnvironment::Always);
+
 				break;
 
 			case DisplaySettingsOption::HighFramerate:

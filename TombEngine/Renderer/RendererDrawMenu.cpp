@@ -212,7 +212,8 @@ namespace TEN::Renderer
 
 			// Enable SSAO
 			AddString(MenuLeftSideEntry, y, g_GameFlow->GetString(STRING_AMBIENT_OCCLUSION), PRINTSTRING_COLOR_ORANGE, SF(titleOption == 6));
-			AddString(MenuRightSideEntry, y, Str_Enabled(g_Gui.GetCurrentSettings().Configuration.EnableAmbientOcclusion), PRINTSTRING_COLOR_WHITE, SF(titleOption == 6));
+			AddString(MenuRightSideEntry, y, Str_Enabled(g_GameFlow->GetSettings()->Graphics.AmbientOcclusion && g_Gui.GetCurrentSettings().Configuration.EnableAmbientOcclusion),
+				g_GameFlow->GetSettings()->Graphics.AmbientOcclusion ? PRINTSTRING_COLOR_WHITE : PRINTSTRING_COLOR_GRAY, SF(titleOption == 6));
 			GetNextLinePosition(&y);
 
 			// Enable high framerate
