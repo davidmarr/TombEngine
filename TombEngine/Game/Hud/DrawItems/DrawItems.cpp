@@ -39,7 +39,7 @@ namespace TEN::Hud
 		return _targetPosition;
 	}
 
-	float DrawItemsController::GetFOV() const
+	float DrawItemsController::GetFov() const
 	{
 		return _fov;
 	}
@@ -54,9 +54,9 @@ namespace TEN::Hud
 		return Vector3::Lerp(_prevTargetPosition, _targetPosition, alpha);
 	}
 
-	float DrawItemsController::GetInterpolatedFoV(float alpha) const
+	float DrawItemsController::GetInterpolatedFov(float alpha) const
 	{
-		return Lerp(_prevFOV, _fov, alpha);
+		return Lerp(_prevFov, _fov, alpha);
 	}
 
 	Vector4 DrawItemsController::GetAmbientLight() const
@@ -83,7 +83,7 @@ namespace TEN::Hud
 	void DrawItemsController::SetFOV(const float& fov, bool disableInterpolation)
 	{
 		if (disableInterpolation)
-			_prevFOV = fov;
+			_prevFov = fov;
 
 		_fov = fov;
 	}
@@ -203,18 +203,19 @@ namespace TEN::Hud
 		{
 			_prevCameraPosition = Vector3(0.0f, 0.0f, -BLOCK(1));
 			_prevTargetPosition = Vector3::Zero;
-			_prevFOV = ANGLE(80.0f);
+			_prevFov = ANGLE(80.0f);
 		}
 
 		_cameraPosition = Vector3(0.0f, 0.0f, -BLOCK(1));
 		_targetPosition = Vector3::Zero;
 		_fov = ANGLE(80.0f);
+		_ambientLight = Vector4(1.0f, 1.0f, 0.5f, 1.0f);
 	}
 
 	void DrawItemsController::StoreCameraInterpolationData()
 	{
 		_prevCameraPosition = _cameraPosition;
 		_prevTargetPosition = _targetPosition;
-		_prevFOV = _fov;
+		_prevFov = _fov;
 	}
 }

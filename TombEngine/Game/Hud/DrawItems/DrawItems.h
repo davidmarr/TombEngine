@@ -21,7 +21,7 @@ namespace TEN::Hud
 		Vector4                  _ambientLight = Vector4(1.0f, 1.0f, 0.5f, 1.0f);
 		
 		float _fov = ANGLE(80.0f);
-		float _prevFOV = ANGLE(80.0f);
+		float _prevFov = ANGLE(80.0f);
 
 		Vector3 _cameraPosition     = Vector3(0.0f, 0.0f, -BLOCK(1));
 		Vector3 _targetPosition     = Vector3::Zero;
@@ -35,10 +35,10 @@ namespace TEN::Hud
 		std::vector<DisplayItem>& GetItems();
 		Vector3                   GetCameraPosition() const;
 		Vector3                   GetCameraTargetPosition() const;
-		float					  GetFOV() const;
+		float					  GetFov() const;
 		Vector3                   GetInterpolatedCameraPosition(float alpha) const;
 		Vector3                   GetInterpolatedCameraTargetPosition(float alpha) const;
-		float					  GetInterpolatedFoV(float alpha) const;
+		float					  GetInterpolatedFov(float alpha) const;
 		Vector4                   GetAmbientLight() const;
 
 		// Setters
