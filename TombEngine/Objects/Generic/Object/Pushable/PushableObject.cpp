@@ -125,7 +125,7 @@ namespace TEN::Entities::Generic
 			return;
 
 		// Check if OCB has changed and update characteristics if needed.
-		if (pushableItem.TriggerFlags != pushable.PreviousTriggerFlags)
+		if (pushableItem.TriggerFlags != pushable.PreviousTriggerFlags || JustLoaded)
 			UpdatePushableFromOCB(pushableItem);
 
 		auto prevPos = pushableItem.Pose.Position;
