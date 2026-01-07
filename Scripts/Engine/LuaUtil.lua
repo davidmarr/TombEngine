@@ -1850,6 +1850,11 @@ LuaUtil.LerpAngle = function(a, b, t, min, max)
         return a
     end
 
+    if min >= max then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: min must be less than max.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
     -- Clamp t to [0, 1]
     t = I.max(0, I.min(1, t))
 
