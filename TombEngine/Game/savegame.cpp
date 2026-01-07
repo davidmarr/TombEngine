@@ -44,6 +44,7 @@
 #include "Specific/savegame/flatbuffers/ten_savegame_generated.h"
 #include "Specific/trutils.h"
 #include "Specific/Video/Video.h"
+#include <Objects/Generic/Object/Pushable/PushableObject.h>
 
 using namespace flatbuffers;
 using namespace TEN::Collision::Floordata;
@@ -3010,6 +3011,9 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			pushable->EdgeAttribs[3].IsPullable = savedPushable->pushable_west_pullable();
 			pushable->EdgeAttribs[3].IsPushable = savedPushable->pushable_west_pushable();
 			pushable->EdgeAttribs[3].IsClimbable = savedPushable->pushable_west_climbable();
+
+			// Force recalculation of OCB-dependent characteristics.
+			UpdatePushableFromOCB(*item);
 		}
 		else if (savedItem->data_type() == Save::ItemData::Short)
 		{
