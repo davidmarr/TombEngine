@@ -169,7 +169,6 @@ Tween.Create = function(params)
         return nil
     end
     if params.loopCount and (not Type.IsNumber(params.loopCount) or params.loopCount <= 0) then
-        TEN.Util.PrintLog("Error in Tween.Create(): params.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount must be a positive integer or nil. Using default value 'nil'", TEN.Util.LogLevel.WARNING)
         params.loopCount = nil
     end
