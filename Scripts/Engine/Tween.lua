@@ -65,6 +65,11 @@ LevelFuncs.Engine.Tween.IsValidTweenValue = function(value)
            Type.IsVec2(value) or
            Type.IsVec3(value)
 end
+
+LevelFuncs.Engine.Tween.CheckEasingParams = function ()
+
+end
+
 -- Storage
 LevelVars.Engine.Tween = { tweens = {} }
 
