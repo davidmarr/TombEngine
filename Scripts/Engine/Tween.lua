@@ -170,7 +170,8 @@ Tween.Create = function(params)
     end
     if params.loopCount and (not Type.IsNumber(params.loopCount) or params.loopCount <= 0) then
         TEN.Util.PrintLog("Error in Tween.Create(): params.loopCount must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
-        return nil
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount must be a positive integer or nil. Using default value 'nil'", TEN.Util.LogLevel.WARNING)
+        params.loopCount = nil
     end
     if params.loopCount and params.loopCount % 1 ~= 0 then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
@@ -228,10 +229,15 @@ Tween.Create = function(params)
             TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge1 must be a number. Using default value '1'", TEN.Util.LogLevel.WARNING)
             params.easingParams.edge1 = 1
         end
+        if Type.IsNumber(params.easingParams.edge1) and Type.IsNumber(params.easingParams.edge0) and params.easingParams.edge1 - params.easingParams.edge0 == 0 then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge1 must be different from edge0. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
+            params.easingParams.edge0 = 0
+            params.easingParams.edge1 = 1
+        end
     end
     if params.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
-        if not params.easingParams.amplitude or not Type.IsNumber(params.easingParams.amplitude) then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.amplitude must be a number. Using default value '1.0'", TEN.Util.LogLevel.WARNING)
+        if not params.easingParams.amplitude or not Type.IsNumber(params.easingParams.amplitude) or params.easingParams.amplitude < 1 then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.amplitude must be a number >= 1. Using default value '1.0'", TEN.Util.LogLevel.WARNING)
             params.easingParams.amplitude = 1.0
         end
         if not params.easingParams.period or not Type.IsNumber(params.easingParams.period) then
@@ -240,17 +246,26 @@ Tween.Create = function(params)
         end
     end
     if params.easingParams and thisTween.easing == Tween.Easing.BOUNCE then
-        -- bounces , damping
-        if not params.easingParams.bounces or params.easingParams.bounces % 1 ~= 0 then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.bounces must be an integer. Using default value '4'", TEN.Util.LogLevel.WARNING)
+        if not params.easingParams.bounces or not Type.IsNumber(params.easingParams.bounces) or params.easingParams.bounces < 1 or params.easingParams.bounces % 1 ~= 0 then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.bounces must be an integer and >= 1. Using default value '4'", TEN.Util.LogLevel.WARNING)
             params.easingParams.bounces = 4
         end
-        if not params.easingParams.damping or not Type.IsNumber(params.easingParams.damping) then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.damping must be a number. Using default value '0.5'", TEN.Util.LogLevel.WARNING)
+        if not params.easingParams.damping or not Type.IsNumber(params.easingParams.damping) or params.easingParams.damping < 0 or params.easingParams.damping > 1 then
+            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.damping must be a number between 0 and 1. Using default value '0.5'", TEN.Util.LogLevel.WARNING)
             params.easingParams.damping = 0.5
         end
     end
-    thisTween.easingParams = params.easingParams or nil
+    if thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP then
+        thisTween.easingParams = {params.easingParams.edge0, params.easingParams.edge1}
+    end
+
+    if thisTween.easing == Tween.Easing.ELASTIC then
+        thisTween.easingParams = {params.easingParams.amplitude, params.easingParams.period}
+    end
+
+    if thisTween.easing == Tween.Easing.BOUNCE then
+        thisTween.easingParams = {params.easingParams.bounces, params.easingParams.damping}
+    end
     thisTween.loopCount = params.loopCount or nil
     thisTween.autoStart = Type.IsBoolean(params.autoStart) and params.autoStart or false
     thisTween.seamlessLoop = Type.IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
@@ -913,14 +928,11 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                         t.progress = 1.0
                     end
 
-                    -- Determine effective progress based on direction
-                    local effectiveProgress = t.direction == 1 and t.progress or (1.0 - t.progress)
-
-                    -- Calculate value
-                    if t.easingParams then
-                        t.value = t.interpolation(t.from, t.to, effectiveProgress, table.unpack(t.easingParams))
+                    -- Calculate value: swap from/to when going backwards to preserve easing curve
+                    if t.direction == 1 then
+                        t.value = t.interpolation(t.from, t.to, t.progress, t.easingParams and table.unpack(t.easingParams))
                     else
-                        t.value = t.interpolation(t.from, t.to, effectiveProgress)
+                        t.value = t.interpolation(t.to, t.from, t.progress, t.easingParams and table.unpack(t.easingParams))
                     end
 
                     -- Callback ON_UPDATE
