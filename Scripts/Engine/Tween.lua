@@ -66,8 +66,57 @@ LevelFuncs.Engine.Tween.IsValidTweenValue = function(value)
            Type.IsVec3(value)
 end
 
-LevelFuncs.Engine.Tween.CheckEasingParams = function ()
-
+LevelFuncs.Engine.Tween.CheckEasingParams = function (functionName, easing, easingParams)
+    if easing == Tween.Easing.SMOOTHSTEP or easing == Tween.Easing.SMOOTHERSTEP then
+        if not Type.IsTable(easingParams) then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
+            return {0, 1}
+        end
+        if not easingParams.edge0 or not Type.IsNumber(easingParams.edge0) then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.edge0 must be a number for SMOOTHSTEP/SMOOTHERSTEP. Using default value '0'", TEN.Util.LogLevel.WARNING)
+            easingParams.edge0 = 0
+        end
+        if not easingParams.edge1 or not Type.IsNumber(easingParams.edge1) then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.edge1 must be a number for SMOOTHSTEP/SMOOTHERSTEP. Using default value '1'", TEN.Util.LogLevel.WARNING)
+            easingParams.edge1 = 1
+        end
+        if Type.IsNumber(easingParams.edge1) and Type.IsNumber(easingParams.edge0) and easingParams.edge1 - easingParams.edge0 == 0 then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.edge1 must be different from edge0 for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
+            easingParams.edge0 = 0
+            easingParams.edge1 = 1
+        end
+        return {easingParams.edge0, easingParams.edge1}
+    end
+    if easing == Tween.Easing.ELASTIC then
+        if not Type.IsTable(easingParams) then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for ELASTIC. Using default values '1.0' and '0.3'", TEN.Util.LogLevel.WARNING)
+            return {1.0, 0.3}
+        end
+        if not easingParams.amplitude or not Type.IsNumber(easingParams.amplitude) or easingParams.amplitude < 1 then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.amplitude must be a number >= 1 for ELASTIC. Using default value '1.0'", TEN.Util.LogLevel.WARNING)
+            easingParams.amplitude = 1.0
+        end
+        if not easingParams.period or not Type.IsNumber(easingParams.period) then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.period must be a number for ELASTIC. Using default value '0.3'", TEN.Util.LogLevel.WARNING)
+            easingParams.period = 0.3
+        end
+        return {easingParams.amplitude, easingParams.period}
+    end
+    if easing == Tween.Easing.BOUNCE then
+        if not Type.IsTable(easingParams) then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for BOUNCE. Using default values '4' and '0.5'", TEN.Util.LogLevel.WARNING)
+            return {4, 0.5}
+        end
+        if not easingParams.bounces or not Type.IsNumber(easingParams.bounces) or easingParams.bounces < 1 or easingParams.bounces % 1 ~= 0 then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.bounces must be an integer and >= 1 for BOUNCE. Using default value '4'", TEN.Util.LogLevel.WARNING)
+            easingParams.bounces = 4
+        end
+        if not easingParams.damping or not Type.IsNumber(easingParams.damping) or easingParams.damping < 0 or easingParams.damping > 1 then
+            TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.damping must be a number between 0 and 1 for BOUNCE. Using default value '0.5'", TEN.Util.LogLevel.WARNING)
+            easingParams.damping = 0.5
+        end
+        return {easingParams.bounces, easingParams.damping}
+    end
 end
 
 -- Storage
@@ -224,52 +273,11 @@ Tween.Create = function(params)
     thisTween.updateMode = LuaUtil.TableHasValue(Tween.UpdateMode, params.updateMode) and params.updateMode or Tween.UpdateMode.GAMEPLAY_ONLY
     thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
 
-    if params.easingParams and (thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP) then
-        if not params.easingParams.edge0 or not Type.IsNumber(params.easingParams.edge0) then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge0 must be a number. Using default value '0'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.edge0 = 0
-        end
-        if not params.easingParams.edge1 or not Type.IsNumber(params.easingParams.edge1) then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge1 must be a number. Using default value '1'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.edge1 = 1
-        end
-        if Type.IsNumber(params.easingParams.edge1) and Type.IsNumber(params.easingParams.edge0) and params.easingParams.edge1 - params.easingParams.edge0 == 0 then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.edge1 must be different from edge0. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.edge0 = 0
-            params.easingParams.edge1 = 1
-        end
-    end
-    if params.easingParams and thisTween.easing == Tween.Easing.ELASTIC then
-        if not params.easingParams.amplitude or not Type.IsNumber(params.easingParams.amplitude) or params.easingParams.amplitude < 1 then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.amplitude must be a number >= 1. Using default value '1.0'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.amplitude = 1.0
-        end
-        if not params.easingParams.period or not Type.IsNumber(params.easingParams.period) then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.period must be a number. Using default value '0.3'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.period = 0.3
-        end
-    end
-    if params.easingParams and thisTween.easing == Tween.Easing.BOUNCE then
-        if not params.easingParams.bounces or not Type.IsNumber(params.easingParams.bounces) or params.easingParams.bounces < 1 or params.easingParams.bounces % 1 ~= 0 then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.bounces must be an integer and >= 1. Using default value '4'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.bounces = 4
-        end
-        if not params.easingParams.damping or not Type.IsNumber(params.easingParams.damping) or params.easingParams.damping < 0 or params.easingParams.damping > 1 then
-            TEN.Util.PrintLog("Warning in Tween.Create(): params.easingParams.damping must be a number between 0 and 1. Using default value '0.5'", TEN.Util.LogLevel.WARNING)
-            params.easingParams.damping = 0.5
-        end
-    end
-    if thisTween.easing == Tween.Easing.SMOOTHSTEP or thisTween.easing == Tween.Easing.SMOOTHERSTEP then
-        thisTween.easingParams = {params.easingParams.edge0, params.easingParams.edge1}
+    if params.easingParams then
+        thisTween.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween.Create()", thisTween.easing, params.easingParams)
     end
 
-    if thisTween.easing == Tween.Easing.ELASTIC then
-        thisTween.easingParams = {params.easingParams.amplitude, params.easingParams.period}
-    end
 
-    if thisTween.easing == Tween.Easing.BOUNCE then
-        thisTween.easingParams = {params.easingParams.bounces, params.easingParams.damping}
-    end
     thisTween.loopCount = params.loopCount or nil
     thisTween.autoStart = Type.IsBoolean(params.autoStart) and params.autoStart or false
     thisTween.seamlessLoop = Type.IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
@@ -678,28 +686,45 @@ end
 
 --- Set the easing function of the tween
 -- @tparam Easing easing Easing function to set (use Tween.Easing)
+-- @tparam[opt] table params Easing parameters table. Please note: if you change the easing without specifying params, the existing parameters will be reset to default values (nil). To preserve custom parameters, always provide them when changing easing, or use SetEasingParams() separately after SetEasing().
 -- @usage
 -- if Tween.IfExists("myTween") then
 --     Tween.Get("myTween"):SetEasing(Tween.Easing.SMOOTHSTEP)
 -- end
-function Tween:SetEasing(easing)
+--
+-- -- Example with custom parameters
+-- if Tween.IfExists("myTween") then
+--     Tween.Get("myTween"):SetEasing(Tween.Easing.SMOOTHSTEP, {edge0 = 0.2, edge1 = 0.8})
+-- end
+function Tween:SetEasing(easing, params)
     if not LuaUtil.TableHasValue(Tween.Easing, easing) then
         return TEN.Util.PrintLog("Error in Tween:SetEasing(easing): invalid easing value", TEN.Util.LogLevel.ERROR)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.easing = easing
     t.interpolation = LevelVars.Engine.Tween.Interpolations[easing]
+    if params and not Type.IsTable(params) then
+        return TEN.Util.PrintLog("Error in Tween:SetEasing(): params must be a table", TEN.Util.LogLevel.ERROR)
+    end
+    if params and Type.IsTable(params) then
+        t.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween:SetEasing()", easing, params)
+    else
+        t.easingParams = nil
+    end
 end
 
 --- Set the easing parameters of the tween
 -- @tparam table params Easing parameters table
 -- @usage
 -- if Tween.IfExists("myTween") then
---     Tween.Get("myTween"):SetEasing(Tween.Easing.SMOOTHSTEP)
 --     Tween.Get("myTween"):SetEasingParams({edge0 = 0, edge1 = 1})
 -- end
 function Tween:SetEasingParams(params)
-    LevelVars.Engine.Tween.tweens[self.name].easingParams = params
+    if not Type.IsTable(params) then
+        return TEN.Util.PrintLog("Error in Tween:SetEasingParams(params): params must be a table", TEN.Util.LogLevel.ERROR)
+    end
+    local t = LevelVars.Engine.Tween.tweens[self.name]
+    t.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween:SetEasingParams()", t.easing, params)
 end
 
 --- Get the loop count of the tween
