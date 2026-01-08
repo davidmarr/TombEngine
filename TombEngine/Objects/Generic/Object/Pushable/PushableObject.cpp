@@ -139,7 +139,7 @@ namespace TEN::Entities::Generic
 		if (player.Context.InteractedItem == itemNumber && player.Control.IsMoving)
 			return;
 
-		// Check if OCB has changed and update characteristics if needed.
+		// Check if the OCB has changed or a savegame has been loaded and update characteristics if needed.
 		if (pushableItem.TriggerFlags != pushable.PreviousTriggerFlags || JustLoaded)
 			UpdatePushableFromOCB(pushableItem);
 
