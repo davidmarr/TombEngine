@@ -29,6 +29,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed animated textures appearing incorrectly when also alpha blended faces were involved.
 * Fixed random textures appearing on enemy gunflashes.
 * Fixed flickering pickup highlighter item count in high FPS mode.
+* Fixed linear inventory not fading ammo and combine selectors.
 
 ### Lua API changes
 * Added new `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
