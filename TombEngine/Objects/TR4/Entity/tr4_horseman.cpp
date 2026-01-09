@@ -725,7 +725,7 @@ namespace TEN::Entities::TR4
 					creature->Enemy = LaraItem;
 					creature->Flags = 0;
 				}
-				else if (!AI.ahead)
+				else if (!AI.ahead || creature->Flags || horseItem->Flags)
 				{
 					item->Animation.TargetState = HORSEMAN_STATE_MOUNTED_IDLE;
 					horseItem->Animation.TargetState = HORSEMAN_STATE_MOUNTED_RUN_FORWARD;
