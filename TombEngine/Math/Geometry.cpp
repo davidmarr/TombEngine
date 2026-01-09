@@ -292,20 +292,6 @@ namespace TEN::Math::Geometry
 			slopeAngle * sinDeltaAngle);
 	}
 
-	Vector3i GetNearestSectorCenter(const Vector3i& pos)
-	{
-		constexpr int SECTOR_SIZE = 1024;
-
-		// Calculate the sector-aligned coordinates.
-		int x = (pos.x / SECTOR_SIZE) * SECTOR_SIZE + SECTOR_SIZE / 2;
-		int z = (pos.z / SECTOR_SIZE) * SECTOR_SIZE + SECTOR_SIZE / 2;
-
-		// Keep the y-coordinate unchanged.
-		int y = pos.y;
-
-		return Vector3i(x, y, z);
-	}
-
 	Quaternion ConvertDirectionToQuat(const Vector3& dir)
 	{
 		constexpr auto SINGULARITY_THRESHOLD = 1.0f - EPSILON;

@@ -3,6 +3,7 @@
 
 #include "Game/Animation/Animation.h"
 #include "Game/collision/collide_room.h"
+#include "Game/collision/floordata.h"
 #include "Game/collision/Point.h"
 #include "Game/control/control.h"
 #include "Game/control/lot.h"
@@ -10,12 +11,11 @@
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_fire.h"
 #include "Game/misc.h"
-#include "Math/Geometry.h"
 #include "Specific/level.h"
 
 using namespace TEN::Animation;
+using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;
-using namespace TEN::Math::Geometry;
 
 namespace TEN::Entities::Creatures::TR1
 {
