@@ -14,7 +14,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed pushables being ignored by other collidable objects after savegame reload.
 * Fixed sector box flags being reset after savegame reload.
 * Fixed several enemy AI issues.
-* Fixed incorrect CLOCKWORK_BEETLE, MONK1/2 and MERCENARY_UZI behaviour.
+* Fixed incorrect CLOCKWORK_BEETLE, HORSEMAN, MONK1/2 and MERCENARY_UZI behaviour.
 * Fixed CIVVY crashing the game.
 * Fixed SEARCH_OBJECT4 not always collecting pickup items.
 * Fixed incorrect HYDRA rotation on activation and keeping its shadow after destroying it.

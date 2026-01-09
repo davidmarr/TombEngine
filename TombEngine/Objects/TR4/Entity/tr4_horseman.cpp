@@ -358,7 +358,7 @@ namespace TEN::Entities::TR4
 							else if (Lara.Control.Weapon.GunType == LaraWeaponType::Revolver)
 								DoDamage(item, 20);
 							else
-								item->HitPoints--;
+								DoDamage(item, 1);
 
 							SoundEffect(SFX_TR4_HORSEMAN_TAKEHIT, &item->Pose);
 							SoundEffect(SFX_TR4_HORSE_RICOCHET, &item->Pose);
