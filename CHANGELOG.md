@@ -12,6 +12,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect handling of negative timer values in classic triggers.
 * Fixed interaction highlighter not working for pushable climbable blocks.
 * Fixed pushables being ignored by other collidable objects after savegame reload.
+* Fixed pushables not updating their properties while changing OCB on the fly.
 * Fixed sector box flags being reset after savegame reload.
 * Fixed several enemy AI issues.
 * Fixed incorrect CLOCKWORK_BEETLE, HORSEMAN, MONK1/2 and MERCENARY_UZI behaviour.
