@@ -3,12 +3,17 @@
 --- Advanced interpolation system. This module offers a flexible way to create and manage interpolations (tweens) for the following data types: numbers, Color, Rotation, Vec2 and Vec3.
 -- It supports different easing functions, modes (once, restart, ping-pong), looping, and callbacks for various events.
 -- Supports multiple tweens with different parameters.<br><br>
--- **Important note about Rotation interpolation:**<br>
--- TombEngine's Rotation:Lerp() uses the **shortest angular path**. This means:<br>
--- - Rotation(10,0,0):Lerp(Rotation(350,0,0), 0.5) → Rotation(0,0,0) (not 180°)<br>
--- - Cannot create gradual rotations like 0°→90°→180°→270°→360° using Rotation primitives<br>
--- - The tween will always interpolate via the shortest route between angles<br><br>
--- To use Tween inside scripts you need to call the module:
+-- **Important note about interpolation:**<br>
+-- The Tween module to interpolate primitives uses their internal methods (Color:Lerp, Vec2:Lerp. Vec3:Lerp, Rotation:Lerp).<br>
+-- Rotation:Lerp() uses the **shortest angular path**. This means:<br>
+--
+-- - Rotation(10,0,0):Lerp(Rotation(350,0,0), 0.5) → Rotation(0,0,0) (not 180°)
+--
+-- - Cannot create gradual rotations like 0°→90°→180°→270°→360° using Rotation primitives
+--
+-- - The tween will always interpolate via the shortest route between angles
+--
+-- <br>To use Tween inside scripts you need to call the module:
 --	local Tween = require("Engine.Tween")
 --
 -- Example usage:
@@ -907,7 +912,7 @@ end
 ---
 -- Constants for tween update modes.
 -- @table UpdateMode
--- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRELOOP callback). Use for gameplay animations like moving platforms, doors, etc. Default mode.
+-- @tfield 1 GAMEPLAY_ONLY Update only during normal gameplay (PRE_LOOP callback). Use for gameplay animations like moving platforms, doors, etc. Default mode.
 -- @tfield 2 FREEZE_ONLY Update only during freeze mode (PRE_FREEZE callback). Use for UI animations during pause, loading screens, etc.
 -- @tfield 3 ALWAYS Update in both gameplay and freeze mode contexts. Use for cross-context effects like audio fades, screen transitions, etc.
 
@@ -1034,7 +1039,7 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
     end -- close for each tween
 end
 
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Tween.UpdateAll)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Tween.UpdateAll)
 
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Tween.UpdateAll)
 
