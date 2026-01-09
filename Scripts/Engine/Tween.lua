@@ -112,7 +112,7 @@ LevelFuncs.Engine.Tween.CheckEasingParams = function (functionName, easing, easi
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for BOUNCE. Using default values '4' and '0.5'", TEN.Util.LogLevel.WARNING)
             return {4, 0.5}
         end
-        if not easingParams.bounces or not Type.IsNumber(easingParams.bounces) or easingParams.bounces < 1 or easingParams.bounces % 1 ~= 0 then
+        if not easingParams.bounces or not Type.IsNumber(easingParams.bounces) or easingParams.bounces < 1 or not LuaUtil.IsInteger(easingParams.bounces) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.bounces must be an integer and >= 1 for BOUNCE. Using default value '4'", TEN.Util.LogLevel.WARNING)
             easingParams.bounces = 4
         end
@@ -231,7 +231,7 @@ Tween.Create = function(params)
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount must be a positive integer or nil. Using default value 'nil'", TEN.Util.LogLevel.WARNING)
         params.loopCount = nil
     end
-    if params.loopCount and params.loopCount % 1 ~= 0 then
+    if params.loopCount and not LuaUtil.IsInteger(params.loopCount) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
         params.loopCount = math.floor(params.loopCount)
     end
@@ -538,7 +538,7 @@ function Tween:GetProgress()
 end
 
 --- Set the current progress of the tween (0.0 to 1.0)
--- @tparam number t Progress value to set (0.0 to 1.0)
+-- @tparam number t Progress value to set (0.0 to 1.0). Values outside this range will be clamped.
 -- @usage myTween:SetProgress(0.5)  -- Set progress to halfway
 function Tween:SetProgress(t)
     if not Type.IsNumber(t) then

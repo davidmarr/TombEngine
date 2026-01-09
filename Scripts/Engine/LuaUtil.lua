@@ -2726,8 +2726,8 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     end
 
     -- Validate bounces (must be positive integer)
-    if bounces < 1 then
-        TEN.Util.PrintLog("Warning in LuaUtil.Bounce: bounces should be >= 1. Using 1.", TEN.Util.LogLevel.WARNING)
+    if bounces < 1 or bounces % 1 ~= 0 then
+        TEN.Util.PrintLog("Warning in LuaUtil.Bounce: bounces should be an integer >= 1. Using 1.", TEN.Util.LogLevel.WARNING)
         bounces = 1
     end
 
