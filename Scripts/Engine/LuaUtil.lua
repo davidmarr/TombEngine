@@ -3159,7 +3159,8 @@ end
 
 --- Create a read-only version of a table.
 -- @tparam table tbl The table to make read-only.
--- @treturn table A read-only version of the input table. If the input is not a table, returns an empty table.
+-- @treturn[1] table A read-only version of the input table.
+-- @treturn[2] table An empty table if the input is not a table.
 -- @usage
 -- local readOnlyTable = LuaUtil.SetTableReadOnly(originalTable)
 LuaUtil.SetTableReadOnly = function(tbl)
