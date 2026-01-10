@@ -2970,39 +2970,40 @@ end
 -- This is a shallow merge (nested tables are not merged recursively).
 -- @tparam table tbl1 The first table (base table).
 -- @tparam table tbl2 The second table (override table).
--- @treturn table A new table with merged contents. If inputs are not tables, returns an empty table.
+-- @treturn[1] table A new table with merged contents.
+-- @treturn[2] table An empty table if either input is not a table.
 -- @usage
 -- -- Example with configuration merge:
 -- local defaults = { volume = 100, fullscreen = false, difficulty = "normal" }
 -- local userSettings = { volume = 80, fullscreen = true }
--- local finalSettings = LuaUtil.TableMerge(defaults, userSettings)
+-- local finalSettings = LuaUtil.MergeTable(defaults, userSettings)
 -- -- finalSettings: { volume = 80, fullscreen = true, difficulty = "normal" }
 --
 -- -- Example with player stats:
 -- local baseStats = { health = 100, stamina = 100, damage = 10 }
 -- local bonuses = { health = 20, damage = 5 }
--- local totalStats = LuaUtil.TableMerge(baseStats, bonuses)
+-- local totalStats = LuaUtil.MergeTable(baseStats, bonuses)
 -- -- totalStats: { health = 20, stamina = 100, damage = 5 }
 -- -- Note: values are replaced, not added! Use custom logic for addition.
 --
 -- -- Example with arrays (numeric keys):
 -- local array1 = { "a", "b", "c" }
 -- local array2 = { "x", "y" }
--- local merged = LuaUtil.TableMerge(array1, array2)
+-- local merged = LuaUtil.MergeTable(array1, array2)
 -- -- merged: { "x", "y", "c" } (indices 1 and 2 are overridden)
 --
 -- -- Practical use: apply temporary modifications
 -- local defaultConfig = { speed = 10, color = "blue" }
 -- local nightMode = { color = "black", brightness = 50 }
--- local activeConfig = LuaUtil.TableMerge(defaultConfig, nightMode)
+-- local activeConfig = LuaUtil.MergeTable(defaultConfig, nightMode)
 -- -- activeConfig: { speed = 10, color = "black", brightness = 50 }
-LuaUtil.TableMerge = function(tbl1, tbl2)
+LuaUtil.MergeTable = function(tbl1, tbl2)
     if not I.IsTable(tbl1) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableMerge: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
     if not I.IsTable(tbl2) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableMerge: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
 
