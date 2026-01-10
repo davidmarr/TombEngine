@@ -1,6 +1,6 @@
 #pragma once
 
-// This file use for documentation of LevelVars.
+// This file is used for documentation of LevelVars.
 
 /// A table with level-specific data which will be saved and loaded.
 // @specialtable LevelVars
