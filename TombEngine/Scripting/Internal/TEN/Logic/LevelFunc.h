@@ -42,7 +42,7 @@ public:
 // any trigger functions you might have specified.
 // 
 // For example, if you give a trigger a Lua name of "my_trigger" in Tomb Editor, you will have to implement it as a member
-// of this table :
+// of this table:
 //	LevelFuncs.my_trigger = function()
 //		--implementation goes here
 //	end
