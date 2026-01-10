@@ -34,7 +34,7 @@ public:
 	}
 };
 
-// This file use for documentation of LevelFunc.
+// This file is used for documentation of LevelFunc.
 
 /// A table nested table system for level-specific functions.
 // @specialtable LevelFunc
