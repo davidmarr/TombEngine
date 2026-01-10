@@ -188,8 +188,14 @@ namespace TEN::Effects::DisplaySprite
 
 		// Step 3: Apply rotation to offset and correct for aspect ratio.
 		// This ensures the offset rotates with the sprite while maintaining proper screen proportions.
-		auto rotMatrix = Matrix::CreateRotationZ(TO_RAD(orientation));
-		layout.Offset = Vector2::Transform(layout.Offset, rotMatrix) * layout.AspectCorrection;
+		// Optimization: Skip matrix creation when no rotation is applied (common case for non-rotated sprites).
+		if (orientation != 0)
+		{
+			auto rotMatrix = Matrix::CreateRotationZ(TO_RAD(orientation));
+			layout.Offset = Vector2::Transform(layout.Offset, rotMatrix);
+		}
+
+		layout.Offset *= layout.AspectCorrection;
 
 		return layout;
 	}

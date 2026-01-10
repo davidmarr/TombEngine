@@ -260,9 +260,7 @@ namespace TEN::Scripting::DisplaySprite
 		// Helper lambda for percent conversion with rounding.
 		auto toPercent = [&screenRes](const Vector2& pos) -> Vec2
 		{
-			return Vec2(
-				std::round((pos.x / screenRes.x) * 10000.0f) / 100.0f,
-				std::round((pos.y / screenRes.y) * 10000.0f) / 100.0f);
+			return Vec2(std::round((pos.x / screenRes.x) * 10000.0f) / 100.0f, std::round((pos.y / screenRes.y) * 10000.0f) / 100.0f);
 		};
 
 		// Calculate edge midpoints.
