@@ -38,7 +38,7 @@ public:
 
 /// A table nested table system for level-specific functions.
 // @specialtable LevelFunc
-// This serves a few purposes : it holds the level callbacks(listed below) as well as
+// This serves a few purposes: it holds the level callbacks (listed below) as well as
 // any trigger functions you might have specified.
 // 
 // For example, if you give a trigger a Lua name of "my_trigger" in Tomb Editor, you will have to implement it as a member
