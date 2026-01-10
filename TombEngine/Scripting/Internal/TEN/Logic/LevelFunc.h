@@ -56,7 +56,7 @@ public:
 //	LevelFuncs.enemyFuncs.makeBaddyUseMedkit = function()
 //		--implementation goes here
 //	end
-// There are two special subtables which you should __not__ overwrite :
+// There are two special subtables which you should __not__ overwrite:
 //	-- this is for 'first-party' functions, i.e.ones that come with TombEngine.
 //	LevelFuncs.Engine
 //	
