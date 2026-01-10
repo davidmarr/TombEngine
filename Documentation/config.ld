@@ -23,7 +23,7 @@ Note that this is primarily a reference document, not a tutorial, so expect desc
 At the time of writing, there is a tutorial describing the basics of Lua, as well as a number of example scripts, on <a href="https://www.tombengine.com">the TombEngine website</a>.
 
 ####Module Hierarchy
-Other than the "special tables" (`GameVars`, `LevelVars` and <a href="1 special table/LevelFunc.html#">LevelFunc</a>), every module described herein is held in a master table called TEN.
+Other than the "special tables" (`GameVars`, `LevelVars` and <a href="1 special table/LevelFunc.html">LevelFunc</a>), every module described herein is held in a master table called TEN.
 For convenience, these modules and classes are automatically put in the global table. For example, you can call GetMoveableByName either of these two ways:
 	local door = TEN.Objects.GetMoveableByName("door_type4_14")
 	local door = GetMoveableByName("door_type4_14")
