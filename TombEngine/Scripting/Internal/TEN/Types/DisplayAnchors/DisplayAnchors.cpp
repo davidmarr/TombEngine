@@ -1,8 +1,6 @@
 #include "framework.h"
 #include "Scripting/Internal/TEN/Types/DisplayAnchors/DisplayAnchors.h"
 
-#include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
-
 namespace TEN::Scripting::Types
 {
 	/// Represents the anchor points of a display element.
