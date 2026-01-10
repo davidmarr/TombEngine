@@ -213,7 +213,7 @@ namespace TEN::Scripting::DisplaySprite
 		float screenAspect = screenRes.x / screenRes.y;
 		float aspectCorrectionBase = screenAspect / DISPLAY_ASPECT;
 
-		// Convert scale and position.
+		// Convert scale, position and rotation.
 		auto convertedScale = _scale * SCALE_CONVERSION_COEFF;
 		auto convertedPos = _position * (DISPLAY_SPACE_RES / 100.0f);
 		short convertedRot = ANGLE(_rotation);
@@ -233,9 +233,9 @@ namespace TEN::Scripting::DisplaySprite
 
 		// Build vertices centered around origin.
 		std::array<Vector2, 4> vertices = {
-			Vector2(size.x,  size.y) / 2.0f,  // top-left
+			size / 2.0f,  // top-left
 			Vector2(-size.x,  size.y) / 2.0f, // top-right
-			Vector2(-size.x, -size.y) / 2.0f, // bottom-right
+			-size / 2.0f, // bottom-right
 			Vector2(size.x, -size.y) / 2.0f   // bottom-left
 		};
 
