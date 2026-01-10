@@ -269,7 +269,8 @@ end
 -- For primitive types (number, string, bool, nil), returns the value itself.
 -- This solves the reference assignment problem where modifying a copy affects the original.
 -- @tparam any value The value to clone (can be any type).
--- @treturn any An independent copy of the value. Returns nil for unsupported types.
+-- @treturn[1] any An independent copy of the value.
+-- @treturn[2] nil If the type is unsupported.
 -- @usage
 -- -- Problem: reference assignment
 -- local row = { TEN.Rotation(244, 90, 276) }
@@ -503,7 +504,8 @@ end
 -- @tparam number|string|Time operand The first value to compare.
 -- @tparam number|string|Time reference The second value to compare against.
 -- @tparam number operator The comparison operator<br>(0: equal, 1: not equal, 2: less than, 3: less than or equal, 4: greater than, 5: greater than or equal).
--- @treturn bool The result of the comparison. If an error occurs, returns false.
+-- @treturn[1] bool The result of the comparison.
+-- @treturn[2] bool false If an error occurs (invalid operator or type mismatch).
 -- @usage
 -- local isEqual = LuaUtil.CompareValues(5, 5, 0) -- true
 -- local isNotEqual = LuaUtil.CompareValues("hello", "world", 1) -- true
@@ -549,19 +551,20 @@ end
 -- @tparam float value The value to check.
 -- @tparam float min Minimum value.
 -- @tparam float max Maximum value.
--- @treturn bool True if value is within range. If an error occurs, returns false.
+-- @treturn[1] bool True if value is within range.
+-- @treturn[2] bool false If an error occurs.
 -- @usage
--- local inRange = LuaUtil.InRange(5, 1, 10) -- true
--- local outOfRange = LuaUtil.InRange(15, 1, 10) -- false
--- local errorCase = LuaUtil.InRange(5, 10, 1) -- false (min greater than max)
-LuaUtil.InRange = function(value, min, max)
+-- local inRange = LuaUtil.IsInRange(5, 1, 10) -- true
+-- local outOfRange = LuaUtil.IsInRange(15, 1, 10) -- false
+-- local errorCase = LuaUtil.IsInRange(5, 10, 1) -- false (min greater than max)
+LuaUtil.IsInRange = function(value, min, max)
     if not (I.IsNumber(value) and I.IsNumber(min) and I.IsNumber(max)) then
-        TEN.Util.PrintLog("Error in LuaUtil.InRange: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)   
+        TEN.Util.PrintLog("Error in LuaUtil.IsInRange: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)   
         return false
     end
 
     if min > max then
-        TEN.Util.PrintLog("Error in LuaUtil.InRange: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.IsInRange: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
         return false
     end
 
@@ -575,7 +578,8 @@ end
 --- Split a string into a table using a specified delimiter.
 -- @tparam string inputStr The string to split.
 -- @tparam[opt=" " (space)] string delimiter The delimiter to use for splitting.
--- @treturn table A table containing the split substrings. If an error occurs, returns an empty table.
+-- @treturn[1] table A table containing the split substrings.
+-- @treturn[2] table {} An empty table if an error occurs.
 -- @usage
 -- local str = "apple,banana,cherry"
 -- local result = LuaUtil.SplitString(str, ",")
@@ -779,7 +783,8 @@ end
 --- Round a number to a specified number of decimal places.
 -- @tparam float num The number to round.
 -- @tparam[opt=0] float decimals Number of decimal places.
--- @treturn float The rounded number. If an error occurs, returns 0.
+-- @treturn[1] float The rounded number.
+-- @treturn[2] float 0 If an error occurs.
 -- @usage
 -- local rounded1 = LuaUtil.Round(3.14159)       -- Result: 3
 -- local rounded2 = LuaUtil.Round(3.14159, 2)    -- Result: 3.14
@@ -798,7 +803,8 @@ end
 --- Truncate a number to a specified number of decimal places (without rounding).
 -- @tparam float num The number to truncate.
 -- @tparam[opt=0] float decimals Number of decimal places.
--- @treturn float The truncated number.
+-- @treturn[1] float The truncated number.
+-- @treturn[2] float 0 If an error occurs.
 -- @usage
 -- local truncated1 = LuaUtil.Truncate(3.14159)       -- Result: 3
 -- local truncated2 = LuaUtil.Truncate(3.14159, 2)    -- Result: 3.14
@@ -951,7 +957,8 @@ end
 -- @tparam number|Color|Rotation|Time|Vec2|Vec3 value The value to clamp.
 -- @tparam number|Color|Rotation|Time|Vec2|Vec3 min The minimum value (same type as value).
 -- @tparam number|Color|Rotation|Time|Vec2|Vec3 max The maximum value (same type as value).
--- @treturn number|Color|Rotation|Time|Vec2|Vec3 The clamped value. If an error occurs, returns the original value.
+-- @treturn[1] number|Color|Rotation|Time|Vec2|Vec3 The clamped value.
+-- @treturn[2] number|Color|Rotation|Time|Vec2|Vec3 The original value if an error occurs.
 -- @usage
 -- -- Example: Clamp to 0-1 range for normalized values
 -- local clampedValue = LuaUtil.Clamp(value, 0, 1)
@@ -1086,7 +1093,8 @@ end
 -- @tparam float angle The angle to wrap.
 -- @tparam[opt=0] float min Minimum value of the range.
 -- @tparam[opt=360] float max Maximum value of the range.
--- @treturn float The wrapped angle. If an error occurs, returns the original angle.
+-- @treturn[1] float The wrapped angle.
+-- @treturn[2] float The original angle if an error occurs.
 -- @usage
 -- -- Normalize angles to 0-360 range:
 -- local wrapped1 = LuaUtil.WrapAngle(450, 0, 360)  -- Result: 90
@@ -1160,7 +1168,8 @@ end
 --- Convert seconds to frames (assuming 30 FPS).
 -- @tparam float seconds Time in seconds. Seconds can be a float value with two decimal places.
 -- @tparam[opt=30] int fps Frames per second.
--- @treturn float Number of frames. If an error occurs, returns 0.
+-- @treturn[1] float Number of frames.
+-- @treturn[2] int 0 If an error occurs.
 -- @usage
 -- local frames = LuaUtil.SecondsToFrames(2.0) -- Result: 60
 LuaUtil.SecondsToFrames = function(seconds, fps)
@@ -1182,7 +1191,8 @@ end
 --- Convert frames to seconds (assuming 30 FPS).
 -- @tparam int frames Number of frames.
 -- @tparam[opt=30] int fps Frames per second.
--- @treturn float Time in seconds. If an error occurs, returns 0.
+-- @treturn[1] float Time in seconds.
+-- @treturn[2] float 0 If an error occurs.
 -- @usage
 -- local seconds = LuaUtil.FramesToSeconds(60) -- Result: 2.0
 LuaUtil.FramesToSeconds = function(frames, fps)
@@ -1495,7 +1505,9 @@ end
 -- **For Rotation primitives specifically:**
 --
 -- - `Rotation:Lerp()` already calculates the **shortest angular distance** for each component (x, y, z)
+--
 -- - `LuaUtil.LerpAngle()` is **NOT needed** when working with `Rotation` primitives
+--
 -- - Use `Rotation:Lerp()` directly instead of interpolating individual rotation components
 --
 -- **Example - CORRECT approach with Rotation:**
@@ -1595,7 +1607,8 @@ end
 -- @tparam float|Color|Rotation|Vec2|Vec3 a The start value (number, Color, Rotation, Vec2, or Vec3).
 -- @tparam float|Color|Rotation|Vec2|Vec3 b The end value (number, Color, Rotation, Vec2, or Vec3).
 -- @tparam float t The interpolation factor (0.0 to 1.0).
--- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value. If an error occurs, returns value `a`.
+-- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value.
+-- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers):
 -- local interpolated = LuaUtil.Lerp(0, 10, 0.5) -- Result: 5
@@ -1778,7 +1791,8 @@ end
 -- @tparam float t Interpolation factor (0.0 to 1.0).
 -- @tparam[opt=0] float min Minimum angle of range (default: 0 for 0-360°).
 -- @tparam[opt=360] float max Maximum angle of range (default: 360 for 0-360°).
--- @treturn float The interpolated angle, taking the shortest path.
+-- @treturn[1] float The interpolated angle, taking the shortest path.
+-- @treturn[2] float Value `a` if an error occurs.
 -- @usage
 -- -- Basic example: Why LerpAngle is needed
 -- local angle1 = LuaUtil.Lerp(350, 10, 0.5)        -- Result: 180° (WRONG! Long way)
@@ -1886,7 +1900,8 @@ end
 -- @tparam float t The input value to be normalized and interpolated.
 -- @tparam[opt=0] float edge0 Lower edge: the value of t that maps to 0 (start of interpolation range).
 -- @tparam[opt=1] float edge1 Upper edge: the value of t that maps to 1 (end of interpolation range).
--- @treturn float|Color|Rotation|Vec2|Vec3 Smoothly interpolated result. If an error occurs, returns value `a`.
+-- @treturn[1] float|Color|Rotation|Vec2|Vec3 Smoothly interpolated result.
+-- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (edge0=0, edge1=1 implicit):
 -- local smoothValue = LuaUtil.Smoothstep(0, 10, 0.5) -- Result: 5.0
@@ -1992,6 +2007,7 @@ LuaUtil.Smoothstep = function (a, b, t, edge0, edge1)
     local normalizedT = I.max(0, I.min(1, (t - edge0) / edgeDelta))
 
     -- Evaluate polynomial
+    -- Smoothstep formula: t²(3 - 2t) = 3t² - 2t³
     local smoothedT = normalizedT * normalizedT * (3 - 2 * normalizedT)
     return F.InterpolateValues(a, b, smoothedT, "LuaUtil.Smoothstep")
 end
@@ -2006,7 +2022,8 @@ end
 -- @tparam float t Interpolation factor (0.0 to 1.0).
 -- @tparam[opt=0] float edge0 Left edge for custom input range (optional, defaults to 0).
 -- @tparam[opt=1] float edge1 Right edge for custom input range (optional, defaults to 1).
--- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value. If an error occurs, returns value `a`.
+-- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value.
+-- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers):
 -- local smootherValue = LuaUtil.Smootherstep(0, 10, 0.5) -- Result: 5
@@ -2276,7 +2293,8 @@ end
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
 -- @tparam float t Interpolation factor (0.0 to 1.0).
--- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value. If an error occurs, returns value `a`.
+-- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value.
+-- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers):
 -- local easeValue = LuaUtil.EaseInOut(0, 10, 0.5) -- Result: 5
@@ -2379,7 +2397,8 @@ end
 -- @tparam float t Interpolation factor (0.0 to 1.0).
 -- @tparam[opt=1.0] float amplitude Controls the overshoot amount (default: 1.0). Higher values = more pronounced bounce.
 -- @tparam[opt=0.3] float period Controls oscillation frequency (default: 0.3). Lower values = faster oscillations.
--- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value with elastic effect. If an error occurs, returns value `a`.
+-- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value with elastic effect.
+-- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers with default parameters):
 -- local elasticValue = LuaUtil.Elastic(0, 100, 0.5) -- Result: ~50 (with slight oscillation)
@@ -2545,7 +2564,8 @@ end
 -- @tparam float t Interpolation factor (0.0 to 1.0).
 -- @tparam[opt=4] float bounces Number of bounces (default: 4). Higher values = more bounces before settling.
 -- @tparam[opt=0.5] float damping Bounce intensity/energy loss (default: 0.5, range: 0.0-1.0). Lower values = faster decay, higher values = longer bounces.
--- @treturn float|Color|Rotation|Vec2|Vec3 The interpolated value with bounce effect. If an error occurs, returns value `a`.
+-- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value with bounce effect.
+-- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers with default parameters):
 -- local bounceValue = LuaUtil.Bounce(0, 100, 0.75) -- Result: ~100 with bounce oscillations
@@ -2773,14 +2793,15 @@ end
 
 --- Get the number of elements in a table (works for non-sequential tables).
 -- @tparam table tbl The table to count.
--- @treturn int The number of elements. If the input is not a table, returns 0.
+-- @treturn[1] int The number of elements.
+-- @treturn[2] int 0 if input is invalid.
 -- @usage
 -- -- Example with non-sequential table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
--- local count = LuaUtil.TableCount(tbl) -- Result: 3
-LuaUtil.TableCount = function(tbl)
+-- local count = LuaUtil.TableSize(tbl) -- Result: 3
+LuaUtil.TableSize = function(tbl)
     if not I.IsTable(tbl) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableCount: input must be a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.TableSize: input must be a table.", TEN.Util.LogLevel.ERROR)
         return 0
     end
     local count = 0
@@ -2794,7 +2815,8 @@ end
 --- This function checks if both tables have the same keys and corresponding values. Works for shallow comparisons only.
 --- @tparam table tbl1 The first table to compare.
 --- @tparam table tbl2 The second table to compare.
---- @treturn bool True if the tables are equal, false otherwise. If inputs are not tables, returns false.
+--- @treturn[1] bool True if the tables are equal, false otherwise.
+--- @treturn[2] bool false if an error occurs.
 --- @usage
 --- local tblA = { a = 1, b = 2 }
 --- local tblB = { a = 1, b = 2 }
@@ -2833,7 +2855,8 @@ end
 --- **Limits:** Maximum depth of 10 levels and 1000 total elements processed to prevent performance issues.
 --- @tparam table tbl1 The first table to compare.
 --- @tparam table tbl2 The second table to compare.
---- @treturn bool True if the tables are deeply equal, false otherwise. If limits are exceeded, returns false. If inputs are not tables, returns false.
+--- @treturn[1] bool True if the tables are deeply equal, false otherwise.
+--- @treturn[2] bool false if an error occurs.
 --- @usage
 --- local tblA = { a = 1, b = { c = 2, d = 3 } }
 --- local tblB = { a = 1, b = { c = 2, d = 3 } }
@@ -2870,7 +2893,8 @@ end
 --- Check if a table contains a specific value.
 -- @tparam table tbl The table to check.
 -- @tparam any val The value to search for.
--- @treturn bool True if the value is found, false otherwise. If the input is not a table, returns false.
+-- @treturn[1] bool True if the value is found, false otherwise.
+-- @treturn[2] bool false if an error occurs.
 -- @usage
 -- -- Example with associative table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
@@ -2897,7 +2921,8 @@ end
 --- Check if a table contains a specific key.
 -- @tparam table tbl The table to check.
 -- @tparam any key The key to search for.
--- @treturn bool True if the key is found, false otherwise. If the input is not a table, returns false.
+-- @treturn[1] bool True if the key is found, false otherwise.
+-- @treturn[2] bool false if an error occurs.
 -- @usage
 -- -- Example with associative table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
@@ -2924,37 +2949,38 @@ end
 --- Create a shallow copy of a table.
 -- Creates a new table with the same key-value pairs. Nested tables are NOT copied (they remain references).
 -- @tparam table tbl The table to copy.
--- @treturn table A shallow copy of the input table. If the input is not a table, returns an empty table.
+-- @treturn[1] table A shallow copy of the input table.
+-- @treturn[2] table An empty table if input is not a table.
 -- @usage
 -- -- Example with simple table:
 -- local original = { a = 1, b = 2, c = 3 }
--- local copy = LuaUtil.TableCopy(original)
+-- local copy = LuaUtil.CopyTable(original)
 -- copy.a = 10
 -- -- original.a is still 1, copy.a is 10
 --
 -- -- Example with nested tables (shallow copy limitation):
 -- local original = { name = "Lara", inventory = { sword = 1, shield = 2 } }
--- local copy = LuaUtil.TableCopy(original)
+-- local copy = LuaUtil.CopyTable(original)
 -- copy.inventory.sword = 5
 -- -- WARNING: original.inventory.sword is now also 5! (nested table is shared)
 -- -- For nested tables, use LuaUtil.CloneValue instead
 --
 -- -- Example with array:
 -- local original = { "red", "green", "blue" }
--- local copy = LuaUtil.TableCopy(original)
+-- local copy = LuaUtil.CopyTable(original)
 -- copy[2] = "yellow"
 -- -- original: { "red", "green", "blue" }
 -- -- copy: { "red", "yellow", "blue" }
 --
 -- -- Practical use: backup a table before modification
--- local backup = LuaUtil.TableCopy(playerStats)
+-- local backup = LuaUtil.CopyTable(playerStats)
 -- playerStats.health = 0
 -- if needRestore then
 --     playerStats = backup
 -- end
-LuaUtil.TableCopy = function(tbl)
+LuaUtil.CopyTable = function(tbl)
     if not I.IsTable(tbl) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableCopy: input is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.CopyTable: input is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
 
@@ -2970,39 +2996,40 @@ end
 -- This is a shallow merge (nested tables are not merged recursively).
 -- @tparam table tbl1 The first table (base table).
 -- @tparam table tbl2 The second table (override table).
--- @treturn table A new table with merged contents. If inputs are not tables, returns an empty table.
+-- @treturn[1] table A new table with merged contents.
+-- @treturn[2] table An empty table if either input is not a table.
 -- @usage
 -- -- Example with configuration merge:
 -- local defaults = { volume = 100, fullscreen = false, difficulty = "normal" }
 -- local userSettings = { volume = 80, fullscreen = true }
--- local finalSettings = LuaUtil.TableMerge(defaults, userSettings)
+-- local finalSettings = LuaUtil.MergeTable(defaults, userSettings)
 -- -- finalSettings: { volume = 80, fullscreen = true, difficulty = "normal" }
 --
 -- -- Example with player stats:
 -- local baseStats = { health = 100, stamina = 100, damage = 10 }
 -- local bonuses = { health = 20, damage = 5 }
--- local totalStats = LuaUtil.TableMerge(baseStats, bonuses)
+-- local totalStats = LuaUtil.MergeTable(baseStats, bonuses)
 -- -- totalStats: { health = 20, stamina = 100, damage = 5 }
 -- -- Note: values are replaced, not added! Use custom logic for addition.
 --
 -- -- Example with arrays (numeric keys):
 -- local array1 = { "a", "b", "c" }
 -- local array2 = { "x", "y" }
--- local merged = LuaUtil.TableMerge(array1, array2)
+-- local merged = LuaUtil.MergeTable(array1, array2)
 -- -- merged: { "x", "y", "c" } (indices 1 and 2 are overridden)
 --
 -- -- Practical use: apply temporary modifications
 -- local defaultConfig = { speed = 10, color = "blue" }
 -- local nightMode = { color = "black", brightness = 50 }
--- local activeConfig = LuaUtil.TableMerge(defaultConfig, nightMode)
+-- local activeConfig = LuaUtil.MergeTable(defaultConfig, nightMode)
 -- -- activeConfig: { speed = 10, color = "black", brightness = 50 }
-LuaUtil.TableMerge = function(tbl1, tbl2)
+LuaUtil.MergeTable = function(tbl1, tbl2)
     if not I.IsTable(tbl1) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableMerge: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
     if not I.IsTable(tbl2) then
-        TEN.Util.PrintLog("Error in LuaUtil.TableMerge: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
 
