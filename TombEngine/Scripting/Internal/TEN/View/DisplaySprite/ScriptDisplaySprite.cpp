@@ -176,17 +176,16 @@ namespace TEN::Scripting::DisplaySprite
 	// - `BOTTOM_LEFT`<br>
 	DisplayAnchors ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const
 	{
-		// Create the DisplayAnchors object with default values (0,0)
 		DisplayAnchors anchors;
 
-		// Object is not a sprite sequence; return default anchors
+		// Object is not a sprite sequence; return default anchors.
 		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
 		{
 			TENLog("Attempted to draw display sprite from non-sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
 			return anchors;
 		}
 
-		// Sprite missing or sequence not found; return default anchors
+		// Sprite missing or sequence not found; return default anchors.
 		const auto& object = Objects[_objectID];
 		if (!object.loaded || _spriteID >= abs(object.nmeshes))
 		{
@@ -194,10 +193,8 @@ namespace TEN::Scripting::DisplaySprite
 			return anchors;
 		}
 
-		// Start calculation of the 4 vertices of the sprite with graphic resolution 800x600
-
-		// Get sprite data from g_Level.Sprites instead of renderer
-		const int spriteIndex = object.meshIndex + _spriteID;
+		// Get sprite data.
+		int spriteIndex = object.meshIndex + _spriteID;
 		if (spriteIndex < 0 || spriteIndex >= g_Level.Sprites.size())
 		{
 			TENLog("Invalid sprite index " + std::to_string(spriteIndex) + " for sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
@@ -205,136 +202,86 @@ namespace TEN::Scripting::DisplaySprite
 		}
 
 		const auto& spriteData = g_Level.Sprites[spriteIndex];
-		
-		// Calculate sprite dimensions from UV coordinates
-		// The sprite dimensions are encoded in the differences between UV coordinates
-		const float spriteWidth = abs(spriteData.x2 - spriteData.x1);
-		const float spriteHeight = abs(spriteData.y3 - spriteData.y1);
-		const float spriteAspect = (spriteHeight > 0.0f) ? (spriteWidth / spriteHeight) : 1.0f;
 
-		// Screen and sprite data
+		// Calculate sprite aspect ratio.
+		float spriteWidth = abs(spriteData.x2 - spriteData.x1);
+		float spriteHeight = abs(spriteData.y3 - spriteData.y1);
+		float spriteAspect = (spriteHeight > 0.0f) ? (spriteWidth / spriteHeight) : 1.0f;
+
+		// Screen data.
 		auto screenRes = Vector2(g_Configuration.ScreenWidth, g_Configuration.ScreenHeight);
-		const float screenAspect = screenRes.x / screenRes.y;
-		const float aspectCorrectionBase = screenAspect / DISPLAY_ASPECT;
-		const float aspectCorrectionBaseInv = 1.0f / aspectCorrectionBase;
+		float screenAspect = screenRes.x / screenRes.y;
+		float aspectCorrectionBase = screenAspect / DISPLAY_ASPECT;
 
-		// Scaled values
-		const Vector2 convertedScale = _scale * SCALE_CONVERSION_COEFF;
-		const Vector2 convertedPos = _position * (DISPLAY_SPACE_RES / 100.0f);
-		const short convertedRot = ANGLE(_rotation);
+		// Convert scale and position.
+		auto convertedScale = _scale * SCALE_CONVERSION_COEFF;
+		auto convertedPos = _position * (DISPLAY_SPACE_RES / 100.0f);
+		short convertedRot = ANGLE(_rotation);
 
-		// Calculate halfSize and aspect correction
-		Vector2 halfSize = Vector2::Zero;
-		Vector2 aspectCorrection = Vector2::One;
-		const auto scaleMode = scaleModeOpt.value_or(DEFAULT_SCALE_MODE);
+		// Get modes.
+		auto alignMode = alignModeOpt.value_or(DEFAULT_ALIGN_MODE);
+		auto scaleMode = scaleModeOpt.value_or(DEFAULT_SCALE_MODE);
 
-		switch (scaleMode)
-		{
-		case DisplaySpriteScaleMode::Fit:
-		case DisplaySpriteScaleMode::Fill:
-		{
-			const bool scaleByHeight = (scaleMode == DisplaySpriteScaleMode::Fit) ? (screenAspect >= spriteAspect) : (screenAspect < spriteAspect);
-			if (scaleByHeight)
-			{
-				halfSize = Vector2(DISPLAY_SPACE_RES.y * convertedScale.y) / 2.0f;
-				halfSize.x *= (spriteAspect >= 1.0f) ? spriteAspect : (1.0f / spriteAspect);
-				aspectCorrection.x = aspectCorrectionBaseInv;
-			}
-			else
-			{
-				halfSize = Vector2(DISPLAY_SPACE_RES.x * convertedScale.x) / 2.0f;
-				halfSize.y *= (spriteAspect >= 1.0f) ? (1.0f / spriteAspect) : spriteAspect;
-				aspectCorrection.y = aspectCorrectionBase;
-			}
-			break;
-		}
-		case DisplaySpriteScaleMode::Stretch:
-		default:
-		{
-			if (screenAspect >= 1.0f)
-			{
-				halfSize = Vector2(DISPLAY_SPACE_RES.x * convertedScale.x) / 2.0f;
-				halfSize.y *= 1.0f / screenAspect;
-				aspectCorrection.y = aspectCorrectionBase;
-			}
-			else
-			{
-				halfSize = Vector2(DISPLAY_SPACE_RES.y * convertedScale.y) / 2.0f;
-				halfSize.x *= 1.0f / screenAspect;
-				aspectCorrection.x = aspectCorrectionBaseInv;
-			}
-			break;
-		}
-		}
+		// Calculate layout using shared helper function.
+		auto layout = CalculateDisplaySpriteLayout(
+			spriteAspect, convertedScale, convertedRot,
+			alignMode, scaleMode, screenAspect, aspectCorrectionBase);
 
-		// Offset based on alignment
-		Vector2 offset = Vector2::Zero;
-		const auto alignMode = alignModeOpt.value_or(DEFAULT_ALIGN_MODE);
+		// Calculate final position.
+		auto position = convertedPos + layout.Offset;
+		auto size = layout.HalfSize * 2.0f;
 
-		switch (alignMode)
-		{
-		case DisplaySpriteAlignMode::CenterTop:     offset = { 0.0f,  halfSize.y }; break;
-		case DisplaySpriteAlignMode::CenterBottom:  offset = { 0.0f, -halfSize.y }; break;
-		case DisplaySpriteAlignMode::CenterLeft:    offset = { halfSize.x, 0.0f }; break;
-		case DisplaySpriteAlignMode::CenterRight:   offset = { -halfSize.x, 0.0f }; break;
-		case DisplaySpriteAlignMode::TopLeft:       offset = { halfSize.x,  halfSize.y }; break;
-		case DisplaySpriteAlignMode::TopRight:      offset = { -halfSize.x,  halfSize.y }; break;
-		case DisplaySpriteAlignMode::BottomLeft:    offset = { halfSize.x, -halfSize.y }; break;
-		case DisplaySpriteAlignMode::BottomRight:   offset = { -halfSize.x, -halfSize.y }; break;
-		default: break; // Center
-		}
-
-		// Apply rotation to offset
-		const Matrix rotMatrix = Matrix::CreateRotationZ(TO_RAD(convertedRot));
-		offset = Vector2::Transform(offset, rotMatrix) * aspectCorrection;
-
-		const Vector2 size = halfSize * 2.0f;
-		const Vector2 position = convertedPos + offset;
-
-		// Vertices centered around origin
+		// Build vertices centered around origin.
 		std::array<Vector2, 4> vertices = {
-			Vector2(size.x,  size.y) / 2.0f, // top-left
+			Vector2(size.x,  size.y) / 2.0f,  // top-left
 			Vector2(-size.x,  size.y) / 2.0f, // top-right
 			Vector2(-size.x, -size.y) / 2.0f, // bottom-right
-			Vector2(size.x, -size.y) / 2.0f  // bottom-left
+			Vector2(size.x, -size.y) / 2.0f   // bottom-left
 		};
 
-		// Apply rotation + aspect + offset
-		const Matrix rot180 = Matrix::CreateRotationZ(TO_RAD(convertedRot + ANGLE(180.0f)));
-
+		// Apply rotation + aspect correction + position offset.
+		// NOTE: Must rotate 180 degrees to match renderer behavior.
+		auto rotMatrix = Matrix::CreateRotationZ(TO_RAD(convertedRot + ANGLE(180.0f)));
 		for (auto& vertex : vertices)
 		{
-			vertex = Vector2::Transform(vertex, rot180);
-			vertex *= aspectCorrection;
+			vertex = Vector2::Transform(vertex, rotMatrix);
+			vertex *= layout.AspectCorrection;
 			vertex += position;
 		}
-		//End calculation of the 4 vertices of the sprite
 
-		// Scale to screen resolution
-		const Vector2 screenScale = screenRes / DISPLAY_SPACE_RES;
+		// Scale to screen resolution.
+		auto screenScale = screenRes / DISPLAY_SPACE_RES;
 		for (auto& vertex : vertices)
 		{
 			vertex.x *= screenScale.x;
 			vertex.y *= screenScale.y;
 		}
 
-		// Calculate anchors
-		const Vector2 CENTER = (vertices[0] + vertices[2]) / 2.0f;
-		const Vector2 CENTER_TOP = (vertices[0] + vertices[1]) / 2.0f;
-		const Vector2 CENTER_LEFT = (vertices[0] + vertices[3]) / 2.0f;
-		const Vector2 CENTER_RIGHT = (vertices[1] + vertices[2]) / 2.0f;
-		const Vector2 CENTER_BOTTOM = (vertices[2] + vertices[3]) / 2.0f;
+		// Helper lambda for percent conversion with rounding.
+		auto toPercent = [&screenRes](const Vector2& pos) -> Vec2
+		{
+			return Vec2(
+				std::round((pos.x / screenRes.x) * 10000.0f) / 100.0f,
+				std::round((pos.y / screenRes.y) * 10000.0f) / 100.0f);
+		};
 
-		// Populate the DisplayAnchors object with the calculated values
-		anchors.TopLeft = Vec2(std::round((vertices[0].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[0].y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.CenterTop = Vec2(std::round((CENTER_TOP.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_TOP.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.TopRight = Vec2(std::round((vertices[1].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[1].y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.CenterLeft = Vec2(std::round((CENTER_LEFT.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_LEFT.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.Center = Vec2(std::round((CENTER.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.CenterRight = Vec2(std::round((CENTER_RIGHT.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_RIGHT.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.BottomRight = Vec2(std::round((vertices[2].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[2].y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.CenterBottom = Vec2(std::round((CENTER_BOTTOM.x / screenRes.x) * 10000.0f) / 100.0f, std::round((CENTER_BOTTOM.y / screenRes.y) * 10000.0f) / 100.0f);
-		anchors.BottomLeft = Vec2(std::round((vertices[3].x / screenRes.x) * 10000.0f) / 100.0f, std::round((vertices[3].y / screenRes.y) * 10000.0f) / 100.0f);
+		// Calculate edge midpoints.
+		auto center = (vertices[0] + vertices[2]) / 2.0f;
+		auto centerTop = (vertices[0] + vertices[1]) / 2.0f;
+		auto centerLeft = (vertices[0] + vertices[3]) / 2.0f;
+		auto centerRight = (vertices[1] + vertices[2]) / 2.0f;
+		auto centerBottom = (vertices[2] + vertices[3]) / 2.0f;
+
+		// Populate anchors.
+		anchors.TopLeft = toPercent(vertices[0]);
+		anchors.CenterTop = toPercent(centerTop);
+		anchors.TopRight = toPercent(vertices[1]);
+		anchors.CenterLeft = toPercent(centerLeft);
+		anchors.Center = toPercent(center);
+		anchors.CenterRight = toPercent(centerRight);
+		anchors.BottomRight = toPercent(vertices[2]);
+		anchors.CenterBottom = toPercent(centerBottom);
+		anchors.BottomLeft = toPercent(vertices[3]);
 
 		return anchors;
 	}
