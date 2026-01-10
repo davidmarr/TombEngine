@@ -8,7 +8,7 @@
 // levelset or game, that you want to store in saved games.
 //
 // For example, you may wish to have a final boss say a specific voice line based on
-// a choice the player made in a previous level.In the level with the choice, you could
+// a choice the player made in a previous level. In the level with the choice, you could
 // write :
 // 	GameVars.playerSnoopedInDrawers = true
 // And in the script file for the level with the boss, you could write:
