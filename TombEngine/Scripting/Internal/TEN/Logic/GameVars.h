@@ -1,6 +1,6 @@
 #pragma once
 
-// This file use for documentation of GameVars.
+// This file is used for documentation of GameVars.
 
 /// A table with game data which will be saved and loaded.
 // @specialtable GameVars
