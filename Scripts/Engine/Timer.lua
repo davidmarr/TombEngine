@@ -69,7 +69,8 @@ LevelVars.Engine.Timer.params = {
 -- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.
 -- @tparam[opt=nil] LevelFunc func The function defined in the *LevelFuncs* table to call when the time is up
 -- @tparam[opt] any ... a variable number of arguments with which the above function will be called
--- @treturn Timer|nil The timer in its paused state or nil if an error occurred
+-- @treturn[1] Timer The timer in its paused state
+-- @treturn[2] nil If an error occurred
 -- @usage
 -- -- Example 1 simple timer:
 -- Timer.Create("my_timer", 6.1)
@@ -146,7 +147,8 @@ end
 
 --- Get a timer by its name.
 -- @tparam string name The label that was given to the timer when it was created
--- @treturn ?Timer|nil The timer or nil if timer does not exist
+-- @treturn[1] Timer The timer
+-- @treturn[2] nil If the timer does not exist
 -- @usage
 -- -- Example:
 -- Timer.Get("my_timer")
@@ -163,7 +165,8 @@ end
 
 --- Check if a timer exists.
 -- @tparam string name The label that was given to the timer when it was created
--- @treturn bool true if the timer exists, false if it does not exist
+-- @treturn[1] bool true if the timer exists
+-- @treturn[2] bool false if an error occurred
 -- @usage
 -- -- Example:
 -- -- This function checks if a timer named "my_timer" exists and starts it
