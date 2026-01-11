@@ -1,5 +1,5 @@
 #pragma once
-#include "Scripting/Internal/TEN/Flow/FlowHandler.h"
+#include "Scripting/Internal/ReservedScriptNames.h"
 
 namespace TEN::Scripting
 {	/// Events that can be handled in level scripts.

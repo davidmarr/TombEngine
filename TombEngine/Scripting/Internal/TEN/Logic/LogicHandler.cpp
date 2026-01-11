@@ -9,7 +9,6 @@
 #include "Scripting/Internal/ScriptAssert.h"
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Logic/LevelFunc.h"
-#include "Scripting/Internal/TEN/Logic/CallbackPoint.h"
 #include "Scripting/Internal/TEN/Logic/EventType.h"
 #include "Scripting/Internal/TEN/Logic/LevelEndReason.h"
 #include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"

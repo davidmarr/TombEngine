@@ -3,6 +3,15 @@
 
 namespace TEN::Scripting
 {
+	enum class LevelEndReason
+	{
+		LevelComplete,
+		LoadGame,
+		ExitToTitle,
+		Death,
+		Other
+	};
+
 	/// Reasons why a level ended.
 	// @enum Logic.EndReason
 	static const auto LEVEL_END_REASONS = std::unordered_map<std::string, LevelEndReason>

@@ -1,9 +1,26 @@
 #pragma once
-
-#include "Scripting/Internal/TEN/Flow/FlowHandler.h"
+#include "Scripting/Internal/ReservedScriptNames.h"
 
 namespace TEN::Scripting
 {
+	enum class CallbackPoint
+	{
+		PreStart,
+		PostStart,
+		PreLoad,
+		PostLoad,
+		PreLoop,
+		PostLoop,
+		PreSave,
+		PostSave,
+		PreEnd,
+		PostEnd,
+		PreUseItem,
+		PostUseItem,
+		PreFreeze,
+		PostFreeze
+	};
+
 	/// Points in the game flow where level scripts can hook into.
 	// @enum Logic.CallbackPoint
 	// @pragma nostrip

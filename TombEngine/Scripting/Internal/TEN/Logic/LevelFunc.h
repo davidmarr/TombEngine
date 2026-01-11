@@ -34,10 +34,8 @@ public:
 	}
 };
 
-// This file is used for documentation of LevelFunc.
-
 /// A table nested table system for level-specific functions.
-// @specialtable LevelFunc
+// @specialtable LevelFuncs
 // This serves a few purposes: it holds the level callbacks (listed below) as well as
 // any trigger functions you might have specified.
 // 
