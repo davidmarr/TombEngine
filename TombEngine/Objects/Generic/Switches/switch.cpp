@@ -25,7 +25,7 @@ void ProcessShootSwitch(ItemInfo* item)
 	if (item->ObjectNumber == ID_SHOOT_SWITCH1 || item->ObjectNumber == ID_SHOOT_SWITCH2)
 		ExplodeItemNode(item, Objects[item->ObjectNumber].nmeshes - 1, 0, 64);
 
-	if (item->ObjectNumber == ID_SHOOT_SWITCH1 && item->TriggerFlags == 444)
+	if (item->ObjectNumber == ID_SHOOT_SWITCH2 && item->TriggerFlags == 444)
 	{
 		auto pos = GetJointPosition(item, 0);
 		TestTriggers(pos.x, pos.y, pos.z, item->RoomNumber, true);
