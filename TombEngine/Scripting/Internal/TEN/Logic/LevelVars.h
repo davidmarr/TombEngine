@@ -12,10 +12,10 @@
 // 
 // In LevelVars, you can only save certain types of variables:
 // 
-// - Numbers (integers and floats)
-// - Booleans (true and false)
-// - Strings (text)
-// - tables (tables containing any of these types, including nested tables)
+// - number (integers and floats)
+// - boolean (true and false)
+// - @{string} (text)
+// - @{table} (tables containing any of these types, including nested tables)
 // - @{Vec2} (2D vectors)
 // - @{Vec3} (3D vectors)
 // - @{Rotation} (rotation values)
