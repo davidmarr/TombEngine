@@ -166,8 +166,10 @@ Any returned value will be discarded.
 @tparam Logic.CallbackPoint point When should the callback be called?
 @tparam function func The function to be called (must be in the `LevelFuncs` hierarchy). Will receive, as an argument, the time in seconds since the last frame.
 @usage
-	LevelFuncs.MyFunc = function(dt) print(dt) end
-	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.MyFunc)
+	LevelFuncs.MyFunc = function() 
+		-- do stuff here
+	end
+	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_START, LevelFuncs.MyFunc)
 */
 void LogicHandler::AddCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
@@ -227,6 +229,13 @@ void LogicHandler::RemoveCallback(CallbackPoint point, const LevelFunc& levelFun
 @tparam string name Name of the event set to find.
 @tparam Logic.EventType type Event to execute.
 @tparam[opt=Lara] Objects.Moveable activator Optional activator.
+@usage
+	-- Executes the "ENTER" volume event of the event set named "MyVolumeEvent"
+	TEN.Logic.HandleEvent("MyVolumeEvent", TEN.Logic.EventType.ENTER)
+
+	-- Executes the "LOAD" global event of the event set named "MyGlobalEvent", with enemy as activator
+	enemy = TEN.Objects.GetMoveableByName("MyEnemy")
+	TEN.Logic.HandleEvent("MyGlobalEvent", TEN.Logic.EventType.LOAD, enemy)
 */
 void LogicHandler::HandleEvent(const std::string& name, EventType type, sol::optional<Moveable&> activator)
 {
@@ -238,6 +247,9 @@ void LogicHandler::HandleEvent(const std::string& name, EventType type, sol::opt
 @function EnableEvent
 @tparam string name Name of the event set to find.
 @tparam Logic.EventType type Event to enable.
+@usage
+	-- Enables the "ENTER" volume event of the event set named "MyVolumeEvent"
+	TEN.Logic.EnableEvent("MyVolumeEvent", TEN.Logic.EventType.ENTER)
 */
 void LogicHandler::EnableEvent(const std::string& name, EventType type)
 {
@@ -249,6 +261,9 @@ void LogicHandler::EnableEvent(const std::string& name, EventType type)
 @function DisableEvent
 @tparam string name Name of the event set to find.
 @tparam Logic.EventType type Event to disable.
+@usage
+	-- Disables the "ENTER" volume event of the event set named "MyVolumeEvent"
+	TEN.Logic.DisableEvent("MyVolumeEvent", TEN.Logic.EventType.ENTER)
 */
 void LogicHandler::DisableEvent(const std::string& name, EventType type)
 {
