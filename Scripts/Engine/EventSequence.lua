@@ -164,7 +164,7 @@ EventSequence.Create = function (name, loop, timerFormat, ...)
 			error = true
 		end
 		if not (Type.IsLevelFunc(funcAndArgs) or (Type.IsTable(funcAndArgs) and Type.IsLevelFunc(funcAndArgs[1]))) then
-			TEN.Util.PrintLog("Error in EventSequence.Create(): wrong value for function, '".. name .."' sequence was not created", TEN.Util.LogLevel.ERROR)
+			TEN.Util.PrintLog("Error in EventSequence.Create(): wrong value for function arguments, used function must be inside LevelFuncs. '".. name .."' sequence was not created", TEN.Util.LogLevel.ERROR)
 			error = true
 		end
 		if error then
