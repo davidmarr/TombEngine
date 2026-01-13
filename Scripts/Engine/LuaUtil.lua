@@ -1841,7 +1841,7 @@ end
 --     
 --     -- Calculate angle to north
 --     -- Add 180° offset because the sprite points down by default
---     local needleTargetAngle = playerYaw + 180
+--     local needleTargetAngle = -playerYaw + 180
 --     
 --     -- Smoothly rotate needle towards north using shortest path
 --     local currentNeedleAngle = compassNeedle:GetRotation()
