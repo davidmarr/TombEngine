@@ -54,6 +54,61 @@
 --	    autoStart = true, -- Start immediately
 --	    onUpdate = LevelFuncs.MyTweenOnUpdate,
 --	}
+--
+-- Example with wrapAngle for HUD compass needle (shortest angular path):
+--
+--	-- Setup sprite and tracking variable
+--	local objID = TEN.Objects.ObjID.SPEEDOMETER_GRAPHICS
+--	local compassNeedle = TEN.View.DisplaySprite(objID, 1, TEN.Vec2(80, 80), 0, TEN.Vec2(20, 20))
+--	local lastTargetAngle = 0
+--
+--	-- Callback: only update needle rotation (not drawing!)
+--	LevelFuncs.OnCompassUpdate = function(value, progress, tween)
+--	    compassNeedle:SetRotation(value)
+--	end
+--
+--	-- Create tween with wrapAngle for smooth rotation via shortest path
+--	local compassTween = Tween.Create{
+--	    name = "compassNeedle",
+--	    from = 0,
+--	    to = 0,
+--	    period = 0.5,
+--	    mode = Tween.Mode.ONCE,  -- Manual restart control
+--	    wrapAngle = true,  -- Use shortest angular path (350° → 10° goes through 0°)
+--	    easing = Tween.Easing.ELASTIC,  -- Overshoot effect for realism
+--	    easingParams = {amplitude = 1.2, period = 0.35},
+--	    autoStart = false,  -- Start manually when target changes
+--	    onUpdate = LevelFuncs.OnCompassUpdate,
+--	}
+--
+--	-- Main loop: draw sprite + update target when player rotates
+--	LevelFuncs.OnLoop = function()
+--	    -- Always draw sprite every frame (required to keep it visible)
+--	    compassNeedle:Draw()
+--
+--	    -- Check if player facing direction changed significantly
+--	    local playerYaw = Lara:GetRotation().y
+--	    local newTarget = -playerYaw + 180  -- Offset because sprite points down
+--	    local angleDelta = math.abs(LuaUtil.WrapAngle(newTarget - lastTargetAngle, -180, 180))
+--
+--	    -- Update tween only if rotation changed by more than 3 degrees
+--	    if angleDelta > 3 then
+--	        local currentAngle = compassNeedle:GetRotation()
+--	        compassTween:SetFromAndTo(currentAngle, newTarget)
+--
+--	        -- Adaptive easing: bigger rotations = more dramatic effect
+--	        if angleDelta > 60 then
+--	            compassTween:SetEasing(Tween.Easing.ELASTIC, {amplitude = 1.3, period = 0.4})
+--	            compassTween:SetPeriod(0.7)
+--	        else
+--	            compassTween:SetEasing(Tween.Easing.EASE_IN_OUT)
+--	            compassTween:SetPeriod(0.3)
+--	        end
+--
+--	        compassTween:Restart()
+--	        lastTargetAngle = newTarget
+--	    end
+--	end
 -- @luautil Tween
 
 local Type = require("Engine.Type")
@@ -241,6 +296,12 @@ Tween.Create = function(params)
     if params.seamlessLoop and not Type.IsBoolean(params.seamlessLoop) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.seamlessLoop must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
     end
+    if params.wrapAngle and not Type.IsBoolean(params.wrapAngle) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.wrapAngle must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
+    end
+    if params.wrapAngle and not Type.IsNumber(params.from) then
+        TEN.Util.PrintLog("Warning in Tween.Create(): params.wrapAngle is only supported for numeric values. Flag will be ignored for this tween.", TEN.Util.LogLevel.WARNING)
+    end
     if params.mode and not LuaUtil.TableHasValue(Tween.Mode, params.mode) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.mode has invalid value. Using default value 'ONCE'", TEN.Util.LogLevel.WARNING)
     end
@@ -286,6 +347,14 @@ Tween.Create = function(params)
     thisTween.loopCount = params.loopCount or nil
     thisTween.autoStart = Type.IsBoolean(params.autoStart) and params.autoStart or false
     thisTween.seamlessLoop = Type.IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
+    -- wrapAngle: only effective for numeric values (uses shortest angular path like LuaUtil.LerpAngle)
+    thisTween.wrapAngle = Type.IsBoolean(params.wrapAngle) and params.wrapAngle and Type.IsNumber(params.from) or false
+
+    -- Pre-calculate effectiveTo for wrapAngle (shortest angular path)
+    if thisTween.wrapAngle then
+        local delta = LuaUtil.WrapAngle(thisTween.to - thisTween.from, -180, 180)
+        thisTween.effectiveTo = thisTween.from + delta
+    end
 
     -- State management
     thisTween.active = params.autoStart and true or false
@@ -614,7 +683,13 @@ function Tween:SetFrom(value)
     if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].to) then
         return TEN.Util.PrintLog("Error in Tween:SetFrom(value): 'from' value type must match 'to' value type", TEN.Util.LogLevel.ERROR)
     end
-    LevelVars.Engine.Tween.tweens[self.name].from = value
+    local t = LevelVars.Engine.Tween.tweens[self.name]
+    t.from = value
+    -- Recalculate effectiveTo if wrapAngle is active
+    if t.wrapAngle then
+        local delta = LuaUtil.WrapAngle(t.to - t.from, -180, 180)
+        t.effectiveTo = t.from + delta
+    end
 end
 
 --- Get the 'to' value of the tween
@@ -641,7 +716,13 @@ function Tween:SetTo(value)
     if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].from) then
         return TEN.Util.PrintLog("Error in Tween:SetTo(value): 'to' value type must match 'from' value type", TEN.Util.LogLevel.ERROR)
     end
-    LevelVars.Engine.Tween.tweens[self.name].to = value
+    local t = LevelVars.Engine.Tween.tweens[self.name]
+    t.to = value
+    -- Recalculate effectiveTo if wrapAngle is active
+    if t.wrapAngle then
+        local delta = LuaUtil.WrapAngle(t.to - t.from, -180, 180)
+        t.effectiveTo = t.from + delta
+    end
 end
 
 --- Get both 'from' and 'to' values of the tween
@@ -674,8 +755,14 @@ function Tween:SetFromAndTo(from, to)
     if getmetatable(from) ~= getmetatable(to) then
         return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): 'from' and 'to' value types must match", TEN.Util.LogLevel.ERROR)
     end
-    LevelVars.Engine.Tween.tweens[self.name].from = from
-    LevelVars.Engine.Tween.tweens[self.name].to = to
+    local t = LevelVars.Engine.Tween.tweens[self.name]
+    t.from = from
+    t.to = to
+    -- Recalculate effectiveTo if wrapAngle is active
+    if t.wrapAngle then
+        local delta = LuaUtil.WrapAngle(t.to - t.from, -180, 180)
+        t.effectiveTo = t.from + delta
+    end
 end
 
 --- Get the easing function of the tween
@@ -885,6 +972,7 @@ end
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
 -- @tfield[opt] table easingParams Optional parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used. For BOUNCE expects `bounces` (integer) and `damping` (number) fields, see `LuaUtil.Bounce`.
 -- @tfield[opt=false] bool seamlessLoop When true, RESTART mode uses seamless loop transitions for cyclic values like rotations (0-360°). When false (default), uses precise reset for better accuracy with Vec3/Color. Only affects RESTART mode - PING_PONG always uses seamless transitions. Use true for smooth infinite rotations, false for precise positional loops.
+-- @tfield[opt=false] bool wrapAngle When true, interpolates numeric values using the **shortest angular path** (like `LuaUtil.LerpAngle`). Only works with numeric `from`/`to` values - ignored for Color, Vec2, Vec3. For Rotation primitives, use `Rotation:Lerp()` which already handles shortest path automatically. Perfect for 2D UI elements like compass needles, gauges, and indicators. Example: from=350° to=10° will interpolate through 0° (20° path) instead of going the long way (340° path).
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start. Signature: `function(tween)`
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete. Signature: `function(value, tween)`
 -- @tfield[opt] function onLoop function in LevelFuncs hierarchy called on loop. Signature: `function(value, tween)`
@@ -963,10 +1051,12 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     end
 
                     -- Calculate value: swap from/to when going backwards to preserve easing curve
+                    -- Use effectiveTo for wrapAngle (shortest angular path)
+                    local targetTo = t.wrapAngle and t.effectiveTo or t.to
                     if t.direction == 1 then
-                        t.value = t.interpolation(t.from, t.to, t.progress, t.easingParams and table.unpack(t.easingParams))
+                        t.value = t.interpolation(t.from, targetTo, t.progress, t.easingParams and table.unpack(t.easingParams))
                     else
-                        t.value = t.interpolation(t.to, t.from, t.progress, t.easingParams and table.unpack(t.easingParams))
+                        t.value = t.interpolation(targetTo, t.from, t.progress, t.easingParams and table.unpack(t.easingParams))
                     end
 
                     -- Callback ON_UPDATE

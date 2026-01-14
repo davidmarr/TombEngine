@@ -51,6 +51,7 @@ LevelVars.Engine.LuaUtil._Internal = {
     atan = math.atan,
     deg = math.deg,
     sqrt = math.sqrt,
+    rad = math.rad,
     pi = math.pi,
 
     -- Default frames per second for time-frame conversions
@@ -1159,6 +1160,295 @@ LuaUtil.IsInteger = function(n)
         return false
     end
     return (n % 1) == 0
+end
+
+--- Rotate a point around an arbitrary axis passing through a pivot point.
+-- Supports rotation around standard axes (X, Y, Z) or custom axis vectors.
+-- Uses TEN's Vec3:Rotate() method for efficient calculation.
+-- @tparam Vec3 point The point to rotate.
+-- @tparam Vec3 pivot The pivot point (center of rotation).
+-- @tparam string|Vec3 axis The rotation axis. Can be "x", "y", "z" (case-insensitive) or a custom Vec3 direction.
+-- @tparam float angle The rotation angle in degrees.
+-- @treturn[1] Vec3 The rotated point.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Rotate point around Y axis (pivot at origin)
+-- local point = TEN.Vec3(100, 0, 0)
+-- local pivot = TEN.Vec3(0, 0, 0)
+-- local rotated = LuaUtil.RotatePointAroundAxis(point, pivot, "y", 90)
+-- -- Result: Vec3(0, 0, -100) (rotated 90° counterclockwise around Y)
+--
+-- -- Example: Rotate around pivot (not origin)
+-- local point = TEN.Vec3(150, 50, 100)
+-- local pivot = TEN.Vec3(100, 50, 100)  -- Pivot at x=100
+-- local rotated = LuaUtil.RotatePointAroundAxis(point, pivot, "y", 180)
+-- -- Result: Vec3(50, 50, 100) (point mirrored around pivot)
+--
+-- -- Example: Rotate around custom axis (diagonal) - Complete working example
+-- local satellite = TEN.Objects.GetMoveableByName("Satellite1")
+-- local planet = TEN.Objects.GetMoveableByName("Planet")
+-- local startPos = satellite:GetPosition()  -- Store initial position (read ONCE outside loop)
+-- local pivot = planet:GetPosition()
+-- local customAxis = TEN.Vec3(1, 0, 1)  -- Diagonal axis XZ (automatically normalized)
+-- local angle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(10)  -- Complete rotation in 10 seconds
+-- LevelFuncs.OnLoop = function()
+--     angle = (angle + rotationSpeed) % 360
+--     -- IMPORTANT: Rotate the INITIAL position (startPos), not current position!
+--     local newPos = LuaUtil.RotatePointAroundAxis(startPos, pivot, customAxis, angle)
+--     satellite:SetPosition(newPos)
+-- end
+--
+-- -- Example: Orbital animation around Y axis - Complete working example
+-- local satellite = TEN.Objects.GetMoveableByName("Satellite1")
+-- local planet = TEN.Objects.GetMoveableByName("Planet")
+-- local startPos = satellite:GetPosition()  -- Initial position (FIXED reference)
+-- local pivot = planet:GetPosition()
+-- local angle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(8)  -- 8 seconds per orbit
+-- LevelFuncs.OnLoop = function()
+--     angle = (angle + rotationSpeed) % 360
+--     local newPos = LuaUtil.RotatePointAroundAxis(startPos, pivot, "y", angle)
+--     satellite:SetPosition(newPos)
+--     
+--     -- Optional: make satellite face the planet
+--     local lookDir = (pivot - newPos):Normalize()
+--     satellite:SetRotation(TEN.Rotation(lookDir))
+-- end
+--
+-- -- Example: Swing/pendulum animation - Complete working example
+-- local pendulum = TEN.Objects.GetMoveableByName("Pendulum")
+-- local anchor = TEN.Objects.GetMoveableByName("Anchor"):GetPosition()  -- Pivot point (fixed)
+-- local restPos = pendulum:GetPosition()  -- Rest position below anchor
+-- local swingAngle = 0
+-- local swingSpeed = 360 / LuaUtil.SecondsToFrames(2)  -- 2 second period
+-- LevelFuncs.OnLoop = function()
+--     swingAngle = swingAngle + swingSpeed
+--     -- Sine wave creates back-and-forth motion: -45° to +45°
+--     local currentAngle = 45 * I.sin(I.rad(swingAngle))
+--     local swingingPos = LuaUtil.RotatePointAroundAxis(restPos, anchor, "z", currentAngle)
+--     pendulum:SetPosition(swingingPos)
+--     
+--     -- Rotate the pendulum object to match swing angle (realistic pendulum motion)
+--     pendulum:SetRotation(TEN.Rotation(0, 0, currentAngle))
+-- end
+--
+-- -- Example: Look at pivot while rotating
+-- local rotatedPos = LuaUtil.RotatePointAroundAxis(pos, pivot, "y", angle)
+-- obj:SetPosition(rotatedPos)
+-- local lookDir = (pivot - rotatedPos):Normalize()
+-- obj:SetRotation(TEN.Rotation(lookDir))
+--
+-- -- Error handling example:
+-- local rotated = LuaUtil.RotatePointAroundAxis(point, pivot, axis, angle)
+-- if rotated == nil then
+--     TEN.Util.PrintLog("Failed to rotate point", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+-- obj:SetPosition(rotated)
+--
+-- -- Safe approach with default fallback:
+-- local rotated = LuaUtil.RotatePointAroundAxis(point, pivot, "y", angle) or point
+LuaUtil.RotatePointAroundAxis = function(point, pivot, axis, angle)
+    -- Type validation
+    if not I.IsVec3(point) then
+        TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: point must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not I.IsVec3(pivot) then
+        TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: pivot must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not I.IsNumber(angle) then
+        TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: angle must be a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Translate point to pivot's local space
+    local localPoint = point - pivot
+
+    -- Rotate based on axis type
+    local rotatedLocal
+    if I.IsString(axis) then
+        local axisLower = axis:lower()
+        local rotation
+        if axisLower == "x" then
+            rotation = TEN.Rotation(angle, 0, 0)
+        elseif axisLower == "y" then
+            rotation = TEN.Rotation(0, angle, 0)
+        elseif axisLower == "z" then
+            rotation = TEN.Rotation(0, 0, angle)
+        else
+            TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: axis string must be 'x', 'y', or 'z'.", TEN.Util.LogLevel.ERROR)
+            return nil
+        end
+        rotatedLocal = localPoint:Rotate(rotation)
+    elseif I.IsVec3(axis) then
+        -- Custom axis: use Rodrigues' rotation formula
+        -- v_rot = v*cos(θ) + (k × v)*sin(θ) + k*(k·v)*(1-cos(θ))
+        local k = axis:Normalize()
+        local angleRad = I.rad(angle)
+        local cosTheta = I.cos(angleRad)
+        local sinTheta = I.sin(angleRad)
+
+        local kCrossV = k:Cross(localPoint)
+        local kDotV = k:Dot(localPoint)
+
+        rotatedLocal = localPoint * cosTheta + kCrossV * sinTheta + k * (kDotV * (1 - cosTheta))
+    else
+        TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: axis must be a string ('x', 'y', 'z') or Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Translate back to world space
+    local result = rotatedLocal + pivot
+
+    return result
+end
+
+--- Calculate a position on a circular orbit around a center point.
+-- Generates positions parametrically using radius and angle, ideal for orbital animations.
+-- @tparam Vec3 center The center of the orbit.
+-- @tparam float radius The radius of the orbit.
+-- @tparam float angle The parametric angle in degrees (0-360).
+-- @tparam[opt="y"] string|Vec3 axis The orbital plane axis. Can be "x", "y", "z" (case-insensitive) or custom Vec3.
+-- @treturn[1] Vec3 The calculated orbital position.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Simple circular orbit on XZ plane - Complete working example
+-- local satellite = TEN.Objects.GetMoveableByName("Satellite1")
+-- local planet = TEN.Objects.GetMoveableByName("Planet")
+-- local center = planet:GetPosition()
+-- local radius = 2048
+-- local angle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(10)  -- 10 seconds per orbit
+-- LevelFuncs.OnLoop = function()
+--     angle = (angle + rotationSpeed) % 360
+--     local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "y")
+--     satellite:SetPosition(orbitPos)
+--     
+--     -- Optional: make satellite face the planet
+--     local lookDir = (center - orbitPos):Normalize()
+--     satellite:SetRotation(TEN.Rotation(lookDir))
+-- end
+--
+-- -- Example: Orbit on XY plane (vertical orbit) - Complete working example
+-- local satellite = TEN.Objects.GetMoveableByName("Satellite1")
+-- local center = TEN.Objects.GetMoveableByName("Planet"):GetPosition()
+-- local radius = 1536
+-- local angle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(6)  -- 6 seconds per orbit
+-- LevelFuncs.OnLoop = function()
+--     angle = (angle + rotationSpeed) % 360
+--     local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "z")  -- Z axis = XY plane
+--     satellite:SetPosition(orbitPos)
+-- end
+--
+-- -- Example: Multiple satellites with phase offset - Complete working example
+-- local sat1 = TEN.Objects.GetMoveableByName("Satellite1")
+-- local sat2 = TEN.Objects.GetMoveableByName("Satellite2")
+-- local sat3 = TEN.Objects.GetMoveableByName("Satellite3")
+-- local planet = TEN.Objects.GetMoveableByName("Planet")
+-- local center = planet:GetPosition()
+-- local radius = 2048
+-- local satellites = { sat1, sat2, sat3 }
+-- local phaseOffset = 360 / #satellites  -- 120° spacing (360/3)
+-- local baseAngle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(12)  -- 12 seconds per orbit
+-- LevelFuncs.OnLoop = function()
+--     baseAngle = (baseAngle + rotationSpeed) % 360
+--     for i, sat in ipairs(satellites) do
+--         local angle = (baseAngle + (i - 1) * phaseOffset) % 360
+--         local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "y")
+--         sat:SetPosition(orbitPos)
+--     end
+-- end
+--
+-- -- Example: Custom diagonal orbital plane - Complete working example
+-- local satellite = TEN.Objects.GetMoveableByName("Satellite1")
+-- local center = TEN.Objects.GetMoveableByName("Planet"):GetPosition()
+-- local radius = 1024
+-- local customAxis = TEN.Vec3(1, 1, 0)  -- Diagonal XY axis (automatically normalized)
+-- local angle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(8)  -- 8 seconds per orbit
+-- LevelFuncs.OnLoop = function()
+--     angle = (angle + rotationSpeed) % 360
+--     local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, customAxis)
+--     satellite:SetPosition(orbitPos)
+-- end
+--
+-- -- Error handling example:
+-- local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "y")
+-- if orbitPos == nil then
+--     TEN.Util.PrintLog("Failed to calculate orbit position", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+-- obj:SetPosition(orbitPos)
+--
+-- -- Safe approach with default fallback:
+-- local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "y") or center
+LuaUtil.OrbitPosition = function(center, radius, angle, axis)
+    -- Type validation
+    if not I.IsVec3(center) then
+        TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: center must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not I.IsNumber(radius) then
+        TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: radius must be a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not I.IsNumber(angle) then
+        TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: angle must be a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Default axis to "y" if not provided
+    axis = axis or "y"
+
+    -- Convert angle to radians
+    local angleRad = I.rad(angle)
+    local cosAngle = I.cos(angleRad)
+    local sinAngle = I.sin(angleRad)
+
+    -- Calculate offset based on axis
+    local offset
+    if I.IsString(axis) then
+        local axisLower = axis:lower()
+        if axisLower == "y" then
+            -- Orbit on XZ plane (around Y axis)
+            offset = TEN.Vec3(cosAngle * radius, 0, sinAngle * radius)
+        elseif axisLower == "x" then
+            -- Orbit on YZ plane (around X axis)
+            offset = TEN.Vec3(0, cosAngle * radius, sinAngle * radius)
+        elseif axisLower == "z" then
+            -- Orbit on XY plane (around Z axis)
+            offset = TEN.Vec3(cosAngle * radius, sinAngle * radius, 0)
+        else
+            TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: axis string must be 'x', 'y', or 'z'.", TEN.Util.LogLevel.ERROR)
+            return nil
+        end
+    elseif I.IsVec3(axis) then
+        -- Custom axis: calculate perpendicular vectors for orbital plane
+        local axisNormalized = axis:Normalize()
+        
+        -- Find perpendicular vector (use cross product with arbitrary vector)
+        local arbitrary = TEN.Vec3(0, 1, 0)
+        if I.abs(axisNormalized.y) > 0.99 then
+            arbitrary = TEN.Vec3(1, 0, 0)
+        end
+        
+        -- Create two perpendicular vectors in the orbital plane
+        local perp1 = axisNormalized:Cross(arbitrary):Normalize()
+        local perp2 = axisNormalized:Cross(perp1):Normalize()
+        
+        -- Calculate position on circular orbit
+        offset = (perp1 * cosAngle + perp2 * sinAngle) * radius
+    else
+        TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: axis must be a string ('x', 'y', 'z') or Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    return center + offset
 end
 
 --- Conversion functions.
