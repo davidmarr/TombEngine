@@ -371,20 +371,20 @@ const std::vector<byte> SaveGame::Build()
 	auto holsterInfoOffset = holsterInfo.Finish();
 
 	Save::ArmInfoBuilder leftArm{ fbb };
+	leftArm.add_anim_object_id(Lara.LeftArm.AnimObjectID);
 	leftArm.add_anim_number(Lara.LeftArm.AnimNumber);
 	leftArm.add_gun_flash(Lara.LeftArm.GunFlash);
 	leftArm.add_gun_smoke(Lara.LeftArm.GunSmoke);
-	leftArm.add_frame_base(Lara.LeftArm.FrameBase);
 	leftArm.add_frame_number(Lara.LeftArm.FrameNumber);
 	leftArm.add_locked(Lara.LeftArm.Locked);
 	leftArm.add_rotation(&FromEulerAngles(Lara.LeftArm.Orientation));
 	auto leftArmOffset = leftArm.Finish();
 
 	Save::ArmInfoBuilder rightArm{ fbb };
+	rightArm.add_anim_object_id(Lara.RightArm.AnimObjectID);
 	rightArm.add_anim_number(Lara.RightArm.AnimNumber);
 	rightArm.add_gun_flash(Lara.RightArm.GunFlash);
 	rightArm.add_gun_smoke(Lara.RightArm.GunSmoke);
-	rightArm.add_frame_base(Lara.RightArm.FrameBase);
 	rightArm.add_frame_number(Lara.RightArm.FrameNumber);
 	rightArm.add_locked(Lara.RightArm.Locked);
 	rightArm.add_rotation(&FromEulerAngles(Lara.RightArm.Orientation));
@@ -617,16 +617,31 @@ const std::vector<byte> SaveGame::Build()
 	{
 		auto nameOffset = fbb.CreateString(room.Name);
 
+		std::vector<bool> blockStopperFlags;
+		for (auto& sector : room.Sectors)
+		{
+			blockStopperFlags.push_back(sector.Stopper);
+		}
+		auto blockStopperFlagsOffset = fbb.CreateVector(blockStopperFlags);
+
 		Save::RoomBuilder serializedInfo{ fbb };
 		serializedInfo.add_name(nameOffset);
 		serializedInfo.add_index(room.originalRoom);
 		serializedInfo.add_reverb_type((int)room.reverbType);
 		serializedInfo.add_flags(room.flags);
+		serializedInfo.add_block_stopper_flags(blockStopperFlagsOffset);
 		auto serializedInfoOffset = serializedInfo.Finish();
 
 		rooms.push_back(serializedInfoOffset);
 	}
 	auto roomOffset = fbb.CreateVector(rooms);
+
+	std::vector<int> boxFlags;
+	for (auto& box : g_Level.PathfindingBoxes)
+	{
+		boxFlags.push_back(box.flags);
+	}
+	auto boxFlagsOffset = fbb.CreateVector(boxFlags);
 
 	int currentItemIndex = 0;
 	for (auto& itemToSerialize : g_Level.Items) 
@@ -638,7 +653,7 @@ const std::vector<byte> SaveGame::Build()
 		auto luaOnCollidedRoomNameOffset = fbb.CreateString(itemToSerialize.Callbacks.OnRoomCollided);
 
 		std::vector<int> itemFlags;
-		for (int i = 0; i < 7; i++)
+		for (int i = 0; i < ITEM_FLAG_COUNT; i++)
 			itemFlags.push_back(itemToSerialize.ItemFlags[i]);
 		auto itemFlagsOffset = fbb.CreateVector(itemFlags);
 
@@ -779,6 +794,8 @@ const std::vector<byte> SaveGame::Build()
 
 			Save::PushableBuilder pushableBuilder{ fbb };
 
+			pushableBuilder.add_previous_trigger_flags((int)pushable->PreviousTriggerFlags);
+
 			pushableBuilder.add_pushable_behaviour_state((int)pushable->BehaviorState);
 			pushableBuilder.add_pushable_gravity(pushable->Gravity);
 			pushableBuilder.add_pushable_water_force(pushable->Oscillation);
@@ -826,11 +843,9 @@ const std::vector<byte> SaveGame::Build()
 
 		Save::ItemBuilder serializedItem{ fbb };
 
-		if (Objects.CheckID(itemToSerialize.ObjectNumber, true))
-			serializedItem.add_anim_number(itemToSerialize.Animation.AnimNumber - Objects[itemToSerialize.ObjectNumber].animIndex);
-
 		serializedItem.add_next_item(itemToSerialize.NextItem);
 		serializedItem.add_next_item_active(itemToSerialize.NextActive);
+		serializedItem.add_anim_number(itemToSerialize.Animation.AnimNumber);
 		serializedItem.add_after_death(itemToSerialize.AfterDeath);
 		serializedItem.add_box_number(itemToSerialize.BoxNumber);
 		serializedItem.add_carried_item(itemToSerialize.CarriedItem);
@@ -1631,6 +1646,7 @@ const std::vector<byte> SaveGame::Build()
 	sgb.add_camera(cameraOffset);
 	sgb.add_lara(laraOffset);
 	sgb.add_rooms(roomOffset);
+	sgb.add_box_flags(boxFlagsOffset);
 	sgb.add_next_item_free(NextItemFree);
 	sgb.add_next_item_active(NextItemActive);
 	sgb.add_items(serializedItemsOffset);
@@ -2222,19 +2238,19 @@ static void ParsePlayer(const Save::SaveGame* s)
 	Lara.Inventory.TotalFlares = s->lara()->inventory()->total_flares();
 	Lara.Inventory.TotalLargeMedipacks = s->lara()->inventory()->total_large_medipacks();
 	Lara.Inventory.TotalSmallMedipacks = s->lara()->inventory()->total_small_medipacks();
+	Lara.LeftArm.AnimObjectID = (GAME_OBJECT_ID)s->lara()->left_arm()->anim_object_id();
 	Lara.LeftArm.AnimNumber = s->lara()->left_arm()->anim_number();
 	Lara.LeftArm.GunFlash = s->lara()->left_arm()->gun_flash();
 	Lara.LeftArm.GunSmoke = s->lara()->left_arm()->gun_smoke();
-	Lara.LeftArm.FrameBase = s->lara()->left_arm()->frame_base();
 	Lara.LeftArm.FrameNumber = s->lara()->left_arm()->frame_number();
 	Lara.LeftArm.Locked = s->lara()->left_arm()->locked();
 	Lara.LeftArm.Orientation = ToEulerAngles(s->lara()->left_arm()->rotation());
 	Lara.Location = s->lara()->location();
 	Lara.LocationPad = s->lara()->location_pad();
+	Lara.RightArm.AnimObjectID = (GAME_OBJECT_ID)s->lara()->right_arm()->anim_object_id();
 	Lara.RightArm.AnimNumber = s->lara()->right_arm()->anim_number();
 	Lara.RightArm.GunFlash = s->lara()->right_arm()->gun_flash();
 	Lara.RightArm.GunSmoke = s->lara()->right_arm()->gun_smoke();
-	Lara.RightArm.FrameBase = s->lara()->right_arm()->frame_base();
 	Lara.RightArm.FrameNumber = s->lara()->right_arm()->frame_number();
 	Lara.RightArm.Locked = s->lara()->right_arm()->locked();
 	Lara.RightArm.Orientation = ToEulerAngles(s->lara()->right_arm()->rotation());
@@ -2595,6 +2611,12 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 		g_Level.Rooms[room->index()].reverbType = (ReverbType)room->reverb_type();
 	}
 
+	// Box flags
+	for (int i = 0; i < s->box_flags()->size(); i++)
+	{
+		g_Level.PathfindingBoxes[i].flags = s->box_flags()->Get(i);
+	}
+
 	// Static objects
 	for (int i = 0; i < s->static_meshes()->size(); i++)
 	{
@@ -2612,13 +2634,7 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 		staticObj.Dirty = true;
 		
 		if (!staticObj.Flags)
-		{
-			int roomNumber = savedStaticObj.room_number();
-			auto& sector = *GetFloor(staticObj.Pose.Position.x, staticObj.Pose.Position.y, staticObj.Pose.Position.z, (short*)&roomNumber);
-
 			TestTriggers(staticObj.Pose.Position.x, staticObj.Pose.Position.y, staticObj.Pose.Position.z, savedStaticObj.room_number(), true, 0);
-			sector.Stopper = false;
-		}
 	}
 
 	// Volumes
@@ -2656,6 +2672,16 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			DoFlipMap(i);
 
 		FlipMap[i] = s->flip_maps()->Get(i) << 8;
+	}
+
+	// Room sector stopper flags (should be applied after flipmaps)
+	for (int i = 0; i < s->rooms()->size(); i++)
+	{
+		auto room = s->rooms()->Get(i);
+		for (int j = 0; j < room->block_stopper_flags()->size(); j++)
+		{
+			g_Level.Rooms[room->index()].Sectors[j].Stopper = room->block_stopper_flags()->Get(j);
+		}
 	}
 
 	// Flipeffects
@@ -2770,7 +2796,7 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 		item->Animation.ActiveState = savedItem->active_state();
 		item->Animation.RequiredState = savedItem->required_state();
 		item->Animation.TargetState = savedItem->target_state();
-		item->Animation.AnimNumber = object->animIndex + savedItem->anim_number();
+		item->Animation.AnimNumber = savedItem->anim_number();
 		item->Animation.FrameNumber = savedItem->frame_number();
 		item->Animation.Velocity = ToVector3(savedItem->velocity());
 
@@ -2787,7 +2813,7 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			item->Model.MeshIndex[j] = savedItem->mesh_index()->Get(j);
 
 		// Flags and timers
-		for (int j = 0; j < 7; j++)
+		for (int j = 0; j < ITEM_FLAG_COUNT; j++)
 			item->ItemFlags[j] = savedItem->item_flags()->Get(j);
 
 		item->Timer = savedItem->timer();
@@ -2825,7 +2851,6 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			(item->Status == ITEM_ACTIVE || item->Status == ITEM_DEACTIVATED))
 		{
 			item->ObjectNumber = (GAME_OBJECT_ID)((int)item->ObjectNumber + ID_PUZZLE_DONE1 - ID_PUZZLE_HOLE1);
-			item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + savedItem->anim_number();
 		}
 
 		// Initialize bridges.
@@ -2953,6 +2978,8 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 		{
 			auto* pushable = (PushableInfo*)item->Data;
 			auto* savedPushable = (Save::Pushable*)savedItem->data();
+
+			pushable->PreviousTriggerFlags = (short)savedPushable->previous_trigger_flags();
 
 			pushable->BehaviorState = (PushableBehaviorState)savedPushable->pushable_behaviour_state();
 			pushable->Gravity = savedPushable->pushable_gravity();

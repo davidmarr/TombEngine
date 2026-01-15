@@ -86,7 +86,7 @@ private:
 	unsigned int _functionCallCount = 0;
 
 	void PerformConsoleInput();
-	void PerformCallbacks(CallbackPoint point);
+	void PerformCallbacks(CallbackPoint point, int argument = NO_VALUE);
 
 	std::string GetRequestedPath() const;
 
@@ -111,6 +111,13 @@ public:
 	template <typename ... Ts> sol::protected_function_result CallLevelFuncByName(const std::string& name, Ts ... vs)
 	{
 		auto func = _levelFuncs_luaFunctions[name];
+
+		if (!func.valid())
+		{
+			TENLog("Could not find script function " + name, LogLevel::Warning);
+			return sol::protected_function_result();
+		}
+
 		auto funcResult = CallLevelFuncBase(func, vs...);
 
 		if (!funcResult.valid())
