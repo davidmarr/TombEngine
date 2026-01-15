@@ -244,4 +244,4 @@ a:target + * {
 }
 
 /* border-top for class section */
-.section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}
+.section-header ~ .section-header {border-top: 1px solid #ccc; padding-top: 1em;}
