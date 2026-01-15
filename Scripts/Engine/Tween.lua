@@ -1014,6 +1014,32 @@ end
 -- @tfield "onTo" ON_TO Called when reaching the 'to' value. Signature: `function(value, tween)`
 -- @tfield "onFrom" ON_FROM Called when reaching the 'from' value. Signature: `function(value, tween)`
 
+----
+-- Example usage of Tween system.
+-- @section TweenExample
+
+--- Example: Bridge moved from point a to point b in 5 seconds using a tween with a callback function.
+-- @table Example 1
+-- @usage
+-- local bridgeTweenParams = {
+--    name = "BridgeMove",
+--    from = Vec3.New(0, 0, 0),
+--    to = Vec3.New(0, 10, 0),
+--    period = 5.0,
+--    autoStart = true,
+-- }
+-- -- Define callback function in LevelFuncs
+-- LevelFuncs.BridgeOnUpdate = function(value, progress, tween)
+--     -- Move the bridge to the new position
+--     local bridgeEntity = TEN.Entity.GetByName("Bridge")
+--     if bridgeEntity then
+--         bridgeEntity:SetPosition(value)
+--     end
+-- end
+--
+-- -- Create the tween
+-- LevelFuncs.Engine.Tween.Create(bridgeTweenParams)
+
 LevelFuncs.Engine.Tween.UpdateAll = function()
     local isInFreeze = TEN.Flow.GetFreezeMode() ~= TEN.Flow.FreezeMode.NONE
 
