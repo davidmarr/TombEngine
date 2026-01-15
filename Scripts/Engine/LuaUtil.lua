@@ -1163,7 +1163,7 @@ LuaUtil.IsInteger = function(n)
 end
 
 --- Rotate a point around an arbitrary axis passing through a pivot point.
--- Supports rotation around standard axes (X, Y, Z) or custom axis vectors.
+-- Supports rotation around standard axes (X, Y, Z) or custom axis vectors. Examples use `SecondsToFrames` for time-based animations.
 -- Uses TEN's Vec3:Rotate() method for efficient calculation.
 -- @tparam Vec3 point The point to rotate.
 -- @tparam Vec3 pivot The pivot point (center of rotation).
@@ -1307,7 +1307,7 @@ LuaUtil.RotatePointAroundAxis = function(point, pivot, axis, angle)
 end
 
 --- Calculate a position on a circular orbit around a center point.
--- Generates positions parametrically using radius and angle, ideal for orbital animations.
+-- Generates positions parametrically using radius and angle, ideal for orbital animations. Examples use `SecondsToFrames` for time-based animations.
 -- @tparam Vec3 center The center of the orbit.
 -- @tparam float radius The radius of the orbit.
 -- @tparam float angle The parametric angle in degrees (0-360).
