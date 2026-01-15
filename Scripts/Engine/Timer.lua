@@ -24,28 +24,6 @@
 --		Timer.Get("my_timer"):Start()
 --	end
 --
--- <a name="timerFormat"><h2 class="section-header">Timer format:</h2></a>
--- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and deciseconds (deciseconds are 1/10th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.<br>Timer format details:
---
---	-- hours:mins:secs.decisecs
---	local myTimeFormat = {hours = true, minutes = true, seconds = true, deciseconds = true}
---
---	-- mins:secs
---	local myTimeFormat1 = {minutes = true, seconds = true, deciseconds = false}
---
---	-- also mins:secs
---	local myTimeFormat2 = {minutes = true, seconds = true}
---	
---	-- secs.decisecs
---	local myTimeFormat3 = {seconds = true, deciseconds = true}
---
---	-- secs; to display only seconds you can pass a table or true
---	local myTimeFormat4 = {seconds = true}
---	local myTimeFormat5 = true
---
---	-- no remaining time display
---	local myTimeFormat6 = false
---
 --Use this sparingly; in the classics, timed challenges did not have visible countdowns.<br>For shorter timers, the gameplay benefit from showing the remaining time might not be necessary, and could interfere with the atmosphere of the level.<br>At any given time, multiple timers can show their countdown.
 -- @luautil Timer
 
@@ -66,7 +44,7 @@ LevelVars.Engine.Timer.params = {
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
 -- @tparam float totalTime Duration of the timer, in seconds.<br>Values with only 1 tenth of a second (0.1) are accepted, example: 1.5 - 6.0 - 9.9 - 123.6. No negative values allowed!
 -- @tparam[opt=false] bool loop If true, the timer will start again immediately after the time has elapsed.
--- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.
+-- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See `timerFormat`.
 -- @tparam[opt=nil] LevelFunc func The function defined in the *LevelFuncs* table to call when the time is up
 -- @tparam[opt] any ... a variable number of arguments with which the above function will be called
 -- @treturn[1] Timer The timer in its paused state
@@ -810,6 +788,27 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 		end
 	end
 end
+
+----
+-- Timer format
+-- @section Timerformat
+
+---
+-- @table timerFormat
+-- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and deciseconds (deciseconds are 1/10th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.<br>Timer format details:
+-- <pre><span class="comment">-- hours:mins:secs.decisecs</span>
+-- <br><span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">true</span>}
+-- <br><span class="comment">-- mins:secs</span>
+-- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">false</span>}
+-- <br><span class="comment">-- also mins:secs</span>
+-- <span class="keyword">local</span> myTimeFormat2 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>}
+-- <br><span class="comment">-- secs.decisecs</span>
+-- <span class="keyword">local</span> myTimeFormat3 = {seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">true</span>}
+-- <br><span class="comment">-- secs; to display only seconds you can pass a table or true</span>
+-- <span class="keyword">local</span> myTimeFormat4 = {seconds = <span class="keyword">true</span>}
+-- <span class="keyword">local</span> myTimeFormat5 = <span class="keyword">true</span>
+-- <br><span class="comment">-- no remaining time display</span>
+-- <span class="keyword">local</span> myTimeFormat6 = <span class="keyword">false</span></pre>
 
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Timer.Decrease)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.Engine.Timer.UpdateAll)
