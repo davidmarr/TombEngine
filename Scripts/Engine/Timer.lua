@@ -794,6 +794,7 @@ end
 -- @section Timerformat
 
 ---
+-- Details about the timer format used in various timer methods.<br>
 -- @table timerFormat
 -- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and deciseconds (deciseconds are 1/10th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.
 -- <h3>Timer format examples:</h3>
