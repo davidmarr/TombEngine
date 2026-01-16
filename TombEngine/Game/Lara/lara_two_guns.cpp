@@ -142,9 +142,9 @@ static void AnimateWeapon(ItemInfo& laraItem, LaraWeaponType weaponType, bool& h
 					else
 					{
 						armOrient = EulerAngles(
-								arm.Orientation.x,
-								arm.Orientation.y + laraItem.Pose.Orientation.y,
-								0);
+							arm.Orientation.x,
+							arm.Orientation.y + laraItem.Pose.Orientation.y,
+							0);
 					}
 
 					if (FireWeapon(weaponType, player.TargetEntity, laraItem, armOrient) != FireWeaponType::NoAmmo)
