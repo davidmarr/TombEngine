@@ -280,7 +280,7 @@ function Timer:GetRemainingTimeInSeconds()
 end
 
 --- Get the formatted remaining time of a timer.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See `timerFormat`.<br>
 -- @treturn string The formatted remaining time.
 -- @usage
 -- -- Example 1: Display remaining time in secs.decisecs
@@ -411,7 +411,7 @@ function Timer:GetTotalTimeInSeconds()
 end
 
 --- Get the formatted total time of a timer. This is the amount of time the timer will start with, as well as when starting a new loop
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See <a href="#timerFormat">Timer format</a>.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See `timerFormat`.<br>
 -- @treturn string The formatted total time.
 -- @usage
 -- -- Example 1: Display total time in secs.decisecs
