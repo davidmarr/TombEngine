@@ -47,6 +47,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Vec3:Direction` function and `Vec3:Translate` overload.
 * Added direction vector constructor to `Rotation`.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
+* Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
 
 ## [Version 1.10.1]
 
