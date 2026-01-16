@@ -795,9 +795,10 @@ end
 
 ---
 -- @table timerFormat
--- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and deciseconds (deciseconds are 1/10th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.<br>Timer format details:
+-- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and deciseconds (deciseconds are 1/10th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.
+-- <h3>Timer format examples:</h3>
 -- <pre><span class="comment">-- hours:mins:secs.decisecs</span>
--- <br><span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">true</span>}
+-- <span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">true</span>}
 -- <br><span class="comment">-- mins:secs</span>
 -- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">false</span>}
 -- <br><span class="comment">-- also mins:secs</span>
