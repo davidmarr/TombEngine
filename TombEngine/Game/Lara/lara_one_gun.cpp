@@ -29,6 +29,7 @@
 #include "Math/Math.h"
 #include "Objects/Generic/Object/objects.h"
 #include "Objects/Generic/Switches/generic_switch.h"
+#include "Objects/Generic/Switches/switch.h"
 #include "Sound/sound.h"
 #include "Specific/clock.h"
 #include "Specific/Input/Input.h"
@@ -811,7 +812,8 @@ void GrenadeControl(short itemNumber)
 	if ((grenadeItem.Flags & CODE_BITS) == CODE_BITS)
 	{
 		grenadeItem.HitPoints = 0;
-		grenadeItem.ItemFlags[0] = (int)ProjectileType::Explosive;
+		if (grenadeItem.ItemFlags[0] < (int)ProjectileType::Grenade)
+			grenadeItem.ItemFlags[0] = (int)ProjectileType::Grenade;
 	}
 	
 	// Check if above water and update Y and Z velocities.
@@ -1442,7 +1444,7 @@ bool EmitFromProjectile(ItemInfo& projectile, ProjectileType type)
 
 		grenadeItem.Pose.Orientation = EulerAngles(
 			Random::GenerateAngle(0, ANGLE(90.0f)) + ANGLE(45.0f),
-			Random::GenerateAngle(0, ANGLE(359.0f)),
+			Random::GenerateAngle(),
 			0);
 		grenadeItem.Animation.Velocity.y = -64.0f * phd_sin(grenadeItem.Pose.Orientation.x);
 		grenadeItem.Animation.Velocity.z = 64.0f;
@@ -1644,7 +1646,7 @@ void HandleProjectile(ItemInfo& projectile, ItemInfo& emitter, const Vector3i& p
 
 			if ((currentObject.intelligent && currentObject.collision && itemPtr->Status == ITEM_ACTIVE) ||
 				itemPtr->IsLara() ||
-				(itemPtr->Flags & 0x40 && Objects[itemPtr->ObjectNumber].explodableMeshbits))
+				(itemPtr->Flags & IFLAG_SWITCH_ONESHOT && Objects[itemPtr->ObjectNumber].explodableMeshbits))
 			{
 				// If we collide with emitter, and there are no other objects around, 
 				// don't process further in early launch stages.
@@ -1691,8 +1693,13 @@ void HandleProjectile(ItemInfo& projectile, ItemInfo& emitter, const Vector3i& p
 					}
 				}
 			}
-			else if (itemPtr->ObjectNumber >= ID_SMASH_OBJECT1 &&
-					 itemPtr->ObjectNumber <= ID_SMASH_OBJECT8)
+			else if (itemPtr->ObjectNumber >= ID_SHOOT_SWITCH1 && itemPtr->ObjectNumber <= ID_SHOOT_SWITCH4)
+			{
+				doShatter = hasHit = true;
+				doExplosion = isExplosive;
+				ProcessShootSwitch(itemPtr);
+			}
+			else if (itemPtr->ObjectNumber >= ID_SMASH_OBJECT1 && itemPtr->ObjectNumber <= ID_SMASH_OBJECT8)
 			{
 				doShatter = hasHit = true;
 				doExplosion = isExplosive;

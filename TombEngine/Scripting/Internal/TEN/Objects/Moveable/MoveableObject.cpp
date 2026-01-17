@@ -286,6 +286,7 @@ void Moveable::SetObjectID(GAME_OBJECT_ID id)
 {
 	_moveable->ObjectNumber = id;
 	_moveable->ResetModelToDefault();
+	SetAnimation(_moveable, 0);
 }
 
 void SetLevelFuncCallback(const TypeOrNil<LevelFunc>& cb, const std::string& callerName, Moveable& mov, std::string& toModify)
@@ -1224,7 +1225,10 @@ void Moveable::SetCollidable(bool isCollidable)
 // @treturn bool Item's visibility state.
 bool Moveable::GetVisible() const
 {
-	return (_moveable->Status != ITEM_INVISIBLE && _moveable->Model.Color.w > EPSILON);
+	if (_moveable->Status == ITEM_INVISIBLE || _moveable->Model.Color.w <= EPSILON)
+		return false;
+
+	return IsItemInRoom(_moveable->Index, _moveable->RoomNumber);
 }
 
 // Make the item invisible. Alias for `Moveable:SetVisible(false)`.
@@ -1346,7 +1350,9 @@ void Moveable::AnimFromObject(GAME_OBJECT_ID objectID, int animNumber, int state
 
 /// Show interaction highlight for the object. Can be useful if you have scripted an interaction with it.
 // @function Moveable:ShowInteractionHighlight
-void Moveable::ShowInteractionHighlight()
+// @tparam[opt] Objects.InteractionType interactionType Interaction icon type to show.
+void Moveable::ShowInteractionHighlight(const TypeOrNil<InteractionType> interactionType)
 {
-	g_Hud.InteractionHighlighter.Test(*LaraItem.Get(), *_moveable);
+	auto convertedIcon = ValueOr<InteractionType>(interactionType, InteractionType::Undefined);
+	g_Hud.InteractionHighlighter.Test(*LaraItem.Get(), *_moveable, InteractionMode::Always, convertedIcon);
 }

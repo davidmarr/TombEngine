@@ -3,6 +3,7 @@
 
 #include "Game/control/box.h"
 #include "Game/control/control.h"
+#include "Game/control/lot.h"
 #include "Game/itemdata/creature_info.h"
 #include "Game/items.h"
 #include "Game/misc.h"
@@ -15,6 +16,7 @@ namespace TEN::Entities::Creatures::TR2
 {
 	const auto MercenaryUziBite		   = CreatureBiteInfo(Vector3(0, 200, 19), 17);
 	const auto MercenaryAutoPistolBite = CreatureBiteInfo(Vector3(0, 230, 9), 17);
+	const auto MercenaryIgnoredTargetIds = { ID_MERCENARY_UZI, ID_MERCENARY_AUTOPISTOLS1, ID_MERCENARY_AUTOPISTOLS2, ID_SNOWMOBILE_DRIVER, ID_FLAMETHROWER_BADDY };
 
 	// TODO
 	enum MercenaryState
@@ -55,6 +57,8 @@ namespace TEN::Entities::Creatures::TR2
 		}
 		else
 		{
+			TargetNearestEntity(*item, MercenaryIgnoredTargetIds);
+
 			AI_INFO ai;
 			CreatureAIInfo(item, &ai);
 
@@ -186,7 +190,7 @@ namespace TEN::Entities::Creatures::TR2
 					extraTorsoRot.y = ai.angle;
 				}
 
-				if (GlobalCounter & (item->Index & 1)) // Reduce shooting rate deterministically.
+				if ((GlobalCounter & 1) == (item->Index & 1)) // Reduce shooting rate deterministically.
 				{
 					if (!ShotLara(item, &ai, MercenaryUziBite, extraTorsoRot.y, 8))
 						item->Animation.TargetState = 1;
@@ -205,7 +209,7 @@ namespace TEN::Entities::Creatures::TR2
 					extraTorsoRot.y = ai.angle;
 				}
 
-				if (GlobalCounter & (item->Index & 1)) // Reduce shooting rate deterministically.
+				if ((GlobalCounter & 1) == (item->Index & 1)) // Reduce shooting rate deterministically.
 				{
 					if (!ShotLara(item, &ai, MercenaryUziBite, extraTorsoRot.y, 8))
 						item->Animation.TargetState = 1;
@@ -256,6 +260,8 @@ namespace TEN::Entities::Creatures::TR2
 		}
 		else
 		{
+			TargetNearestEntity(*item, MercenaryIgnoredTargetIds);
+
 			AI_INFO ai;
 			CreatureAIInfo(item, &ai);
 
