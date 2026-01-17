@@ -2086,6 +2086,7 @@ namespace TEN::Gui
 			if (player.Control.HandStatus == HandStatus::Free &&
 				player.Control.Weapon.GunType == player.Control.Weapon.RequestGunType)
 			{
+				InitializeNewWeapon(item);
 				player.Control.HandStatus = HandStatus::WeaponDraw;
 			}
 
