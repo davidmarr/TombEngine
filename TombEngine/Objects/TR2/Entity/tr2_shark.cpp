@@ -112,7 +112,7 @@ namespace TEN::Entities::Creatures::TR2
 
 			if (creature->Enemy && creature->Enemy->IsLara() && creature->Enemy->HitPoints <= 0 && laraAlive)
 			{
-				CreatureKill(item, SHARK_KILL_ANIM, LEA_SHARK_DEATH, SHARK_KILL_STATE, LS_DEATH);
+				CreatureKill(item, SHARK_KILL_ANIM, LEA_SHARK_DEATH, SHARK_KILL_STATE, LS_WATER_DEATH);
 				return;
 			}
 		}
