@@ -50,6 +50,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added direction vector constructor to `Rotation`.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 * Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
+* Added `DisplayAnchors` primitive.
+* Added `DisplaySprite:GetAnchors` method.
 
 ## [Version 1.10.1]
 
