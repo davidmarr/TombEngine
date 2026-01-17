@@ -7,6 +7,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### New features
 * Added faster Xorshift32 random number generation method.
+* Optimized pause and options menu handling and apply settings while exiting the menu instead of canceling them.
 
 ### Bug fixes
 * Fixed incorrect handling of negative timer values in classic triggers.
@@ -17,10 +18,14 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed several enemy AI issues.
 * Fixed incorrect CLOCKWORK_BEETLE, HORSEMAN, MONK1/2 and MERCENARY_UZI behaviour.
 * Fixed CIVVY crashing the game.
+* Fixed BADDY1/2 shooting rate.
+* Fixed missing SHARK final attack animation.
 * Fixed SEARCH_OBJECT4 not always collecting pickup items.
+* Fixed SHOOT_SWITCH objects not activated with projectile weapons.
 * Fixed incorrect HYDRA rotation on activation and keeping its shadow after destroying it.
 * Fixed potential issues with PUNA_BOSS, TONY_BOSS, FISH_SWARM and WRAITH objects on savegame reloading.
 * Fixed WRAITH not using effects near walls and occasional issues with room transitions.
+* Fixed submerging into the floor when picking up items under low-placed static meshes.
 * Fixed broken hardcoded camera when using the TURN_SWITCH.
 * Fixed weapon unholstering animation when selecting a weapon from the inventory for the first time.
 * Fixed original issue with incorrect arm orientation with unholstered weapons.
@@ -44,7 +49,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Vec3:Direction` function and `Vec3:Translate` overload.
 * Added direction vector constructor to `Rotation`.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
-* Added `DisplaySprite:GetAnchors` method.
+* Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
 
 ## [Version 1.10.1]
 
