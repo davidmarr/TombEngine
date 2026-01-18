@@ -28,7 +28,8 @@
 
 local Type = {}
 
-TYPE_CONSTANTS = {
+TYPE_CONSTANTS =
+{
     COLOR = TEN.Color(0,0,0),
     ROTATION = TEN.Rotation(0, 0, 0),
     TIME = TEN.Time(),
