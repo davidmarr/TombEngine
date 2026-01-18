@@ -28,7 +28,7 @@
 
 local Type = {}
 
-LevelVars.Engine.Type = {
+TYPE_CONSTANTS = {
     COLOR = TEN.Color(0,0,0),
     ROTATION = TEN.Rotation(0, 0, 0),
     TIME = TEN.Time(),
@@ -36,9 +36,7 @@ LevelVars.Engine.Type = {
     VEC3 = TEN.Vec3(0,0,0),
 }
 
-LevelFuncs.Engine.Type = {
-    TYPE_CONTROL_LEVEL_FUNC = function () end
-}
+LevelFuncs.Engine.TYPE_CONTROL_LEVEL_FUNC = function () end
 
 --- Check if the variable is a number.
 -- @tparam variable variable Variable to be checked.
@@ -140,7 +138,7 @@ end
 --      end
 --  end
 Type.IsColor = function (variable)
-    return getmetatable(variable) == getmetatable(LevelVars.Engine.Type.COLOR)
+    return getmetatable(variable) == getmetatable(TYPE_CONSTANTS.COLOR)
 end
 
 --- Check if the variable is a @{Rotation}.
@@ -154,7 +152,7 @@ end
 --      end
 --  end
 Type.IsRotation = function (variable)
-    return getmetatable(variable) == getmetatable(LevelVars.Engine.Type.ROTATION)
+    return getmetatable(variable) == getmetatable(TYPE_CONSTANTS.ROTATION)
 end
 
 --- Check if the variable is a @{Vec2}.
@@ -168,7 +166,7 @@ end
 --      end
 --  end
 Type.IsVec2 = function (variable)
-    return getmetatable(variable) == getmetatable(LevelVars.Engine.Type.VEC2)
+    return getmetatable(variable) == getmetatable(TYPE_CONSTANTS.VEC2)
 end
 
 --- Check if the variable is a @{Vec3}.
@@ -182,7 +180,7 @@ end
 --      end
 --	end
 Type.IsVec3 = function (variable)
-    return getmetatable(variable) == getmetatable(LevelVars.Engine.Type.VEC3)
+    return getmetatable(variable) == getmetatable(TYPE_CONSTANTS.VEC3)
 end
 
 --- Check if the variable is a @{Time} object.
@@ -196,7 +194,7 @@ end
 --      end
 --	end
 Type.IsTime = function (variable)
-    return getmetatable(variable) == getmetatable(LevelVars.Engine.Type.TIME)
+    return getmetatable(variable) == getmetatable(TYPE_CONSTANTS.TIME)
 end
 
 --- Check if the variable is a LevelFunc.
@@ -210,7 +208,7 @@ end
 --      end
 --  end
 Type.IsLevelFunc = function (variable)
-    return getmetatable(variable) == getmetatable(LevelFuncs.Engine.Type.TYPE_CONTROL_LEVEL_FUNC)
+    return getmetatable(variable) == getmetatable(LevelFuncs.Engine.TYPE_CONTROL_LEVEL_FUNC)
 end
 
 --- Check if the variable is an enum value.
