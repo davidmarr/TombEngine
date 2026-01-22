@@ -183,12 +183,12 @@ end
 LevelVars.Engine.Tween = { tweens = {} }
 
 local TWEEN_INTERPOLATIONS = {
-    LuaUtil.Lerp,
-    LuaUtil.Smoothstep,
-    LuaUtil.Smootherstep,
-    LuaUtil.EaseInOut,
-    LuaUtil.Elastic,
-    LuaUtil.Bounce
+    "Lerp",
+    "Smoothstep",
+    "Smootherstep",
+    "EaseInOut",
+    "Elastic",
+    "Bounce"
 }
 
 Tween.Mode = {
@@ -1085,9 +1085,9 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     -- Use effectiveTo for wrapAngle (shortest angular path)
                     local targetTo = t.wrapAngle and t.effectiveTo or t.to
                     if t.direction == 1 then
-                        t.value = t.interpolation(t.from, targetTo, t.progress, t.easingParams and table.unpack(t.easingParams))
+                        t.value = LuaUtil[t.interpolation](t.from, targetTo, t.progress, t.easingParams and table.unpack(t.easingParams))
                     else
-                        t.value = t.interpolation(targetTo, t.from, t.progress, t.easingParams and table.unpack(t.easingParams))
+                        t.value = LuaUtil[t.interpolation](targetTo, t.from, t.progress, t.easingParams and table.unpack(t.easingParams))
                     end
 
                     -- Callback ON_UPDATE
