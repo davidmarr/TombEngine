@@ -394,6 +394,7 @@ void LogicHandler::FreeLevelScripts()
 	_levelFuncs.raw_set(strKey, ScriptReserved_LevelFuncs);
 
 	_levelFuncs[ScriptReserved_Engine] = sol::table(*_handler.GetState(), sol::create);
+	_levelFuncs[ScriptReserved_External] = sol::table(*_handler.GetState(), sol::create);
 
 	_levelFuncs_tablesOfNames.clear();
 	_levelFuncs_luaFunctions.clear();

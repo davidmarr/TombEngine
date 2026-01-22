@@ -62,19 +62,10 @@ public:
 //	-- If you write a library providing LevelFuncs functions for other builders to use in their levels, put those functions in LevelFuncs.External.YourLibraryNameHere
 //	LevelFuncs.External
 // 
-// __The order of loading is as follows:__
+// <h2>Level Callbacks</h2>
+// The level's .lua file contains predefined functions, called callbacks, that will be called on specific events in the level. If you want to execute code or call other functions in these events, you'll need to place them inside these functions.
 // 
-// 1. The level data itself is loaded.
-// 
-// 2. The level script itself is run (i.e. any code you put outside the `LevelFuncs` callbacks is executed).
-// 
-// 3. Save data is loaded, if saving from a saved game (will empty `LevelVars` and `GameVars` and repopulate them with what they contained when the game was saved).
-// 
-// 4. If loading from a save, OnLoaded will be called. Otherwise, OnStart will be called.
-// 
-// 5. The control loop, in which OnLoop will be called once per frame, begins.
-// 
-// The following are the level callbacks.
+// The functions are:
 // 
 // * __OnStart__ Will be called when a level is entered by completing a previous level or by selecting it in the menu. Will not be called when loaded from a saved game.
 // * __OnLoad__ Will be called when a level is loaded from a saved game.
@@ -99,3 +90,14 @@ public:
 //	end
 // * __OnFreeze__ Will be called when any of the Freeze modes are activated.
 //
+// <br>__The order of loading is as follows:__
+// 
+// 1. The level data itself is loaded.
+// 
+// 2. The level script itself is run (i.e. any code you put outside the `LevelFuncs` callbacks is executed).
+// 
+// 3. Save data is loaded, if saving from a saved game (will empty `LevelVars` and `GameVars` and repopulate them with what they contained when the game was saved).
+// 
+// 4. If loading from a save, OnLoad will be called. Otherwise, OnStart will be called.
+// 
+// 5. The control loop, in which OnLoop will be called once per frame, begins.
