@@ -182,7 +182,7 @@ end
 -- Storage
 LevelVars.Engine.Tween = { tweens = {} }
 
-LevelVars.Engine.Tween.Interpolations = {
+local TWEEN_INTERPOLATIONS = {
     LuaUtil.Lerp,
     LuaUtil.Smoothstep,
     LuaUtil.Smootherstep,
@@ -365,7 +365,7 @@ Tween.Create = function(params)
     thisTween.active = params.autoStart and true or false
     thisTween.paused = false
 
-    thisTween.interpolation = LevelVars.Engine.Tween.Interpolations[thisTween.easing]
+    thisTween.interpolation = TWEEN_INTERPOLATIONS[thisTween.easing]
     thisTween.interpolationDuration = LuaUtil.SecondsToFrames(thisTween.period)
 
     -- Interpolation state
@@ -799,7 +799,7 @@ function Tween:SetEasing(easing, params)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.easing = easing
-    t.interpolation = LevelVars.Engine.Tween.Interpolations[easing]
+    t.interpolation = TWEEN_INTERPOLATIONS[easing]
     if params and not Type.IsTable(params) then
         return TEN.Util.PrintLog("Error in Tween:SetEasing(): params must be a table", TEN.Util.LogLevel.ERROR)
     end
