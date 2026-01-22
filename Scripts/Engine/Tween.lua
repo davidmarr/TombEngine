@@ -339,6 +339,11 @@ Tween.Create = function(params)
     thisTween.updateMode = LuaUtil.TableHasValue(Tween.UpdateMode, params.updateMode) and params.updateMode or Tween.UpdateMode.GAMEPLAY_ONLY
     thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
 
+    if params.easingParams and thisTween.easing == Tween.Easing.LERP then
+        TEN.Util.PrintLog("Warning in Tween.Create(): easingParams are not used with LERP easing. Ignoring easingParams.", TEN.Util.LogLevel.WARNING)
+        params.easingParams = nil
+    end
+
     if params.easingParams then
         thisTween.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween.Create()", thisTween.easing, params.easingParams)
     end
