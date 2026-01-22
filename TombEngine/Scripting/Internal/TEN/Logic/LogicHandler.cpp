@@ -977,7 +977,7 @@ void LogicHandler::OnLoop(float deltaTime, bool postLoop)
 {
 	if (!postLoop)
 	{
-		PerformCallbacks(CallbackPoint::PreLoop);
+		PerformCallbacks(CallbackPoint::PreLoop, deltaTime);
 
 		PerformConsoleInput();
 
@@ -987,7 +987,7 @@ void LogicHandler::OnLoop(float deltaTime, bool postLoop)
 	}
 	else
 	{
-		PerformCallbacks(CallbackPoint::PostLoop);
+		PerformCallbacks(CallbackPoint::PostLoop, deltaTime);
 	}
 }
 
