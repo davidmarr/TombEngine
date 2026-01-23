@@ -81,7 +81,7 @@ bool ShouldAnimateUpperBody(const LaraWeaponType& weapon)
 
 // HACK: Arm frames for pistols, uzis, and revolver currently remain absolute.
 // Until the weapon system is rewritten from scratch, this will ensure correct behaviour. -- Sezz 2023.11.13
-int GetNormalizedArmAnimFrame(GAME_OBJECT_ID animObjectID, int frameNumber)
+static int GetNormalizedArmAnimFrame(GAME_OBJECT_ID animObjectID, int frameNumber)
 {
 	int frameCount = 0;
 	int animCount = (int)Objects[animObjectID].Animations.size();
@@ -96,7 +96,7 @@ int GetNormalizedArmAnimFrame(GAME_OBJECT_ID animObjectID, int frameNumber)
 		if (frameNumber < nextFrameCount)
 			return frameNumber - frameCount;
 
-		if (i == animCount - 1 && frameNumber >= nextFrameCount)
+		if (i == (animCount - 1) && frameNumber >= nextFrameCount)
 			return currentAnimFrameCount - 1;
 
 		frameCount = nextFrameCount;
