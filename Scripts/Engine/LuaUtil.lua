@@ -1157,6 +1157,10 @@ LuaUtil.IsInteger = function(n)
     return (n % 1) == 0
 end
 
+--- 3D Transformations.
+-- Utilities for 3D point and vector transformations.
+-- @section transform
+
 --- Rotate a point around an arbitrary axis passing through a pivot point.
 -- Supports rotation around standard axes (X, Y, Z) or custom axis vectors. Examples use `SecondsToFrames` for time-based animations.
 -- Uses TEN's Vec3:Rotate() method for efficient calculation.
@@ -1444,6 +1448,305 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
     end
 
     return center + offset
+end
+
+--- Transform local coordinates to world space using parent transform.
+-- Converts position and rotation from parent's local space to world space.
+-- This is the low-level mathematical function used by AttachToObject.
+-- @tparam Vec3 parentPos Parent's world position.
+-- @tparam Rotation parentRot Parent's world rotation.
+-- @tparam Vec3 localOffset Offset in parent's local space.
+-- @tparam[opt] Rotation localRotation Rotation in parent's local space (optional).
+-- @treturn[1] Vec3 World position.
+-- @treturn[2] Rotation World rotation (or nil if localRotation not provided).
+-- @treturn[3] nil If an error occurs.
+-- @usage
+-- -- Example: Calculate world position of satellite relative to ship
+-- local shipPos = TEN.Vec3(5000, 1000, 5000)
+-- local shipRot = TEN.Rotation(0, 45, 0)
+-- local localOffset = TEN.Vec3(500, 200, 0)  -- 500 units right, 200 units up in ship's space
+-- local worldPos, worldRot = LuaUtil.TransformLocalToWorld(shipPos, shipRot, localOffset)
+-- -- Result: worldPos accounts for ship's rotation
+--
+-- -- Example: Transform with local rotation
+-- local shipPos = TEN.Vec3(5000, 1000, 5000)
+-- local shipRot = TEN.Rotation(0, 90, 0)
+-- local localOffset = TEN.Vec3(300, 0, 0)
+-- local localRot = TEN.Rotation(0, 45, 0)  -- Additional 45° yaw
+-- local worldPos, worldRot = LuaUtil.TransformLocalToWorld(shipPos, shipRot, localOffset, localRot)
+-- turret:SetPosition(worldPos)
+-- turret:SetRotation(worldRot)
+--
+-- -- Example: Manual attachment in loop
+-- local parent = TEN.Objects.GetMoveableByName("Ship")
+-- local child = TEN.Objects.GetMoveableByName("Turret")
+-- local localOffset = TEN.Vec3(0, 300, -500)  -- Behind and above
+-- LevelFuncs.OnLoop = function()
+--     local parentPos = parent:GetPosition()
+--     local parentRot = parent:GetRotation()
+--     local worldPos, worldRot = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset, TEN.Rotation(0, 0, 0))
+--     child:SetPosition(worldPos)
+--     child:SetRotation(worldRot)
+-- end
+--
+-- -- Error handling example:
+-- local worldPos, worldRot = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset)
+-- if worldPos == nil then
+--     TEN.Util.PrintLog("Failed to transform local to world", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+-- obj:SetPosition(worldPos)
+--
+-- -- Safe approach with fallback:
+-- local worldPos = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset) or parentPos
+LuaUtil.TransformLocalToWorld = function(parentPos, parentRot, localOffset, localRotation)
+    -- Type validation
+    if not cache.IsVec3(parentPos) then
+        TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: parentPos must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not cache.IsRotation(parentRot) then
+        TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: parentRot must be a Rotation.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if not cache.IsVec3(localOffset) then
+        TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: localOffset must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+    if localRotation and not cache.IsRotation(localRotation) then
+        TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: localRotation must be a Rotation or nil.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Rotate local offset by parent rotation to get world-space offset
+    local worldOffset = localOffset:Rotate(parentRot)
+    
+    -- Calculate world position
+    local worldPos = parentPos + worldOffset
+    
+    -- Calculate world rotation if local rotation provided
+    local worldRot = nil
+    if localRotation then
+        -- Combine parent rotation with local rotation
+        -- In TEN, rotations are combined by adding components
+        worldRot = TEN.Rotation(
+            parentRot.x + localRotation.x,
+            parentRot.y + localRotation.y,
+            parentRot.z + localRotation.z
+        )
+    end
+    
+    return worldPos, worldRot
+end
+
+--- Calculate local offset from child to parent in parent's local space.
+-- This helper function computes the offset needed for AttachToObject.
+-- Call this ONCE during setup, then use the returned offset in your loop.
+-- Works with both Moveable and Static objects.
+-- @tparam Objects.Moveable|Objects.Static parent Parent object.
+-- @tparam Objects.Moveable|Objects.Static child Child object to calculate offset for.
+-- @treturn[1] Vec3 Local offset in parent's space.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Calculate offset for turret on ship (setup phase)
+-- local ship = TEN.Objects.GetMoveableByName("Ship")
+-- local turret = TEN.Objects.GetMoveableByName("Turret")
+-- local offset = LuaUtil.CalculateLocalOffset(ship, turret)
+-- -- Now use 'offset' in your loop with AttachToObject
+--
+-- -- Example: Complete attachment workflow
+-- local parent = TEN.Objects.GetMoveableByName("Vehicle")
+-- local child = TEN.Objects.GetMoveableByName("Wheel")
+-- 
+-- -- STEP 1: Calculate offset ONCE (outside loop)
+-- local localOffset = LuaUtil.CalculateLocalOffset(parent, child)
+-- 
+-- -- STEP 2: Use offset every frame
+-- LevelFuncs.OnLoop = function()
+--     LuaUtil.AttachToObject(parent, child, localOffset, true)
+-- end
+--
+-- -- Example: Multiple children with different offsets
+-- local ship = TEN.Objects.GetMoveableByName("Ship")
+-- local turret1 = TEN.Objects.GetMoveableByName("Turret1")
+-- local turret2 = TEN.Objects.GetMoveableByName("Turret2")
+-- local offset1 = LuaUtil.CalculateLocalOffset(ship, turret1)
+-- local offset2 = LuaUtil.CalculateLocalOffset(ship, turret2)
+-- LevelFuncs.OnLoop = function()
+--     LuaUtil.AttachToObject(ship, turret1, offset1, true)
+--     LuaUtil.AttachToObject(ship, turret2, offset2, true)
+-- end
+--
+-- -- Example: Static object attachment
+-- local platform = TEN.Objects.GetStaticByName("Platform")
+-- local crate = TEN.Objects.GetMoveableByName("Crate")
+-- local offset = LuaUtil.CalculateLocalOffset(platform, crate)
+-- LevelFuncs.OnLoop = function()
+--     LuaUtil.AttachToObject(platform, crate, offset, false)
+-- end
+--
+-- -- Error handling example:
+-- local offset = LuaUtil.CalculateLocalOffset(parent, child)
+-- if offset == nil then
+--     TEN.Util.PrintLog("Failed to calculate local offset", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+-- -- Use offset...
+--
+-- -- Safe approach with fallback:
+-- local offset = LuaUtil.CalculateLocalOffset(parent, child) or TEN.Vec3(0, 0, 0)
+LuaUtil.CalculateLocalOffset = function(parent, child)
+    -- Type validation (check for GetPosition and GetRotation methods)
+    if not parent or not child then
+        TEN.Util.PrintLog("Error in LuaUtil.CalculateLocalOffset: parent and child cannot be nil.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    local parentPos = parent.GetPosition and parent:GetPosition()
+    local parentRot = parent.GetRotation and parent:GetRotation()
+    local childPos = child.GetPosition and child:GetPosition()
+
+    if not parentPos or not parentRot or not childPos then
+        TEN.Util.PrintLog("Error in LuaUtil.CalculateLocalOffset: parent and child must have GetPosition() and GetRotation() methods.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Calculate world offset
+    local worldOffset = childPos - parentPos
+
+    -- Convert world offset to parent's local space
+    -- This is the inverse of Vec3:Rotate() - we need to rotate by inverse parent rotation
+    local inverseRot = TEN.Rotation(-parentRot.x, -parentRot.y, -parentRot.z)
+    local localOffset = worldOffset:Rotate(inverseRot)
+    
+    return localOffset
+end
+
+--- Attach child object to parent object with automatic transform updates.
+-- High-level convenience function that applies position and optionally rotation.
+-- Call this EVERY FRAME in your loop. The localOffset should be calculated ONCE
+-- using CalculateLocalOffset() before the loop.
+-- Works with both Moveable and Static objects.
+-- @tparam Objects.Moveable|Objects.Static parent Parent object.
+-- @tparam Objects.Moveable|Objects.Static child Child object to attach.
+-- @tparam Vec3 localOffset Offset in parent's local space.
+-- @tparam[opt=false] bool inheritRotation If true, child inherits parent's rotation.
+-- @treturn[1] bool True if successful.
+-- @treturn[2] bool False if an error occurs.
+-- @usage
+-- -- Example: Simple attachment (position only) - Complete working example
+-- local vehicle = TEN.Objects.GetMoveableByName("Vehicle")
+-- local crate = TEN.Objects.GetMoveableByName("Crate")
+-- local offset = LuaUtil.CalculateLocalOffset(vehicle, crate)  -- Setup ONCE
+-- LevelFuncs.OnLoop = function()
+--     LuaUtil.AttachToObject(vehicle, crate, offset, false)  -- Every frame
+-- end
+--
+-- -- Example: Attachment with rotation inheritance - Complete working example
+-- local ship = TEN.Objects.GetMoveableByName("Ship")
+-- local turret = TEN.Objects.GetMoveableByName("Turret")
+-- local offset = TEN.Vec3(0, 300, 0)  -- 300 units above ship
+-- LevelFuncs.OnLoop = function()
+--     -- Turret follows ship position AND rotation
+--     LuaUtil.AttachToObject(ship, turret, offset, true)
+-- end
+--
+-- -- Example: Multiple satellites orbiting with attachment - Complete working example
+-- local planet = TEN.Objects.GetMoveableByName("Planet")
+-- local sat1 = TEN.Objects.GetMoveableByName("Satellite1")
+-- local sat2 = TEN.Objects.GetMoveableByName("Satellite2")
+-- local offset1 = TEN.Vec3(2048, 0, 0)  -- Right side
+-- local offset2 = TEN.Vec3(-2048, 0, 0)  -- Left side
+-- local angle = 0
+-- local rotationSpeed = 360 / LuaUtil.SecondsToFrames(20)  -- 20 seconds per rotation
+-- LevelFuncs.OnLoop = function()
+--     -- Rotate planet
+--     angle = (angle + rotationSpeed) % 360
+--     planet:SetRotation(TEN.Rotation(0, angle, 0))
+--     
+--     -- Satellites follow planet rotation automatically
+--     LuaUtil.AttachToObject(planet, sat1, offset1, false)
+--     LuaUtil.AttachToObject(planet, sat2, offset2, false)
+-- end
+--
+-- -- Example: Weapon held by character - Complete working example
+-- local lara = Lara
+-- local torch = TEN.Objects.GetMoveableByName("Torch")
+-- local weaponOffset = TEN.Vec3(150, 300, 50)  -- Right hand position
+-- LevelFuncs.OnLoop = function()
+--     -- Torch follows Lara's position and rotation
+--     LuaUtil.AttachToObject(lara, torch, weaponOffset, true)
+-- end
+--
+-- -- Example: Cart pulled by horse - Complete working example
+-- local horse = TEN.Objects.GetMoveableByName("Horse")
+-- local cart = TEN.Objects.GetMoveableByName("Cart")
+-- local offset = LuaUtil.CalculateLocalOffset(horse, cart)  -- Setup ONCE
+-- LevelFuncs.OnLoop = function()
+--     -- Cart follows horse with original offset, inherits rotation
+--     LuaUtil.AttachToObject(horse, cart, offset, true)
+-- end
+--
+-- -- Example: Platform with crate (Static parent) - Complete working example
+-- local platform = TEN.Objects.GetStaticByName("MovingPlatform")
+-- local crate = TEN.Objects.GetMoveableByName("Crate")
+-- local offset = TEN.Vec3(0, 256, 0)  -- On top of platform
+-- LevelFuncs.OnLoop = function()
+--     -- Crate stays on platform as it moves
+--     LuaUtil.AttachToObject(platform, crate, offset, false)
+-- end
+--
+-- -- Error handling example:
+-- local success = LuaUtil.AttachToObject(parent, child, offset, true)
+-- if not success then
+--     TEN.Util.PrintLog("Failed to attach object", TEN.Util.LogLevel.ERROR)
+-- end
+LuaUtil.AttachToObject = function(parent, child, localOffset, inheritRotation)
+    -- Type validation
+    if not parent or not child then
+        TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: parent and child cannot be nil.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    if not cache.IsVec3(localOffset) then
+        TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: localOffset must be a Vec3.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    if inheritRotation ~= nil and not cache.IsBoolean(inheritRotation) then
+        TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: inheritRotation must be a boolean or nil.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    
+    -- Get parent transform
+    local parentPos = parent.GetPosition and parent:GetPosition()
+    local parentRot = parent.GetRotation and parent:GetRotation()
+    
+    if not parentPos or not parentRot then
+        TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: parent must have GetPosition() and GetRotation() methods.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    
+    -- Check child has SetPosition
+    if not child.SetPosition then
+        TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: child must have SetPosition() method.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    
+    -- Transform local offset to world space
+    local localRot = (inheritRotation and TEN.Rotation(0, 0, 0)) or nil
+    local worldPos, worldRot = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset, localRot)
+    
+    if not worldPos then
+        return false
+    end
+    
+    -- Apply transforms
+    child:SetPosition(worldPos)
+    
+    if inheritRotation and worldRot and child.SetRotation then
+        child:SetRotation(worldRot)
+    end
+    
+    return true
 end
 
 --- Conversion functions.
