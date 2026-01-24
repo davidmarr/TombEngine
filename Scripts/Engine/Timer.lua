@@ -35,12 +35,9 @@ Timer.__index = Timer
 LevelFuncs.Engine.Timer = {}
 LevelVars.Engine.Timer = {timers = {}}
 
-TIMER_CONSTANTS =
-{
-	ZERO = TEN.Time(),
-	DEFAULT_TEXT_OPTIONS = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER},
-	DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, deciseconds = true}
-}
+local ZERO = TEN.Time()
+local DEFAULT_TEXT_OPTIONS = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, deciseconds = true}
 
 --- Create (but do not start) a new timer.
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
@@ -106,7 +103,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.scale = 1
 	thisTimer.unpausedColor = TEN.Color(255, 255, 255)
 	thisTimer.pausedColor = TEN.Color(255, 255, 0)
-	thisTimer.stringOption = TIMER_CONSTANTS.DEFAULT_TEXT_OPTIONS
+	thisTimer.stringOption = DEFAULT_TEXT_OPTIONS
 	return setmetatable(self, Timer)
 end
 
@@ -302,8 +299,8 @@ end
 --    TEN.Strings.ShowString(str, 1)
 -- end
 function Timer:GetRemainingTimeFormatted(timerFormat)
-    timerFormat = timerFormat or TIMER_CONSTANTS.DEFAULT_TIMER_FORMAT
-    if timerFormat ~= TIMER_CONSTANTS.DEFAULT_TIMER_FORMAT then
+    timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
+    if timerFormat ~= DEFAULT_TIMER_FORMAT then
         local errorFormat = "Error in Timer:GetRemainingTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
         timerFormat = Utility.CheckTimeFormat(timerFormat, errorFormat)
     end
@@ -431,8 +428,8 @@ end
 --    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
 -- end
 function Timer:GetTotalTimeFormatted(timerFormat)
-	timerFormat = timerFormat or TIMER_CONSTANTS.DEFAULT_TIMER_FORMAT
-	if timerFormat ~= TIMER_CONSTANTS.DEFAULT_TIMER_FORMAT then
+	timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
+	if timerFormat ~= DEFAULT_TIMER_FORMAT then
 		local errorFormat = "Error in Timer:GetTotalTimeFormatted(): wrong value for timerFormat in '" .. self.name .. "' timer"
 		timerFormat = Utility.CheckTimeFormat(timerFormat, errorFormat)
 	end
@@ -688,7 +685,7 @@ end
 --    Timer.Get("my_timer"):SetTextOption()
 -- end
 function Timer:SetTextOption(optionsTable)
-	optionsTable = optionsTable or TIMER_CONSTANTS.DEFAULT_TEXT_OPTIONS
+	optionsTable = optionsTable or DEFAULT_TEXT_OPTIONS
 	if type(optionsTable) ~= "table" then
 		TEN.Util.PrintLog("Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
@@ -786,10 +783,10 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 				local text = Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat)
 				local color = t.paused and t.pausedColor or t.unpausedColor
 				local timerString = TEN.Strings.DisplayString(text, t.pos, t.scale, color, false, t.stringOption)
-				local time = (t.remainingTime == TIMER_CONSTANTS.ZERO and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30
+				local time = (t.remainingTime == ZERO and not t.loop and not string.match(t.name, "__TEN")) and 1 or 1/30
 				TEN.Strings.ShowString(timerString, time)
 			end
-			if t.remainingTime == TIMER_CONSTANTS.ZERO then
+			if t.remainingTime == ZERO then
 				if t.loop then
 					t.realRemainingTime = t.totalTime
 					t.remainingTime = t.totalTime
