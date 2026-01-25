@@ -26,7 +26,6 @@
 --	end
 -- @luautil Type
 
-
 -- Constants for primitive TEN types
 local COLOR = TEN.Color(0,0,0)
 local ROTATION = TEN.Rotation(0, 0, 0)
