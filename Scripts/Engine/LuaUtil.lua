@@ -1482,6 +1482,201 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
     return center + offset
 end
 
+--- Arrange multiple objects in a circular formation around a center point.
+-- Places objects evenly spaced on a circle, with optional rotation control.
+-- Uses OrbitPosition internally for efficient calculation.
+-- @tparam Vec3|Objects.Moveable|Objects.Static center Center of the circle (Vec3, Moveable, or Static).
+-- @tparam table objects Array of Moveable or Static objects to arrange.
+-- @tparam float radius Distance from center to each object.
+-- @tparam[opt] table options Optional configuration: {axis = "y", startAngle = 0, faceDirection = nil}
+--   - axis (string|Vec3): Orbital plane axis ("x"/"y"/"z" or custom Vec3, default "y")
+--   - startAngle (number): Starting angle in degrees (default 0)
+--   - faceDirection (string): "center" = face inward, "outward" = face outward, nil = no rotation
+-- @treturn[1] bool True if successful.
+-- @treturn[2] bool False if an error occurs.
+-- @usage
+-- -- Example: Torches around altar (simple XZ circle) - Complete working example
+-- local altar = TEN.Objects.GetMoveableByName("Altar")
+-- local torches = {
+--     TEN.Objects.GetMoveableByName("Torch1"),
+--     TEN.Objects.GetMoveableByName("Torch2"),
+--     TEN.Objects.GetMoveableByName("Torch3"),
+--     TEN.Objects.GetMoveableByName("Torch4")
+-- }
+-- LuaUtil.ArrangeInCircle(altar, torches, 1024)
+-- -- Result: 4 torches evenly spaced (90° apart) at radius 1024 on XZ plane
+--
+-- -- Example: Pickups around player with rotation facing center
+-- local player = TEN.Objects.GetLaraObject()
+-- local pickups = {
+--     TEN.Objects.GetMoveableByName("Pickup1"),
+--     TEN.Objects.GetMoveableByName("Pickup2"),
+--     TEN.Objects.GetMoveableByName("Pickup3")
+-- }
+-- LuaUtil.ArrangeInCircle(player, pickups, 512, {faceDirection = "center"})
+-- -- Result: 3 pickups at 120° spacing, all rotated to face player
+--
+-- -- Example: Enemies spawn formation facing outward
+-- local spawnPoint = TEN.Vec3(5000, 1000, 5000)
+-- local enemies = {
+--     TEN.Objects.GetMoveableByName("Enemy1"),
+--     TEN.Objects.GetMoveableByName("Enemy2"),
+--     TEN.Objects.GetMoveableByName("Enemy3"),
+--     TEN.Objects.GetMoveableByName("Enemy4"),
+--     TEN.Objects.GetMoveableByName("Enemy5")
+-- }
+-- LuaUtil.ArrangeInCircle(spawnPoint, enemies, 2048, {faceDirection = "outward"})
+-- -- Result: 5 enemies at 72° spacing, facing outward (defensive circle)
+--
+-- -- Example: Vertical circle (XY plane) with custom start angle
+-- local center = TEN.Vec3(10000, 2000, 8000)
+-- local platforms = {
+--     TEN.Objects.GetStaticByName("Platform1"),
+--     TEN.Objects.GetStaticByName("Platform2"),
+--     TEN.Objects.GetStaticByName("Platform3")
+-- }
+-- LuaUtil.ArrangeInCircle(center, platforms, 1536, {axis = "z", startAngle = 90})
+-- -- Result: Vertical circle starting at 90° (top position)
+--
+-- -- Example: Diagonal orbital plane (custom axis)
+-- local center = TEN.Objects.GetMoveableByName("Hub")
+-- local satellites = {}
+-- for i = 1, 6 do
+--     satellites[i] = TEN.Objects.GetMoveableByName("Satellite" .. i)
+-- end
+-- local customAxis = TEN.Vec3(1, 1, 0)  -- Diagonal XY
+-- LuaUtil.ArrangeInCircle(center, satellites, 2048, {
+--     axis = customAxis,
+--     startAngle = 45,
+--     faceDirection = "center"
+-- })
+-- -- Result: 6 objects on tilted orbital plane, facing center
+--
+-- -- Example: Error handling
+-- local success = LuaUtil.ArrangeInCircle(center, objects, radius, options)
+-- if not success then
+--     TEN.Util.PrintLog("Failed to arrange objects in circle", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Example: Dynamic arrangement in loop (moving center)
+-- local hub = TEN.Objects.GetMoveableByName("Hub")
+-- local satellites = { ... }
+-- LevelFuncs.OnLoop = function()
+--     -- Rearrange every frame as hub moves
+--     LuaUtil.ArrangeInCircle(hub, satellites, 1024, {faceDirection = "center"})
+-- end
+LuaUtil.ArrangeInCircle = function(center, objects, radius, options)
+    -- Parse center (Vec3, Moveable, or Static)
+    local centerPos
+    if IsVec3(center) then
+        centerPos = center
+    elseif center and center.GetPosition then
+        centerPos = center:GetPosition()
+    else
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: center must be a Vec3, Moveable, or Static object.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate objects array
+    if not IsTable(objects) then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: objects must be a table.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    if #objects == 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: objects table is empty.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate radius
+    if not IsNumber(radius) then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: radius must be a number.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    if radius <= 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: radius must be positive.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Parse options with defaults
+    options = options or {}
+    local axis = options.axis or "y"
+    local startAngle = options.startAngle or 0
+    local faceDirection = options.faceDirection
+
+    -- Validate axis
+    if IsString(axis) then
+        local axisLower = axis:lower()
+        if axisLower ~= "x" and axisLower ~= "y" and axisLower ~= "z" then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: axis string must be 'x', 'y', or 'z'.", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+    elseif IsVec3(axis) then
+        if axis:Length() < 0.001 then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: axis Vec3 cannot be zero.", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+    else
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: axis must be a string ('x', 'y', 'z') or Vec3.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate startAngle
+    if not IsNumber(startAngle) then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: startAngle must be a number.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate faceDirection
+    if faceDirection ~= nil and faceDirection ~= "center" and faceDirection ~= "outward" then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: faceDirection must be nil, 'center', or 'outward'.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Calculate angle step for even spacing
+    local angleStep = 360 / #objects
+
+    -- Arrange each object
+    for i, obj in ipairs(objects) do
+        -- Calculate position angle
+        local angle = startAngle + (i - 1) * angleStep
+
+        -- Calculate position using OrbitPosition
+        local position = LuaUtil.OrbitPosition(centerPos, radius, angle, axis)
+        if position == nil then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: failed to calculate position for object " .. i .. ".", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+
+        -- Set position
+        if not obj or not obj.SetPosition then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: object " .. i .. " is invalid or missing SetPosition method.", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+        obj:SetPosition(position)
+
+        -- Set rotation if requested
+        if faceDirection then
+            local direction
+            if faceDirection == "center" then
+                -- Face inward (toward center)
+                direction = (centerPos - position):Normalize()
+            else -- "outward"
+                -- Face outward (away from center)
+                direction = (position - centerPos):Normalize()
+            end
+
+            -- Convert direction to rotation
+            local rotation = TEN.Rotation(direction)
+            if obj.SetRotation then
+                obj:SetRotation(rotation)
+            end
+        end
+    end
+
+    return true
+end
+
 --- Transform local coordinates to world space using parent transform.
 -- Converts position and rotation from parent's local space to world space.
 -- This is the low-level mathematical function used by AttachToObject.
