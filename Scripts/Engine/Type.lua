@@ -26,15 +26,20 @@
 --	end
 -- @luautil Type
 
-local Type = {}
 
--- Constants for type checking
-local COLOR_TYPE = "TEN::Scripting::Types::ScriptColor"
-local ROTATION_TYPE = "TEN::Scripting::Rotation"
-local VEC2_TYPE = "Vec2"
-local VEC3_TYPE = "Vec3"
-local TIME_TYPE = "TEN::Scripting::Time"
-local FUNCTION_TYPE = "LevelFunc"
+-- Constants for primitive TEN types
+local COLOR = TEN.Color(0,0,0)
+local ROTATION = TEN.Rotation(0, 0, 0)
+local TIME = TEN.Time()
+local VEC2 = TEN.Vec2(0,0)
+local VEC3 = TEN.Vec3(0,0,0)
+
+-- Internal sentinel: moved to LevelFuncs.Engine to reduce exposure
+-- to end users. Used only for metatable comparisons in Type.IsLevelFunc;
+-- do not modify or use directly.
+LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC = function () end
+
+local Type = {}
 
 --- Check if the variable is a number.
 -- @tparam variable variable Variable to be checked.
@@ -136,7 +141,7 @@ end
 --      end
 --  end
 Type.IsColor = function (variable)
-    return variable ~= nil and type(variable) == "userdata" and variable.__type.name == COLOR_TYPE
+    return getmetatable(variable) == getmetatable(COLOR)
 end
 
 --- Check if the variable is a @{Rotation}.
@@ -150,7 +155,7 @@ end
 --      end
 --  end
 Type.IsRotation = function (variable)
-    return variable ~= nil and type(variable) == "userdata" and variable.__type.name == ROTATION_TYPE
+    return getmetatable(variable) == getmetatable(ROTATION)
 end
 
 --- Check if the variable is a @{Vec2}.
@@ -164,7 +169,7 @@ end
 --      end
 --  end
 Type.IsVec2 = function (variable)
-    return variable ~= nil and type(variable) == "userdata" and variable.__type.name == VEC2_TYPE
+    return getmetatable(variable) == getmetatable(VEC2)
 end
 
 --- Check if the variable is a @{Vec3}.
@@ -178,7 +183,7 @@ end
 --      end
 --	end
 Type.IsVec3 = function (variable)
-    return variable ~= nil and type(variable) == "userdata" and variable.__type.name == VEC3_TYPE
+    return getmetatable(variable) == getmetatable(VEC3)
 end
 
 --- Check if the variable is a @{Time} object.
@@ -192,7 +197,7 @@ end
 --      end
 --	end
 Type.IsTime = function (variable)
-    return variable ~= nil and type(variable) == "userdata" and variable.__type.name == TIME_TYPE
+    return getmetatable(variable) == getmetatable(TIME)
 end
 
 --- Check if the variable is a LevelFunc.
@@ -206,7 +211,7 @@ end
 --      end
 --  end
 Type.IsLevelFunc = function (variable)
-    return variable ~= nil and type(variable) == "userdata" and variable.__type.name == FUNCTION_TYPE
+    return getmetatable(variable) == getmetatable(LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC)
 end
 
 --- Check if the variable is an enum value.
