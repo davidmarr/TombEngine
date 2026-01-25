@@ -577,26 +577,26 @@ end
 
 --- Check if a value is within a range (inclusive).
 -- @tparam float value The value to check.
--- @tparam float min Minimum value.
--- @tparam float max Maximum value.
+-- @tparam float minValue Minimum value.
+-- @tparam float maxValue Maximum value.
 -- @treturn[1] bool True if value is within range.
 -- @treturn[2] bool false If an error occurs.
 -- @usage
 -- local inRange = LuaUtil.IsInRange(5, 1, 10) -- true
 -- local outOfRange = LuaUtil.IsInRange(15, 1, 10) -- false
--- local errorCase = LuaUtil.IsInRange(5, 10, 1) -- false (min greater than max)
-LuaUtil.IsInRange = function(value, min, max)
-    if not (IsNumber(value) and IsNumber(min) and IsNumber(max)) then
+-- local errorCase = LuaUtil.IsInRange(5, 10, 1) -- false (minValue greater than maxValue)
+LuaUtil.IsInRange = function(value, minValue, maxValue)
+    if not (IsNumber(value) and IsNumber(minValue) and IsNumber(maxValue)) then
         TEN.Util.PrintLog("Error in LuaUtil.IsInRange: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)   
         return false
     end
 
-    if min > max then
-        TEN.Util.PrintLog("Error in LuaUtil.IsInRange: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+    if minValue > maxValue then
+        TEN.Util.PrintLog("Error in LuaUtil.IsInRange: minValue cannot be greater than maxValue.", TEN.Util.LogLevel.ERROR)
         return false
     end
 
-    return value >= min and value <= max
+    return value >= minValue and value <= maxValue
 end
 
 --- String functions.
@@ -850,10 +850,10 @@ LuaUtil.Truncate = function(num, decimals)
 end
 
 --- Generate a random number or vector/color/time with optional seed.
--- @tparam float|Vec2|Vec3|Rotation|Color|Time min Minimum value.
--- @tparam float|Vec2|Vec3|Rotation|Color|Time max Maximum value (same type as min).
+-- @tparam float|Vec2|Vec3|Rotation|Color|Time minValue Minimum value.
+-- @tparam float|Vec2|Vec3|Rotation|Color|Time maxValue Maximum value (same type as minValue).
 -- @tparam[opt] float seed Seed for reproducible randomness.
--- @treturn[1] float|Vec2|Vec3|Rotation|Color|Time Random value between min and max.
+-- @treturn[1] float|Vec2|Vec3|Rotation|Color|Time Random value between minValue and maxValue.
 -- @treturn[2] nil If an error occurs.
 -- @usage
 -- local rand1 = LuaUtil.Random(1, 10)          -- Random number between 1 and 10
@@ -907,7 +907,7 @@ end
 -- -- Safe approach with default fallback:
 -- local randomColor = LuaUtil.Random(color1, color2) or TEN.Color(255, 255, 255, 255)
 -- sprite:SetColor(randomColor)
-LuaUtil.Random = function(min, max, seed)
+LuaUtil.Random = function(minValue, maxValue, seed)
 
     if seed and not IsNumber(seed) then
         TEN.Util.PrintLog("Error in LuaUtil.Random: seed must be a number.", TEN.Util.LogLevel.ERROR)
@@ -918,73 +918,73 @@ LuaUtil.Random = function(min, max, seed)
         randomseed(seed)
     end
 
-    if IsNumber(min) then
-        if not IsNumber(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    if IsNumber(minValue) then
+        if not IsNumber(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
-        return min + random() * (max - min)
-    elseif IsVec2(min) then
-        if not IsVec2(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+        return minValue + random() * (maxValue - minValue)
+    elseif IsVec2(minValue) then
+        if not IsVec2(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Vec2(
-            min.x + random() * (max.x - min.x),
-            min.y + random() * (max.y - min.y)
+            minValue.x + random() * (maxValue.x - minValue.x),
+            minValue.y + random() * (maxValue.y - minValue.y)
         )
-    elseif IsVec3(min) then
-        if not IsVec3(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsVec3(minValue) then
+        if not IsVec3(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Vec3(
-            min.x + random() * (max.x - min.x),
-            min.y + random() * (max.y - min.y),
-            min.z + random() * (max.z - min.z)
+            minValue.x + random() * (maxValue.x - minValue.x),
+            minValue.y + random() * (maxValue.y - minValue.y),
+            minValue.z + random() * (maxValue.z - minValue.z)
         )
-    elseif IsColor(min) then
-        if not IsColor(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsColor(minValue) then
+        if not IsColor(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Color(
-            floor(min.r + random() * (max.r - min.r)),
-            floor(min.g + random() * (max.g - min.g)),
-            floor(min.b + random() * (max.b - min.b)),
-            floor(min.a + random() * (max.a - min.a))
+            floor(minValue.r + random() * (maxValue.r - minValue.r)),
+            floor(minValue.g + random() * (maxValue.g - minValue.g)),
+            floor(minValue.b + random() * (maxValue.b - minValue.b)),
+            floor(minValue.a + random() * (maxValue.a - minValue.a))
         )
-    elseif IsTime(min) then
-        if not IsTime(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsTime(minValue) then
+        if not IsTime(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
-        -- Generate random frames between min and max (Time objects work with gameFrames)
-        local minFrames = min:GetFrameCount()
-        local maxFrames = max:GetFrameCount()
+        -- Generate random frames between minValue and maxValue (Time objects work with gameFrames)
+        local minFrames = minValue:GetFrameCount()
+        local maxFrames = maxValue:GetFrameCount()
         local randomFrames = floor(minFrames + random() * (maxFrames - minFrames))
         return TEN.Time(randomFrames)
-    elseif IsRotation(min) then
-        if not IsRotation(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsRotation(minValue) then
+        if not IsRotation(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Rotation(
-            min.x + random() * (max.x - min.x),
-            min.y + random() * (max.y - min.y),
-            min.z + random() * (max.z - min.z)
+            minValue.x + random() * (maxValue.x - minValue.x),
+            minValue.y + random() * (maxValue.y - minValue.y),
+            minValue.z + random() * (maxValue.z - minValue.z)
         )
     end
-    TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be same type (number, Vec2, Vec3, Color, or Time).", TEN.Util.LogLevel.ERROR)
+    TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be same type (number, Vec2, Vec3, Color, or Time).", TEN.Util.LogLevel.ERROR)
     return nil
 end
 
 --- Clamp a value between a minimum and maximum for numbers, Vec2, Vec3, Color, Rotation, and Time.
 -- Supports numbers and TEN primitives (Color, Rotation, Time, Vec2, Vec3).
--- For primitives, each component is clamped individually between corresponding min/max components.
+-- For primitives, each component is clamped individually between corresponding minValue/maxValue components.
 -- @tparam number|Color|Rotation|Time|Vec2|Vec3 value The value to clamp.
--- @tparam number|Color|Rotation|Time|Vec2|Vec3 min The minimum value (same type as value).
--- @tparam number|Color|Rotation|Time|Vec2|Vec3 max The maximum value (same type as value).
+-- @tparam number|Color|Rotation|Time|Vec2|Vec3 minValue The minimum value (same type as value).
+-- @tparam number|Color|Rotation|Time|Vec2|Vec3 maxValue The maximum value (same type as value).
 -- @treturn[1] number|Color|Rotation|Time|Vec2|Vec3 The clamped value.
 -- @treturn[2] number|Color|Rotation|Time|Vec2|Vec3 The original value if an error occurs.
 -- @usage
@@ -1040,75 +1040,75 @@ end
 --     return  -- or use a fallback value
 -- end
 -- -- Safe approach with default fallback:
--- local clampedValue = LuaUtil.Clamp(value, min, max) or defaultValue
-LuaUtil.Clamp = function(value, min, max)
+-- local clampedValue = LuaUtil.Clamp(value, minValue, maxValue) or defaultValue
+LuaUtil.Clamp = function(value, minValue, maxValue)
     -- Lazy type checking: check only what's needed
     if IsNumber(value) then
-        if not (IsNumber(min) and IsNumber(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+        if not (IsNumber(minValue) and IsNumber(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
-        if min > max then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+        if minValue > maxValue then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: minValue cannot be greater than maxValue.", TEN.Util.LogLevel.ERROR)
             return value
         end
-        return max(min, min(max, value))
+        return max(minValue, min(maxValue, value))
     end
 
     if IsVec2(value) then
-        if not (IsVec2(min) and IsVec2(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+        if not (IsVec2(minValue) and IsVec2(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Vec2(
-            max(min.x, min(max.x, value.x)),
-            max(min.y, min(max.y, value.y))
+            max(minValue.x, min(maxValue.x, value.x)),
+            max(minValue.y, min(maxValue.y, value.y))
         )
     end
 
     if IsVec3(value) then
-        if not (IsVec3(min) and IsVec3(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+        if not (IsVec3(minValue) and IsVec3(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Vec3(
-            max(min.x, min(max.x, value.x)),
-            max(min.y, min(max.y, value.y)),
-            max(min.z, min(max.z, value.z))
+            max(minValue.x, min(maxValue.x, value.x)),
+            max(minValue.y, min(maxValue.y, value.y)),
+            max(minValue.z, min(maxValue.z, value.z))
         )
     end
 
     if IsRotation(value) then
-        if not (IsRotation(min) and IsRotation(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+        if not (IsRotation(minValue) and IsRotation(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Rotation(
-            max(min.x, min(max.x, value.x)),
-            max(min.y, min(max.y, value.y)),
-            max(min.z, min(max.z, value.z))
+            max(minValue.x, min(maxValue.x, value.x)),
+            max(minValue.y, min(maxValue.y, value.y)),
+            max(minValue.z, min(maxValue.z, value.z))
         )
     end
 
     if IsColor(value) then
-        if not (IsColor(min) and IsColor(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+        if not (IsColor(minValue) and IsColor(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Color(
-            max(min.r, min(max.r, value.r)),
-            max(min.g, min(max.g, value.g)),
-            max(min.b, min(max.b, value.b)),
-            max(min.a, min(max.a, value.a))
+            max(minValue.r, min(maxValue.r, value.r)),
+            max(minValue.g, min(maxValue.g, value.g)),
+            max(minValue.b, min(maxValue.b, value.b)),
+            max(minValue.a, min(maxValue.a, value.a))
         )
     end
 
     if IsTime(value) then
-        if not (IsTime(min) and IsTime(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+        if not (IsTime(minValue) and IsTime(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
-        return TEN.Time(max(min:GetFrameCount(), min(max:GetFrameCount(), value:GetFrameCount())))
+        return TEN.Time(max(minValue:GetFrameCount(), min(maxValue:GetFrameCount(), value:GetFrameCount())))
     end
 
     TEN.Util.PrintLog("Error in LuaUtil.Clamp: unsupported type.", TEN.Util.LogLevel.ERROR)
@@ -1119,8 +1119,8 @@ end
 -- Useful for normalizing rotation angles and preventing overflow.
 -- Unlike Clamp, this function wraps values cyclically (e.g., 450° → 90°).
 -- @tparam float angle The angle to wrap.
--- @tparam[opt=0] float min Minimum value of the range.
--- @tparam[opt=360] float max Maximum value of the range.
+-- @tparam[opt=0] float minValue Minimum value of the range.
+-- @tparam[opt=360] float maxValue Maximum value of the range.
 -- @treturn[1] float The wrapped angle.
 -- @treturn[2] float The original angle if an error occurs.
 -- @usage
@@ -1152,22 +1152,22 @@ end
 -- -- Wrapped difference:
 -- local delta = LuaUtil.WrapAngle(targetYaw - currentYaw, -180, 180)
 -- -- Result: 20° (correct shortest path: turn right 20°)
-LuaUtil.WrapAngle = function(angle, min, max)
-    min = min or 0
-    max = max or 360
+LuaUtil.WrapAngle = function(angle, minValue, maxValue)
+    minValue = minValue or 0
+    maxValue = maxValue or 360
 
-    if not (IsNumber(angle) and IsNumber(min) and IsNumber(max)) then
+    if not (IsNumber(angle) and IsNumber(minValue) and IsNumber(maxValue)) then
         TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)
         return angle
     end
 
-    local range = max - min
+    local range = maxValue - minValue
     if range == 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: min cannot equal max.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: minValue cannot equal maxValue.", TEN.Util.LogLevel.ERROR)
         return angle
     end
 
-    return angle - range * floor((angle - min) / range)
+    return angle - range * floor((angle - minValue) / range)
 end
 
 --- Checks if a value is an integer (a number without fractional part).
@@ -2225,16 +2225,16 @@ LuaUtil.ColorToHSL = function(color)
     local h = color:GetHue()
 
     -- Calculate saturation and lightness
-    local max = max(r, g, b)
-    local min = min(r, g, b)
-    local l = (max + min) / 2
+    local maxValue = max(r, g, b)
+    local minValue = min(r, g, b)
+    local l = (maxValue + minValue) / 2
 
     local s
-    if max == min then
+    if maxValue == minValue then
         s = 0  -- Achromatic (gray)
     else
-        local delta = max - min
-        s = l > 0.5 and delta / (2 - max - min) or delta / (max + min)
+        local delta = maxValue - minValue
+        s = l > 0.5 and delta / (2 - maxValue - minValue) or delta / (maxValue + minValue)
     end
 
     return { h = h, s = s, l = l, a = a }
@@ -2665,22 +2665,22 @@ end
 --     
 --     compassNeedle:Draw()
 -- end
-LuaUtil.LerpAngle = function(a, b, t, min, max)
-    min = min or 0
-    max = max or 360
+LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
+    minValue = minValue or 0
+    maxValue = maxValue or 360
 
     if not (IsNumber(a) and IsNumber(b) and IsNumber(t)) then
         TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: a, b, and t must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
-    if not (IsNumber(min) and IsNumber(max)) then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: min and max must be numbers.", TEN.Util.LogLevel.ERROR)
+    if not (IsNumber(minValue) and IsNumber(maxValue)) then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue and maxValue must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
-    if min >= max then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: min must be less than max.", TEN.Util.LogLevel.ERROR)
+    if minValue >= maxValue then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue must be less than maxValue.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
@@ -2688,12 +2688,12 @@ LuaUtil.LerpAngle = function(a, b, t, min, max)
     t = max(0, min(1, t))
 
     -- Normalize angles to range
-    a = LuaUtil.WrapAngle(a, min, max)
-    b = LuaUtil.WrapAngle(b, min, max)
+    a = LuaUtil.WrapAngle(a, minValue, maxValue)
+    b = LuaUtil.WrapAngle(b, minValue, maxValue)
 
     -- Calculate shortest delta
     local delta = b - a
-    local range = max - min
+    local range = maxValue - minValue
 
     -- Wrap delta to [-range/2, range/2] for shortest path
     if delta > range / 2 then
@@ -2704,7 +2704,7 @@ LuaUtil.LerpAngle = function(a, b, t, min, max)
 
     -- Interpolate and wrap result
     local result = a + delta * t
-    return LuaUtil.WrapAngle(result, min, max)
+    return LuaUtil.WrapAngle(result, minValue, maxValue)
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
