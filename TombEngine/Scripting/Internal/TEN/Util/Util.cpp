@@ -155,7 +155,7 @@ namespace TEN::Scripting::Util
 	//@treturn Vec2 Display position.
 	//@usage
 	//local screenPos = TEN.Vec2(400, 300)
-	//local percentPos = Util.ScreenToPercent(screenPos)
+	//local percentPos = TEN.Util.ScreenToPercent(screenPos)
 	//print('Percent X: ' .. percentPos.x .. ' Percent Y: ' .. percentPos.y)
 	static Vec2 ScreenToPercent(const Vec2& screenPos)
 	{
