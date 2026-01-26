@@ -2604,8 +2604,8 @@ end
 -- @tparam float a Start angle (in degrees).
 -- @tparam float b End angle (in degrees).
 -- @tparam float t Interpolation factor (0.0 to 1.0).
--- @tparam[opt=0] float min Minimum angle of range (default: 0 for 0-360°).
--- @tparam[opt=360] float max Maximum angle of range (default: 360 for 0-360°).
+-- @tparam[opt=0] float minValue Minimum angle of range (default: 0 for 0-360°).
+-- @tparam[opt=360] float maxValue Maximum angle of range (default: 360 for 0-360°).
 -- @treturn[1] float The interpolated angle, taking the shortest path.
 -- @treturn[2] float Value `a` if an error occurs.
 -- @usage
