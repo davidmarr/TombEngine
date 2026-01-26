@@ -99,7 +99,7 @@ namespace TEN::Scripting::Util
 	//local ScreenPos = TEN.Vec2(halfwayX, halfwayY)
 	//local spawnLocationNullmesh = TEN.Objects.GetMoveableByName("position_behind_left_pillar")
 	//local flags = { DisplayStringOption.SHADOW, DisplayStringOption.CENTER }
-	//local str1 = TEN.Strings.DisplayString("You spawned an enemy!", ScreenPos, Color(255, 100, 100), false, flags)
+	//local str1 = TEN.Strings.DisplayString("You spawned an enemy!", ScreenPos, 1, Color(255, 100, 100), false, flags)
 	//
 	//LevelFuncs.triggerOne = function(obj) 
 	//	ShowString(str1, 4)
