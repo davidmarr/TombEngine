@@ -3195,9 +3195,9 @@ LuaUtil.EaseInOut = function(a, b, t)
     -- EaseInOutQuad formula
     local easedT
     if t < 0.5 then
-        easedT = 2 * t * t  -- Ease in: accelerazione
+        easedT = 2 * t * t  -- Ease in: acceleration
     else
-        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: decelerazione
+        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
     end
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.EaseInOut")
