@@ -238,18 +238,26 @@ namespace TEN::Scripting::Types
 
 	/// Invert the RGB components of this Color (255 - component).
 	// @function Color:Invert
-	// @treturn Color An inverted version of this Color with RGB components inverted (alpha unchanged).
+	// @tparam[opt=true] bool keepAlpha Whether to keep the alpha component unchanged.
+	// @treturn Color An inverted version of this Color with RGB components inverted. Alpha is kept unchanged if keepAlpha is true; otherwise, it is also inverted.
 	// @usage
+	// -- Invert color while keeping alpha unchanged
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local invertedColor = color:Invert()
 	// print(tostring(invertedColor)) -- Output: {0, 255, 255, 255}
-	ScriptColor ScriptColor::Invert() const
+	//
+	// -- Invert color including alpha
+	// local colorWithAlpha = TEN.Color(255, 0, 0, 128) -- Red color with 50% opacity
+	// local fullyInvertedColor = colorWithAlpha:Invert(false)
+	// print(tostring(fullyInvertedColor)) -- Output: {0, 255, 255, 127}
+	ScriptColor ScriptColor::Invert(TypeOrNil<bool> keepAlpha) const
 	{
+		bool keepAlphaValue = ValueOr<bool>(keepAlpha, true);
 		return ScriptColor(
 			255 - GetR(),
 			255 - GetG(),
 			255 - GetB(),
-			GetA()
+			keepAlphaValue ? GetA() : 255 - GetA()
 		);
 	}
 

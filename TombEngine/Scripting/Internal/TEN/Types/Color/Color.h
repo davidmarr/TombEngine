@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Specific/RGBAColor8Byte.h"
+#include "Scripting/Internal/ScriptUtil.h"
 
 typedef DWORD D3DCOLOR;
 
@@ -49,7 +50,7 @@ namespace TEN::Scripting::Types
 		float GetSaturation() const;
 		float GetHue() const;
 		ScriptColor ToGrayscale() const;
-		ScriptColor Invert() const;
+		ScriptColor Invert(TypeOrNil<bool> endDrift) const;
 		ScriptColor Screen(const ScriptColor& other) const;
 
 		// Utilities
