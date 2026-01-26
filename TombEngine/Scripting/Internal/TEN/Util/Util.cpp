@@ -74,8 +74,8 @@ namespace TEN::Scripting::Util
 	// @usage 
 	// -- Example: Display a string at the player's position.
 	// local displayPos = TEN.Util.GetDisplayPosition(Lara:GetPosition())
-	// local string = TEN.Strings.DisplayString('You are here!', displayPos)
-	// ShowString(string, 4)
+	// local str = TEN.Strings.DisplayString('You are here!', displayPos)
+	// ShowString(str, 4)
 	static sol::optional<Vec2> GetDisplayPosition(const Vec3& worldPos)
 	{
 		auto displayPos = g_Renderer.Get2DPosition(worldPos.ToVector3());
@@ -88,22 +88,21 @@ namespace TEN::Scripting::Util
 	}
 
 	/// Translate a pair display position coordinates to pixel coordinates.
-	//To be used with @{Strings.DisplayString:SetPosition} and @{Strings.DisplayString}.
+	//
+	//To be used with `Strings.DisplayString` and `Strings.DisplayString:SetPosition`.
 	//@function PercentToScreen
 	//@tparam float x X component of the display position.
 	//@tparam float y Y component of the display position.
 	//@treturn int x X coordinate in pixels.
 	//@treturn int y Y coordinate in pixels.
-	//@usage	
-	//local halfwayX, halfwayY = TEN.Util.PercentToScreen(50, 50)
-	//local ScreenPos = TEN.Vec2(halfwayX, halfwayY)
-	//local spawnLocationNullmesh = TEN.Objects.GetMoveableByName("position_behind_left_pillar")
-	//local flags = { DisplayStringOption.SHADOW, DisplayStringOption.CENTER }
-	//local str1 = TEN.Strings.DisplayString("You spawned an enemy!", ScreenPos, 1, Color(255, 100, 100), false, flags)
+	//@usage
+	//-- Example 1: Simple usage of PercentToScreen.
+	//local screenX, screenY = TEN.Util.PercentToScreen(10, 10)
+	//local pos = TEN.Vec2(screenX, screenY)
+	//local str1 = TEN.Strings.DisplayString("Position at 10% X and 10% Y", pos)
 	//
-	//LevelFuncs.triggerOne = function(obj) 
-	//	ShowString(str1, 4)
-	//end
+	//-- Example 2: Using PercentToScreen with DisplayString:SetPosition.
+	//str1:SetPosition(TEN.Util.PercentToScreen(50, 50))
 	static std::tuple<int, int> PercentToScreen(float x, float y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -115,15 +114,19 @@ namespace TEN::Scripting::Util
 	}
 
 	/// Translate a Vec2 of display position coordinates to Vec2 pixel coordinates.
-	//To be used with @{Strings.DisplayString:SetPosition} and @{Strings.DisplayString}.
+	//
+	//To be used with `Strings.DisplayString` and `Strings.DisplayString:SetPosition`.
 	//@function PercentToScreen
 	//@tparam Vec2 percentPos Display position to translate to pixel coordinates.
 	//@treturn Vec2 Pixel coordinates.
 	//@usage
+	//-- Example: Translate a display position to pixel coordinates.
 	//local percentPos = TEN.Vec2(25, 75)
 	//local screenPos = TEN.Util.PercentToScreen(percentPos)
 	//local str1 = TEN.Strings.DisplayString("Position at 25% X and 75% Y", screenPos)
-	//ShowString(str1, 4)
+	//
+	//-- Example 2: Using PercentToScreen with DisplayString:SetPosition.
+	//str1:SetPosition(TEN.Util.PercentToScreen(TEN.Vec2(50, 50)))
 	static Vec2 PercentToScreen(const Vec2& percentPos)
 	{
 		auto [screenX, screenY] = PercentToScreen(percentPos.x, percentPos.y);
@@ -131,14 +134,19 @@ namespace TEN::Scripting::Util
 	}
 
 	/// Translate a pair of pixel coordinates to display position coordinates.
-	//To be used with @{Strings.DisplayString:GetPosition}.
+	//To be used with `Strings.DisplayString:GetPosition`.
 	//@function ScreenToPercent
 	//@tparam int x X pixel coordinate to translate to display position.
 	//@tparam int y Y pixel coordinate to translate to display position.
 	//@treturn float x X component of display position.
 	//@treturn float y Y component of display position.
 	//@usage
+	//-- Example: Translate pixel coordinates to display position.
 	//local percentX, percentY = TEN.Util.ScreenToPercent(800, 600)
+	//
+	//-- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
+	//local screenPos = str1:GetPosition()
+	//local percentPos = TEN.Util.ScreenToPercent(screenPos.x, screenPos.y)
 	static std::tuple<float, float> ScreenToPercent(int x, int y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -154,9 +162,13 @@ namespace TEN::Scripting::Util
 	//@tparam Vec2 screenPos Pixel coordinates to translate to display position.
 	//@treturn Vec2 Display position.
 	//@usage
+	//-- Example: Translate pixel coordinates to display position.
 	//local screenPos = TEN.Vec2(400, 300)
 	//local percentPos = TEN.Util.ScreenToPercent(screenPos)
-	//print('Percent X: ' .. percentPos.x .. ' Percent Y: ' .. percentPos.y)
+	//
+	//-- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
+	//local screenPos = str1:GetPosition()
+	//local percentPos = TEN.Util.ScreenToPercent(screenPos)
 	static Vec2 ScreenToPercent(const Vec2& screenPos)
 	{
 		auto [percentX, percentY] = ScreenToPercent((int)screenPos.x, (int)screenPos.y);
