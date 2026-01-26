@@ -187,6 +187,8 @@ namespace TEN::Scripting::Types
 	/// Methods for Color type.
 	// @type Color
 
+	// Method not registered due to normalization issues.
+
 	/// Get the perceived brightness of this Color using Rec.709 luminance formula.
 	// @ function Color:GetBrightness
 	// @ treturn float The brightness value in the range [0.0, 1.0].
@@ -198,6 +200,8 @@ namespace TEN::Scripting::Types
 	{
 		return Math::Luma(_color);
 	}
+
+	// Method not registered due to normalization issues.
 
 	/// Get the saturation of this Color using the HSV color model.
 	// @ function Color:GetSaturation
@@ -211,17 +215,7 @@ namespace TEN::Scripting::Types
 		return Math::Chroma(_color);
 	}
 
-	/// Get the hue of this Color using the HSV color model.
-	// @function Color:GetHue
-	// @treturn float The hue value in the range [0.0, 360.0) in degrees.
-	// @usage
-	// local color = TEN.Color(255, 0, 0) -- Red color
-	// local hue = color:GetHue()
-	// print(hue) -- Output: 0.0
-	float ScriptColor::GetHue() const
-	{
-		return Math::Hue(_color);
-	}
+	// Method not registered due to normalization issues.
 
 	/// Convert this Color to grayscale using perceived luminance (ITU-R BT.709).
 	// @ function Color:ToGrayscale
@@ -234,6 +228,34 @@ namespace TEN::Scripting::Types
 	{
 		const byte grayscaleValue = static_cast<byte>(std::clamp(GetBrightness() * 255.0f, 0.0f, 255.0f));
 		return ScriptColor(grayscaleValue, grayscaleValue, grayscaleValue, GetA());
+	}
+
+	// Method not registered due to normalization issues.
+
+	/// Blend this Color with another Color using the Screen blend mode.
+	// @ function Color:Screen
+	// @ tparam Color other The other Color to blend with.
+	// @ treturn Color The resulting blended Color.
+	// @ usage
+	// local color1 = TEN.Color(255, 0, 0) -- Red color
+	// local color2 = TEN.Color(0, 0, 255) -- Blue color
+	// local blendedColor = color1:Screen(color2) -- Screen blend of red and blue
+	ScriptColor ScriptColor::Screen(const ScriptColor& other) const
+	{
+		const Color result = Math::Screen(static_cast<Color>(_color), static_cast<Color>(other._color));
+		return ScriptColor(result);
+	}
+
+	/// Get the hue of this Color using the HSV color model.
+	// @function Color:GetHue
+	// @treturn float The hue value in the range [0.0, 360.0) in degrees.
+	// @usage
+	// local color = TEN.Color(255, 0, 0) -- Red color
+	// local hue = color:GetHue()
+	// print(hue) -- Output: 0.0
+	float ScriptColor::GetHue() const
+	{
+		return Math::Hue(_color);
 	}
 
 	/// Invert the RGB components of this Color (255 - component).
@@ -259,20 +281,6 @@ namespace TEN::Scripting::Types
 			255 - GetB(),
 			keepAlphaValue ? GetA() : 255 - GetA()
 		);
-	}
-
-	/// Blend this Color with another Color using the Screen blend mode.
-	// @ function Color:Screen
-	// @ tparam Color other The other Color to blend with.
-	// @ treturn Color The resulting blended Color.
-	// @usage
-	// local color1 = TEN.Color(255, 0, 0) -- Red color
-	// local color2 = TEN.Color(0, 0, 255) -- Blue color
-	// local blendedColor = color1:Screen(color2) -- Screen blend of red and blue
-	ScriptColor ScriptColor::Screen(const ScriptColor& other) const
-	{
-		const Color result = Math::Screen(static_cast<Color>(_color), static_cast<Color>(other._color));
-		return ScriptColor(result);
 	}
 
 	/// Get the linearly interpolated Color between this Color and the input Color according to the input alpha.
