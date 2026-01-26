@@ -23,58 +23,90 @@
 local Type= require("Engine.Type")
 local LuaUtil = {}
 
--- Internal helper functions and constants
-local cache = {
-    -- Type checking functions
-    IsNumber = Type.IsNumber,
-    IsVec2 = Type.IsVec2,
-    IsVec3 = Type.IsVec3,
-    IsColor = Type.IsColor,
-    IsTime = Type.IsTime,
-    IsRotation = Type.IsRotation,
-    IsBoolean = Type.IsBoolean,
-    IsString = Type.IsString,
-    IsTable = Type.IsTable,
+-- ============================================================================
+-- PERFORMANCE OPTIMIZATION: DIRECT LOCAL REFERENCES
+-- ============================================================================
+-- These variables are declared as direct locals instead of being grouped in a table
+-- to optimize hot-path performance. This module's functions are frequently called
+-- every frame in game loops (animations, interpolations, particle systems, etc.).
+--
+-- Performance gain:
+-- - With table:  IsNumber(x)  →  2 opcodes (GETUPVAL + GETTABLE)
+-- - Direct:      IsNumber(x)        →  1 opcode  (GETUPVAL)
+-- 
+-- This 50% reduction in opcodes is significant when functions are called thousands
+-- of times per second. For example:
+-- - 200 particles × 15 calls/frame × 30 FPS = 90,000 table lookups/second
+-- - Direct access saves ~45,000 opcodes/second in such scenarios
+--
+-- Trade-off: More variables in local scope (34 total), but well below Lua's 200 limit.
+-- ============================================================================
 
-    -- Math functions (risparmia table lookup)
-    floor = math.floor,
-    max = math.max,
-    min = math.min,
-    random = math.random,
-    randomseed = math.randomseed,
-    abs = math.abs,
-    sin = math.sin,
-    cos = math.cos,
-    asin = math.asin,
-    atan = math.atan,
-    deg = math.deg,
-    sqrt = math.sqrt,
-    rad = math.rad,
-    pi = math.pi,
+-- ----------------------------------------------------------------------------
+-- TYPE CHECKING FUNCTIONS
+-- Cached from Engine.Type module - used in every LuaUtil function for validation
+-- ----------------------------------------------------------------------------
+local IsNumber = Type.IsNumber
+local IsVec2 = Type.IsVec2
+local IsVec3 = Type.IsVec3
+local IsColor = Type.IsColor
+local IsTime = Type.IsTime
+local IsRotation = Type.IsRotation
+local IsBoolean = Type.IsBoolean
+local IsString = Type.IsString
+local IsTable = Type.IsTable
 
-    -- Default frames per second for time-frame conversions
-    FPS = 30,
+-- ----------------------------------------------------------------------------
+-- MATH FUNCTIONS
+-- Cached from math library - heavily used in interpolation and clamping operations
+-- ----------------------------------------------------------------------------
+local floor = math.floor
+local max = math.max
+local min = math.min
+local random = math.random
+local randomseed = math.randomseed
+local abs = math.abs
+local sin = math.sin
+local cos = math.cos
+local asin = math.asin
+local atan = math.atan
+local deg = math.deg
+local sqrt = math.sqrt
+local rad = math.rad
+local pi = math.pi
 
-    -- Helper table for comparison operators
-    operators = {
-        function(a, b) return a == b end,
-        function(a, b) return a ~= b end,
-        function(a, b) return a < b end,
-        function(a, b) return a <= b end,
-        function(a, b) return a > b end,
-        function(a, b) return a >= b end,
-    },
+-- ----------------------------------------------------------------------------
+-- IMMUTABLE CONSTANTS
+-- Configuration values that never change during runtime (SCREAMING_SNAKE_CASE)
+-- ----------------------------------------------------------------------------
+local FPS = 30              -- Default frames per second for time-frame conversions
+local MAX_DEPTH = 10        -- Maximum recursion depth for deep operations (prevents stack overflow)
+local MAX_ELEMENTS = 1000   -- Maximum elements processed in deep operations (prevents performance issues)
 
-    -- Settings for deep table comparison
-    MAX_DEPTH = 10,        -- Maximum nesting depth (prevents stack overflow)
-    MAX_ELEMENTS = 1000,   -- Maximum total elements processed (prevents performance issues)
-    nextId = 1,            -- Progressive ID for each comparison
-    activeCompares = {},   -- Tracks active comparisons: { [id] = { depth, elementCount, visited } }
-
-    -- Settings for deep table copy (separate from comparison to avoid conflicts)
-    nextCopyId = 1,        -- Progressive ID for each copy operation
-    activeCopies = {}      -- Tracks active copy operations: { [id] = { depth, elementCount, visited } }
+-- ----------------------------------------------------------------------------
+-- COMPARISON OPERATORS
+-- Lookup table for CompareValues function (immutable after initialization)
+-- ----------------------------------------------------------------------------
+local COMPARISON_OPS = {
+    function(a, b) return a == b end,   -- 0: equal
+    function(a, b) return a ~= b end,   -- 1: not equal
+    function(a, b) return a < b end,    -- 2: less than
+    function(a, b) return a <= b end,   -- 3: less than or equal
+    function(a, b) return a > b end,    -- 4: greater than
+    function(a, b) return a >= b end,   -- 5: greater than or equal
 }
+
+-- ----------------------------------------------------------------------------
+-- MUTABLE STATE (with underscore prefix to indicate internal mutability)
+-- Used by recursive algorithms to track context across function calls
+-- ----------------------------------------------------------------------------
+-- State for deep table comparison (CompareTablesDeep)
+local _nextCompareId = 1       -- Progressive ID generator for each comparison operation
+local _activeCompares = {}     -- Tracks active comparisons: { [id] = { depth, elementCount, visited } }
+
+-- State for deep table copy (CloneValue)
+local _nextCopyId = 1          -- Progressive ID generator for each copy operation
+local _activeCopies = {}       -- Tracks active copy operations: { [id] = { depth, elementCount, visited } }
 
 LevelFuncs.Engine.LuaUtil = {}
 
@@ -83,40 +115,40 @@ local F = LevelFuncs.Engine.LuaUtil
 
 -- Helper function for type checking and interpolation
 F.InterpolateValues = function(a, b, clampedT, functionName)
-    if cache.IsNumber(a) then
-        if not cache.IsNumber(b) then
+    if IsNumber(a) then
+        if not IsNumber(b) then
             TEN.Util.PrintLog("Error in " .. functionName .. ": type mismatch.", TEN.Util.LogLevel.ERROR)
             return a
         end
         return a + (b - a) * clampedT
     end
 
-    if cache.IsVec3(a) then
-        if not cache.IsVec3(b) then
+    if IsVec3(a) then
+        if not IsVec3(b) then
             TEN.Util.PrintLog("Error in " .. functionName .. ": type mismatch.", TEN.Util.LogLevel.ERROR)
             return a
         end
         return a:Lerp(b, clampedT)
     end
 
-    if cache.IsVec2(a) then
-        if not cache.IsVec2(b) then
+    if IsVec2(a) then
+        if not IsVec2(b) then
             TEN.Util.PrintLog("Error in " .. functionName .. ": type mismatch.", TEN.Util.LogLevel.ERROR)
             return a
         end
         return a:Lerp(b, clampedT)
     end
 
-    if cache.IsColor(a) then
-        if not cache.IsColor(b) then
+    if IsColor(a) then
+        if not IsColor(b) then
             TEN.Util.PrintLog("Error in " .. functionName .. ": type mismatch.", TEN.Util.LogLevel.ERROR)
             return a
         end
         return a:Lerp(b, clampedT)
     end
 
-    if cache.IsRotation(a) then
-        if not cache.IsRotation(b) then
+    if IsRotation(a) then
+        if not IsRotation(b) then
             TEN.Util.PrintLog("Error in " .. functionName .. ": type mismatch.", TEN.Util.LogLevel.ERROR)
             return a
         end
@@ -149,12 +181,12 @@ end
 
 -- Support function for deep table copy
 F.DeepCopyRecursive = function(original, copyId)
-    local context = cache.activeCopies[copyId]
+    local context = _activeCopies[copyId]
 
     -- Check maximum depth
-    if context.depth >= cache.MAX_DEPTH then
+    if context.depth >= MAX_DEPTH then
         TEN.Util.PrintLog("Warning in LuaUtil.CloneValue: Maximum depth (" .. 
-            cache.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+            MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
         return {}
     end
 
@@ -172,13 +204,13 @@ F.DeepCopyRecursive = function(original, copyId)
         context.elementCount = context.elementCount + 1
 
         -- Check maximum elements
-        if context.elementCount >= cache.MAX_ELEMENTS then
-            TEN.Util.PrintLog("Warning in LuaUtil.CloneValue: Maximum elements (" .. cache.MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+        if context.elementCount >= MAX_ELEMENTS then
+            TEN.Util.PrintLog("Warning in LuaUtil.CloneValue: Maximum elements (" .. MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
             return copy
         end
 
         -- Deep copy nested tables
-        if cache.IsTable(value) then
+        if IsTable(value) then
             copy[key] = F.DeepCopyRecursive(value, copyId)
         else
             copy[key] = value
@@ -191,11 +223,11 @@ end
 
 -- Support function for recursive comparison
 F.CompareRecursive = function(t1, t2, compareId)
-    local context = cache.activeCompares[compareId]
+    local context = _activeCompares[compareId]
 
     -- Check maximum depth
-    if context.depth >= cache.MAX_DEPTH then
-        TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum depth (" .. cache.MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+    if context.depth >= MAX_DEPTH then
+        TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum depth (" .. MAX_DEPTH .. ") exceeded.", TEN.Util.LogLevel.WARNING)
         return false
     end
 
@@ -216,9 +248,9 @@ F.CompareRecursive = function(t1, t2, compareId)
         context.elementCount = context.elementCount + 1
 
         -- Check maximum elements
-        if context.elementCount >= cache.MAX_ELEMENTS then
+        if context.elementCount >= MAX_ELEMENTS then
             TEN.Util.PrintLog("Warning in LuaUtil.CompareTablesDeep: Maximum elements (" .. 
-                cache.MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
+                MAX_ELEMENTS .. ") exceeded.", TEN.Util.LogLevel.WARNING)
             return false
         end
 
@@ -232,7 +264,7 @@ F.CompareRecursive = function(t1, t2, compareId)
         end
 
         -- Compare values
-        if cache.IsTable(value1) and cache.IsTable(value2) then
+        if IsTable(value1) and IsTable(value2) then
             if not F.CompareRecursive(value1, value2, compareId) then
                 context.depth = context.depth - 1
                 return false
@@ -317,34 +349,34 @@ LuaUtil.CloneValue = function(value)
     end
 
     -- Handle TEN engine types (userdata)
-    if cache.IsVec2(value) then
+    if IsVec2(value) then
         return TEN.Vec2(value.x, value.y)
     end
 
-    if cache.IsVec3(value) then
+    if IsVec3(value) then
         return TEN.Vec3(value.x, value.y, value.z)
     end
 
-    if cache.IsRotation(value) then
+    if IsRotation(value) then
         return TEN.Rotation(value.x, value.y, value.z)
     end
 
-    if cache.IsColor(value) then
+    if IsColor(value) then
         return TEN.Color(value.r, value.g, value.b, value.a)
     end
 
-    if cache.IsTime(value) then
+    if IsTime(value) then
         return TEN.Time(value:GetFrameCount())
     end
 
     -- Handle Lua tables (deep copy)
-    if cache.IsTable(value) then
+    if IsTable(value) then
         -- Generate unique ID for this copy operation
-        local copyId = cache.nextCopyId
-        cache.nextCopyId = cache.nextCopyId + 1
+        local copyId = _nextCopyId
+        _nextCopyId = _nextCopyId + 1
 
         -- Initialize context for this copy
-        cache.activeCopies[copyId] = {
+        _activeCopies[copyId] = {
             depth = 0,
             elementCount = 0,
             visited = {}  -- Prevents infinite loops on circular references
@@ -354,7 +386,7 @@ LuaUtil.CloneValue = function(value)
         local result = F.DeepCopyRecursive(value, copyId)
 
         -- Cleanup: remove context for this copy
-        cache.activeCopies[copyId] = nil
+        _activeCopies[copyId] = nil
 
         return result
     end
@@ -476,12 +508,12 @@ LuaUtil.IsEmpty = function(value)
     end
 
     -- Check for empty string
-    if cache.IsString(value) and value == "" then
+    if IsString(value) and value == "" then
         return true
     end
 
     -- Check for empty table
-    if cache.IsTable(value) then
+    if IsTable(value) then
         for _ in pairs(value) do
             return false  -- Has at least one element
         end
@@ -509,34 +541,34 @@ end
 -- local isGreaterOrEqual = LuaUtil.CompareValues(TEN.Time(10), TEN.Time(5), 5) -- true
 LuaUtil.CompareValues = function(operand, reference, operator)
     -- Validate operator
-    if not cache.IsNumber(operator) or operator < 0 or operator > 5 then
+    if not IsNumber(operator) or operator < 0 or operator > 5 then
         TEN.Util.PrintLog("Invalid operator for comparison", TEN.Util.LogLevel.ERROR)
         return false
     end
 
     -- Lazy type checking
-    if cache.IsNumber(operand) then
-        if not cache.IsNumber(reference) then
+    if IsNumber(operand) then
+        if not IsNumber(reference) then
             TEN.Util.PrintLog("Error in LuaUtil.CompareValues: type mismatch.", TEN.Util.LogLevel.ERROR)
             return false
         end
-        return cache.operators[operator + 1](operand, reference)
+        return COMPARISON_OPS[operator + 1](operand, reference)
     end
 
-    if cache.IsString(operand) then
-        if not cache.IsString(reference) then
+    if IsString(operand) then
+        if not IsString(reference) then
             TEN.Util.PrintLog("Error in LuaUtil.CompareValues: type mismatch.", TEN.Util.LogLevel.ERROR)
             return false
         end
-        return cache.operators[operator + 1](operand, reference)
+        return COMPARISON_OPS[operator + 1](operand, reference)
     end
 
-    if cache.IsTime(operand) then
-        if not cache.IsTime(reference) then
+    if IsTime(operand) then
+        if not IsTime(reference) then
             TEN.Util.PrintLog("Error in LuaUtil.CompareValues: type mismatch.", TEN.Util.LogLevel.ERROR)
             return false
         end
-        return cache.operators[operator + 1](operand, reference)
+        return COMPARISON_OPS[operator + 1](operand, reference)
     end
 
     TEN.Util.PrintLog("Error in LuaUtil.CompareValues: unsupported type.", TEN.Util.LogLevel.ERROR)
@@ -545,26 +577,26 @@ end
 
 --- Check if a value is within a range (inclusive).
 -- @tparam float value The value to check.
--- @tparam float min Minimum value.
--- @tparam float max Maximum value.
+-- @tparam float minValue Minimum value.
+-- @tparam float maxValue Maximum value.
 -- @treturn[1] bool True if value is within range.
 -- @treturn[2] bool false If an error occurs.
 -- @usage
 -- local inRange = LuaUtil.IsInRange(5, 1, 10) -- true
 -- local outOfRange = LuaUtil.IsInRange(15, 1, 10) -- false
--- local errorCase = LuaUtil.IsInRange(5, 10, 1) -- false (min greater than max)
-LuaUtil.IsInRange = function(value, min, max)
-    if not (cache.IsNumber(value) and cache.IsNumber(min) and cache.IsNumber(max)) then
+-- local errorCase = LuaUtil.IsInRange(5, 10, 1) -- false (minValue greater than maxValue)
+LuaUtil.IsInRange = function(value, minValue, maxValue)
+    if not (IsNumber(value) and IsNumber(minValue) and IsNumber(maxValue)) then
         TEN.Util.PrintLog("Error in LuaUtil.IsInRange: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)   
         return false
     end
 
-    if min > max then
-        TEN.Util.PrintLog("Error in LuaUtil.IsInRange: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+    if minValue > maxValue then
+        TEN.Util.PrintLog("Error in LuaUtil.IsInRange: minValue cannot be greater than maxValue.", TEN.Util.LogLevel.ERROR)
         return false
     end
 
-    return value >= min and value <= max
+    return value >= minValue and value <= maxValue
 end
 
 --- String functions.
@@ -581,13 +613,13 @@ end
 -- local result = LuaUtil.SplitString(str, ",")
 -- -- Result: {"apple", "banana", "cherry"}
 LuaUtil.SplitString = function(inputStr, delimiter)
-    if not cache.IsString(inputStr) then
+    if not IsString(inputStr) then
         TEN.Util.PrintLog("Error in LuaUtil.SplitString: inputStr is not a string.", TEN.Util.LogLevel.ERROR)
         return {}
     end
 
 	delimiter = delimiter or " "
-    if not cache.IsString(delimiter) then
+    if not IsString(delimiter) then
         TEN.Util.PrintLog("Error in LuaUtil.SplitString: delimiter is not a string.", TEN.Util.LogLevel.ERROR)
         return {}
     end
@@ -638,10 +670,10 @@ LuaUtil.Min = function(...)
 
     local first = args[1]
 
-    if cache.IsNumber(first) then
+    if IsNumber(first) then
         local minVal = args[1]
         for i = 2, #args do
-            if not cache.IsNumber(args[i]) then
+            if not IsNumber(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Min: all arguments must be numbers.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
@@ -650,10 +682,10 @@ LuaUtil.Min = function(...)
             end
         end
         return minVal
-    elseif cache.IsTime(first) then
+    elseif IsTime(first) then
         local minTime = first
         for i = 2, #args do
-            if not cache.IsTime(args[i]) then
+            if not IsTime(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Min: all arguments must be Time.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
@@ -662,27 +694,27 @@ LuaUtil.Min = function(...)
             end
         end
         return minTime
-    elseif cache.IsVec2(first) then
+    elseif IsVec2(first) then
         local result = TEN.Vec2(first.x, first.y)
         for i = 2, #args do
-            if not cache.IsVec2(args[i]) then
+            if not IsVec2(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Min: all arguments must be Vec2.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
-            result.x = cache.min(result.x, args[i].x)
-            result.y = cache.min(result.y, args[i].y)
+            result.x = min(result.x, args[i].x)
+            result.y = min(result.y, args[i].y)
         end
         return result
-    elseif cache.IsVec3(first) then
+    elseif IsVec3(first) then
         local result = TEN.Vec3(first.x, first.y, first.z)
         for i = 2, #args do
-            if not cache.IsVec3(args[i]) then
+            if not IsVec3(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Min: all arguments must be Vec3.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
-            result.x = cache.min(result.x, args[i].x)
-            result.y = cache.min(result.y, args[i].y)
-            result.z = cache.min(result.z, args[i].z)
+            result.x = min(result.x, args[i].x)
+            result.y = min(result.y, args[i].y)
+            result.z = min(result.z, args[i].z)
         end
         return result
     end
@@ -724,10 +756,10 @@ LuaUtil.Max = function(...)
 
     local first = args[1]
 
-    if cache.IsNumber(first) then
+    if IsNumber(first) then
         local maxVal = args[1]
         for i = 2, #args do
-            if not cache.IsNumber(args[i]) then
+            if not IsNumber(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Max: all arguments must be numbers.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
@@ -736,10 +768,10 @@ LuaUtil.Max = function(...)
             end
         end
         return maxVal
-    elseif cache.IsTime(first) then
+    elseif IsTime(first) then
         local maxTime = first
         for i = 2, #args do
-            if not cache.IsTime(args[i]) then
+            if not IsTime(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Max: all arguments must be Time.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
@@ -748,27 +780,27 @@ LuaUtil.Max = function(...)
             end
         end
         return maxTime
-    elseif cache.IsVec2(first) then
+    elseif IsVec2(first) then
         local result = TEN.Vec2(first.x, first.y)
         for i = 2, #args do
-            if not cache.IsVec2(args[i]) then
+            if not IsVec2(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Max: all arguments must be Vec2.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
-            result.x = cache.max(result.x, args[i].x)
-            result.y = cache.max(result.y, args[i].y)
+            result.x = max(result.x, args[i].x)
+            result.y = max(result.y, args[i].y)
         end
         return result
-    elseif cache.IsVec3(first) then
+    elseif IsVec3(first) then
         local result = TEN.Vec3(first.x, first.y, first.z)
         for i = 2, #args do
-            if not cache.IsVec3(args[i]) then
+            if not IsVec3(args[i]) then
                 TEN.Util.PrintLog("Error in LuaUtil.Max: all arguments must be Vec3.", TEN.Util.LogLevel.ERROR)
                 return nil
             end
-            result.x = cache.max(result.x, args[i].x)
-            result.y = cache.max(result.y, args[i].y)
-            result.z = cache.max(result.z, args[i].z)
+            result.x = max(result.x, args[i].x)
+            result.y = max(result.y, args[i].y)
+            result.z = max(result.z, args[i].z)
         end
         return result
     end
@@ -788,12 +820,12 @@ end
 -- local rounded4 = LuaUtil.Round(-1.2345, 1)    -- Result: -1.2
 LuaUtil.Round = function(num, decimals)
     decimals = decimals or 0
-    if not cache.IsNumber(num) or not cache.IsNumber(decimals) then
+    if not IsNumber(num) or not IsNumber(decimals) then
         TEN.Util.PrintLog("Error in LuaUtil.Round: num and decimals must be numbers.", TEN.Util.LogLevel.ERROR)
         return 0
     end
     local mult = 10 ^ decimals
-    return cache.floor(num * mult + 0.5) / mult
+    return floor(num * mult + 0.5) / mult
 end
 
 --- Truncate a number to a specified number of decimal places (without rounding).
@@ -809,19 +841,19 @@ end
 -- local truncated4 = LuaUtil.Truncate(-1.2345, 1)    -- Result: -1.2
 LuaUtil.Truncate = function(num, decimals)
     decimals = decimals or 0
-    if not cache.IsNumber(num) or not cache.IsNumber(decimals) then
+    if not IsNumber(num) or not IsNumber(decimals) then
         TEN.Util.PrintLog("Error in LuaUtil.Truncate: num and decimals must be numbers.", TEN.Util.LogLevel.ERROR)
         return 0
     end
     local mult = 10 ^ decimals
-    return cache.floor(num * mult) / mult
+    return floor(num * mult) / mult
 end
 
 --- Generate a random number or vector/color/time with optional seed.
--- @tparam float|Vec2|Vec3|Rotation|Color|Time min Minimum value.
--- @tparam float|Vec2|Vec3|Rotation|Color|Time max Maximum value (same type as min).
+-- @tparam float|Vec2|Vec3|Rotation|Color|Time minValue Minimum value.
+-- @tparam float|Vec2|Vec3|Rotation|Color|Time maxValue Maximum value (same type as minValue).
 -- @tparam[opt] float seed Seed for reproducible randomness.
--- @treturn[1] float|Vec2|Vec3|Rotation|Color|Time Random value between min and max.
+-- @treturn[1] float|Vec2|Vec3|Rotation|Color|Time Random value between minValue and maxValue.
 -- @treturn[2] nil If an error occurs.
 -- @usage
 -- local rand1 = LuaUtil.Random(1, 10)          -- Random number between 1 and 10
@@ -875,84 +907,84 @@ end
 -- -- Safe approach with default fallback:
 -- local randomColor = LuaUtil.Random(color1, color2) or TEN.Color(255, 255, 255, 255)
 -- sprite:SetColor(randomColor)
-LuaUtil.Random = function(min, max, seed)
+LuaUtil.Random = function(minValue, maxValue, seed)
 
-    if seed and not cache.IsNumber(seed) then
+    if seed and not IsNumber(seed) then
         TEN.Util.PrintLog("Error in LuaUtil.Random: seed must be a number.", TEN.Util.LogLevel.ERROR)
         return nil
     end
 
     if seed then
-        cache.randomseed(seed)
+        randomseed(seed)
     end
 
-    if cache.IsNumber(min) then
-        if not cache.IsNumber(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    if IsNumber(minValue) then
+        if not IsNumber(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
-        return min + cache.random() * (max - min)
-    elseif cache.IsVec2(min) then
-        if not cache.IsVec2(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+        return minValue + random() * (maxValue - minValue)
+    elseif IsVec2(minValue) then
+        if not IsVec2(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Vec2(
-            min.x + cache.random() * (max.x - min.x),
-            min.y + cache.random() * (max.y - min.y)
+            minValue.x + random() * (maxValue.x - minValue.x),
+            minValue.y + random() * (maxValue.y - minValue.y)
         )
-    elseif cache.IsVec3(min) then
-        if not cache.IsVec3(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsVec3(minValue) then
+        if not IsVec3(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Vec3(
-            min.x + cache.random() * (max.x - min.x),
-            min.y + cache.random() * (max.y - min.y),
-            min.z + cache.random() * (max.z - min.z)
+            minValue.x + random() * (maxValue.x - minValue.x),
+            minValue.y + random() * (maxValue.y - minValue.y),
+            minValue.z + random() * (maxValue.z - minValue.z)
         )
-    elseif cache.IsColor(min) then
-        if not cache.IsColor(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsColor(minValue) then
+        if not IsColor(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Color(
-            cache.floor(min.r + cache.random() * (max.r - min.r)),
-            cache.floor(min.g + cache.random() * (max.g - min.g)),
-            cache.floor(min.b + cache.random() * (max.b - min.b)),
-            cache.floor(min.a + cache.random() * (max.a - min.a))
+            floor(minValue.r + random() * (maxValue.r - minValue.r)),
+            floor(minValue.g + random() * (maxValue.g - minValue.g)),
+            floor(minValue.b + random() * (maxValue.b - minValue.b)),
+            floor(minValue.a + random() * (maxValue.a - minValue.a))
         )
-    elseif cache.IsTime(min) then
-        if not cache.IsTime(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsTime(minValue) then
+        if not IsTime(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
-        -- Generate random frames between min and max (Time objects work with gameFrames)
-        local minFrames = min:GetFrameCount()
-        local maxFrames = max:GetFrameCount()
-        local randomFrames = cache.floor(minFrames + cache.random() * (maxFrames - minFrames))
+        -- Generate random frames between minValue and maxValue (Time objects work with gameFrames)
+        local minFrames = minValue:GetFrameCount()
+        local maxFrames = maxValue:GetFrameCount()
+        local randomFrames = floor(minFrames + random() * (maxFrames - minFrames))
         return TEN.Time(randomFrames)
-    elseif cache.IsRotation(min) then
-        if not cache.IsRotation(max) then
-            TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be the same type.", TEN.Util.LogLevel.ERROR)
+    elseif IsRotation(minValue) then
+        if not IsRotation(maxValue) then
+            TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be the same type.", TEN.Util.LogLevel.ERROR)
             return nil
         end
         return TEN.Rotation(
-            min.x + cache.random() * (max.x - min.x),
-            min.y + cache.random() * (max.y - min.y),
-            min.z + cache.random() * (max.z - min.z)
+            minValue.x + random() * (maxValue.x - minValue.x),
+            minValue.y + random() * (maxValue.y - minValue.y),
+            minValue.z + random() * (maxValue.z - minValue.z)
         )
     end
-    TEN.Util.PrintLog("Error in LuaUtil.Random: min and max must be same type (number, Vec2, Vec3, Color, or Time).", TEN.Util.LogLevel.ERROR)
+    TEN.Util.PrintLog("Error in LuaUtil.Random: minValue and maxValue must be same type (number, Vec2, Vec3, Color, or Time).", TEN.Util.LogLevel.ERROR)
     return nil
 end
 
 --- Clamp a value between a minimum and maximum for numbers, Vec2, Vec3, Color, Rotation, and Time.
 -- Supports numbers and TEN primitives (Color, Rotation, Time, Vec2, Vec3).
--- For primitives, each component is clamped individually between corresponding min/max components.
+-- For primitives, each component is clamped individually between corresponding minValue/maxValue components.
 -- @tparam number|Color|Rotation|Time|Vec2|Vec3 value The value to clamp.
--- @tparam number|Color|Rotation|Time|Vec2|Vec3 min The minimum value (same type as value).
--- @tparam number|Color|Rotation|Time|Vec2|Vec3 max The maximum value (same type as value).
+-- @tparam number|Color|Rotation|Time|Vec2|Vec3 minValue The minimum value (same type as value).
+-- @tparam number|Color|Rotation|Time|Vec2|Vec3 maxValue The maximum value (same type as value).
 -- @treturn[1] number|Color|Rotation|Time|Vec2|Vec3 The clamped value.
 -- @treturn[2] number|Color|Rotation|Time|Vec2|Vec3 The original value if an error occurs.
 -- @usage
@@ -1008,75 +1040,75 @@ end
 --     return  -- or use a fallback value
 -- end
 -- -- Safe approach with default fallback:
--- local clampedValue = LuaUtil.Clamp(value, min, max) or defaultValue
-LuaUtil.Clamp = function(value, min, max)
+-- local clampedValue = LuaUtil.Clamp(value, minValue, maxValue) or defaultValue
+LuaUtil.Clamp = function(value, minValue, maxValue)
     -- Lazy type checking: check only what's needed
-    if cache.IsNumber(value) then
-        if not (cache.IsNumber(min) and cache.IsNumber(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+    if IsNumber(value) then
+        if not (IsNumber(minValue) and IsNumber(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
-        if min > max then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: min cannot be greater than max.", TEN.Util.LogLevel.ERROR)
+        if minValue > maxValue then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: minValue cannot be greater than maxValue.", TEN.Util.LogLevel.ERROR)
             return value
         end
-        return cache.max(min, cache.min(max, value))
+        return max(minValue, min(maxValue, value))
     end
 
-    if cache.IsVec2(value) then
-        if not (cache.IsVec2(min) and cache.IsVec2(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+    if IsVec2(value) then
+        if not (IsVec2(minValue) and IsVec2(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Vec2(
-            cache.max(min.x, cache.min(max.x, value.x)),
-            cache.max(min.y, cache.min(max.y, value.y))
+            max(minValue.x, min(maxValue.x, value.x)),
+            max(minValue.y, min(maxValue.y, value.y))
         )
     end
 
-    if cache.IsVec3(value) then
-        if not (cache.IsVec3(min) and cache.IsVec3(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+    if IsVec3(value) then
+        if not (IsVec3(minValue) and IsVec3(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Vec3(
-            cache.max(min.x, cache.min(max.x, value.x)),
-            cache.max(min.y, cache.min(max.y, value.y)),
-            cache.max(min.z, cache.min(max.z, value.z))
+            max(minValue.x, min(maxValue.x, value.x)),
+            max(minValue.y, min(maxValue.y, value.y)),
+            max(minValue.z, min(maxValue.z, value.z))
         )
     end
 
-    if cache.IsRotation(value) then
-        if not (cache.IsRotation(min) and cache.IsRotation(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+    if IsRotation(value) then
+        if not (IsRotation(minValue) and IsRotation(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Rotation(
-            cache.max(min.x, cache.min(max.x, value.x)),
-            cache.max(min.y, cache.min(max.y, value.y)),
-            cache.max(min.z, cache.min(max.z, value.z))
+            max(minValue.x, min(maxValue.x, value.x)),
+            max(minValue.y, min(maxValue.y, value.y)),
+            max(minValue.z, min(maxValue.z, value.z))
         )
     end
 
-    if cache.IsColor(value) then
-        if not (cache.IsColor(min) and cache.IsColor(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+    if IsColor(value) then
+        if not (IsColor(minValue) and IsColor(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
         return TEN.Color(
-            cache.max(min.r, cache.min(max.r, value.r)),
-            cache.max(min.g, cache.min(max.g, value.g)),
-            cache.max(min.b, cache.min(max.b, value.b)),
-            cache.max(min.a, cache.min(max.a, value.a))
+            max(minValue.r, min(maxValue.r, value.r)),
+            max(minValue.g, min(maxValue.g, value.g)),
+            max(minValue.b, min(maxValue.b, value.b)),
+            max(minValue.a, min(maxValue.a, value.a))
         )
     end
 
-    if cache.IsTime(value) then
-        if not (cache.IsTime(min) and cache.IsTime(max)) then
-            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, min, max must be same type.", TEN.Util.LogLevel.ERROR)
+    if IsTime(value) then
+        if not (IsTime(minValue) and IsTime(maxValue)) then
+            TEN.Util.PrintLog("Error in LuaUtil.Clamp: value, minValue, maxValue must be same type.", TEN.Util.LogLevel.ERROR)
             return value
         end
-        return TEN.Time(cache.max(min:GetFrameCount(), cache.min(max:GetFrameCount(), value:GetFrameCount())))
+        return TEN.Time(max(minValue:GetFrameCount(), min(maxValue:GetFrameCount(), value:GetFrameCount())))
     end
 
     TEN.Util.PrintLog("Error in LuaUtil.Clamp: unsupported type.", TEN.Util.LogLevel.ERROR)
@@ -1087,8 +1119,8 @@ end
 -- Useful for normalizing rotation angles and preventing overflow.
 -- Unlike Clamp, this function wraps values cyclically (e.g., 450° → 90°).
 -- @tparam float angle The angle to wrap.
--- @tparam[opt=0] float min Minimum value of the range.
--- @tparam[opt=360] float max Maximum value of the range.
+-- @tparam[opt=0] float minValue Minimum value of the range.
+-- @tparam[opt=360] float maxValue Maximum value of the range.
 -- @treturn[1] float The wrapped angle.
 -- @treturn[2] float The original angle if an error occurs.
 -- @usage
@@ -1120,22 +1152,22 @@ end
 -- -- Wrapped difference:
 -- local delta = LuaUtil.WrapAngle(targetYaw - currentYaw, -180, 180)
 -- -- Result: 20° (correct shortest path: turn right 20°)
-LuaUtil.WrapAngle = function(angle, min, max)
-    min = min or 0
-    max = max or 360
+LuaUtil.WrapAngle = function(angle, minValue, maxValue)
+    minValue = minValue or 0
+    maxValue = maxValue or 360
 
-    if not (cache.IsNumber(angle) and cache.IsNumber(min) and cache.IsNumber(max)) then
+    if not (IsNumber(angle) and IsNumber(minValue) and IsNumber(maxValue)) then
         TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: all parameters must be numbers.", TEN.Util.LogLevel.ERROR)
         return angle
     end
 
-    local range = max - min
+    local range = maxValue - minValue
     if range == 0 then
-        TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: min cannot equal max.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.WrapAngle: minValue cannot equal maxValue.", TEN.Util.LogLevel.ERROR)
         return angle
     end
 
-    return angle - range * cache.floor((angle - min) / range)
+    return angle - range * floor((angle - minValue) / range)
 end
 
 --- Checks if a value is an integer (a number without fractional part).
@@ -1150,7 +1182,7 @@ end
 -- LuaUtil.IsInteger("10")    -- false
 -- LuaUtil.IsInteger(nil)     -- false
 LuaUtil.IsInteger = function(n)
-    if not cache.IsNumber(n) then
+    if not IsNumber(n) then
         TEN.Util.PrintLog("Error in LuaUtil.IsInteger: parameter must be a number.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -1250,15 +1282,15 @@ end
 -- local rotated = LuaUtil.RotatePointAroundAxis(point, pivot, "y", angle) or point
 LuaUtil.RotatePointAroundAxis = function(point, pivot, axis, angle)
     -- Type validation
-    if not cache.IsVec3(point) then
+    if not IsVec3(point) then
         TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: point must be a Vec3.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not cache.IsVec3(pivot) then
+    if not IsVec3(pivot) then
         TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: pivot must be a Vec3.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not cache.IsNumber(angle) then
+    if not IsNumber(angle) then
         TEN.Util.PrintLog("Error in LuaUtil.RotatePointAroundAxis: angle must be a number.", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -1268,7 +1300,7 @@ LuaUtil.RotatePointAroundAxis = function(point, pivot, axis, angle)
 
     -- Rotate based on axis type
     local rotatedLocal
-    if cache.IsString(axis) then
+    if IsString(axis) then
         local axisLower = axis:lower()
         local rotation
         if axisLower == "x" then
@@ -1282,13 +1314,13 @@ LuaUtil.RotatePointAroundAxis = function(point, pivot, axis, angle)
             return nil
         end
         rotatedLocal = localPoint:Rotate(rotation)
-    elseif cache.IsVec3(axis) then
+    elseif IsVec3(axis) then
         -- Custom axis: use Rodrigues' rotation formula
         -- v_rot = v*cos(θ) + (k × v)*sin(θ) + k*(k·v)*(1-cos(θ))
         local k = axis:Normalize()
-        local angleRad = cache.rad(angle)
-        local cosTheta = cache.cos(angleRad)
-        local sinTheta = cache.sin(angleRad)
+        local angleRad = rad(angle)
+        local cosTheta = cos(angleRad)
+        local sinTheta = sin(angleRad)
 
         local kCrossV = k:Cross(localPoint)
         local kDotV = k:Dot(localPoint)
@@ -1388,15 +1420,15 @@ end
 -- local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "y") or center
 LuaUtil.OrbitPosition = function(center, radius, angle, axis)
     -- Type validation
-    if not cache.IsVec3(center) then
+    if not IsVec3(center) then
         TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: center must be a Vec3.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not cache.IsNumber(radius) then
+    if not IsNumber(radius) then
         TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: radius must be a number.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not cache.IsNumber(angle) then
+    if not IsNumber(angle) then
         TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: angle must be a number.", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -1405,13 +1437,13 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
     axis = axis or "y"
 
     -- Convert angle to radians
-    local angleRad = cache.rad(angle)
-    local cosAngle = cache.cos(angleRad)
-    local sinAngle = cache.sin(angleRad)
+    local angleRad = rad(angle)
+    local cosAngle = cos(angleRad)
+    local sinAngle = sin(angleRad)
 
     -- Calculate offset based on axis
     local offset
-    if cache.IsString(axis) then
+    if IsString(axis) then
         local axisLower = axis:lower()
         if axisLower == "y" then
             -- Orbit on XZ plane (around Y axis)
@@ -1426,13 +1458,13 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
             TEN.Util.PrintLog("Error in LuaUtil.OrbitPosition: axis string must be 'x', 'y', or 'z'.", TEN.Util.LogLevel.ERROR)
             return nil
         end
-    elseif cache.IsVec3(axis) then
+    elseif IsVec3(axis) then
         -- Custom axis: calculate perpendicular vectors for orbital plane
         local axisNormalized = axis:Normalize()
         
         -- Find perpendicular vector (use cross product with arbitrary vector)
         local arbitrary = TEN.Vec3(0, 1, 0)
-        if cache.abs(axisNormalized.y) > 0.99 then
+        if abs(axisNormalized.y) > 0.99 then
             arbitrary = TEN.Vec3(1, 0, 0)
         end
         
@@ -1448,6 +1480,201 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
     end
 
     return center + offset
+end
+
+--- Arrange multiple objects in a circular formation around a center point.
+-- Places objects evenly spaced on a circle, with optional rotation control.
+-- Uses OrbitPosition internally for efficient calculation.
+-- @tparam Vec3|Objects.Moveable|Objects.Static center Center of the circle (Vec3, Moveable, or Static).
+-- @tparam table objects Array of Moveable or Static objects to arrange.
+-- @tparam float radius Distance from center to each object.
+-- @tparam[opt] table options Optional configuration: {axis = "y", startAngle = 0, faceDirection = nil}
+--   - axis (string|Vec3): Orbital plane axis ("x"/"y"/"z" or custom Vec3, default "y")
+--   - startAngle (number): Starting angle in degrees (default 0)
+--   - faceDirection (string): "center" = face inward, "outward" = face outward, nil = no rotation
+-- @treturn[1] bool True if successful.
+-- @treturn[2] bool False if an error occurs.
+-- @usage
+-- -- Example: Torches around altar (simple XZ circle) - Complete working example
+-- local altar = TEN.Objects.GetMoveableByName("Altar")
+-- local torches = {
+--     TEN.Objects.GetMoveableByName("Torch1"),
+--     TEN.Objects.GetMoveableByName("Torch2"),
+--     TEN.Objects.GetMoveableByName("Torch3"),
+--     TEN.Objects.GetMoveableByName("Torch4")
+-- }
+-- LuaUtil.ArrangeInCircle(altar, torches, 1024)
+-- -- Result: 4 torches evenly spaced (90° apart) at radius 1024 on XZ plane
+--
+-- -- Example: Pickups around player with rotation facing center
+-- local player = TEN.Objects.GetLaraObject()
+-- local pickups = {
+--     TEN.Objects.GetMoveableByName("Pickup1"),
+--     TEN.Objects.GetMoveableByName("Pickup2"),
+--     TEN.Objects.GetMoveableByName("Pickup3")
+-- }
+-- LuaUtil.ArrangeInCircle(player, pickups, 512, {faceDirection = "center"})
+-- -- Result: 3 pickups at 120° spacing, all rotated to face player
+--
+-- -- Example: Enemies spawn formation facing outward
+-- local spawnPoint = TEN.Vec3(5000, 1000, 5000)
+-- local enemies = {
+--     TEN.Objects.GetMoveableByName("Enemy1"),
+--     TEN.Objects.GetMoveableByName("Enemy2"),
+--     TEN.Objects.GetMoveableByName("Enemy3"),
+--     TEN.Objects.GetMoveableByName("Enemy4"),
+--     TEN.Objects.GetMoveableByName("Enemy5")
+-- }
+-- LuaUtil.ArrangeInCircle(spawnPoint, enemies, 2048, {faceDirection = "outward"})
+-- -- Result: 5 enemies at 72° spacing, facing outward (defensive circle)
+--
+-- -- Example: Vertical circle (XY plane) with custom start angle
+-- local center = TEN.Vec3(10000, 2000, 8000)
+-- local platforms = {
+--     TEN.Objects.GetStaticByName("Platform1"),
+--     TEN.Objects.GetStaticByName("Platform2"),
+--     TEN.Objects.GetStaticByName("Platform3")
+-- }
+-- LuaUtil.ArrangeInCircle(center, platforms, 1536, {axis = "z", startAngle = 90})
+-- -- Result: Vertical circle starting at 90° (top position)
+--
+-- -- Example: Diagonal orbital plane (custom axis)
+-- local center = TEN.Objects.GetMoveableByName("Hub")
+-- local satellites = {}
+-- for i = 1, 6 do
+--     satellites[i] = TEN.Objects.GetMoveableByName("Satellite" .. i)
+-- end
+-- local customAxis = TEN.Vec3(1, 1, 0)  -- Diagonal XY
+-- LuaUtil.ArrangeInCircle(center, satellites, 2048, {
+--     axis = customAxis,
+--     startAngle = 45,
+--     faceDirection = "center"
+-- })
+-- -- Result: 6 objects on tilted orbital plane, facing center
+--
+-- -- Example: Error handling
+-- local success = LuaUtil.ArrangeInCircle(center, objects, radius, options)
+-- if not success then
+--     TEN.Util.PrintLog("Failed to arrange objects in circle", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Example: Dynamic arrangement in loop (moving center)
+-- local hub = TEN.Objects.GetMoveableByName("Hub")
+-- local satellites = { ... }
+-- LevelFuncs.OnLoop = function()
+--     -- Rearrange every frame as hub moves
+--     LuaUtil.ArrangeInCircle(hub, satellites, 1024, {faceDirection = "center"})
+-- end
+LuaUtil.ArrangeInCircle = function(center, objects, radius, options)
+    -- Parse center (Vec3, Moveable, or Static)
+    local centerPos
+    if IsVec3(center) then
+        centerPos = center
+    elseif center and center.GetPosition then
+        centerPos = center:GetPosition()
+    else
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: center must be a Vec3, Moveable, or Static object.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate objects array
+    if not IsTable(objects) then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: objects must be a table.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    if #objects == 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: objects table is empty.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate radius
+    if not IsNumber(radius) then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: radius must be a number.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    if radius <= 0 then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: radius must be positive.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Parse options with defaults
+    options = options or {}
+    local axis = options.axis or "y"
+    local startAngle = options.startAngle or 0
+    local faceDirection = options.faceDirection
+
+    -- Validate axis
+    if IsString(axis) then
+        local axisLower = axis:lower()
+        if axisLower ~= "x" and axisLower ~= "y" and axisLower ~= "z" then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: axis string must be 'x', 'y', or 'z'.", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+    elseif IsVec3(axis) then
+        if axis:Length() < 0.001 then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: axis Vec3 cannot be zero.", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+    else
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: axis must be a string ('x', 'y', 'z') or Vec3.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate startAngle
+    if not IsNumber(startAngle) then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: startAngle must be a number.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Validate faceDirection
+    if faceDirection ~= nil and faceDirection ~= "center" and faceDirection ~= "outward" then
+        TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: faceDirection must be nil, 'center', or 'outward'.", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+
+    -- Calculate angle step for even spacing
+    local angleStep = 360 / #objects
+
+    -- Arrange each object
+    for i, obj in ipairs(objects) do
+        -- Calculate position angle
+        local angle = startAngle + (i - 1) * angleStep
+
+        -- Calculate position using OrbitPosition
+        local position = LuaUtil.OrbitPosition(centerPos, radius, angle, axis)
+        if position == nil then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: failed to calculate position for object " .. i .. ".", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+
+        -- Set position
+        if not obj or not obj.SetPosition then
+            TEN.Util.PrintLog("Error in LuaUtil.ArrangeInCircle: object " .. i .. " is invalid or missing SetPosition method.", TEN.Util.LogLevel.ERROR)
+            return false
+        end
+        obj:SetPosition(position)
+
+        -- Set rotation if requested
+        if faceDirection then
+            local direction
+            if faceDirection == "center" then
+                -- Face inward (toward center)
+                direction = (centerPos - position):Normalize()
+            else -- "outward"
+                -- Face outward (away from center)
+                direction = (position - centerPos):Normalize()
+            end
+
+            -- Convert direction to rotation
+            local rotation = TEN.Rotation(direction)
+            if obj.SetRotation then
+                obj:SetRotation(rotation)
+            end
+        end
+    end
+
+    return true
 end
 
 --- Transform local coordinates to world space using parent transform.
@@ -1501,19 +1728,19 @@ end
 -- local worldPos = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset) or parentPos
 LuaUtil.TransformLocalToWorld = function(parentPos, parentRot, localOffset, localRotation)
     -- Type validation
-    if not cache.IsVec3(parentPos) then
+    if not IsVec3(parentPos) then
         TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: parentPos must be a Vec3.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not cache.IsRotation(parentRot) then
+    if not IsRotation(parentRot) then
         TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: parentRot must be a Rotation.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not cache.IsVec3(localOffset) then
+    if not IsVec3(localOffset) then
         TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: localOffset must be a Vec3.", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if localRotation and not cache.IsRotation(localRotation) then
+    if localRotation and not IsRotation(localRotation) then
         TEN.Util.PrintLog("Error in LuaUtil.TransformLocalToWorld: localRotation must be a Rotation or nil.", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -1707,11 +1934,11 @@ LuaUtil.AttachToObject = function(parent, child, localOffset, inheritRotation)
         TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: parent and child cannot be nil.", TEN.Util.LogLevel.ERROR)
         return false
     end
-    if not cache.IsVec3(localOffset) then
+    if not IsVec3(localOffset) then
         TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: localOffset must be a Vec3.", TEN.Util.LogLevel.ERROR)
         return false
     end
-    if inheritRotation ~= nil and not cache.IsBoolean(inheritRotation) then
+    if inheritRotation ~= nil and not IsBoolean(inheritRotation) then
         TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: inheritRotation must be a boolean or nil.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -1761,19 +1988,19 @@ end
 -- @usage
 -- local frames = LuaUtil.SecondsToFrames(2.0) -- Result: 60
 LuaUtil.SecondsToFrames = function(seconds, fps)
-    fps = fps or cache.FPS
-    if not cache.IsNumber(seconds) or not cache.IsNumber(fps) then
+    fps = fps or FPS
+    if not IsNumber(seconds) or not IsNumber(fps) then
         TEN.Util.PrintLog("Error in LuaUtil.SecondsToFrames: seconds and fps must be numbers.", TEN.Util.LogLevel.ERROR)
         return 0
     end
 
     -- Check if fps is a float and warn user
-    if fps ~= cache.floor(fps) then
-        TEN.Util.PrintLog("Warning in LuaUtil.SecondsToFrames: fps should be an integer. Rounding " .. fps .. " to " .. cache.floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
-        fps = cache.floor(fps + 0.5)
+    if fps ~= floor(fps) then
+        TEN.Util.PrintLog("Warning in LuaUtil.SecondsToFrames: fps should be an integer. Rounding " .. fps .. " to " .. floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
+        fps = floor(fps + 0.5)
     end
 
-    return cache.floor(seconds * fps + 0.5)
+    return floor(seconds * fps + 0.5)
 end
 
 --- Convert frames to seconds (assuming 30 FPS).
@@ -1784,22 +2011,22 @@ end
 -- @usage
 -- local seconds = LuaUtil.FramesToSeconds(60) -- Result: 2.0
 LuaUtil.FramesToSeconds = function(frames, fps)
-    fps = fps or cache.FPS
-    if not cache.IsNumber(frames) or (fps and not cache.IsNumber(fps)) then
+    fps = fps or FPS
+    if not IsNumber(frames) or (fps and not IsNumber(fps)) then
         TEN.Util.PrintLog("Error in LuaUtil.FramesToSeconds: frames and fps must be numbers.", TEN.Util.LogLevel.ERROR)
         return 0
     end
 
     -- Check if frames is a float and warn user
-    if frames ~= cache.floor(frames) then
-        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: frames should be an integer. Rounding " .. frames .. " to " .. cache.floor(frames + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
-        frames = cache.floor(frames + 0.5)
+    if frames ~= floor(frames) then
+        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: frames should be an integer. Rounding " .. frames .. " to " .. floor(frames + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
+        frames = floor(frames + 0.5)
     end
 
     -- Check if fps is a float and warn user
-    if fps ~= cache.floor(fps) then
-        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: fps should be an integer. Rounding " .. fps .. " to " .. cache.floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
-        fps = cache.floor(fps + 0.5)
+    if fps ~= floor(fps) then
+        TEN.Util.PrintLog("Warning in LuaUtil.FramesToSeconds: fps should be an integer. Rounding " .. fps .. " to " .. floor(fps + 0.5) .. ".", TEN.Util.LogLevel.WARNING)
+        fps = floor(fps + 0.5)
     end
 
     if fps == 0 then
@@ -1836,7 +2063,7 @@ end
 -- -- Safe approach with default fallback:
 -- local color = LuaUtil.HexToColor(hexString) or TEN.Color(255, 255, 255, 255)
 LuaUtil.HexToColor = function(hex)
-    if not cache.IsString(hex) then
+    if not IsString(hex) then
         TEN.Util.PrintLog("Error in LuaUtil.HexToColor: hex must be a string.", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -1900,12 +2127,12 @@ end
 -- -- Safe approach with default fallback:
 -- local color = LuaUtil.HSLtoColor(hue, saturation, lightness, alpha) or TEN.Color(255, 255, 255, 255)
 LuaUtil.HSLtoColor = function(h, s, l, a)
-    if not (cache.IsNumber(h) and cache.IsNumber(s) and cache.IsNumber(l)) then
+    if not (IsNumber(h) and IsNumber(s) and IsNumber(l)) then
         TEN.Util.PrintLog("Error in LuaUtil.HSLtoColor: h, s, and l must be numbers.", TEN.Util.LogLevel.ERROR)
         return nil
     end
 
-    if a and not cache.IsNumber(a) then
+    if a and not IsNumber(a) then
         TEN.Util.PrintLog("Error in LuaUtil.HSLtoColor: a must be a number.", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -1914,9 +2141,9 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
 
     -- Clamp values to valid ranges
     h = h % 360
-    s = cache.max(0, cache.min(1, s))
-    l = cache.max(0, cache.min(1, l))
-    a = cache.max(0, cache.min(1, a))
+    s = max(0, min(1, s))
+    l = max(0, min(1, l))
+    a = max(0, min(1, a))
 
     -- HSL to RGB conversion
     local r, g, b
@@ -1936,10 +2163,10 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
 
     -- Convert to 0-255 range and create TEN.Color
     return TEN.Color(
-        cache.floor(r * 255 + 0.5),
-        cache.floor(g * 255 + 0.5),
-        cache.floor(b * 255 + 0.5),
-        cache.floor(a * 255 + 0.5)
+        floor(r * 255 + 0.5),
+        floor(g * 255 + 0.5),
+        floor(b * 255 + 0.5),
+        floor(a * 255 + 0.5)
     )
 end
 
@@ -1983,7 +2210,7 @@ end
 -- -- Safe approach with default fallback:
 -- local hsl = LuaUtil.ColorToHSL(color) or { h = 0, s = 0, l = 0, a = 1.0 }
 LuaUtil.ColorToHSL = function(color)
-    if not cache.IsColor(color) then
+    if not IsColor(color) then
         TEN.Util.PrintLog("Error in LuaUtil.ColorToHSL: color must be a Color object.", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -1998,16 +2225,16 @@ LuaUtil.ColorToHSL = function(color)
     local h = color:GetHue()
 
     -- Calculate saturation and lightness
-    local max = cache.max(r, g, b)
-    local min = cache.min(r, g, b)
-    local l = (max + min) / 2
+    local maxValue = max(r, g, b)
+    local minValue = min(r, g, b)
+    local l = (maxValue + minValue) / 2
 
     local s
-    if max == min then
+    if maxValue == minValue then
         s = 0  -- Achromatic (gray)
     else
-        local delta = max - min
-        s = l > 0.5 and delta / (2 - max - min) or delta / (max + min)
+        local delta = maxValue - minValue
+        s = l > 0.5 and delta / (2 - maxValue - minValue) or delta / (maxValue + minValue)
     end
 
     return { h = h, s = s, l = l, a = a }
@@ -2058,13 +2285,13 @@ end
 -- -- Safe approach with default fallback:
 -- local invertedColor = LuaUtil.InvertColor(color, true) or TEN.Color(255, 255, 255, 255)
 LuaUtil.InvertColor = function(color, keepAlpha)
-    if not cache.IsColor(color) then
+    if not IsColor(color) then
         TEN.Util.PrintLog("Error in LuaUtil.InvertColor: color must be a Color object.", TEN.Util.LogLevel.ERROR)
         return nil
     end
 
     -- Handle keepAlpha: use default if nil/not provided, warn if wrong type
-    if keepAlpha ~= nil and not cache.IsBoolean(keepAlpha) then
+    if keepAlpha ~= nil and not IsBoolean(keepAlpha) then
         TEN.Util.PrintLog("Warning in LuaUtil.InvertColor: keepAlpha must be a boolean. Using default value (false).", TEN.Util.LogLevel.WARNING)
         keepAlpha = false
     else
@@ -2314,12 +2541,12 @@ end
 -- -- ✗ Cinematic camera (use Smootherstep)
 -- -- ✗ Natural phenomena like fog, wind (use Smoothstep/Smootherstep)
 LuaUtil.Lerp = function(a, b, t)
-    if not cache.IsNumber(t) then
+    if not IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.Lerp: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
         return a
     end
     -- Clamp t to the range [0, 1]
-    local clampedT = cache.max(0, cache.min(1, t))
+    local clampedT = max(0, min(1, t))
     return F.InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
 end
 
@@ -2438,35 +2665,35 @@ end
 --     
 --     compassNeedle:Draw()
 -- end
-LuaUtil.LerpAngle = function(a, b, t, min, max)
-    min = min or 0
-    max = max or 360
+LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
+    minValue = minValue or 0
+    maxValue = maxValue or 360
 
-    if not (cache.IsNumber(a) and cache.IsNumber(b) and cache.IsNumber(t)) then
+    if not (IsNumber(a) and IsNumber(b) and IsNumber(t)) then
         TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: a, b, and t must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
-    if not (cache.IsNumber(min) and cache.IsNumber(max)) then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: min and max must be numbers.", TEN.Util.LogLevel.ERROR)
+    if not (IsNumber(minValue) and IsNumber(maxValue)) then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue and maxValue must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
-    if min >= max then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: min must be less than max.", TEN.Util.LogLevel.ERROR)
+    if minValue >= maxValue then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue must be less than maxValue.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
     -- Clamp t to [0, 1]
-    t = cache.max(0, cache.min(1, t))
+    t = max(0, min(1, t))
 
     -- Normalize angles to range
-    a = LuaUtil.WrapAngle(a, min, max)
-    b = LuaUtil.WrapAngle(b, min, max)
+    a = LuaUtil.WrapAngle(a, minValue, maxValue)
+    b = LuaUtil.WrapAngle(b, minValue, maxValue)
 
     -- Calculate shortest delta
     local delta = b - a
-    local range = max - min
+    local range = maxValue - minValue
 
     -- Wrap delta to [-range/2, range/2] for shortest path
     if delta > range / 2 then
@@ -2477,7 +2704,7 @@ LuaUtil.LerpAngle = function(a, b, t, min, max)
 
     -- Interpolate and wrap result
     local result = a + delta * t
-    return LuaUtil.WrapAngle(result, min, max)
+    return LuaUtil.WrapAngle(result, minValue, maxValue)
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -2573,12 +2800,12 @@ LuaUtil.Smoothstep = function (a, b, t, edge0, edge1)
     edge0 = edge0 or 0
     edge1 = edge1 or 1
 
-    if not cache.IsNumber(t) then
+    if not IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.Smoothstep: t must be a number.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
-    if not (cache.IsNumber(edge0) and cache.IsNumber(edge1)) then
+    if not (IsNumber(edge0) and IsNumber(edge1)) then
         TEN.Util.PrintLog("Error in LuaUtil.Smoothstep: edge0 and edge1 must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
@@ -2592,7 +2819,7 @@ LuaUtil.Smoothstep = function (a, b, t, edge0, edge1)
     end
 
     -- Scale, bias and saturate t to 0..1 range
-    local normalizedT = cache.max(0, cache.min(1, (t - edge0) / edgeDelta))
+    local normalizedT = max(0, min(1, (t - edge0) / edgeDelta))
 
     -- Evaluate polynomial
     -- Smoothstep formula: t²(3 - 2t) = 3t² - 2t³
@@ -2846,12 +3073,12 @@ LuaUtil.Smootherstep = function (a, b, t, edge0, edge1)
     edge0 = edge0 or 0
     edge1 = edge1 or 1
 
-    if not cache.IsNumber(t) then
+    if not IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.Smootherstep: t must be a number.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
-    if not (cache.IsNumber(edge0) and cache.IsNumber(edge1)) then
+    if not (IsNumber(edge0) and IsNumber(edge1)) then
         TEN.Util.PrintLog("Error in LuaUtil.Smootherstep: edge0 and edge1 must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
@@ -2865,7 +3092,7 @@ LuaUtil.Smootherstep = function (a, b, t, edge0, edge1)
     end
 
     -- Scale, bias and saturate t to 0..1 range
-    local normalizedT = cache.max(0, cache.min(1, (t - edge0) / edgeDelta))
+    local normalizedT = max(0, min(1, (t - edge0) / edgeDelta))
 
     -- Ken Perlin's smootherstep polynomial: 6t⁵ - 15t⁴ + 10t³
     -- This is identical to LevelFuncs.Engine.Node.Smoothstep
@@ -2957,13 +3184,13 @@ end
 --     end
 -- end
 LuaUtil.EaseInOut = function(a, b, t)
-    if not cache.IsNumber(t) then
+    if not IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.EaseInOut: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
         return a
     end
 
     -- Clamp t to [0, 1]
-    t = cache.max(0, cache.min(1, t))
+    t = max(0, min(1, t))
 
     -- EaseInOutQuad formula
     local easedT
@@ -3082,7 +3309,7 @@ end
 --     end
 -- end
 LuaUtil.Elastic = function(a, b, t, amplitude, period)
-    if not cache.IsNumber(t) then
+    if not IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.Elastic: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
         return a
     end
@@ -3091,7 +3318,7 @@ LuaUtil.Elastic = function(a, b, t, amplitude, period)
     amplitude = amplitude or 1.0
     period = period or 0.3
 
-    if not cache.IsNumber(amplitude) or not cache.IsNumber(period) then
+    if not IsNumber(amplitude) or not IsNumber(period) then
         TEN.Util.PrintLog("Error in LuaUtil.Elastic: amplitude and period must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
@@ -3103,7 +3330,7 @@ LuaUtil.Elastic = function(a, b, t, amplitude, period)
     end
 
     -- Clamp t to [0, 1]
-    t = cache.max(0, cache.min(1, t))
+    t = max(0, min(1, t))
 
     -- Handle edge cases (no oscillation at start/end)
     if t == 0 then
@@ -3113,23 +3340,23 @@ LuaUtil.Elastic = function(a, b, t, amplitude, period)
     end
 
     -- EaseInOutElastic formula
-    local twoPi = 2 * cache.pi
+    local twoPi = 2 * pi
 
     -- Calculate phase shift 's' to adjust the sine wave's starting point
     -- The phase shift ensures the elastic curve starts at 0 and ends at 1
     -- Formula: s = period / (2π) * arcsin(1 / amplitude)
-    local s = period / (2 * cache.pi) * cache.asin(1 / amplitude)
+    local s = period / (2 * pi) * asin(1 / amplitude)
     local periodOverTwoPi = twoPi / period
     local easedT
 
     if t < 0.5 then
         -- Ease In (first half) - undershoot at start
         t = t * 2
-        easedT = -(amplitude * (2 ^ (10 * (t - 1))) * cache.sin((t - 1 - s) * periodOverTwoPi)) / 2
+        easedT = -(amplitude * (2 ^ (10 * (t - 1))) * sin((t - 1 - s) * periodOverTwoPi)) / 2
     else
         -- Ease Out (second half) - overshoot at end
         t = t * 2 - 1
-        easedT = (amplitude * (2 ^ (-10 * t)) * cache.sin((t - s) * periodOverTwoPi)) / 2 + 1
+        easedT = (amplitude * (2 ^ (-10 * t)) * sin((t - s) * periodOverTwoPi)) / 2 + 1
     end
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.Elastic")
@@ -3319,7 +3546,7 @@ end
 --     end
 -- end
 LuaUtil.Bounce = function(a, b, t, bounces, damping)
-    if not cache.IsNumber(t) then
+    if not IsNumber(t) then
         TEN.Util.PrintLog("Error in LuaUtil.Bounce: interpolation factor t is not a number.", TEN.Util.LogLevel.ERROR)
         return a
     end
@@ -3328,7 +3555,7 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     bounces = bounces or 4
     damping = damping or 0.5
 
-    if not cache.IsNumber(bounces) or not cache.IsNumber(damping) then
+    if not IsNumber(bounces) or not IsNumber(damping) then
         TEN.Util.PrintLog("Error in LuaUtil.Bounce: bounces and damping must be numbers.", TEN.Util.LogLevel.ERROR)
         return a
     end
@@ -3342,11 +3569,11 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     -- Validate damping (0.0 to 1.0 range)
     if damping < 0.0 or damping > 1.0 then
         TEN.Util.PrintLog("Warning in LuaUtil.Bounce: damping should be between 0.0 and 1.0. Clamping.", TEN.Util.LogLevel.WARNING)
-        damping = cache.max(0.0, cache.min(1.0, damping))
+        damping = max(0.0, min(1.0, damping))
     end
 
     -- Clamp t to [0, 1]
-    t = cache.max(0, cache.min(1, t))
+    t = max(0, min(1, t))
     -- Handle edge cases
     if t == 0 then
         return a
@@ -3368,7 +3595,7 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     -- 4. (1 - result): Invert so we approach target value instead of 0
     
     local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
-    local oscillation = cache.abs(cache.cos(t * cache.pi * bounces))
+    local oscillation = abs(cos(t * pi * bounces))
     local easedT = 1 - (oscillation * decay)
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
@@ -3387,7 +3614,7 @@ end
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
 -- local count = LuaUtil.TableSize(tbl) -- Result: 3
 LuaUtil.TableSize = function(tbl)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.TableSize: input must be a table.", TEN.Util.LogLevel.ERROR)
         return 0
     end
@@ -3411,7 +3638,7 @@ end
 --- local isEqualAB = LuaUtil.CompareTables(tblA, tblB) -- Result: true
 --- local isEqualAC = LuaUtil.CompareTables(tblA, tblC) -- Result: false
 LuaUtil.CompareTables = function (tbl1, tbl2)
-    if not (cache.IsTable(tbl1) and cache.IsTable(tbl2)) then
+    if not (IsTable(tbl1) and IsTable(tbl2)) then
         TEN.Util.PrintLog("Error in LuaUtil.CompareTables: both inputs must be tables.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -3451,17 +3678,17 @@ end
 --- local isEqualAB = LuaUtil.CompareTablesDeep(tblA, tblB) -- Result: true
 --- local isEqualAC = LuaUtil.CompareTablesDeep(tblA, tblC) -- Result: false
 LuaUtil.CompareTablesDeep = function (tbl1, tbl2)
-    if not (cache.IsTable(tbl1) and cache.IsTable(tbl2)) then
+    if not (IsTable(tbl1) and IsTable(tbl2)) then
         TEN.Util.PrintLog("Error in LuaUtil.CompareTablesDeep: both inputs must be tables.", TEN.Util.LogLevel.ERROR)
         return false
     end
 
     -- Generate unique ID for this comparison
-    local compareId = cache.nextId
-    cache.nextId = cache.nextId + 1
+    local compareId = _nextCompareId
+    _nextCompareId = _nextCompareId + 1
 
     -- Initialize context for this comparison
-    cache.activeCompares[compareId] = {
+    _activeCompares[compareId] = {
         depth = 0,
         elementCount = 0,
         visited = {},  -- Prevents infinite loops on circular tables
@@ -3472,7 +3699,7 @@ LuaUtil.CompareTablesDeep = function (tbl1, tbl2)
     local result = F.CompareRecursive(tbl1, tbl2, compareId)
 
     -- Cleanup: remove context for this comparison
-    cache.activeCompares[compareId] = nil
+    _activeCompares[compareId] = nil
 
     return result
 end
@@ -3493,7 +3720,7 @@ end
 -- local hasBanana = LuaUtil.TableHasValue(tbl, "banana") -- Result: true
 -- local hasGrape = LuaUtil.TableHasValue(tbl, "grape") -- Result: false
 LuaUtil.TableHasValue = function (tbl, val)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.TableHasValue: input is not a table.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -3521,7 +3748,7 @@ end
 -- local hasBananaKey = LuaUtil.TableHasKey(tbl, 2) -- Result: true
 -- local hasGrapeKey = LuaUtil.TableHasKey(tbl, 4) -- Result: false
 LuaUtil.TableHasKey = function (tbl, key)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.TableHasKey: input is not a table.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -3566,7 +3793,7 @@ end
 --     playerStats = backup
 -- end
 LuaUtil.CopyTable = function(tbl)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.CopyTable: input is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
@@ -3611,11 +3838,11 @@ end
 -- local activeConfig = LuaUtil.MergeTable(defaultConfig, nightMode)
 -- -- activeConfig: { speed = 10, color = "black", brightness = 50 }
 LuaUtil.MergeTable = function(tbl1, tbl2)
-    if not cache.IsTable(tbl1) then
+    if not IsTable(tbl1) then
         TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
-    if not cache.IsTable(tbl2) then
+    if not IsTable(tbl2) then
         TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
@@ -3663,7 +3890,7 @@ end
 -- local removed = LuaUtil.RemoveValue(mixed, "two") -- Result: true
 -- -- mixed is now: { 1, 3, "four" }
 LuaUtil.RemoveValue = function(tbl, value)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.RemoveValue: input is not a table.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -3712,7 +3939,7 @@ end
 -- local removed = LuaUtil.RemoveAllValues(inventory, "potion")
 -- -- Removed 3 potions, inventory: { "sword", "shield" }
 LuaUtil.RemoveAllValues = function(tbl, value)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.RemoveAllValues: input is not a table.", TEN.Util.LogLevel.ERROR)
         return 0
     end
@@ -3758,7 +3985,7 @@ end
 -- local removed = LuaUtil.RemoveKey(config, "sound") -- Result: true
 -- -- config is now: { display = { width = 1920, height = 1080 } }
 LuaUtil.RemoveKey = function(tbl, key)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.RemoveKey: input is not a table.", TEN.Util.LogLevel.ERROR)
         return false
     end
@@ -3778,7 +4005,7 @@ end
 -- @usage
 -- local readOnlyTable = LuaUtil.SetTableReadOnly(originalTable)
 LuaUtil.SetTableReadOnly = function(tbl)
-    if not cache.IsTable(tbl) then
+    if not IsTable(tbl) then
         TEN.Util.PrintLog("Error in LuaUtil.SetTableReadonly: input is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
