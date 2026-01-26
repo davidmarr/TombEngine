@@ -42,7 +42,8 @@ namespace TEN::Scripting::Util
 	// @treturn bool true if there is a line of sight, false if not.
 	// @usage
 	// local flamePlinthPos = flamePlinth:GetPosition() + Vec3(0, flamePlinthHeight, 0);
-	// print(TEN.Util.HasLineOfSight(enemyHead:GetRoomNumber(), enemyHead:GetPosition(), flamePlinthPos))
+	// local test = TEN.Util.HasLineOfSight(enemyHead:GetRoomNumber(), enemyHead:GetPosition(), flamePlinthPos);
+	// print(tostring(test))
 	static bool HasLineOfSight(int roomID, const Vec3& posA, const Vec3& posB)
 	{
 		auto vector0 = posA.ToGameVector();
