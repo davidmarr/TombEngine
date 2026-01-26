@@ -3103,7 +3103,7 @@ end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
 -- Provides gentle acceleration at the start and deceleration at the end.
--- Quadratic curve with pronounced than Smoothstep but smoother than linear interpolation.
+-- Quadratic curve with more pronounced acceleration/deceleration than Smoothstep but smoother than linear interpolation.
 -- Uses quadratic formula: t < 0.5 → 2t², otherwise → 1 - 2(1-t)²
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
