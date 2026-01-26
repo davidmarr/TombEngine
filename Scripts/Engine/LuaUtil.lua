@@ -878,16 +878,10 @@ end
 --     TEN.Color(255, 255, 0, 255)
 -- )
 --
--- -- Random time duration between 1 and 3 seconds:
--- local randomDelay = LuaUtil.Random(
---     TEN.Time.FromSeconds(1),
---     TEN.Time.FromSeconds(3)
--- )
---
 -- -- Random time in frames (30-90 frames = 1-3 seconds @ 30fps):
 -- local randomFrames = LuaUtil.Random(
---     TEN.Time(LuaUtil.SecondsToFrames(5)),
---     TEN.Time(LuaUtil.SecondsToFrames(3.2))
+--     TEN.Time(LuaUtil.SecondsToFrames(1)),
+--     TEN.Time(LuaUtil.SecondsToFrames(3))
 -- )
 --
 -- -- Random rotation between two angles:
