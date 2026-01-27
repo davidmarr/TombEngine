@@ -296,8 +296,8 @@ end
 -- Works with all TEN types (`Vec2`, `Vec3`, `Rotation`, `Color`, `Time`) and Lua tables.
 -- For primitive types (number, string, bool, nil), returns the value itself.
 -- This solves the reference assignment problem where modifying a copy affects the original.
--- @tparam any value The value to clone (can be any type).
--- @treturn[1] any An independent copy of the value.
+-- @tparam nil|number|string|boolean|table|Vec2|Vec3|Rotation|Color|Time value The value to clone (can be any type).
+-- @treturn[1] nil|number|string|boolean|table|Vec2|Vec3|Rotation|Color|Time An independent copy of the value.
 -- @treturn[2] nil If the type is unsupported.
 -- @usage
 -- -- Problem: reference assignment
@@ -878,16 +878,10 @@ end
 --     TEN.Color(255, 255, 0, 255)
 -- )
 --
--- -- Random time duration between 1 and 3 seconds:
--- local randomDelay = LuaUtil.Random(
---     TEN.Time.FromSeconds(1),
---     TEN.Time.FromSeconds(3)
--- )
---
 -- -- Random time in frames (30-90 frames = 1-3 seconds @ 30fps):
 -- local randomFrames = LuaUtil.Random(
---     TEN.Time(LuaUtil.SecondsToFrames(5)),
---     TEN.Time(LuaUtil.SecondsToFrames(3.2))
+--     TEN.Time(LuaUtil.SecondsToFrames(1)),
+--     TEN.Time(LuaUtil.SecondsToFrames(3))
 -- )
 --
 -- -- Random rotation between two angles:
@@ -1685,8 +1679,8 @@ end
 -- @tparam Vec3 localOffset Offset in parent's local space.
 -- @tparam[opt] Rotation localRotation Rotation in parent's local space (optional).
 -- @treturn[1] Vec3 World position.
--- @treturn[2] Rotation World rotation (or nil if localRotation not provided).
--- @treturn[3] nil If an error occurs.
+-- @treturn[1] Rotation World rotation (or nil if localRotation not provided).
+-- @treturn[2] nil If an error occurs.
 -- @usage
 -- -- Example: Calculate world position of satellite relative to ship
 -- local shipPos = TEN.Vec3(5000, 1000, 5000)
@@ -2238,73 +2232,6 @@ LuaUtil.ColorToHSL = function(color)
     end
 
     return { h = h, s = s, l = l, a = a }
-end
-
---- Invert the RGB components of a color (255 - component).
--- Creates a negative/opposite color effect by inverting red, green, and blue channels.
--- Optionally preserves the original alpha channel.
--- @tparam Color color The color to invert.
--- @tparam[opt=false] bool keepAlpha If true, preserves the original alpha value.
--- @treturn[1] Color The inverted color.
--- @treturn[2] nil If an error occurs.
--- @usage
--- -- Example: Simple color inversion
--- local red = TEN.Color(255, 0, 0, 255)
--- local cyan = LuaUtil.InvertColor(red)  
--- -- Result: TEN.Color(0, 255, 255, 0)
---
--- -- Example: Invert while keeping alpha
--- local semiRed = TEN.Color(255, 0, 0, 128)
--- local semiCyan = LuaUtil.InvertColor(semiRed, true)
--- -- Result: TEN.Color(0, 255, 255, 128)
---
--- -- Practical example: Create negative effect on sprite
--- local originalColor = sprite:GetColor()
--- local negativeColor = LuaUtil.InvertColor(originalColor, true)  -- Keep transparency
--- sprite:SetColor(negativeColor)
---
--- -- Example: Toggle between normal and inverted
--- local isInverted = false
--- local baseColor = TEN.Color(100, 150, 200, 255)
--- LevelFuncs.OnLoop = function()
---     if isInverted then
---         sprite:SetColor(LuaUtil.InvertColor(baseColor, true))
---     else
---         sprite:SetColor(baseColor)
---     end
--- end
---
--- -- Error handling example:
--- local inverted = LuaUtil.InvertColor(color, true)
--- if inverted == nil then
---     TEN.Util.PrintLog("Failed to invert color", TEN.Util.LogLevel.ERROR)
---     return
--- end
--- sprite:SetColor(inverted)
---
--- -- Safe approach with default fallback:
--- local invertedColor = LuaUtil.InvertColor(color, true) or TEN.Color(255, 255, 255, 255)
-LuaUtil.InvertColor = function(color, keepAlpha)
-    if not IsColor(color) then
-        TEN.Util.PrintLog("Error in LuaUtil.InvertColor: color must be a Color object.", TEN.Util.LogLevel.ERROR)
-        return nil
-    end
-
-    -- Handle keepAlpha: use default if nil/not provided, warn if wrong type
-    if keepAlpha ~= nil and not IsBoolean(keepAlpha) then
-        TEN.Util.PrintLog("Warning in LuaUtil.InvertColor: keepAlpha must be a boolean. Using default value (false).", TEN.Util.LogLevel.WARNING)
-        keepAlpha = false
-    else
-        keepAlpha = keepAlpha or false
-    end
-
-    local inverted = color:Invert()
-
-    if keepAlpha then
-        inverted.a = color.a
-    end
-
-    return inverted
 end
 
 --- Interpolation functions.
@@ -3103,7 +3030,7 @@ end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
 -- Provides gentle acceleration at the start and deceleration at the end.
--- Quadratic curve with pronounced than Smoothstep but smoother than linear interpolation.
+-- Quadratic curve with more pronounced acceleration/deceleration than Smoothstep but smoother than linear interpolation.
 -- Uses quadratic formula: t < 0.5 → 2t², otherwise → 1 - 2(1-t)²
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
@@ -3195,9 +3122,9 @@ LuaUtil.EaseInOut = function(a, b, t)
     -- EaseInOutQuad formula
     local easedT
     if t < 0.5 then
-        easedT = 2 * t * t  -- Ease in: accelerazione
+        easedT = 2 * t * t  -- Ease in: acceleration
     else
-        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: decelerazione
+        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
     end
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.EaseInOut")
@@ -3816,34 +3743,34 @@ end
 -- -- Example with configuration merge:
 -- local defaults = { volume = 100, fullscreen = false, difficulty = "normal" }
 -- local userSettings = { volume = 80, fullscreen = true }
--- local finalSettings = LuaUtil.MergeTable(defaults, userSettings)
+-- local finalSettings = LuaUtil.MergeTables(defaults, userSettings)
 -- -- finalSettings: { volume = 80, fullscreen = true, difficulty = "normal" }
 --
 -- -- Example with player stats:
 -- local baseStats = { health = 100, stamina = 100, damage = 10 }
 -- local bonuses = { health = 20, damage = 5 }
--- local totalStats = LuaUtil.MergeTable(baseStats, bonuses)
+-- local totalStats = LuaUtil.MergeTables(baseStats, bonuses)
 -- -- totalStats: { health = 20, stamina = 100, damage = 5 }
 -- -- Note: values are replaced, not added! Use custom logic for addition.
 --
 -- -- Example with arrays (numeric keys):
 -- local array1 = { "a", "b", "c" }
 -- local array2 = { "x", "y" }
--- local merged = LuaUtil.MergeTable(array1, array2)
+-- local merged = LuaUtil.MergeTables(array1, array2)
 -- -- merged: { "x", "y", "c" } (indices 1 and 2 are overridden)
 --
 -- -- Practical use: apply temporary modifications
 -- local defaultConfig = { speed = 10, color = "blue" }
 -- local nightMode = { color = "black", brightness = 50 }
--- local activeConfig = LuaUtil.MergeTable(defaultConfig, nightMode)
+-- local activeConfig = LuaUtil.MergeTables(defaultConfig, nightMode)
 -- -- activeConfig: { speed = 10, color = "black", brightness = 50 }
-LuaUtil.MergeTable = function(tbl1, tbl2)
+LuaUtil.MergeTables = function(tbl1, tbl2)
     if not IsTable(tbl1) then
-        TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.MergeTables: tbl1 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
     if not IsTable(tbl2) then
-        TEN.Util.PrintLog("Error in LuaUtil.MergeTable: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
+        TEN.Util.PrintLog("Error in LuaUtil.MergeTables: tbl2 is not a table.", TEN.Util.LogLevel.ERROR)
         return {}
     end
 
