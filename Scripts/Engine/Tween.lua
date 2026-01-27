@@ -1085,9 +1085,17 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     -- Use effectiveTo for wrapAngle (shortest angular path)
                     local targetTo = t.wrapAngle and t.effectiveTo or t.to
                     if t.direction == 1 then
-                        t.value = LuaUtil[t.interpolation](t.from, targetTo, t.progress, t.easingParams and table.unpack(t.easingParams))
+                        if t.easingParams then
+                            t.value = LuaUtil[t.interpolation](t.from, targetTo, t.progress, table.unpack(t.easingParams))
+                        else
+                            t.value = LuaUtil[t.interpolation](t.from, targetTo, t.progress)
+                        end
                     else
-                        t.value = LuaUtil[t.interpolation](targetTo, t.from, t.progress, t.easingParams and table.unpack(t.easingParams))
+                        if t.easingParams then
+                            t.value = LuaUtil[t.interpolation](targetTo, t.from, t.progress, table.unpack(t.easingParams))
+                        else
+                            t.value = LuaUtil[t.interpolation](targetTo, t.from, t.progress)
+                        end
                     end
 
                     -- Callback ON_UPDATE
