@@ -1679,8 +1679,8 @@ end
 -- @tparam Vec3 localOffset Offset in parent's local space.
 -- @tparam[opt] Rotation localRotation Rotation in parent's local space (optional).
 -- @treturn[1] Vec3 World position.
--- @treturn[2] Rotation World rotation (or nil if localRotation not provided).
--- @treturn[3] nil If an error occurs.
+-- @treturn[1] Rotation World rotation (or nil if localRotation not provided).
+-- @treturn[2] nil If an error occurs.
 -- @usage
 -- -- Example: Calculate world position of satellite relative to ship
 -- local shipPos = TEN.Vec3(5000, 1000, 5000)
