@@ -296,8 +296,8 @@ end
 -- Works with all TEN types (`Vec2`, `Vec3`, `Rotation`, `Color`, `Time`) and Lua tables.
 -- For primitive types (number, string, bool, nil), returns the value itself.
 -- This solves the reference assignment problem where modifying a copy affects the original.
--- @tparam any value The value to clone (can be any type).
--- @treturn[1] any An independent copy of the value.
+-- @tparam nil|number|string|boolean|table|Vec2|Vec3|Rotation|Color|Time value The value to clone (can be any type).
+-- @treturn[1] nil|number|string|boolean|table|Vec2|Vec3|Rotation|Color|Time An independent copy of the value.
 -- @treturn[2] nil If the type is unsupported.
 -- @usage
 -- -- Problem: reference assignment
