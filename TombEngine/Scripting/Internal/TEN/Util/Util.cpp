@@ -166,8 +166,8 @@ namespace TEN::Scripting::Util
 	// local percentPos = TEN.Util.ScreenToPercent(screenPos)
 	//
 	// -- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
-	// local screenPos = str1:GetPosition()
-	// local percentPos = TEN.Util.ScreenToPercent(screenPos)
+	// local textPos = str1:GetPosition()
+	// local percentPos = TEN.Util.ScreenToPercent(textPos)
 	static Vec2 ScreenToPercent(const Vec2& screenPos)
 	{
 		auto [percentX, percentY] = ScreenToPercent((int)screenPos.x, (int)screenPos.y);
