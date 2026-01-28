@@ -76,7 +76,7 @@ namespace TEN::Scripting::Util
 	// -- Example: Display a string at the player's position.
 	// local displayPos = TEN.Util.GetDisplayPosition(Lara:GetPosition())
 	// local str = TEN.Strings.DisplayString('You are here!', displayPos)
-	// ShowString(str, 4)
+	// TEN.Strings.ShowString(str, 4)
 	static sol::optional<Vec2> GetDisplayPosition(const Vec3& worldPos)
 	{
 		auto displayPos = g_Renderer.Get2DPosition(worldPos.ToVector3());
