@@ -33,8 +33,8 @@ local TIME = TEN.Time()
 local VEC2 = TEN.Vec2(0,0)
 local VEC3 = TEN.Vec3(0,0,0)
 
--- Internal sentinel: moved to LevelFuncs.Engine to reduce exposure
--- to end users. Used only for metatable comparisons in Type.IsLevelFunc;
+-- Internal sentinel: moved to LevelFuncs.Engine to reduce exposure to end users.
+-- Used only for metatable comparisons in Type.IsLevelFunc;
 -- do not modify or use directly.
 LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC = function () end
 
