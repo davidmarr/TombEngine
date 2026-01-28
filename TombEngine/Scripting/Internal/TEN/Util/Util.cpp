@@ -88,22 +88,21 @@ namespace TEN::Scripting::Util
 			(displayPos->y / DISPLAY_SPACE_RES.y) * 100);
 	}
 
-	/// Translate a pair display position coordinates to pixel coordinates.
+	/// Translate a pair display position coordinates to pixel coordinates.<br>
+	// To be used with `Strings.DisplayString` and `Strings.DisplayString:SetPosition`.
+	// @function PercentToScreen
+	// @tparam float x X component of the display position.
+	// @tparam float y Y component of the display position.
+	// @treturn int x X coordinate in pixels.
+	// @treturn int y Y coordinate in pixels.
+	// @usage
+	// -- Example 1: Simple usage of PercentToScreen.
+	// local screenX, screenY = TEN.Util.PercentToScreen(10, 10)
+	// local pos = TEN.Vec2(screenX, screenY)
+	// local str1 = TEN.Strings.DisplayString("Position at 10% X and 10% Y", pos)
 	//
-	//To be used with `Strings.DisplayString` and `Strings.DisplayString:SetPosition`.
-	//@function PercentToScreen
-	//@tparam float x X component of the display position.
-	//@tparam float y Y component of the display position.
-	//@treturn int x X coordinate in pixels.
-	//@treturn int y Y coordinate in pixels.
-	//@usage
-	//-- Example 1: Simple usage of PercentToScreen.
-	//local screenX, screenY = TEN.Util.PercentToScreen(10, 10)
-	//local pos = TEN.Vec2(screenX, screenY)
-	//local str1 = TEN.Strings.DisplayString("Position at 10% X and 10% Y", pos)
-	//
-	//-- Example 2: Using PercentToScreen with DisplayString:SetPosition.
-	//str1:SetPosition(TEN.Util.PercentToScreen(50, 50))
+	// -- Example 2: Using PercentToScreen with DisplayString:SetPosition.
+	// str1:SetPosition(TEN.Util.PercentToScreen(50, 50))
 	static std::tuple<int, int> PercentToScreen(float x, float y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -114,20 +113,19 @@ namespace TEN::Scripting::Util
 		return std::make_tuple(resX, resY);
 	}
 
-	/// Translate a Vec2 of display position coordinates to Vec2 pixel coordinates.
+	/// Translate a Vec2 of display position coordinates to Vec2 pixel coordinates.<br>
+	// To be used with `Strings.DisplayString` and `Strings.DisplayString:SetPosition`.
+	// @function PercentToScreen
+	// @tparam Vec2 percentPos Display position to translate to pixel coordinates.
+	// @treturn Vec2 Pixel coordinates.
+	// @usage
+	// -- Example: Translate a display position to pixel coordinates.
+	// local percentPos = TEN.Vec2(25, 75)
+	// local screenPos = TEN.Util.PercentToScreen(percentPos)
+	// local str1 = TEN.Strings.DisplayString("Position at 25% X and 75% Y", screenPos)
 	//
-	//To be used with `Strings.DisplayString` and `Strings.DisplayString:SetPosition`.
-	//@function PercentToScreen
-	//@tparam Vec2 percentPos Display position to translate to pixel coordinates.
-	//@treturn Vec2 Pixel coordinates.
-	//@usage
-	//-- Example: Translate a display position to pixel coordinates.
-	//local percentPos = TEN.Vec2(25, 75)
-	//local screenPos = TEN.Util.PercentToScreen(percentPos)
-	//local str1 = TEN.Strings.DisplayString("Position at 25% X and 75% Y", screenPos)
-	//
-	//-- Example 2: Using PercentToScreen with DisplayString:SetPosition.
-	//str1:SetPosition(TEN.Util.PercentToScreen(TEN.Vec2(50, 50)))
+	// -- Example 2: Using PercentToScreen with DisplayString:SetPosition.
+	// str1:SetPosition(TEN.Util.PercentToScreen(TEN.Vec2(50, 50)))
 	static Vec2 PercentToScreen(const Vec2& percentPos)
 	{
 		auto [screenX, screenY] = PercentToScreen(percentPos.x, percentPos.y);
@@ -135,19 +133,19 @@ namespace TEN::Scripting::Util
 	}
 
 	/// Translate a pair of pixel coordinates to display position coordinates.
-	//To be used with `Strings.DisplayString:GetPosition`.
-	//@function ScreenToPercent
-	//@tparam int x X pixel coordinate to translate to display position.
-	//@tparam int y Y pixel coordinate to translate to display position.
-	//@treturn float x X component of display position.
-	//@treturn float y Y component of display position.
-	//@usage
-	//-- Example: Translate pixel coordinates to display position.
-	//local percentX, percentY = TEN.Util.ScreenToPercent(800, 600)
+	// To be used with `Strings.DisplayString:GetPosition`.
+	// @function ScreenToPercent
+	// @tparam int x X pixel coordinate to translate to display position.
+	// @tparam int y Y pixel coordinate to translate to display position.
+	// @treturn float x X component of display position.
+	// @treturn float y Y component of display position.
+	// @usage
+	// -- Example: Translate pixel coordinates to display position.
+	// local percentX, percentY = TEN.Util.ScreenToPercent(800, 600)
 	//
-	//-- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
-	//local screenPos = str1:GetPosition()
-	//local percentPos = TEN.Util.ScreenToPercent(screenPos.x, screenPos.y)
+	// -- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
+	// local screenPos = str1:GetPosition()
+	// local percentPos = TEN.Util.ScreenToPercent(screenPos.x, screenPos.y)
 	static std::tuple<float, float> ScreenToPercent(int x, int y)
 	{
 		float fWidth = g_Configuration.ScreenWidth;
@@ -158,18 +156,18 @@ namespace TEN::Scripting::Util
 	}
 
 	/// Translate a Vec2 of pixel coordinates to Vec2 display position coordinates.
-	//To be used with @{Strings.DisplayString:GetPosition}.
-	//@function ScreenToPercent
-	//@tparam Vec2 screenPos Pixel coordinates to translate to display position.
-	//@treturn Vec2 Display position.
-	//@usage
-	//-- Example: Translate pixel coordinates to display position.
-	//local screenPos = TEN.Vec2(400, 300)
-	//local percentPos = TEN.Util.ScreenToPercent(screenPos)
+	// To be used with `Strings.DisplayString:GetPosition`.
+	// @function ScreenToPercent
+	// @tparam Vec2 screenPos Pixel coordinates to translate to display position.
+	// @treturn Vec2 Display position.
+	// @usage
+	// -- Example: Translate pixel coordinates to display position.
+	// local screenPos = TEN.Vec2(400, 300)
+	// local percentPos = TEN.Util.ScreenToPercent(screenPos)
 	//
-	//-- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
-	//local screenPos = str1:GetPosition()
-	//local percentPos = TEN.Util.ScreenToPercent(screenPos)
+	// -- Example 2: Using ScreenToPercent with DisplayString:GetPosition.
+	// local screenPos = str1:GetPosition()
+	// local percentPos = TEN.Util.ScreenToPercent(screenPos)
 	static Vec2 ScreenToPercent(const Vec2& screenPos)
 	{
 		auto [percentX, percentY] = ScreenToPercent((int)screenPos.x, (int)screenPos.y);
@@ -231,24 +229,18 @@ namespace TEN::Scripting::Util
 		return std::make_unique<Static>(*mesh);
 	}
 
-	/// Write messages within the Log file
-	//@advancedDesc
-	//For native Lua handling of errors, see the official Lua website:
-	//
-	//<a href="https://www.lua.org/pil/8.3.html">Error management</a>
-	//
-	//<a href="https://www.lua.org/manual/5.4/manual.html#pdf-debug.traceback">debug.traceback</a>
-	//@function PrintLog
-	//@tparam string Message to be displayed within the log.
-	//@tparam Util.LogLevel logLevel Log level to be displayed.
-	//@tparam[opt] bool allowSpam If true, allows continuous spamming of the message.
-	// 
-	//@usage
-	//TEN.Util.PrintLog('test info log', TEN.Util.LogLevel.INFO)
-	//TEN.Util.PrintLog('test warning log', TEN.Util.LogLevel.WARNING)
-	//TEN.Util.PrintLog('test error log', TEN.Util.LogLevel.ERROR)
-	//-- spammed message
-	//TEN.Util.PrintLog('test spam log', TEN.Util.LogLevel.INFO, true)
+	/// Write messages within the Log file.<br>
+	// For native Lua handling of errors, see <a href="https://www.lua.org/pil/8.3.html">Error management</a> and <a href="https://www.lua.org/manual/5.4/manual.html#pdf-debug.traceback">debug.traceback</a>
+	// @function PrintLog
+	// @tparam string Message to be displayed within the log.
+	// @tparam Util.LogLevel logLevel Log level to be displayed.
+	// @tparam[opt] bool allowSpam If true, allows continuous spamming of the message.
+	// @usage
+	// TEN.Util.PrintLog('test info log', TEN.Util.LogLevel.INFO)
+	// TEN.Util.PrintLog('test warning log', TEN.Util.LogLevel.WARNING)
+	// TEN.Util.PrintLog('test error log', TEN.Util.LogLevel.ERROR)
+	// -- spammed message
+	// TEN.Util.PrintLog('test spam log', TEN.Util.LogLevel.INFO, true)
 	static void PrintLog(const std::string& message, const LogLevel& level, TypeOrNil<bool> allowSpam)
 	{
 		TENLog(message, level, LogConfig::All, ValueOr<bool>(allowSpam, false));
