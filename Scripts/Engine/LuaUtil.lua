@@ -531,9 +531,9 @@ end
 --- Compare two values based on the specified operator.
 -- @tparam number|string|Time operand The first value to compare.
 -- @tparam number|string|Time reference The second value to compare against.
--- @tparam number operator The comparison operator<br>(0: equal, 1: not equal, 2: less than, 3: less than or equal, 4: greater than, 5: greater than or equal).
+-- @tparam number operator The comparison operator<br>0: equal<br> 1: not equal<br> 2: less than<br> 3: less than or equal<br> 4: greater than<br> 5: greater than or equal
 -- @treturn[1] bool The result of the comparison.
--- @treturn[2] bool false If an error occurs (invalid operator or type mismatch).
+-- @treturn[2] bool false If an error occurs (invalid operator or type mismatch), with an error message.
 -- @usage
 -- local isEqual = LuaUtil.CompareValues(5, 5, 0) -- true
 -- local isNotEqual = LuaUtil.CompareValues("hello", "world", 1) -- true
