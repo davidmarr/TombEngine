@@ -53,6 +53,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added direction vector constructor to `Rotation`.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 * Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
+* Added overloads for `TEN.Util.PercentToScreen(Vec2(x, y))` and `TEN.Util.ScreenToPercent(Vec2(x, y))`.
 
 ## [Version 1.10.1]
 
