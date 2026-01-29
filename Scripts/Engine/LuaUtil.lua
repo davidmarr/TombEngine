@@ -293,7 +293,7 @@ end
 -- @section general
 
 --- Clone a value, creating an independent copy.
--- Works with all TEN types (`Vec2`, `Vec3`, `Rotation`, `Color`, `Time`) and Lua tables.
+-- Works with lua primitives and TEN primitives (`Vec2`, `Vec3`, `Rotation`, `Color`, `Time`).
 -- For primitive types (number, string, bool, nil), returns the value itself.
 -- This solves the reference assignment problem where modifying a copy affects the original.
 -- @tparam nil|number|string|boolean|table|Vec2|Vec3|Rotation|Color|Time value The value to clone (can be any type).
