@@ -155,13 +155,17 @@ void LogicHandler::ResetGameTables()
 @advancedDesc
 This is intended for module/library developers who want their modules to do
 stuff during level start/load/end/save/control phase, but don't want the level
-designer to add calls to `OnStart`, `OnLoad`, etc. in their level script.
+designer to add calls to `OnStart`, `OnLoad`, etc. in their level script. Any returned value will be discarded.
 
 Note: __the order in which two functions with the same CallbackPoint are called is undefined__.
 
 i.e. if you register `MyFunc` and `MyFunc2` with `PRE_LOOP`, both will be called in the beginning of game loop, but there is no guarantee that `MyFunc` will be called before `MyFunc2`, or vice-versa.
 
-Any returned value will be discarded.
+Arguments:
+
+- The callbacks `PRE_END`, `POST_END`, `PRE_USE_ITEM`, and `POST_USE_ITEM` receive an argument (like their respective LevelFuncs.OnEnd and LevelFuncs.OnUseItem).
+
+- The argument for `PRE_LOOP` and `POST_LOOP` is deprecated and should not be used.
 
 @function AddCallback
 @tparam Logic.CallbackPoint point When should the callback be called?
@@ -171,6 +175,13 @@ Any returned value will be discarded.
 		-- do stuff here
 	end
 	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_START, LevelFuncs.MyFunc)
+
+	-- Another example, with argument
+	LevelFuncs.OnLevelEnd = function(reason)
+		-- do stuff here
+		print("Level ended because reason code: " .. reason)
+	end
+	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_END, LevelFuncs.OnLevelEnd)
 */
 void LogicHandler::AddCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
