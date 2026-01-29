@@ -157,7 +157,8 @@ This is intended for module/library developers who want their modules to do
 stuff during level start/load/end/save/control phase, but don't want the level
 designer to add calls to `OnStart`, `OnLoad`, etc. in their level script.
 
-Note: __the order in which two functions with the same CallbackPoint are called is undefined__.<br>
+Note: __the order in which two functions with the same CallbackPoint are called is undefined__.
+
 i.e. if you register `MyFunc` and `MyFunc2` with `PRE_LOOP`, both will be called in the beginning of game loop, but there is no guarantee that `MyFunc` will be called before `MyFunc2`, or vice-versa.
 
 Any returned value will be discarded.
