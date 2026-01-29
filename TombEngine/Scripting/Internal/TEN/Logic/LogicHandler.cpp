@@ -182,6 +182,17 @@ Arguments:
 		print("Level ended because reason code: " .. reason)
 	end
 	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_END, LevelFuncs.OnLevelEnd)
+
+	-- Another example, two functions added in the same callback type
+	LevelFuncs.FuncA = function()
+		-- do stuff here
+	end
+	LevelFuncs.FuncB = function()
+		-- do other stuff here
+	end
+	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOAD, LevelFuncs.FuncA)
+	TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOAD, LevelFuncs.FuncB)
+	-- In this case, both FuncA and FuncB will be called after level load, but the order is undefined.
 */
 void LogicHandler::AddCallback(CallbackPoint point, const LevelFunc& levelFunc)
 {
