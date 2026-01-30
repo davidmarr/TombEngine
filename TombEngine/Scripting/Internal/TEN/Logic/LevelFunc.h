@@ -95,7 +95,7 @@ public:
 // 
 // 5. The control loop, in which OnLoop will be called once per frame, begins.
 //
-// Note:
+// <h2>Note:</h2>
 //
 // - LevelFuncs is created automatically. Never assign a value to LevelFuncs itself, as that will overwrite the entire table.<br>
 // For example, do NOT do this:
