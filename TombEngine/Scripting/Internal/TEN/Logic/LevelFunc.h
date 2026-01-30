@@ -34,7 +34,7 @@ public:
 	}
 };
 
-/// A table nested table system for level-specific functions.
+/// A hierarchical table system for organizing level-specific functions.
 // @specialtable LevelFuncs
 // This serves a few purposes: it holds the level callbacks (listed below) as well as
 // any trigger functions you might have specified.
