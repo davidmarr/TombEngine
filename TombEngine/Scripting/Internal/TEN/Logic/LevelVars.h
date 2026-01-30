@@ -24,9 +24,24 @@
 //
 // If you try to save a variable of an unsupported type (like a function or userdata), an error will be raised when you attempt to save the game.
 // 
-// __This table is emptied when a level is finished.__ If the player needs to be able
+// Note:
+// 
+// - LevelVars is created automatically. Never assign a value to LevelVars.<br>
+// For example, do not write:
+// 	LevelVars = {} -- This will break everything!
+// or
+// 	LevelVars = LevelVars -- not needed, LevelVars already exists
+// Instead, just assign values to members of LevelVars, like so:
+// 	LevelVars.someValue = 42
+// 	LevelVars.anotherValue = "Hello, world!"
+// 	LevelVars.aTable = { key1 = "value1", key2 = "value2" }
+// 	LevelVars.someValue = 11 -- chainge value of existing variable
+// 
+// - __This table is emptied when a level is finished.__ If the player needs to be able
 // to return to the level (like in the Karnak and Alexandria levels in *The Last Revelation*),
 // you will need to use the @{GameVars} table, below.
+// 
+// - LevelVars is saved and loaded automatically when the game is saved and loaded. There is no need to write custom save/load code for it.
 //
-// __*LevelVars.Engine*__ is a reserved table used internally by TombEngine's libs. __Do not modify, overwrite, or add to it.__
+// - __*LevelVars.Engine*__ is a reserved table used internally by TombEngine's libs. __Do not modify, overwrite, or add to it.__
 //

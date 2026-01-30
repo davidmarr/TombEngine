@@ -30,7 +30,22 @@
 //
 // If you try to save a variable of an unsupported type (like a function or userdata), an error will be raised when you attempt to save the game.
 // 
-// Unlike @{LevelVars}, this table will remain intact for the entirety of the game.
+// Note:
+//
+// - GameVars is created automatically. Never assign a value to GameVars.<br>
+// For example, do not write:
+// 	GameVars = {} -- This will break everything!
+// or
+// 	GameVars = GameVars -- not needed, GameVars already exists
+// Instead, just assign values to members of GameVars, like so:
+// 	GameVars.someValue = 42
+// 	GameVars.anotherValue = "Hello, world!"
+// 	GameVars.aTable = { key1 = "value1", key2 = "value2" }
+// 	GameVars.someValue = 11 -- chainge value of existing variable
+//
+// - GameVars is saved and loaded automatically when the game is saved and loaded. There is no need to write custom save/load code for it.
+//
+// - Unlike @{LevelVars}, this table will remain intact for the entirety of the game.
 // 
-// __*GameVars.Engine*__ is a reserved table used internally by TombEngine's libs. __Do not modify, overwrite, or add to it.__
+// - __*GameVars.Engine*__ is a reserved table used internally by TombEngine's libs. __Do not modify, overwrite, or add to it.__
 //

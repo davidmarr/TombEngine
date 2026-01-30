@@ -54,13 +54,6 @@ public:
 //	LevelFuncs.enemyFuncs.makeBaddyUseMedkit = function()
 //		--implementation goes here
 //	end
-// There are two special subtables which you should __not__ overwrite:
-//	-- this is for 'first-party' functions, i.e.ones that come with TombEngine.
-//	LevelFuncs.Engine
-//	
-//	-- this is for 'third-party' functions.
-//	-- If you write a library providing LevelFuncs functions for other builders to use in their levels, put those functions in LevelFuncs.External.YourLibraryNameHere
-//	LevelFuncs.External
 // 
 // <h2>Level Callbacks</h2>
 // The level's .lua file contains predefined functions, called callbacks, that will be called on specific events in the level. If you want to execute code or call other functions in these events, you'll need to place them inside these functions.
@@ -101,3 +94,24 @@ public:
 // 4. If loading from a save, OnLoad will be called. Otherwise, OnStart will be called.
 // 
 // 5. The control loop, in which OnLoop will be called once per frame, begins.
+//
+// Note:
+//
+// - LevelFuncs is created automatically. Never assign a value to LevelFuncs itself, as that will overwrite the entire table.<br>
+// For example, do NOT do this:
+// 	LevelFuncs = {} -- This will break everything!
+// or
+// 	LevelFuncs = LevelFuncs -- not needed, LevelFuncs already exists.
+//
+// - __*LevelFuncs.External*__ is for 'third-party' functions.<br>
+// For example, if you write a library providing LevelFuncs functions for other builders to use in their levels, put those functions in:
+//	LevelFuncs.External.YourLibraryNameHere = {}
+//	LevelFuncs.External.YourLibraryNameHere.yourFunction = function()
+//		--implementation goes here
+//	end
+//	LevelFuncs.External.YourLibraryNameHere.yourFunction2 = function()
+//		--implementation goes here
+//	end
+//
+// - __*LevelFuncs.Engine*__ is a reserved table used internally by TombEngine's libs. __Do not modify, overwrite, or add to it.__
+//
