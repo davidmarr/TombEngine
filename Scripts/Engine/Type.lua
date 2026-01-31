@@ -140,7 +140,7 @@ end
 --      end
 --  end
 Type.IsColor = function (variable)
-    return type(variable) == "userdata" and getmetatable(variable) == getmetatable(COLOR)
+    return getmetatable(variable) == getmetatable(COLOR)
 end
 
 --- Check if the variable is a @{Rotation}.
@@ -154,7 +154,7 @@ end
 --      end
 --  end
 Type.IsRotation = function (variable)
-    return type(variable) == "userdata" and getmetatable(variable) == getmetatable(ROTATION)
+    return getmetatable(variable) == getmetatable(ROTATION)
 end
 
 --- Check if the variable is a @{Vec2}.
@@ -168,7 +168,7 @@ end
 --      end
 --  end
 Type.IsVec2 = function (variable)
-    return type(variable) == "userdata" and getmetatable(variable) == getmetatable(VEC2)
+    return getmetatable(variable) == getmetatable(VEC2)
 end
 
 --- Check if the variable is a @{Vec3}.
@@ -182,7 +182,7 @@ end
 --      end
 --	end
 Type.IsVec3 = function (variable)
-    return type(variable) == "userdata" and getmetatable(variable) == getmetatable(VEC3)
+    return getmetatable(variable) == getmetatable(VEC3)
 end
 
 --- Check if the variable is a @{Time} object.
@@ -196,7 +196,7 @@ end
 --      end
 --	end
 Type.IsTime = function (variable)
-    return type(variable) == "userdata" and getmetatable(variable) == getmetatable(TIME)
+    return getmetatable(variable) == getmetatable(TIME)
 end
 
 --- Check if the variable is a LevelFunc.
@@ -210,7 +210,7 @@ end
 --      end
 --  end
 Type.IsLevelFunc = function (variable)
-    return type(variable) == "userdata" and getmetatable(variable) == getmetatable(LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC)
+    return getmetatable(variable) == getmetatable(LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC)
 end
 
 --- Check if the variable is an enum value.
