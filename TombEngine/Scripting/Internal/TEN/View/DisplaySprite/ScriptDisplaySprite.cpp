@@ -318,7 +318,7 @@ namespace TEN::Scripting::DisplaySprite
 
 	/// Set the horizontal and vertical scale of the display sprite in percent.
 	// @function DisplaySprite:SetScale
-	// @tparam float scale New horizontal and vertical scale in percent.
+	// @tparam Vec2 scale New horizontal and vertical scale in percent.
 	void ScriptDisplaySprite::SetScale(const Vec2& scale)
 	{
 		_scale = scale;
