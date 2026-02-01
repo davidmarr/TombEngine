@@ -221,8 +221,7 @@ Tween.UpdateMode = LuaUtil.SetTableReadOnly(Tween.UpdateMode)
 Tween.ColorSpace = {
     RGB = 1,
     HSL = 2,
-    OKLAB = 3,
-    OKLCH = 4
+    OKLCH = 3
 }
 
 Tween.ColorSpace = LuaUtil.SetTableReadOnly(Tween.ColorSpace)
