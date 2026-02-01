@@ -271,15 +271,15 @@ namespace TEN::Scripting::DisplaySprite
 		auto centerBottom = (vertices[2] + vertices[3]) / 2.0f;
 
 		// Populate anchors.
-		anchors.TopLeft = toPercent(vertices[0]);
-		anchors.CenterTop = toPercent(centerTop);
-		anchors.TopRight = toPercent(vertices[1]);
-		anchors.CenterLeft = toPercent(centerLeft);
-		anchors.Center = toPercent(center);
-		anchors.CenterRight = toPercent(centerRight);
-		anchors.BottomRight = toPercent(vertices[2]);
-		anchors.CenterBottom = toPercent(centerBottom);
-		anchors.BottomLeft = toPercent(vertices[3]);
+		anchors.TOP_LEFT = toPercent(vertices[0]);
+		anchors.TOP_CENTER = toPercent(centerTop);
+		anchors.TOP_RIGHT = toPercent(vertices[1]);
+		anchors.CENTER_LEFT = toPercent(centerLeft);
+		anchors.CENTER = toPercent(center);
+		anchors.CENTER_RIGHT = toPercent(centerRight);
+		anchors.BOTTOM_RIGHT = toPercent(vertices[2]);
+		anchors.BOTTOM_CENTER = toPercent(centerBottom);
+		anchors.BOTTOM_LEFT = toPercent(vertices[3]);
 
 		return anchors;
 	}
