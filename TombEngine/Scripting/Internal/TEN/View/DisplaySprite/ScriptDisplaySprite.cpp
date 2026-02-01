@@ -53,7 +53,7 @@ namespace TEN::Scripting::DisplaySprite
 		ScriptReserved_DisplayStringGetRotation, &ScriptDisplaySprite::GetRotation,
 		ScriptReserved_DisplayStringGetScale, &ScriptDisplaySprite::GetScale,
 		ScriptReserved_DisplayStringGetColor, &ScriptDisplaySprite::GetColor,
-		ScriptReserved_DisplayStringGetAnchors, & ScriptDisplaySprite::GetAnchors,
+		ScriptReserved_DisplayStringGetAnchors, &ScriptDisplaySprite::GetAnchors,
 		ScriptReserved_DisplayStringSetObjectID, &ScriptDisplaySprite::SetObjectID,
 		ScriptReserved_DisplayStringSetSpriteID, &ScriptDisplaySprite::SetSpriteID,
 		ScriptReserved_DisplayStringSetPosition, &ScriptDisplaySprite::SetPosition,
