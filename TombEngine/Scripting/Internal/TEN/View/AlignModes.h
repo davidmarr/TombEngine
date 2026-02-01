@@ -19,11 +19,11 @@ namespace TEN::Scripting::View
 
 		/// Center top alignment.
 		// @mem CENTER_TOP
-		{ "CENTER_TOP", DisplaySpriteAlignMode::CenterTop },
+		{ "TOP_CENTER", DisplaySpriteAlignMode::CenterTop },
 
 		/// Center bottom alignment.
 		// @mem CENTER_BOTTOM
-		{ "CENTER_BOTTOM", DisplaySpriteAlignMode::CenterBottom },
+		{ "BOTTOM_CENTER", DisplaySpriteAlignMode::CenterBottom },
 
 		/// Center left alignment.
 		// @mem CENTER_LEFT
@@ -47,6 +47,10 @@ namespace TEN::Scripting::View
 
 		/// Bottom right alignment.
 		// @mem BOTTOM_RIGHT
-		{ "BOTTOM_RIGHT", DisplaySpriteAlignMode::BottomRight }
+		{ "BOTTOM_RIGHT", DisplaySpriteAlignMode::BottomRight },
+
+		// COMPATIBILITY
+		{ "CENTER_BOTTOM", DisplaySpriteAlignMode::CenterBottom },
+		{ "CENTER_TOP", DisplaySpriteAlignMode::CenterTop },
 	};
 }
