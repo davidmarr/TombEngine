@@ -218,6 +218,15 @@ Tween.UpdateMode = {
 
 Tween.UpdateMode = LuaUtil.SetTableReadOnly(Tween.UpdateMode)
 
+Tween.ColorSpace = {
+    RGB = 1,
+    HSL = 2,
+    OKLAB = 3,
+    OKLCH = 4
+}
+
+Tween.ColorSpace = LuaUtil.SetTableReadOnly(Tween.ColorSpace)
+
 Tween.CallbackType = {
     ON_START = "onStart",
     ON_COMPLETE = "onComplete",
