@@ -17,54 +17,50 @@ namespace TEN::Scripting::Types
 
 			/// (Vec2) Top-left anchor point in percent.
 			// @mem TOP_LEFT
-			"TOP_LEFT", &DisplayAnchors::TopLeft,
+			"TOP_LEFT", &DisplayAnchors::TOP_LEFT,
 
 			/// (Vec2) Center-top anchor point in percent.
-			// @mem CENTER_TOP
-			"CENTER_TOP", &DisplayAnchors::CenterTop,
-
+			// @mem TOP_CENTER
+			"TOP_CENTER", &DisplayAnchors::TOP_CENTER,
 			/// (Vec2) Top-right anchor point in percent.
 			// @mem TOP_RIGHT
-			"TOP_RIGHT", &DisplayAnchors::TopRight,
+			"TOP_RIGHT", &DisplayAnchors::TOP_RIGHT,
 
 			/// (Vec2) Center-left anchor point in percent.
 			// @mem CENTER_LEFT
-			"CENTER_LEFT", &DisplayAnchors::CenterLeft,
-
+			"CENTER_LEFT", &DisplayAnchors::CENTER_LEFT,
 			/// (Vec2) Center anchor point in percent.
 			// @mem CENTER
-			"CENTER", &DisplayAnchors::Center,
+			"CENTER", &DisplayAnchors::CENTER,
 
 			/// (Vec2) Center-right anchor point in percent.
 			// @mem CENTER_RIGHT
-			"CENTER_RIGHT", &DisplayAnchors::CenterRight,
-
+			"CENTER_RIGHT", &DisplayAnchors::CENTER_RIGHT,
 			/// (Vec2) Bottom-left anchor point in percent.
 			// @mem BOTTOM_LEFT
-			"BOTTOM_LEFT", &DisplayAnchors::BottomLeft,
+			"BOTTOM_LEFT", &DisplayAnchors::BOTTOM_LEFT,
 
-			/// (Vec2) Center-bottom anchor point in percent.
-			// @mem CENTER_BOTTOM
-			"CENTER_BOTTOM", &DisplayAnchors::CenterBottom,
-
+			/// (Vec2) Bottom-center anchor point in percent.
+			// @mem BOTTOM_CENTER
+			"BOTTOM_CENTER", &DisplayAnchors::BOTTOM_CENTER,
 			/// (Vec2) Bottom-right anchor point in percent.
 			// @mem BOTTOM_RIGHT
-			"BOTTOM_RIGHT", &DisplayAnchors::BottomRight);
+			"BOTTOM_RIGHT", &DisplayAnchors::BOTTOM_RIGHT);
 	}
 
-	DisplayAnchors::DisplayAnchors(const Vec2& topLeft, const Vec2& centerTop, const Vec2& topRight,
+	DisplayAnchors::DisplayAnchors(const Vec2& topLeft, const Vec2& topCenter, const Vec2& topRight,
 	                               const Vec2& centerLeft, const Vec2& center, const Vec2& centerRight,
-	                               const Vec2& bottomLeft, const Vec2& centerBottom, const Vec2& bottomRight)
+	                               const Vec2& bottomLeft, const Vec2& bottomCenter, const Vec2& bottomRight)
 	{
-		TopLeft = topLeft;
-		CenterTop = centerTop;
-		TopRight = topRight;
-		CenterLeft = centerLeft;
-		Center = center;
-		CenterRight = centerRight;
-		BottomLeft = bottomLeft;
-		CenterBottom = centerBottom;
-		BottomRight = bottomRight;
+		TOP_LEFT = topLeft;
+		TOP_CENTER = topCenter;
+		TOP_RIGHT = topRight;
+		CENTER_LEFT = centerLeft;
+		CENTER = center;
+		CENTER_RIGHT = centerRight;
+		BOTTOM_LEFT = bottomLeft;
+		BOTTOM_CENTER = bottomCenter;
+		BOTTOM_RIGHT = bottomRight;
 	}
 
 	/// Metafunction. Use tostring(anchors).
@@ -74,14 +70,14 @@ namespace TEN::Scripting::Types
 	std::string DisplayAnchors::ToString() const
 	{
 		return "DisplayAnchors { "
-			"TOP_LEFT: " + TopLeft.ToString() + ", "
-			"CENTER_TOP: " + CenterTop.ToString() + ", "
-			"TOP_RIGHT: " + TopRight.ToString() + ", "
-			"CENTER_LEFT: " + CenterLeft.ToString() + ", "
-			"CENTER: " + Center.ToString() + ", "
-			"CENTER_RIGHT: " + CenterRight.ToString() + ", "
-			"BOTTOM_LEFT: " + BottomLeft.ToString() + ", "
-			"CENTER_BOTTOM: " + CenterBottom.ToString() + ", "
-			"BOTTOM_RIGHT: " + BottomRight.ToString() + " }";
+			"TOP_LEFT: " + TOP_LEFT.ToString() + ", "
+			"TOP_CENTER: " + TOP_CENTER.ToString() + ", "
+			"TOP_RIGHT: " + TOP_RIGHT.ToString() + ", "
+			"CENTER_LEFT: " + CENTER_LEFT.ToString() + ", "
+			"CENTER: " + CENTER.ToString() + ", "
+			"CENTER_RIGHT: " + CENTER_RIGHT.ToString() + ", "
+			"BOTTOM_LEFT: " + BOTTOM_LEFT.ToString() + ", "
+			"BOTTOM_CENTER: " + BOTTOM_CENTER.ToString() + ", "
+			"BOTTOM_RIGHT: " + BOTTOM_RIGHT.ToString() + " }";
 	}
 }
