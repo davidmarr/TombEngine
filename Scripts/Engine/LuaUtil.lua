@@ -179,6 +179,24 @@ F.HueToRgb = function(p, q, t)
     return p
 end
 
+-- Helper functions for sRGB and Linear color space conversion
+F.SrgbToLinear = function(c)
+    if c <= 0.04045 then
+        return c / 12.92
+    else
+        return ((c + 0.055) / 1.055) ^ 2.4
+    end
+end
+
+-- Helper function for Linear to sRGB color space conversion
+F.LinearToSrgb = function(c)
+    if c <= 0.0031308 then
+        return c * 12.92
+    else
+        return 1.055 * (c ^ (1 / 2.4)) - 0.055
+    end
+end
+
 -- Support function for deep table copy
 F.DeepCopyRecursive = function(original, copyId)
     local context = _activeCopies[copyId]
@@ -2232,6 +2250,191 @@ LuaUtil.ColorToHSL = function(color)
     end
 
     return { h = h, s = s, l = l, a = a }
+end
+
+--- Convert a TEN.Color object to OKLch (Lightness, Chroma, Hue) values.
+-- OKLch is a perceptually uniform color space, ideal for:
+-- - Color interpolations that look smooth to human eyes
+-- - Adjusting saturation (chroma) without affecting perceived brightness
+-- - Rainbow gradients with consistent perceived brightness
+-- @tparam Color color The TEN.Color object to convert.
+-- @treturn[1] table A table with l, c, h, a values { l = float (0-1), c = float (0-0.4), h = float (0-360), a = float (0-1) }.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Get OKLch values from a color
+-- local color = TEN.Color(255, 87, 51, 255)
+-- local oklch = LuaUtil.ColorToOKLch(color)
+-- -- Result: { l = 0.68, c = 0.18, h = 29.2, a = 1.0 }
+--
+-- -- Practical example: Desaturate while preserving perceived brightness
+-- local vividColor = TEN.Color(255, 0, 128, 255)
+-- local oklch = LuaUtil.ColorToOKLch(vividColor)
+-- if oklch then
+--     oklch.c = oklch.c * 0.5  -- Reduce chroma by 50%
+--     local desaturatedColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
+--     sprite:SetColor(desaturatedColor)
+-- end
+--
+-- -- Example: Create rainbow gradient with uniform brightness
+-- local startColor = TEN.Color(255, 0, 0, 255)  -- Red
+-- local oklch = LuaUtil.ColorToOKLch(startColor)
+-- for i = 0, 360, 30 do
+--     oklch.h = i  -- Rotate hue
+--     local rainbowColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
+--     -- All colors have same perceived brightness!
+-- end
+--
+-- -- Example: Brighten color perceptually uniformly
+-- local darkColor = TEN.Color(50, 50, 150, 255)
+-- local oklch = LuaUtil.ColorToOKLch(darkColor)
+-- if oklch then
+--     oklch.l = math.min(1.0, oklch.l + 0.2)  -- Increase lightness
+--     local brighterColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
+--     sprite:SetColor(brighterColor)
+-- end
+--
+-- -- Error handling example:
+-- local oklch = LuaUtil.ColorToOKLch(invalidColor)
+-- if oklch == nil then
+--     TEN.Util.PrintLog("Failed to convert color to OKLch", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Safe approach with default fallback:
+-- local oklch = LuaUtil.ColorToOKLch(color) or { l = 0.5, c = 0, h = 0, a = 1.0 }
+LuaUtil.ColorToOKLch = function(color)
+    if not IsColor(color) then
+        TEN.Util.PrintLog("Error in LuaUtil.ColorToOKLch: color must be a Color object.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- Convert sRGB to linear RGB (0-1 range)
+    local r = F.SrgbToLinear(color.r / 255)
+    local g = F.SrgbToLinear(color.g / 255)
+    local b = F.SrgbToLinear(color.b / 255)
+    local a = color.a / 255
+
+    -- Linear RGB to OKLab (using matrix multiplication)
+    -- Step 1: RGB to LMS (cone response)
+    local l_ = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
+    local m_ = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
+    local s_ = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
+
+    -- Step 2: Cube root (perceptual nonlinearity)
+    local l_cbrt = l_ >= 0 and l_ ^ (1/3) or -((-l_) ^ (1/3))
+    local m_cbrt = m_ >= 0 and m_ ^ (1/3) or -((-m_) ^ (1/3))
+    local s_cbrt = s_ >= 0 and s_ ^ (1/3) or -((-s_) ^ (1/3))
+
+    -- Step 3: LMS to OKLab
+    local L = 0.2104542553 * l_cbrt + 0.7936177850 * m_cbrt - 0.0040720468 * s_cbrt
+    local A = 1.9779984951 * l_cbrt - 2.4285922050 * m_cbrt + 0.4505937099 * s_cbrt
+    local B = 0.0259040371 * l_cbrt + 0.7827717662 * m_cbrt - 0.8086757660 * s_cbrt
+
+    -- OKLab to OKLch (cartesian to polar)
+    local C = sqrt(A * A + B * B)
+    local h = deg(atan(B, A))
+    if h < 0 then
+        h = h + 360
+    end
+
+    return { l = L, c = C, h = h, a = a }
+end
+
+--- Convert OKLch (Lightness, Chroma, Hue) values to a TEN.Color object.
+-- OKLch is a perceptually uniform color space, ideal for smooth color transitions.
+-- @tparam float l Lightness value (0.0 to 1.0, where 0 = black, 1 = white).
+-- @tparam float c Chroma value (0.0 to ~0.4, where 0 = gray, higher = more saturated).
+-- @tparam float h Hue angle in degrees (0 to 360).
+-- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
+-- @treturn[1] Color The TEN.Color object.
+-- @treturn[2] nil If an error occurs.
+-- @usage
+-- -- Example: Create pure red in OKLch
+-- local red = LuaUtil.OKLchToColor(0.63, 0.26, 29, 1.0)
+--
+-- -- Example: Create gray (zero chroma)
+-- local gray = LuaUtil.OKLchToColor(0.5, 0, 0, 1.0)  -- Hue irrelevant when c=0
+--
+-- -- Example: Rainbow with uniform brightness
+-- local colors = {}
+-- for hue = 0, 330, 30 do
+--     colors[#colors + 1] = LuaUtil.OKLchToColor(0.7, 0.15, hue, 1.0)
+--     -- All colors appear equally bright!
+-- end
+--
+-- -- Example: Sunrise gradient (perceptually uniform)
+-- local nightBlue = LuaUtil.ColorToOKLch(TEN.Color(20, 30, 80, 255))
+-- local sunsetOrange = LuaUtil.ColorToOKLch(TEN.Color(255, 150, 50, 255))
+-- for t = 0, 1, 0.1 do
+--     local l = nightBlue.l + (sunsetOrange.l - nightBlue.l) * t
+--     local c = nightBlue.c + (sunsetOrange.c - nightBlue.c) * t
+--     local h = nightBlue.h + (sunsetOrange.h - nightBlue.h) * t
+--     local color = LuaUtil.OKLchToColor(l, c, h, 1.0)
+--     -- Smooth perceptual transition!
+-- end
+--
+-- -- Error handling example:
+-- local color = LuaUtil.OKLchToColor(0.5, 0.2, 180)
+-- if color == nil then
+--     TEN.Util.PrintLog("Failed to convert OKLch to color", TEN.Util.LogLevel.ERROR)
+--     return
+-- end
+--
+-- -- Safe approach with default fallback:
+-- local color = LuaUtil.OKLchToColor(l, c, h, a) or TEN.Color(128, 128, 128, 255)
+LuaUtil.OKLchToColor = function(l, c, h, a)
+    -- Default alpha
+    a = a or 1.0
+
+    -- Validate parameters
+    if not (IsNumber(l) and IsNumber(c) and IsNumber(h)) then
+        TEN.Util.PrintLog("Error in LuaUtil.OKLchToColor: l, c, h must be numbers.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    if a and not IsNumber(a) then
+        TEN.Util.PrintLog("Error in LuaUtil.OKLchToColor: a must be a number.", TEN.Util.LogLevel.ERROR)
+        return nil
+    end
+
+    -- OKLch to OKLab (polar to cartesian)
+    local h_rad = rad(h)
+    local A = c * cos(h_rad)
+    local B = c * sin(h_rad)
+    local L = l
+
+    -- OKLab to LMS (inverse matrix)
+    local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B
+    local m_cbrt = L - 0.1055613458 * A - 0.0638541728 * B
+    local s_cbrt = L - 0.0894841775 * A - 1.2914855480 * B
+
+    -- Cube (inverse of cube root)
+    local l_ = l_cbrt * l_cbrt * l_cbrt
+    local m_ = m_cbrt * m_cbrt * m_cbrt
+    local s_ = s_cbrt * s_cbrt * s_cbrt
+
+    -- LMS to linear RGB (inverse matrix)
+    local r_lin =  4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
+    local g_lin = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
+    local b_lin = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
+
+    -- Clamp to valid range before gamma correction
+    r_lin = max(0, min(1, r_lin))
+    g_lin = max(0, min(1, g_lin))
+    b_lin = max(0, min(1, b_lin))
+
+    -- Linear RGB to sRGB
+    local r = F.LinearToSrgb(r_lin)
+    local g = F.LinearToSrgb(g_lin)
+    local b = F.LinearToSrgb(b_lin)
+
+    -- Clamp and convert to 0-255 range
+    r = floor(max(0, min(1, r)) * 255 + 0.5)
+    g = floor(max(0, min(1, g)) * 255 + 0.5)
+    b = floor(max(0, min(1, b)) * 255 + 0.5)
+    local alpha = floor(max(0, min(1, a)) * 255 + 0.5)
+
+    return TEN.Color(r, g, b, alpha)
 end
 
 --- Interpolation functions.
