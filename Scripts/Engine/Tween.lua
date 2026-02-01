@@ -586,7 +586,7 @@ end
 --     currentLoop = Tween.Get("myTween"):GetCurrentLoop()
 -- end
 function Tween:GetCurrentLoop()
-    return LevelVars.Engine.Tween.tweens[self.name].loopCount
+    return LevelVars.Engine.Tween.tweens[self.name].currentLoopIndex
 end
 
 --- Get the current value of the tween
