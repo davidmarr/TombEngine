@@ -1,10 +1,10 @@
 #include "framework.h"
-#include "Scripting/Internal/TEN/Types/DisplayAnchors/DisplayAnchors.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/DisplayAnchors.h"
 
 namespace TEN::Scripting::Types
 {
 	/// Represents the anchor points of a display element.
-	// @tenprimitive DisplayAnchors
+	// @tenprimitive View.DisplayAnchors
 	// @pragma nostrip
 	void DisplayAnchors::Register(sol::table& parent)
 	{
