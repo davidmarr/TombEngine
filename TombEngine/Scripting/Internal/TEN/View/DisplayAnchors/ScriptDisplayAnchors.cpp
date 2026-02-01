@@ -90,15 +90,17 @@ namespace TEN::Scripting::Types
 	// -- DisplayAnchors { TOP_LEFT: Vec2 { x = 45.0, y = 40.0 }, TOP_CENTER: Vec2 { x = 50.0, y = 40.0 }, ... }
 	std::string ScriptDisplayAnchors::ToString() const
 	{
-		return "{ \n"
-			"TOP_LEFT: " + TOP_LEFT.ToString() + ", "
-			"TOP_CENTER: " + TOP_CENTER.ToString() + ", "
-			"TOP_RIGHT: " + TOP_RIGHT.ToString() + ", \n"
-			"CENTER_LEFT: " + CENTER_LEFT.ToString() + ", "
-			"CENTER: " + CENTER.ToString() + ", "
-			"CENTER_RIGHT: " + CENTER_RIGHT.ToString() + ", \n"
-			"BOTTOM_LEFT: " + BOTTOM_LEFT.ToString() + ", "
-			"BOTTOM_CENTER: " + BOTTOM_CENTER.ToString() + ", "
-			"BOTTOM_RIGHT: " + BOTTOM_RIGHT.ToString() + " \n}";
+		std::ostringstream stream;
+		stream << "{ \n"
+			<< "TOP_LEFT: " << TOP_LEFT.ToString() << ", "
+			<< "TOP_CENTER: " << TOP_CENTER.ToString() << ", "
+			<< "TOP_RIGHT: " << TOP_RIGHT.ToString() << ", \n"
+			<< "CENTER_LEFT: " << CENTER_LEFT.ToString() << ", "
+			<< "CENTER: " << CENTER.ToString() << ", "
+			<< "CENTER_RIGHT: " << CENTER_RIGHT.ToString() << ", \n"
+			<< "BOTTOM_LEFT: " << BOTTOM_LEFT.ToString() << ", "
+			<< "BOTTOM_CENTER: " << BOTTOM_CENTER.ToString() << ", "
+			<< "BOTTOM_RIGHT: " << BOTTOM_RIGHT.ToString() << " \n}";
+		return stream.str();
 	}
 }
