@@ -11,22 +11,22 @@ namespace TEN::Scripting::Types
 
 		// Fields
 
-		Vec2 TopLeft = Vec2(0.0f, 0.0f);
-		Vec2 CenterTop = Vec2(0.0f, 0.0f);
-		Vec2 TopRight = Vec2(0.0f, 0.0f);
-		Vec2 CenterLeft = Vec2(0.0f, 0.0f);
-		Vec2 Center = Vec2(0.0f, 0.0f);
-		Vec2 CenterRight = Vec2(0.0f, 0.0f);
-		Vec2 BottomLeft = Vec2(0.0f, 0.0f);
-		Vec2 CenterBottom = Vec2(0.0f, 0.0f);
-		Vec2 BottomRight = Vec2(0.0f, 0.0f);
+		Vec2 TOP_LEFT = Vec2(0.0f, 0.0f);
+		Vec2 TOP_CENTER = Vec2(0.0f, 0.0f);
+		Vec2 TOP_RIGHT = Vec2(0.0f, 0.0f);
+		Vec2 CENTER_LEFT = Vec2(0.0f, 0.0f);
+		Vec2 CENTER = Vec2(0.0f, 0.0f);
+		Vec2 CENTER_RIGHT = Vec2(0.0f, 0.0f);
+		Vec2 BOTTOM_LEFT = Vec2(0.0f, 0.0f);
+		Vec2 BOTTOM_CENTER = Vec2(0.0f, 0.0f);
+		Vec2 BOTTOM_RIGHT = Vec2(0.0f, 0.0f);
 
 		// Constructors
 
 		DisplayAnchors() = default;
-		DisplayAnchors(const Vec2& topLeft, const Vec2& centerTop, const Vec2& topRight,
-		               const Vec2& centerLeft, const Vec2& center, const Vec2& centerRight,
-		               const Vec2& bottomLeft, const Vec2& centerBottom, const Vec2& bottomRight);
+		DisplayAnchors(const Vec2& TOP_LEFT, const Vec2& TOP_CENTER, const Vec2& TOP_RIGHT,
+		               const Vec2& CENTER_LEFT, const Vec2& CENTER, const Vec2& CENTER_RIGHT,
+		               const Vec2& BOTTOM_LEFT, const Vec2& BOTTOM_CENTER, const Vec2& BOTTOM_RIGHT);
 
 		// Meta functions
 
