@@ -16,8 +16,7 @@ namespace TEN::Scripting::Types
 
 		// Register type (no constructor exposed to Lua).
 		parent.new_usertype<ScriptDisplayAnchors>(
-			"DisplayAnchors",
-			ctors(),
+			"DisplayAnchors", ctors(),
 			sol::call_constructor, ctors(),
 
 			sol::meta_function::to_string, &ScriptDisplayAnchors::ToString,
