@@ -7,7 +7,7 @@ using namespace TEN::Effects::DisplaySprite;
 namespace TEN::Scripting::View
 {
 	/// Constants for sprite align modes.
-	// To be used with @{Strings.DisplayString} class.
+	// To be used with @{View.DisplaySprite} class.
 	// @enum View.AlignMode
 	// @pragma nostrip
 
