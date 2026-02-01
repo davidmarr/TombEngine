@@ -179,14 +179,14 @@ namespace TEN::Scripting::DisplaySprite
 		DisplayAnchors anchors;
 
 		// Object is not a sprite sequence; return default anchors.
-		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
+		const auto& object = Objects[_objectID];
+		if (object.nmeshes > 0)
 		{
 			TENLog("Attempted to retrieve anchors from non-sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
 			return anchors;
 		}
 
 		// Sprite missing or sequence not found; return default anchors.
-		const auto& object = Objects[_objectID];
 		if (!object.loaded || _spriteID >= abs(object.nmeshes))
 		{
 			TENLog("Attempted to retrieve the anchors of missing sprite " + std::to_string(_spriteID) + " from sprite sequence object " + std::to_string(_objectID) + " as display sprite.", LogLevel::Warning);
@@ -343,14 +343,14 @@ namespace TEN::Scripting::DisplaySprite
 								   sol::optional<DisplaySpriteScaleMode> scaleMode, sol::optional<BlendMode> blendMode)
 	{
 		// Object is not a sprite sequence; return early.
-		if (_spriteID != VIDEO_SPRITE_ID && (_objectID < GAME_OBJECT_ID::ID_HORIZON || _objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS))
+		const auto& object = Objects[_objectID];
+		if (object.nmeshes > 0)
 		{
 			TENLog("Attempted to draw display sprite from non-sprite sequence object " + std::to_string(_objectID), LogLevel::Warning);
 			return;
 		}
 
 		// Sprite missing or sequence not found; return early.
-		const auto& object = Objects[_objectID];
 		if (!object.loaded || _spriteID >= abs(object.nmeshes))
 		{
 			TENLog(
