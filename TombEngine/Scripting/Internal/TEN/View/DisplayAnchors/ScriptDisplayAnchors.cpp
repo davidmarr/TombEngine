@@ -8,10 +8,17 @@ namespace TEN::Scripting::Types
 	// @pragma nostrip
 	void ScriptDisplayAnchors::Register(sol::table& parent)
 	{
+		using ctors = sol::constructors <
+			ScriptDisplayAnchors(),
+			ScriptDisplayAnchors(const Vec2&, const Vec2&, const Vec2&,
+				const Vec2&, const Vec2&, const Vec2&,
+				const Vec2&, const Vec2&, const Vec2&)>;
+
 		// Register type (no constructor exposed to Lua).
 		parent.new_usertype<ScriptDisplayAnchors>(
 			"DisplayAnchors",
-			sol::no_constructor,
+			ctors(),
+			sol::call_constructor, ctors(),
 
 			sol::meta_function::to_string, &ScriptDisplayAnchors::ToString,
 
@@ -83,7 +90,7 @@ namespace TEN::Scripting::Types
 	// -- DisplayAnchors { TOP_LEFT: Vec2 { x = 45.0, y = 40.0 }, TOP_CENTER: Vec2 { x = 50.0, y = 40.0 }, ... }
 	std::string ScriptDisplayAnchors::ToString() const
 	{
-		return "DisplayAnchors { \n"
+		return "{ \n"
 			"TOP_LEFT: " + TOP_LEFT.ToString() + ", "
 			"TOP_CENTER: " + TOP_CENTER.ToString() + ", "
 			"TOP_RIGHT: " + TOP_RIGHT.ToString() + ", \n"
