@@ -382,7 +382,7 @@ namespace TEN::Scripting::View
 		// Register types.
 		ScriptDisplaySprite::Register(*state, tableView);
 		ScriptDisplayItem::Register(*state, tableView);
-		DisplayAnchors::Register(tableView);
+		ScriptDisplayAnchors::Register(tableView);
 
 		// Register types COMPATIBILITY
 		ScriptDisplaySprite::Register(*state, parent);

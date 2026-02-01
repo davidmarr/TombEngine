@@ -1,56 +1,56 @@
 #include "framework.h"
-#include "Scripting/Internal/TEN/View/DisplayAnchors/DisplayAnchors.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 
 namespace TEN::Scripting::Types
 {
 	/// Represents the anchor points of a display element.
 	// @tenprimitive View.DisplayAnchors
 	// @pragma nostrip
-	void DisplayAnchors::Register(sol::table& parent)
+	void ScriptDisplayAnchors::Register(sol::table& parent)
 	{
 		// Register type (no constructor exposed to Lua).
-		parent.new_usertype<DisplayAnchors>(
+		parent.new_usertype<ScriptDisplayAnchors>(
 			"DisplayAnchors",
 			sol::no_constructor,
 
-			sol::meta_function::to_string, &DisplayAnchors::ToString,
+			sol::meta_function::to_string, &ScriptDisplayAnchors::ToString,
 
 			/// (Vec2) Top-left anchor point in percent.
 			// @mem TOP_LEFT
-			"TOP_LEFT", &DisplayAnchors::TOP_LEFT,
+			"TOP_LEFT", &ScriptDisplayAnchors::TOP_LEFT,
 
 			/// (Vec2) Center-top anchor point in percent.
 			// @mem TOP_CENTER
-			"TOP_CENTER", &DisplayAnchors::TOP_CENTER,
+			"TOP_CENTER", &ScriptDisplayAnchors::TOP_CENTER,
 			/// (Vec2) Top-right anchor point in percent.
 			// @mem TOP_RIGHT
-			"TOP_RIGHT", &DisplayAnchors::TOP_RIGHT,
+			"TOP_RIGHT", &ScriptDisplayAnchors::TOP_RIGHT,
 
 			/// (Vec2) Center-left anchor point in percent.
 			// @mem CENTER_LEFT
-			"CENTER_LEFT", &DisplayAnchors::CENTER_LEFT,
+			"CENTER_LEFT", &ScriptDisplayAnchors::CENTER_LEFT,
 			/// (Vec2) Center anchor point in percent.
 			// @mem CENTER
-			"CENTER", &DisplayAnchors::CENTER,
+			"CENTER", &ScriptDisplayAnchors::CENTER,
 
 			/// (Vec2) Center-right anchor point in percent.
 			// @mem CENTER_RIGHT
-			"CENTER_RIGHT", &DisplayAnchors::CENTER_RIGHT,
+			"CENTER_RIGHT", &ScriptDisplayAnchors::CENTER_RIGHT,
 			/// (Vec2) Bottom-left anchor point in percent.
 			// @mem BOTTOM_LEFT
-			"BOTTOM_LEFT", &DisplayAnchors::BOTTOM_LEFT,
+			"BOTTOM_LEFT", &ScriptDisplayAnchors::BOTTOM_LEFT,
 
 			/// (Vec2) Bottom-center anchor point in percent.
 			// @mem BOTTOM_CENTER
-			"BOTTOM_CENTER", &DisplayAnchors::BOTTOM_CENTER,
+			"BOTTOM_CENTER", &ScriptDisplayAnchors::BOTTOM_CENTER,
 			/// (Vec2) Bottom-right anchor point in percent.
 			// @mem BOTTOM_RIGHT
-			"BOTTOM_RIGHT", &DisplayAnchors::BOTTOM_RIGHT);
+			"BOTTOM_RIGHT", &ScriptDisplayAnchors::BOTTOM_RIGHT);
 	}
 
-	DisplayAnchors::DisplayAnchors(const Vec2& topLeft, const Vec2& topCenter, const Vec2& topRight,
-	                               const Vec2& centerLeft, const Vec2& center, const Vec2& centerRight,
-	                               const Vec2& bottomLeft, const Vec2& bottomCenter, const Vec2& bottomRight)
+	ScriptDisplayAnchors::ScriptDisplayAnchors(const Vec2& topLeft, const Vec2& topCenter, const Vec2& topRight,
+		const Vec2& centerLeft, const Vec2& center, const Vec2& centerRight,
+		const Vec2& bottomLeft, const Vec2& bottomCenter, const Vec2& bottomRight)
 	{
 		TOP_LEFT = topLeft;
 		TOP_CENTER = topCenter;
@@ -81,7 +81,7 @@ namespace TEN::Scripting::Types
 	// print(anchors)
 	// -- result:
 	// -- DisplayAnchors { TOP_LEFT: Vec2 { x = 45.0, y = 40.0 }, TOP_CENTER: Vec2 { x = 50.0, y = 40.0 }, ... }
-	std::string DisplayAnchors::ToString() const
+	std::string ScriptDisplayAnchors::ToString() const
 	{
 		return "DisplayAnchors { \n"
 			"TOP_LEFT: " + TOP_LEFT.ToString() + ", "

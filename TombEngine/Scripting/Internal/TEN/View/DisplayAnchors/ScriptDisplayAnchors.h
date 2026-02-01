@@ -4,7 +4,7 @@
 
 namespace TEN::Scripting::Types
 {
-	class DisplayAnchors
+	class ScriptDisplayAnchors
 	{
 	public:
 		static void Register(sol::table& parent);
@@ -23,8 +23,8 @@ namespace TEN::Scripting::Types
 
 		// Constructors
 
-		DisplayAnchors() = default;
-		DisplayAnchors(const Vec2& TOP_LEFT, const Vec2& TOP_CENTER, const Vec2& TOP_RIGHT,
+		ScriptDisplayAnchors() = default;
+		ScriptDisplayAnchors(const Vec2& TOP_LEFT, const Vec2& TOP_CENTER, const Vec2& TOP_RIGHT,
 		               const Vec2& CENTER_LEFT, const Vec2& CENTER, const Vec2& CENTER_RIGHT,
 		               const Vec2& BOTTOM_LEFT, const Vec2& BOTTOM_CENTER, const Vec2& BOTTOM_RIGHT);
 

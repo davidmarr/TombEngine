@@ -8,7 +8,7 @@
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
-#include "Scripting/Internal/TEN/View/DisplayAnchors/DisplayAnchors.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 #include "Specific/level.h"
 
@@ -174,9 +174,9 @@ namespace TEN::Scripting::DisplaySprite
 	// - `BOTTOM_RIGHT`<br>
 	// - `CENTER_BOTTOM`<br>
 	// - `BOTTOM_LEFT`<br>
-	DisplayAnchors ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const
+	ScriptDisplayAnchors ScriptDisplaySprite::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const
 	{
-		DisplayAnchors anchors;
+		ScriptDisplayAnchors anchors;
 
 		// Object is not a sprite sequence; return default anchors.
 		const auto& object = Objects[_objectID];
