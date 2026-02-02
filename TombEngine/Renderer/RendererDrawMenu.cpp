@@ -1616,7 +1616,7 @@ namespace TEN::Renderer
 
 			if (_adapterInfo.DedicatedVideoMemory > 0)
 			{
-				float usagePercent = (toMB(vram.GetTotal()) / toMB(_adapterInfo.DedicatedVideoMemory)) * 100.0f;
+				float usagePercent = (toMB(vram.GetTotal()) / toMB((int)_adapterInfo.DedicatedVideoMemory)) * 100.0f;
 				PrintDebugMessage(" ");
 				PrintDebugMessage("VRAM usage: %.1f%%", usagePercent);
 			}
