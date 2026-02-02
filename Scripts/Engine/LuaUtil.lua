@@ -2275,22 +2275,27 @@ end
 --     sprite:SetColor(desaturatedColor)
 -- end
 --
--- -- Example: Create rainbow gradient with uniform brightness
--- local startColor = TEN.Color(255, 0, 0, 255)  -- Red
--- local oklch = LuaUtil.ColorToOKLch(startColor)
--- for i = 0, 360, 30 do
---     oklch.h = i  -- Rotate hue
---     local rainbowColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
---     -- All colors have same perceived brightness!
+-- -- Example: Rainbow gradient with uniform brightness - Complete working example
+-- local rainbowObj = TEN.Objects.GetMoveableByName("rainbowObject")
+-- local baseColor = TEN.Color(255, 0, 0, 255)  -- Start with red
+-- local oklch = LuaUtil.ColorToOKLch(baseColor)
+-- local hueAngle = 0
+-- local hueSpeed = 360 / LuaUtil.SecondsToFrames(5)  -- Full rainbow cycle in 5 seconds
+-- LevelFuncs.OnLoop = function()
+--     hueAngle = (hueAngle + hueSpeed) % 360
+--     local rainbowColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, hueAngle, oklch.a)
+--     rainbowObj:SetColor(rainbowColor)
+--     -- All colors have same perceived brightness throughout the cycle!
 -- end
 --
 -- -- Example: Brighten color perceptually uniformly
+-- local obj = TEN.Objects.GetMoveableByName("Object")
 -- local darkColor = TEN.Color(50, 50, 150, 255)
 -- local oklch = LuaUtil.ColorToOKLch(darkColor)
 -- if oklch then
 --     oklch.l = math.min(1.0, oklch.l + 0.2)  -- Increase lightness
 --     local brighterColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
---     sprite:SetColor(brighterColor)
+--     obj:SetColor(brighterColor)
 -- end
 --
 -- -- Error handling example:
@@ -2355,22 +2360,52 @@ end
 -- -- Example: Create gray (zero chroma)
 -- local gray = LuaUtil.OKLchToColor(0.5, 0, 0, 1.0)  -- Hue irrelevant when c=0
 --
--- -- Example: Rainbow with uniform brightness
--- local colors = {}
--- for hue = 0, 330, 30 do
---     colors[#colors + 1] = LuaUtil.OKLchToColor(0.7, 0.15, hue, 1.0)
---     -- All colors appear equally bright!
+-- -- Example: Rainbow with uniform brightness - Complete working example
+-- local obj = TEN.Objects.GetMoveableByName("ColorWheel")
+-- local lightness = 0.7   -- Fixed lightness for uniform brightness
+-- local chroma = 0.15     -- Fixed saturation
+-- local hueAngle = 0
+-- local hueSpeed = 360 / LuaUtil.SecondsToFrames(8)  -- 8 seconds per full cycle
+-- LevelFuncs.OnLoop = function()
+--     hueAngle = (hueAngle + hueSpeed) % 360
+--     local color = LuaUtil.OKLchToColor(lightness, chroma, hueAngle, 1.0)
+--     obj:SetColor(color)
+--     -- All hues appear equally bright!
 -- end
 --
--- -- Example: Sunrise gradient (perceptually uniform)
--- local nightBlue = LuaUtil.ColorToOKLch(TEN.Color(20, 30, 80, 255))
--- local sunsetOrange = LuaUtil.ColorToOKLch(TEN.Color(255, 150, 50, 255))
--- for t = 0, 1, 0.1 do
---     local l = nightBlue.l + (sunsetOrange.l - nightBlue.l) * t
---     local c = nightBlue.c + (sunsetOrange.c - nightBlue.c) * t
---     local h = nightBlue.h + (sunsetOrange.h - nightBlue.h) * t
+-- -- Example: Torch flicker (warm color oscillation) - Complete working example
+-- -- OKLch is ideal for this: smooth transitions with perceptually uniform brightness
+-- local torchLight = TEN.Objects.GetMoveableByName("TorchFlame")
+-- local warmOrange = LuaUtil.ColorToOKLch(TEN.Color(255, 120, 40, 255))  -- h ≈ 45°
+-- local brightYellow = LuaUtil.ColorToOKLch(TEN.Color(255, 200, 80, 255))  -- h ≈ 55°
+-- local flickerTime = 0
+-- local flickerSpeed = 1 / LuaUtil.SecondsToFrames(0.5)  -- 0.5 second cycle
+-- LevelFuncs.OnLoop = function()
+--     flickerTime = (flickerTime + flickerSpeed) % 1
+--     -- Sine wave for smooth back-and-forth oscillation
+--     local t = (math.sin(flickerTime * math.pi * 2) + 1) / 2
+--     local l = warmOrange.l + (brightYellow.l - warmOrange.l) * t
+--     local c = warmOrange.c + (brightYellow.c - warmOrange.c) * t
+--     local h = warmOrange.h + (brightYellow.h - warmOrange.h) * t
 --     local color = LuaUtil.OKLchToColor(l, c, h, 1.0)
---     -- Smooth perceptual transition!
+--     torchLight:SetColor(color)
+--     -- Smooth, natural-looking flame flicker!
+-- end
+--
+-- -- Example: Lava pulse (brightness variation) - Complete working example
+-- -- Demonstrates OKLch advantage: changing lightness without color shift
+-- local lavaObj = TEN.Objects.GetMoveableByName("LavaGlow")
+-- local baseLava = LuaUtil.ColorToOKLch(TEN.Color(200, 60, 20, 255))  -- Dark red-orange
+-- local pulseTime = 0
+-- local pulseSpeed = 1 / LuaUtil.SecondsToFrames(2)  -- 2 second pulse cycle
+-- LevelFuncs.OnLoop = function()
+--     pulseTime = (pulseTime + pulseSpeed) % 1
+--     -- Pulse lightness between base and +0.15 brighter
+--     local pulse = (math.sin(pulseTime * math.pi * 2) + 1) / 2
+--     local l = baseLava.l + pulse * 0.15
+--     local color = LuaUtil.OKLchToColor(l, baseLava.c, baseLava.h, 1.0)
+--     lavaObj:SetColor(color)
+--     -- Brightness pulses without hue shift (unlike HSL which would shift toward white)
 -- end
 --
 -- -- Error handling example:
