@@ -21,5 +21,5 @@
     <LocalDebuggerWorkingDirectory>$(SolutionDir)Build\$(Configuration)\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
-
 </Project>
+
