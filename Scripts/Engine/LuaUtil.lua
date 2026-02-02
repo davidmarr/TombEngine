@@ -1496,17 +1496,17 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
     elseif IsVec3(axis) then
         -- Custom axis: calculate perpendicular vectors for orbital plane
         local axisNormalized = axis:Normalize()
-        
+
         -- Find perpendicular vector (use cross product with arbitrary vector)
         local arbitrary = TEN.Vec3(0, 1, 0)
         if abs(axisNormalized.y) > 0.99 then
             arbitrary = TEN.Vec3(1, 0, 0)
         end
-        
+
         -- Create two perpendicular vectors in the orbital plane
         local perp1 = axisNormalized:Cross(arbitrary):Normalize()
         local perp2 = axisNormalized:Cross(perp1):Normalize()
-        
+
         -- Calculate position on circular orbit
         offset = (perp1 * cosAngle + perp2 * sinAngle) * radius
     else
@@ -1782,10 +1782,10 @@ LuaUtil.TransformLocalToWorld = function(parentPos, parentRot, localOffset, loca
 
     -- Rotate local offset by parent rotation to get world-space offset
     local worldOffset = localOffset:Rotate(parentRot)
-    
+
     -- Calculate world position
     local worldPos = parentPos + worldOffset
-    
+
     -- Calculate world rotation if local rotation provided
     local worldRot = nil
     if localRotation then
@@ -1797,7 +1797,7 @@ LuaUtil.TransformLocalToWorld = function(parentPos, parentRot, localOffset, loca
             parentRot.z + localRotation.z
         )
     end
-    
+
     return worldPos, worldRot
 end
 
@@ -1880,7 +1880,7 @@ LuaUtil.CalculateLocalOffset = function(parent, child)
     -- This is the inverse of Vec3:Rotate() - we need to rotate by inverse parent rotation
     local inverseRot = TEN.Rotation(-parentRot.x, -parentRot.y, -parentRot.z)
     local localOffset = worldOffset:Rotate(inverseRot)
-    
+
     return localOffset
 end
 
@@ -1977,37 +1977,37 @@ LuaUtil.AttachToObject = function(parent, child, localOffset, inheritRotation)
         TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: inheritRotation must be a boolean or nil.", TEN.Util.LogLevel.ERROR)
         return false
     end
-    
+
     -- Get parent transform
     local parentPos = parent.GetPosition and parent:GetPosition()
     local parentRot = parent.GetRotation and parent:GetRotation()
-    
+
     if not parentPos or not parentRot then
         TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: parent must have GetPosition() and GetRotation() methods.", TEN.Util.LogLevel.ERROR)
         return false
     end
-    
+
     -- Check child has SetPosition
     if not child.SetPosition then
         TEN.Util.PrintLog("Error in LuaUtil.AttachToObject: child must have SetPosition() method.", TEN.Util.LogLevel.ERROR)
         return false
     end
-    
+
     -- Transform local offset to world space
     local localRot = (inheritRotation and TEN.Rotation(0, 0, 0)) or nil
     local worldPos, worldRot = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset, localRot)
-    
+
     if not worldPos then
         return false
     end
-    
+
     -- Apply transforms
     child:SetPosition(worldPos)
-    
+
     if inheritRotation and worldRot and child.SetRotation then
         child:SetRotation(worldRot)
     end
-    
+
     return true
 end
 
