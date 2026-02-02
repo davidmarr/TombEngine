@@ -3273,9 +3273,9 @@ namespace TEN::Renderer
 			auto cameraMatrix = Matrix::CreateTranslation(renderView.Camera.WorldPosition);
 
 			float alpha = levelPtr->GetHorizonTransparency(layer);
-
+			auto color = levelPtr->GetHorizonColor(layer);
 			_stSky.World = rotMatrix * translationMatrix * cameraMatrix;
-			_stSky.Color = Color(1.0f, 1.0f, 1.0f, alpha);
+			_stSky.Color = Color(color.GetR(), color.GetG(), color.GetB(), alpha);
 			_stSky.ApplyFogBulbs = 1;
 			UpdateConstantBuffer(_stSky, _cbSky);
 

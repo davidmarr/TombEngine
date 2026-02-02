@@ -64,6 +64,7 @@ struct Level : public ScriptInterfaceLevel
 	EulerAngles GetHorizonOrientation(int index) const override;
 	Vector3 GetHorizonPrevPosition(int index) const override;
 	EulerAngles GetHorizonPrevOrientation(int index) const override;
+	RGBAColor8Byte GetHorizonColor(int index) const override;
 
 	// Compatibility
 	bool GetHorizon1Enabled() const;

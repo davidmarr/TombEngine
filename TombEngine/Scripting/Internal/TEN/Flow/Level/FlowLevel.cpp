@@ -262,6 +262,11 @@ GAME_OBJECT_ID Level::GetHorizonObjectID(int index) const
 	return GetHorizon(index).GetObjectID();
 }
 
+RGBAColor8Byte Level::GetHorizonColor(int index) const
+{
+	return GetHorizon(index).GetColor();
+}
+
 float Level::GetHorizonTransparency(int index) const
 {
 	return GetHorizon(index).GetTransparency();

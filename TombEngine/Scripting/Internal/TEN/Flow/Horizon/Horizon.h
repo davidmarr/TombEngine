@@ -4,6 +4,7 @@
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
+#include "Scripting/Internal/TEN/Types/Color/Color.h"
 
 namespace TEN::Scripting
 {
@@ -21,6 +22,7 @@ namespace TEN::Scripting
 			Rotation		_rotation	  = {};
 			float			_scale		  = 1.0f;
 			float			_transparency = 1.0f;
+			ScriptColor		_color = (255, 255, 255, 255);
 
 			Vec3	 _prevPosition = {};
 			Rotation _prevRotation = {};
@@ -40,9 +42,11 @@ namespace TEN::Scripting
 			const Vec3		GetPosition() const;
 			const Rotation	GetRotation() const;
 			const float 	GetTransparency() const;
+			const float		GetScale() const;
 
 			const Vec3		GetPrevPosition() const;
 			const Rotation	GetPrevRotation() const;
+			const RGBAColor8Byte GetColor() const;
 
 			// Setters
 			
@@ -51,5 +55,7 @@ namespace TEN::Scripting
 			void SetPosition(const Vec3& pos, TypeOrNil<bool> disableInterpolation);
 			void SetRotation(const Rotation& orient, TypeOrNil<bool> disableInterpolation);
 			void SetTransparency(float value);
+			void SetScale(float value);
+			void SetColor(const ScriptColor& color);
 	};
 }

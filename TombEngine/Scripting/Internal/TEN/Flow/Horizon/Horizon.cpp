@@ -7,6 +7,8 @@
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 
+using TEN::Scripting::Types::ScriptColor;
+
 namespace TEN::Scripting
 {
 	/// Represents a horizon. To be used with @{Flow.Level.horizon1} and @{Flow.Level.horizon2} properties.
@@ -43,6 +45,16 @@ namespace TEN::Scripting
 			// Specifies horizon rotation.
 			// @mem rotation
 			"rotation", sol::property(&Horizon::GetRotation, &Horizon::SetRotation),
+
+			/// (float) Horizon scale.
+			// Specifies horizon scale.
+			// @mem scale
+			"scale", sol::property(&Horizon::GetScale, &Horizon::SetScale),
+
+			/// (@{Color}) Horizon color.
+			// Specifies horizon color tint.
+			// @mem color
+			"color", sol::property(&Horizon::GetColor, &Horizon::SetColor),
 
 			/// (float) Horizon transparency.
 			// Specifies horizon transparency on a range from 0 to 1.
@@ -86,6 +98,16 @@ namespace TEN::Scripting
 		return _rotation;
 	}
 
+	const float Horizon::GetScale() const
+	{
+		return _scale;
+	}
+
+	const RGBAColor8Byte Horizon::GetColor() const
+	{
+		return _color;
+	}
+
 	const float Horizon::GetTransparency() const
 	{
 		return _transparency;
@@ -111,6 +133,17 @@ namespace TEN::Scripting
 	{
 		_prevRotation = ValueOr<bool>(noInterpolation, false) ? rot : _rotation;
 		_rotation = rot;
+	}
+
+	void Horizon::SetScale(float value)
+	{
+		_prevScale = _scale;
+		_scale = value;
+	}
+
+	void Horizon::SetColor(const ScriptColor& color)
+	{
+		_color = color;
 	}
 
 	void Horizon::SetTransparency(float value)

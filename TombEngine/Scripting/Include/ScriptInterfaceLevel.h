@@ -47,6 +47,7 @@ public:
 	virtual bool		   GetHorizonEnabled(int index) const = 0;
 	virtual GAME_OBJECT_ID GetHorizonObjectID(int index) const = 0;
 	virtual float		   GetHorizonTransparency(int index) const = 0;
+	virtual RGBAColor8Byte GetHorizonColor(int index) const = 0;
 	virtual Vector3		   GetHorizonPosition(int index) const = 0;
 	virtual EulerAngles	   GetHorizonOrientation(int index) const = 0;
 	virtual Vector3		   GetHorizonPrevPosition(int index) const = 0;
