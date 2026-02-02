@@ -55,6 +55,7 @@ local IsRotation = Type.IsRotation
 local IsBoolean = Type.IsBoolean
 local IsString = Type.IsString
 local IsTable = Type.IsTable
+local IsNull = Type.IsNull
 
 -- ----------------------------------------------------------------------------
 -- MATH FUNCTIONS
@@ -158,6 +159,28 @@ F.InterpolateValues = function(a, b, clampedT, functionName)
     TEN.Util.PrintLog("Error in " .. functionName .. ": unsupported type.", TEN.Util.LogLevel.ERROR)
     return a
 end
+
+-- Helper function for hue interpolation with different modes
+F.InterpolateHue = function(h1, h2, t, mode)
+    local delta = h2 - h1
+
+    if mode == "shortest" then
+        delta = ((delta + 180) % 360) - 180
+
+    elseif mode == "longest" then
+        delta = ((delta + 180) % 360) - 180
+        if delta > 0 then delta = delta - 360 else delta = delta + 360 end
+
+    elseif mode == "increasing" then
+        if delta < 0 then delta = delta + 360 end
+
+    elseif mode == "decreasing" then
+        if delta > 0 then delta = delta - 360 end
+    end
+
+    return (h1 + delta * t) % 360
+end
+
 
 -- Helper function for HSL to RGB conversion
 F.HueToRgb = function(p, q, t)
@@ -3758,12 +3781,169 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     --    - Higher damping = longer bounces
     -- 3. Multiply them: Bounces that decrease in amplitude
     -- 4. (1 - result): Invert so we approach target value instead of 0
-    
+
     local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
     local oscillation = abs(cos(t * pi * bounces))
     local easedT = 1 - (oscillation * decay)
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
+end
+
+--- Interpolates between two colors in specified color space with options.
+-- Supports RGB, HSL, and OKLch color spaces with customizable hue interpolation paths and saturation/lightness preservation.
+-- @tparam Color colorA Starting color.
+-- @tparam Color colorB Ending color.
+-- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam[opt=0] int colorSpace Color space to use (0 = RGB, 1 = HSL, 2 = OKLch).
+-- @tparam[opt={}] table options Additional options.
+--
+-- - `huePath` (string): Path for hue interpolation in HSL/OKLch<br>`("shortest", "longest", "increasing", "decreasing")`<br>*Default: "shortest"*.
+-- - `preserveSaturation` (boolean): If true, preserves starting saturation in HSL/OKLch.<br>*Default: false*.
+--
+-- - `preserveLightness` (boolean): If true, preserves starting lightness in HSL/OKLch.<br>*Default: false*.
+--
+-- @treturn[1] Color The interpolated color.
+-- @treturn[2] Color colorA if an error occurs.
+-- @usage
+-- -- Example with RGB interpolation (red to blue):
+-- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
+-- local color2 = TEN.Color(0, 0, 255, 255)  -- Blue
+-- 
+-- --   t    | R   | G | B
+-- --  ------|-----|---|-----
+-- --  0.00  | 255 | 0 | 0
+-- --  0.25  | 191 | 0 | 64
+-- --  0.50  | 127 | 0 | 127
+-- --  0.75  | 64  | 0 | 191
+-- --  1.00  | 0   | 0 | 255
+-- local rgbColor = LuaUtil.InterpolateColor(color1, color2, 0.5)
+--
+-- -- Example with HSL interpolation (red to green, shortest hue path):
+-- local hslColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 1)
+-- --   t    | R   | G   | B
+-- --  ------|-----|-----|-----
+-- --  0.00  | 255 | 0   | 0
+-- --  0.25  | 191 | 64  | 0
+-- --  0.50  | 127 | 127 | 0
+-- --  0.75  | 64  | 191 | 0
+-- --  1.00  | 0   | 255 | 0
+-- -- Example with HSL interpolation (red to green, longest hue path):
+-- local hslLongColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 1, { huePath = "longest" })
+-- --   t    | R   | G   | B
+-- --  ------|-----|-----|-----
+-- --  0.00  | 255 | 0   | 0
+-- --  0.25  | 191 | 0   | 64
+-- --  0.50  | 127 | 0   | 127
+-- --  0.75  | 64  | 0   | 191
+-- --  1.00  | 0   | 0   | 255
+--
+-- -- Example with OKLch interpolation (red to green, preserving saturation):
+-- local oklchColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 2, { preserveSaturation = true })
+-- --   t    | R   | G   | B
+-- --  ------|-----|-----|-----
+-- --  0.00  | 255 | 0   | 0
+-- --  0.25  | 223 | 32  | 0
+-- --  0.50  | 191 | 95  | 0
+-- --  0.75  | 95  | 223 | 0
+-- --  1.00  | 0   | 255 | 0
+--
+-- -- Example with OKLch interpolation (red to green, preserving lightness):
+-- local oklchLightColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 2, { preserveLightness = true })
+-- --   t    | R   | G   | B
+-- --  ------|-----|-----|-----
+-- --  0.00  | 255 | 0   | 0
+-- --  0.25  | 223 | 32  | 0
+-- --  0.50  | 191 | 95  | 0
+-- --  0.75  | 95  | 223 | 0
+-- --  1.00  | 0   | 255 | 0
+LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
+
+    -- Validate input parameters
+    if not IsColor(colorA) or not IsColor(colorB) then
+        TEN.Util.PrintLog("Error in LuaUtil.InterpolateColor: colorA and colorB must be TEN.Color.", TEN.Util.LogLevel.ERROR)
+        return colorA
+    end
+
+    if not IsNumber(t) then
+        TEN.Util.PrintLog("Error in LuaUtil.InterpolateColor: t must be a number.", TEN.Util.LogLevel.ERROR)
+        return colorA
+    end
+
+    t = LuaUtil.Clamp(t, 0, 1)
+
+    colorSpace = colorSpace or 0
+
+    if not IsNumber(colorSpace) or (colorSpace ~= 0  and colorSpace ~= 1 and colorSpace ~= 2) then
+        TEN.Util.PrintLog("Warning in LuaUtil.InterpolateColor: invalid colorSpace, using RGB.", TEN.Util.LogLevel.WARNING)
+        colorSpace = 0
+    end
+
+    -- Validate options (optional parameter)
+    if not IsTable(options) then
+        options = {}
+    end
+
+    local huePath = options.huePath
+    if huePath ~= "shortest" and huePath ~= "longest" and huePath ~= "increasing" and huePath ~= "decreasing" then
+        if huePath ~= nil then
+            TEN.Util.PrintLog("Warning in LuaUtil.InterpolateColor: invalid huePath, using 'shortest'.", TEN.Util.LogLevel.WARNING)
+        end
+        huePath = "shortest"
+    end
+
+    local preserveS = options.preserveSaturation
+    if preserveS ~= nil and not IsBoolean(preserveS) then
+        TEN.Util.PrintLog("Warning in LuaUtil.InterpolateColor: preserveSaturation must be boolean. Using false.", TEN.Util.LogLevel.WARNING)
+        preserveS = false
+    end
+    preserveS = preserveS or false
+
+    local preserveL = options.preserveLightness
+    if preserveL ~= nil and not IsBoolean(preserveL) then
+        TEN.Util.PrintLog("Warning in LuaUtil.InterpolateColor: preserveLightness must be boolean. Using false.", TEN.Util.LogLevel.WARNING)
+        preserveL = false
+    end
+    preserveL = preserveL or false
+
+    -- RBG
+    if colorSpace == 0 then
+        local r = LuaUtil.Lerp(colorA.r, colorB.r, t)
+        local g = LuaUtil.Lerp(colorA.g, colorB.g, t)
+        local b = LuaUtil.Lerp(colorA.b, colorB.b, t)
+        local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
+        return TEN.Color(r, g, b, a)
+    end
+
+    -- HSL
+    if colorSpace == 1 then
+        local HSLcolorA = LuaUtil.ColorToHSL(colorA)
+        local HSLcolorB = LuaUtil.ColorToHSL(colorB)
+
+        local h = F.InterpolateHue(HSLcolorA.h, HSLcolorB.h, t, huePath)
+        local s = preserveS and HSLcolorA.s or LuaUtil.Lerp(HSLcolorA.s, HSLcolorB.s, t)
+        local l = preserveL and HSLcolorA.l or LuaUtil.Lerp(HSLcolorA.l, HSLcolorB.l, t)
+
+        local finalColor = LuaUtil.HSLtoColor(h, s, l)
+        local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
+        return TEN.Color(finalColor.r, finalColor.g, finalColor.b, a)
+    end
+
+    -- OKLch
+    if colorSpace == 2 then
+        local OKLchColorA = LuaUtil.ColorToOKLch(colorA)
+        local OKLchColorB = LuaUtil.ColorToOKLch(colorB)
+
+        local l = preserveL and OKLchColorA.l or LuaUtil.Lerp(OKLchColorA.l, OKLchColorB.l, t)
+        local c = preserveS and OKLchColorA.c or LuaUtil.Lerp(OKLchColorA.c, OKLchColorB.c, t)
+        local h = F.InterpolateHue(OKLchColorA.h, OKLchColorB.h, t, huePath)
+
+        local finalColor = LuaUtil.OKLchToColor(l, c, h)
+        local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
+        return TEN.Color(finalColor.r, finalColor.g, finalColor.b, a)
+    end
+
+    -- Fallback (non dovrebbe mai accadere)
+    -- return colorA
 end
 
 --- Table functions.
