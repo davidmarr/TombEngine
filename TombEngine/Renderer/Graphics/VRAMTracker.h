@@ -10,7 +10,6 @@ namespace TEN::Renderer::Graphics
 	{
 		Texture,
 		RenderTarget,
-		ConstantBuffer,
 		VertexBuffer,
 		IndexBuffer,
 
@@ -26,42 +25,41 @@ namespace TEN::Renderer::Graphics
 			return instance;
 		}
 
-		void Add(VRAMCategory category, size_t bytes)
+		void Add(VRAMCategory category, int bytes)
 		{
 			_categories[static_cast<int>(category)] += bytes;
 			_total += bytes;
 		}
 
-		void Remove(VRAMCategory category, size_t bytes)
+		void Remove(VRAMCategory category, int bytes)
 		{
 			_categories[static_cast<int>(category)] -= bytes;
 			_total -= bytes;
 		}
 
-		size_t GetTotal() const
+		int GetTotal() const
 		{
 			return _total.load();
 		}
 
-		size_t GetCategory(VRAMCategory category) const
+		int GetCategory(VRAMCategory category) const
 		{
 			return _categories[static_cast<int>(category)].load();
 		}
 
 		std::string GetSummary() const
 		{
-			auto toMB = [](size_t bytes) { return static_cast<float>(bytes) / (1024.0f * 1024.0f); };
+			auto toMB = [](int bytes) { return static_cast<float>(bytes) / (1024.0f * 1024.0f); };
 
 			return "VRAM usage: " +
 				std::to_string(toMB(GetTotal())) + " MB total | " +
 				"Textures: " + std::to_string(toMB(GetCategory(VRAMCategory::Texture))) + " MB | " +
 				"RenderTargets: " + std::to_string(toMB(GetCategory(VRAMCategory::RenderTarget))) + " MB | " +
-				"CB: " + std::to_string(toMB(GetCategory(VRAMCategory::ConstantBuffer))) + " MB | " +
 				"VB: " + std::to_string(toMB(GetCategory(VRAMCategory::VertexBuffer))) + " MB | " +
 				"IB: " + std::to_string(toMB(GetCategory(VRAMCategory::IndexBuffer))) + " MB";
 		}
 
-		static size_t GetDXGIFormatBytesPerPixel(DXGI_FORMAT format)
+		static int GetDXGIFormatBytesPerPixel(DXGI_FORMAT format)
 		{
 			switch (format)
 			{
@@ -169,12 +167,12 @@ namespace TEN::Renderer::Graphics
 			}
 		}
 
-		static size_t ComputeTexture2DSize(const D3D11_TEXTURE2D_DESC& desc)
+		static int ComputeTexture2DSize(const D3D11_TEXTURE2D_DESC& desc)
 		{
-			size_t totalSize = 0;
-			auto bpp = GetDXGIFormatBytesPerPixel(desc.Format);
+			int totalSize = 0;
+			int bpp = GetDXGIFormatBytesPerPixel(desc.Format);
 
-			unsigned int mipLevels = desc.MipLevels;
+			int mipLevels = desc.MipLevels;
 			if (mipLevels == 0)
 			{
 				// MipLevels = 0 means full mip chain down to 1x1.
@@ -187,22 +185,22 @@ namespace TEN::Renderer::Graphics
 				}
 			}
 
-			for (unsigned int mip = 0; mip < mipLevels; mip++)
+			for (int mip = 0; mip < mipLevels; mip++)
 			{
-				auto mipWidth  = std::max(1u, desc.Width >> mip);
-				auto mipHeight = std::max(1u, desc.Height >> mip);
+				int mipWidth  = std::max(1u, desc.Width >> mip);
+				int mipHeight = std::max(1u, desc.Height >> mip);
 
 				if (bpp > 0)
 				{
-					totalSize += static_cast<size_t>(mipWidth) * mipHeight * bpp;
+					totalSize += mipWidth * mipHeight * bpp;
 				}
 				else
 				{
 					// Block-compressed: 4x4 blocks.
-					auto blockWidth  = std::max(1u, (mipWidth + 3) / 4);
-					auto blockHeight = std::max(1u, (mipHeight + 3) / 4);
+					int blockWidth  = std::max(1, (mipWidth + 3) / 4);
+					int blockHeight = std::max(1, (mipHeight + 3) / 4);
 
-					size_t blockSize = 8; // BC1, BC4
+					int blockSize = 8; // BC1, BC4
 					switch (desc.Format)
 					{
 					case DXGI_FORMAT_BC2_UNORM:
@@ -226,7 +224,7 @@ namespace TEN::Renderer::Graphics
 						break;
 					}
 
-					totalSize += static_cast<size_t>(blockWidth) * blockHeight * blockSize;
+					totalSize += blockWidth * blockHeight * blockSize;
 				}
 			}
 
@@ -237,7 +235,7 @@ namespace TEN::Renderer::Graphics
 	private:
 		VRAMTracker() = default;
 
-		std::atomic<size_t> _total = 0;
-		std::atomic<size_t> _categories[static_cast<int>(VRAMCategory::Count)] = {};
+		std::atomic<int> _total = 0;
+		std::atomic<int> _categories[static_cast<int>(VRAMCategory::Count)] = {};
 	};
 }

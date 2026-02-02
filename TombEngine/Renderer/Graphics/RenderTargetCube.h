@@ -171,6 +171,6 @@ namespace TEN::Renderer::Graphics
 		}
 
 	private:
-		size_t _vramSize = 0;
+		int _vramSize = 0;
 	};
 }

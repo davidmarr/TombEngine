@@ -15,7 +15,7 @@ namespace TEN::Renderer::Graphics
 	{
 	private:
 		int _numIndices;
-		size_t _vramSize = 0;
+		int _vramSize = 0;
 
 	public:
 		Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;

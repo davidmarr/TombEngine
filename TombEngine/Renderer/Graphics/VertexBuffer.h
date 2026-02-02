@@ -20,7 +20,7 @@ namespace TEN::Renderer::Graphics
 	{
 	private:
 		int _numVertices;
-		size_t _vramSize = 0;
+		int _vramSize = 0;
 
 	public:
 		ComPtr<ID3D11Buffer> Buffer;

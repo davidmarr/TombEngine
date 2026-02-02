@@ -5,7 +5,6 @@
 
 #include "Game/Debug/Debug.h"
 #include "Renderer/RendererUtils.h"
-#include "Renderer/Graphics/VRAMTracker.h"
 
 namespace TEN::Renderer::ConstantBuffers
 {
@@ -13,28 +12,20 @@ namespace TEN::Renderer::ConstantBuffers
 	class ConstantBuffer
 	{
 		ComPtr<ID3D11Buffer> buffer;
-		size_t _vramSize = 0;
 
 	public:
 		ConstantBuffer() = default;
 
 		ConstantBuffer(ConstantBuffer&& other) noexcept
-			: buffer(std::move(other.buffer)), _vramSize(other._vramSize)
+			: buffer(std::move(other.buffer))
 		{
-			other._vramSize = 0;
 		}
 
 		ConstantBuffer& operator=(ConstantBuffer&& other) noexcept
 		{
 			if (this != &other)
-			{
-				if (_vramSize > 0)
-					Graphics::VRAMTracker::Get().Remove(Graphics::VRAMCategory::ConstantBuffer, _vramSize);
-
 				buffer = std::move(other.buffer);
-				_vramSize = other._vramSize;
-				other._vramSize = 0;
-			}
+
 			return *this;
 		}
 
@@ -50,15 +41,6 @@ namespace TEN::Renderer::ConstantBuffers
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 			Utils::throwIfFailed(device->CreateBuffer(&desc, nullptr, buffer.GetAddressOf()));
 			buffer->SetPrivateData(WKPDID_D3DDebugObjectName, 32, typeid(CBuff).name());
-
-			_vramSize = desc.ByteWidth;
-			Graphics::VRAMTracker::Get().Add(Graphics::VRAMCategory::ConstantBuffer, _vramSize);
-		}
-
-		~ConstantBuffer()
-		{
-			if (_vramSize > 0)
-				Graphics::VRAMTracker::Get().Remove(Graphics::VRAMCategory::ConstantBuffer, _vramSize);
 		}
 
 		ID3D11Buffer** get()

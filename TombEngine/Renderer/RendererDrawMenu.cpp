@@ -1594,7 +1594,7 @@ namespace TEN::Renderer
 
 		case RendererDebugPage::MemoryStats:
 		{
-			auto toMB = [](size_t bytes) { return static_cast<float>(bytes) / (1024.0f * 1024.0f); };
+			auto toMB = [](int bytes) { return static_cast<float>(bytes) / (1024.0f * 1024.0f); };
 			const auto& vram = Graphics::VRAMTracker::Get();
 
 			PrintDebugMessage("MEMORY STATS");
@@ -1611,7 +1611,6 @@ namespace TEN::Renderer
 			PrintDebugMessage("Total: %.2f MB", toMB(vram.GetTotal()));
 			PrintDebugMessage("  Textures: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::Texture)));
 			PrintDebugMessage("  Render targets: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::RenderTarget)));
-			PrintDebugMessage("  Constant buffers: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::ConstantBuffer)));
 			PrintDebugMessage("  Vertex buffers: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::VertexBuffer)));
 			PrintDebugMessage("  Index buffers: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::IndexBuffer)));
 

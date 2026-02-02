@@ -238,7 +238,7 @@ namespace TEN::Renderer::Graphics
 		}
 
 	private:
-		size_t _vramSize = 0;
+		int _vramSize = 0;
 
 		DXGI_FORMAT MakeTypeless(DXGI_FORMAT format)
 		{
