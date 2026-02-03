@@ -2539,12 +2539,12 @@ end
 -- <table class="tableSP">
 -- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
 -- <tr><td><a href="#Lerp">Lerp</a></td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations, mechanical movements</td></tr>
--- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>2D UI sprites (compass, indicators)</td></tr>
 -- <tr><td><a href="#Smoothstep">Smoothstep</a></td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions, standard animations</td></tr>
 -- <tr><td><a href="#Smootherstep">Smootherstep</a></td><td>Ultra-smooth S-curve</td><td>Very gentle ease-in/out (C² continuity)</td><td>Cinematic effects, premium visuals</td></tr>
 -- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Dramatic movements, elevators</td></tr>
 -- <tr><td><a href="#Elastic">Elastic</a></td><td>Spring oscillation</td><td>Overshoot with smooth bounce back</td><td>Playful UI, cartoon effects</td></tr>
 -- <tr><td><a href="#Bounce">Bounce</a></td><td>Damped oscillation</td><td>Smooth bounces with energy decay</td><td>Falling objects, ball physics, collision effects</td></tr>
+-- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>2D UI sprites (compass, indicators)</td></tr>
 -- </table>
 --
 -- <br>**Comparison of interpolation methods (0 to 10):**
