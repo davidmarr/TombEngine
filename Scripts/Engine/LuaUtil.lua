@@ -2762,163 +2762,6 @@ LuaUtil.Lerp = function(a, b, t)
     return F.InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
 end
 
---- Linearly interpolate between two angles, taking the shortest path.
--- **Why use LerpAngle instead of Lerp for angles?**
--- 
--- Lerp treats angles as linear numbers:
---
---      LuaUtil.Lerp(350°, 10°, 0.5) = 180° ❌ (rotates 170° the long way!)
--- 
--- LerpAngle calculates shortest rotation path:
---
---      LuaUtil.LerpAngle(350°, 10°, 0.5) = 0° ✅ (rotates 10° through 0°/360° boundary)
---
--- This prevents objects from "spinning wildly" when rotating across 0°/360°.
---
---- **IMPORTANT: When NOT to use LerpAngle**
--- 
--- LerpAngle calculates the SHORTEST path between angles.
---
--- This means:
---
--- - 0° → 360° = 0° rotation (they're the same angle!)
--- - For FULL 360° rotation, use Lerp instead
---
--- **Use LerpAngle for:**
---
--- - Shortest rotation to target (enemy, turret, compass)
--- - Door/lid opening (0° → 90° type rotations)
--- - Any rotation where direction doesn't matter
---
--- **Use Lerp for:**
---
--- - Full 360° camera orbit (specific direction)
--- - Multiple rotations (0° → 720° = 2 full circles)
--- - Continuous rotation (0° → 1000°)
---
--- **Problem with regular Lerp:**
--- <table class="tableSP">
--- <tr><th>Start</th><th>End</th><th>Lerp result</th><th>Problem</th></tr>
--- <tr><td>350°</td><td>10°</td><td>180°</td><td>Goes the LONG way (340° turn!)</td></tr>
--- <tr><td>10°</td><td>350°</td><td>180°</td><td>Goes the LONG way (340° turn!)</td></tr>
--- <tr><td>270°</td><td>90°</td><td>180°</td><td>Correct by chance</td></tr>
--- </table>
---
--- <br>**Solution with LerpAngle:**
---
--- <table class="tableSP">
--- <tr><th>Start</th><th>End</th><th>LerpAngle result</th><th>Result</th></tr>
--- <tr><td>350°</td><td>10°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
--- <tr><td>10°</td><td>350°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
--- <tr><td>270°</td><td>90°</td><td>180°</td><td>SHORT way (180° turn)</td></tr>
--- </table>
---
--- @tparam float a Start angle (in degrees).
--- @tparam float b End angle (in degrees).
--- @tparam float t Interpolation factor (0.0 to 1.0).
--- @tparam[opt=0] float minValue Minimum angle of range (default: 0 for 0-360°).
--- @tparam[opt=360] float maxValue Maximum angle of range (default: 360 for 0-360°).
--- @treturn[1] float The interpolated angle, taking the shortest path.
--- @treturn[2] float Value `a` if an error occurs.
--- @usage
--- -- Basic example: Why LerpAngle is needed
--- local angle1 = LuaUtil.Lerp(350, 10, 0.5)        -- Result: 180° (WRONG! Long way)
--- local angle2 = LuaUtil.LerpAngle(350, 10, 0.5)   -- Result: 0° (CORRECT! Short way)
---
--- -- Demonstration: Rotating from 350° to 10° (should cross 0°/360°)
--- --   t    | Lerp  | LerpAngle | Correct?
--- --  ------|-------|-----------|----------
--- --  0.00  | 350   | 350       | ✓
--- --  0.25  | 265   | 355       | ✓ (short path)
--- --  0.50  | 180   | 0         | ✓ (crosses boundary)
--- --  0.75  | 95    | 5         | ✓ (short path)
--- --  1.00  | 10    | 10        | ✓
---
--- -- Real-world example 1: 2D sprite pointing towards mouse cursor
--- -- DisplaySprite uses single float for rotation, perfect use case for LerpAngle!
--- local arrowSprite = TEN.View.DisplaySprite(1354, 16, TEN.Vec2(400, 300), 0, TEN.Vec2(3, 3))
--- local rotationSpeed = 0.1  -- How fast the arrow rotates (0.0-1.0)
---
--- LevelFuncs.OnLoop = function()
---     local mousePos = TEN.Input.GetMouseDisplayPosition()
---     local arrowPos = arrowSprite:GetPosition()
---     
---     -- Calculate angle from arrow to mouse
---     local dx = mousePos.x - arrowPos.x
---     local dy = mousePos.y - arrowPos.y
---     local targetAngle = math.atan(dy, dx) * (180 / math.pi)  -- Convert radians to degrees
---     
---     -- Smoothly rotate arrow towards mouse using shortest path
---     local currentAngle = arrowSprite:GetRotation()
---     local newAngle = LuaUtil.LerpAngle(currentAngle, targetAngle, rotationSpeed)
---     arrowSprite:SetRotation(newAngle)
---     
---     arrowSprite:Draw()
--- end
---
--- -- Real-world example 2: HUD compass needle rotating to point north
--- -- Perfect for 2D UI elements that need smooth rotation
--- -- Uses speedometer needle sprite from base WAD (points down by default, so we add 180° offset)
--- local objID = TEN.Objects.ObjID.SPEEDOMETER_GRAPHICS
--- local compassNeedle = TEN.View.DisplaySprite(objID, 1, TEN.Vec2(80, 80), 0, TEN.Vec2(20, 20))
---
--- LevelFuncs.OnLoop = function()
---     -- Get player's current yaw (facing direction)
---     local playerYaw = Lara:GetRotation().y
---     
---     -- Calculate angle to north
---     -- Add 180° offset because the sprite points down by default
---     local needleTargetAngle = -playerYaw + 180
---     
---     -- Smoothly rotate needle towards north using shortest path
---     local currentNeedleAngle = compassNeedle:GetRotation()
---     local newNeedleAngle = LuaUtil.LerpAngle(currentNeedleAngle, needleTargetAngle, 0.15)
---     compassNeedle:SetRotation(newNeedleAngle)
---     
---     compassNeedle:Draw()
--- end
-LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
-    minValue = minValue or 0
-    maxValue = maxValue or 360
-
-    if not (IsNumber(a) and IsNumber(b) and IsNumber(t)) then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: a, b, and t must be numbers.", TEN.Util.LogLevel.ERROR)
-        return a
-    end
-
-    if not (IsNumber(minValue) and IsNumber(maxValue)) then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue and maxValue must be numbers.", TEN.Util.LogLevel.ERROR)
-        return a
-    end
-
-    if minValue >= maxValue then
-        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue must be less than maxValue.", TEN.Util.LogLevel.ERROR)
-        return a
-    end
-
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
-    -- Normalize angles to range
-    a = LuaUtil.WrapAngle(a, minValue, maxValue)
-    b = LuaUtil.WrapAngle(b, minValue, maxValue)
-
-    -- Calculate shortest delta
-    local delta = b - a
-    local range = maxValue - minValue
-
-    -- Wrap delta to [-range/2, range/2] for shortest path
-    if delta > range / 2 then
-        delta = delta - range
-    elseif delta < -range / 2 then
-        delta = delta + range
-    end
-
-    -- Interpolate and wrap result
-    local result = a + delta * t
-    return LuaUtil.WrapAngle(result, minValue, maxValue)
-end
-
 --- Smoothly interpolate between two values using Hermite interpolation.
 -- The function first normalizes the input value t to a 0-1 range using edge0 and edge1,
 -- then applies a smooth S-curve (Hermite polynomial: 3t² - 2t³ or t²(3 - 2t)) for smoother transitions.
@@ -3811,6 +3654,163 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     local easedT = 1 - (oscillation * decay)
 
     return F.InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
+end
+
+--- Linearly interpolate between two angles, taking the shortest path.
+-- **Why use LerpAngle instead of Lerp for angles?**
+-- 
+-- Lerp treats angles as linear numbers:
+--
+--      LuaUtil.Lerp(350°, 10°, 0.5) = 180° ❌ (rotates 170° the long way!)
+-- 
+-- LerpAngle calculates shortest rotation path:
+--
+--      LuaUtil.LerpAngle(350°, 10°, 0.5) = 0° ✅ (rotates 10° through 0°/360° boundary)
+--
+-- This prevents objects from "spinning wildly" when rotating across 0°/360°.
+--
+--- **IMPORTANT: When NOT to use LerpAngle**
+-- 
+-- LerpAngle calculates the SHORTEST path between angles.
+--
+-- This means:
+--
+-- - 0° → 360° = 0° rotation (they're the same angle!)
+-- - For FULL 360° rotation, use Lerp instead
+--
+-- **Use LerpAngle for:**
+--
+-- - Shortest rotation to target (enemy, turret, compass)
+-- - Door/lid opening (0° → 90° type rotations)
+-- - Any rotation where direction doesn't matter
+--
+-- **Use Lerp for:**
+--
+-- - Full 360° camera orbit (specific direction)
+-- - Multiple rotations (0° → 720° = 2 full circles)
+-- - Continuous rotation (0° → 1000°)
+--
+-- **Problem with regular Lerp:**
+-- <table class="tableSP">
+-- <tr><th>Start</th><th>End</th><th>Lerp result</th><th>Problem</th></tr>
+-- <tr><td>350°</td><td>10°</td><td>180°</td><td>Goes the LONG way (340° turn!)</td></tr>
+-- <tr><td>10°</td><td>350°</td><td>180°</td><td>Goes the LONG way (340° turn!)</td></tr>
+-- <tr><td>270°</td><td>90°</td><td>180°</td><td>Correct by chance</td></tr>
+-- </table>
+--
+-- <br>**Solution with LerpAngle:**
+--
+-- <table class="tableSP">
+-- <tr><th>Start</th><th>End</th><th>LerpAngle result</th><th>Result</th></tr>
+-- <tr><td>350°</td><td>10°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
+-- <tr><td>10°</td><td>350°</td><td>0° (360°)</td><td>SHORT way (20° turn through 0°)</td></tr>
+-- <tr><td>270°</td><td>90°</td><td>180°</td><td>SHORT way (180° turn)</td></tr>
+-- </table>
+--
+-- @tparam float a Start angle (in degrees).
+-- @tparam float b End angle (in degrees).
+-- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam[opt=0] float minValue Minimum angle of range (default: 0 for 0-360°).
+-- @tparam[opt=360] float maxValue Maximum angle of range (default: 360 for 0-360°).
+-- @treturn[1] float The interpolated angle, taking the shortest path.
+-- @treturn[2] float Value `a` if an error occurs.
+-- @usage
+-- -- Basic example: Why LerpAngle is needed
+-- local angle1 = LuaUtil.Lerp(350, 10, 0.5)        -- Result: 180° (WRONG! Long way)
+-- local angle2 = LuaUtil.LerpAngle(350, 10, 0.5)   -- Result: 0° (CORRECT! Short way)
+--
+-- -- Demonstration: Rotating from 350° to 10° (should cross 0°/360°)
+-- --   t    | Lerp  | LerpAngle | Correct?
+-- --  ------|-------|-----------|----------
+-- --  0.00  | 350   | 350       | ✓
+-- --  0.25  | 265   | 355       | ✓ (short path)
+-- --  0.50  | 180   | 0         | ✓ (crosses boundary)
+-- --  0.75  | 95    | 5         | ✓ (short path)
+-- --  1.00  | 10    | 10        | ✓
+--
+-- -- Real-world example 1: 2D sprite pointing towards mouse cursor
+-- -- DisplaySprite uses single float for rotation, perfect use case for LerpAngle!
+-- local arrowSprite = TEN.View.DisplaySprite(1354, 16, TEN.Vec2(400, 300), 0, TEN.Vec2(3, 3))
+-- local rotationSpeed = 0.1  -- How fast the arrow rotates (0.0-1.0)
+--
+-- LevelFuncs.OnLoop = function()
+--     local mousePos = TEN.Input.GetMouseDisplayPosition()
+--     local arrowPos = arrowSprite:GetPosition()
+--     
+--     -- Calculate angle from arrow to mouse
+--     local dx = mousePos.x - arrowPos.x
+--     local dy = mousePos.y - arrowPos.y
+--     local targetAngle = math.atan(dy, dx) * (180 / math.pi)  -- Convert radians to degrees
+--     
+--     -- Smoothly rotate arrow towards mouse using shortest path
+--     local currentAngle = arrowSprite:GetRotation()
+--     local newAngle = LuaUtil.LerpAngle(currentAngle, targetAngle, rotationSpeed)
+--     arrowSprite:SetRotation(newAngle)
+--     
+--     arrowSprite:Draw()
+-- end
+--
+-- -- Real-world example 2: HUD compass needle rotating to point north
+-- -- Perfect for 2D UI elements that need smooth rotation
+-- -- Uses speedometer needle sprite from base WAD (points down by default, so we add 180° offset)
+-- local objID = TEN.Objects.ObjID.SPEEDOMETER_GRAPHICS
+-- local compassNeedle = TEN.View.DisplaySprite(objID, 1, TEN.Vec2(80, 80), 0, TEN.Vec2(20, 20))
+--
+-- LevelFuncs.OnLoop = function()
+--     -- Get player's current yaw (facing direction)
+--     local playerYaw = Lara:GetRotation().y
+--     
+--     -- Calculate angle to north
+--     -- Add 180° offset because the sprite points down by default
+--     local needleTargetAngle = -playerYaw + 180
+--     
+--     -- Smoothly rotate needle towards north using shortest path
+--     local currentNeedleAngle = compassNeedle:GetRotation()
+--     local newNeedleAngle = LuaUtil.LerpAngle(currentNeedleAngle, needleTargetAngle, 0.15)
+--     compassNeedle:SetRotation(newNeedleAngle)
+--     
+--     compassNeedle:Draw()
+-- end
+LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
+    minValue = minValue or 0
+    maxValue = maxValue or 360
+
+    if not (IsNumber(a) and IsNumber(b) and IsNumber(t)) then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: a, b, and t must be numbers.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    if not (IsNumber(minValue) and IsNumber(maxValue)) then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue and maxValue must be numbers.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    if minValue >= maxValue then
+        TEN.Util.PrintLog("Error in LuaUtil.LerpAngle: minValue must be less than maxValue.", TEN.Util.LogLevel.ERROR)
+        return a
+    end
+
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
+
+    -- Normalize angles to range
+    a = LuaUtil.WrapAngle(a, minValue, maxValue)
+    b = LuaUtil.WrapAngle(b, minValue, maxValue)
+
+    -- Calculate shortest delta
+    local delta = b - a
+    local range = maxValue - minValue
+
+    -- Wrap delta to [-range/2, range/2] for shortest path
+    if delta > range / 2 then
+        delta = delta - range
+    elseif delta < -range / 2 then
+        delta = delta + range
+    end
+
+    -- Interpolate and wrap result
+    local result = a + delta * t
+    return LuaUtil.WrapAngle(result, minValue, maxValue)
 end
 
 --- Interpolates between two colors in specified color space with options.
