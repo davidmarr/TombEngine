@@ -207,6 +207,7 @@ namespace TEN::Renderer::Native::DirectX11
 		void Initialize() override;
 		std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height) override;
 		std::string GetDefaultAdapterName() override;
+		AdapterInfo GetAdapterInfo() override;
 		void ResizeSwapChain(int width, int height) override;
 
 		std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) override;

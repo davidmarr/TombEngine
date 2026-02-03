@@ -3,6 +3,7 @@
 #ifdef SDL_PLATFORM_WIN32
 
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
+#include "Renderer/Native/DirectX11/DX11ErrorHelper.h"
 #include "Specific/EngineMain.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
@@ -483,7 +484,7 @@ namespace TEN::Renderer::Native::DirectX11
 		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _subtractiveBlendState.GetAddressOf()));
+		throwIfFailed(_device->CreateBlendState(&blendStateDesc, _subtractiveBlendState.GetAddressOf()));
 
 		blendStateDesc.AlphaToCoverageEnable = false;
 		blendStateDesc.IndependentBlendEnable = false;
@@ -495,7 +496,7 @@ namespace TEN::Renderer::Native::DirectX11
 		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _screenBlendState.GetAddressOf()));
+		throwIfFailed(_device->CreateBlendState(&blendStateDesc, _screenBlendState.GetAddressOf()));
 
 		blendStateDesc.AlphaToCoverageEnable = false;
 		blendStateDesc.IndependentBlendEnable = false;
@@ -507,7 +508,7 @@ namespace TEN::Renderer::Native::DirectX11
 		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_DEST_ALPHA;
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _lightenBlendState.GetAddressOf()));
+		throwIfFailed(_device->CreateBlendState(&blendStateDesc, _lightenBlendState.GetAddressOf()));
 
 		blendStateDesc.AlphaToCoverageEnable = false;
 		blendStateDesc.IndependentBlendEnable = false;
@@ -519,7 +520,7 @@ namespace TEN::Renderer::Native::DirectX11
 		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _excludeBlendState.GetAddressOf()));
+		throwIfFailed(_device->CreateBlendState(&blendStateDesc, _excludeBlendState.GetAddressOf()));
 
 		blendStateDesc.AlphaToCoverageEnable = false;
 		blendStateDesc.IndependentBlendEnable = true;
@@ -539,7 +540,7 @@ namespace TEN::Renderer::Native::DirectX11
 		blendStateDesc.RenderTarget[1].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 		blendStateDesc.RenderTarget[1].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendStateDesc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_RED;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _transparencyBlendState.GetAddressOf()));
+		throwIfFailed(_device->CreateBlendState(&blendStateDesc, _transparencyBlendState.GetAddressOf()));
 
 		blendStateDesc.AlphaToCoverageEnable = false;
 		blendStateDesc.IndependentBlendEnable = false;
@@ -551,7 +552,7 @@ namespace TEN::Renderer::Native::DirectX11
 		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		Utils::throwIfFailed(_device->CreateBlendState(&blendStateDesc, _finalTransparencyBlendState.GetAddressOf()));
+		throwIfFailed(_device->CreateBlendState(&blendStateDesc, _finalTransparencyBlendState.GetAddressOf()));
 
 		D3D11_SAMPLER_DESC shadowSamplerDesc = {};
 		shadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -559,7 +560,7 @@ namespace TEN::Renderer::Native::DirectX11
 		shadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 		shadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
 		shadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-		Utils::throwIfFailed(_device->CreateSamplerState(&shadowSamplerDesc, _shadowSampler.GetAddressOf()));
+		throwIfFailed(_device->CreateSamplerState(&shadowSamplerDesc, _shadowSampler.GetAddressOf()));
 		_shadowSampler->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof("ShadowSampler") - 1, "ShadowSampler");
 
 		D3D11_RASTERIZER_DESC rasterizerStateDesc = {};
@@ -570,7 +571,7 @@ namespace TEN::Renderer::Native::DirectX11
 		rasterizerStateDesc.MultisampleEnable = true;
 		rasterizerStateDesc.AntialiasedLineEnable = true;
 		rasterizerStateDesc.ScissorEnable = true;
-		Utils::throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullCounterClockwiseRasterizerState.GetAddressOf()));
+		throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullCounterClockwiseRasterizerState.GetAddressOf()));
 
 		rasterizerStateDesc.CullMode = D3D11_CULL_FRONT;
 		rasterizerStateDesc.FillMode = D3D11_FILL_SOLID;
@@ -578,7 +579,7 @@ namespace TEN::Renderer::Native::DirectX11
 		rasterizerStateDesc.MultisampleEnable = true;
 		rasterizerStateDesc.AntialiasedLineEnable = true;
 		rasterizerStateDesc.ScissorEnable = true;
-		Utils::throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullClockwiseRasterizerState.GetAddressOf()));
+		throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullClockwiseRasterizerState.GetAddressOf()));
 
 		rasterizerStateDesc.CullMode = D3D11_CULL_NONE;
 		rasterizerStateDesc.FillMode = D3D11_FILL_SOLID;
@@ -586,7 +587,7 @@ namespace TEN::Renderer::Native::DirectX11
 		rasterizerStateDesc.MultisampleEnable = true;
 		rasterizerStateDesc.AntialiasedLineEnable = true;
 		rasterizerStateDesc.ScissorEnable = true;
-		Utils::throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullNoneRasterizerState.GetAddressOf()));
+		throwIfFailed(_device->CreateRasterizerState(&rasterizerStateDesc, _cullNoneRasterizerState.GetAddressOf()));
 
 		D3D11_SAMPLER_DESC samplerStateDesc = {};
 		samplerStateDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
@@ -598,7 +599,7 @@ namespace TEN::Renderer::Native::DirectX11
 		samplerStateDesc.MipLODBias = 0;
 		samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		samplerStateDesc.MaxAnisotropy = 1;
-		Utils::throwIfFailed(_device->CreateSamplerState(&samplerStateDesc, _pointWrapSamplerState.GetAddressOf()));
+		throwIfFailed(_device->CreateSamplerState(&samplerStateDesc, _pointWrapSamplerState.GetAddressOf()));
 	}
 
 	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::InitializeSwapChain(int width, int height)
@@ -641,21 +642,21 @@ namespace TEN::Renderer::Native::DirectX11
 		sd.BufferCount = 1;
 		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		ComPtr<IDXGIDevice> dxgiDevice;
-		Utils::throwIfFailed(_device.As(&dxgiDevice));
+		throwIfFailed(_device.As(&dxgiDevice));
 
 		ComPtr<IDXGIAdapter> dxgiAdapter;
-		Utils::throwIfFailed(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), &dxgiAdapter));
+		throwIfFailed(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), &dxgiAdapter));
 
 		ComPtr<IDXGIFactory> dxgiFactory;
-		Utils::throwIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), &dxgiFactory));
+		throwIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), &dxgiFactory));
 
-		Utils::throwIfFailed(dxgiFactory->CreateSwapChain(_device.Get(), &sd, &_swapChain));
+		throwIfFailed(dxgiFactory->CreateSwapChain(_device.Get(), &sd, &_swapChain));
 
 		dxgiFactory->MakeWindowAssociation(_handle, DXGI_MWA_NO_ALT_ENTER);
 
 		// Initialize render targets
 		ID3D11Texture2D* backBufferTexture = NULL;
-		Utils::throwIfFailed(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast <void**>(&backBufferTexture)));
+		throwIfFailed(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast <void**>(&backBufferTexture)));
 
 		_viewportToolkit = Viewport(0, 0, width, height, 0.0f, 1.0f);
 
@@ -686,13 +687,13 @@ namespace TEN::Renderer::Native::DirectX11
 				levels, 1, D3D11_SDK_VERSION, &_device, &featureLevel, &_context);
 		}
 
-		Utils::throwIfFailed(res);
+		throwIfFailed(res);
 	}
 
 	std::string DX11GraphicsDevice::GetDefaultAdapterName()
 	{
 		IDXGIFactory* dxgiFactory = NULL;
-		Utils::throwIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
+		throwIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
 
 		IDXGIAdapter* dxgiAdapter = NULL;
 
@@ -706,6 +707,33 @@ namespace TEN::Renderer::Native::DirectX11
 		return TEN::Utils::ToString(adapterDesc.Description);
 	}
 
+	AdapterInfo DX11GraphicsDevice::GetAdapterInfo()
+	{
+		IDXGIFactory* dxgiFactory = NULL;
+		throwIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
+
+		IDXGIAdapter* dxgiAdapter = NULL;
+		dxgiFactory->EnumAdapters(0, &dxgiAdapter);
+
+		DXGI_ADAPTER_DESC adapterDesc = {};
+		dxgiAdapter->GetDesc(&adapterDesc);
+
+		dxgiAdapter->Release();
+		dxgiFactory->Release();
+
+		auto info = AdapterInfo{};
+		info.Name = TEN::Utils::ToString(adapterDesc.Description);
+		info.VendorId = adapterDesc.VendorId;
+		info.DeviceId = adapterDesc.DeviceId;
+		info.SubSysId = adapterDesc.SubSysId;
+		info.Revision = adapterDesc.Revision;
+		info.DedicatedVideoMemory = adapterDesc.DedicatedVideoMemory;
+		info.DedicatedSystemMemory = adapterDesc.DedicatedSystemMemory;
+		info.SharedSystemMemory = adapterDesc.SharedSystemMemory;
+
+		return info;
+	}
+
 	void DX11GraphicsDevice::ResizeSwapChain(int width, int height)
 	{
 		ID3D11RenderTargetView* nullViews[] = { nullptr };
@@ -714,14 +742,14 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->ClearState();
 
 		IDXGIOutput* output;
-		Utils::throwIfFailed(_swapChain->GetContainingOutput(&output));
+		throwIfFailed(_swapChain->GetContainingOutput(&output));
 
 		DXGI_SWAP_CHAIN_DESC scd;
-		Utils::throwIfFailed(_swapChain->GetDesc(&scd));
+		throwIfFailed(_swapChain->GetDesc(&scd));
 
 		unsigned int numModes = 1024;
 		DXGI_MODE_DESC modes[1024];
-		Utils::throwIfFailed(output->GetDisplayModeList(scd.BufferDesc.Format, 0, &numModes, modes));
+		throwIfFailed(output->GetDisplayModeList(scd.BufferDesc.Format, 0, &numModes, modes));
 
 		DXGI_MODE_DESC* mode = &modes[0];
 		for (unsigned int i = 0; i < numModes; i++)
@@ -731,7 +759,7 @@ namespace TEN::Renderer::Native::DirectX11
 				break;
 		}
 
-		Utils::throwIfFailed(_swapChain->ResizeTarget(mode));
+		throwIfFailed(_swapChain->ResizeTarget(mode));
 
 		_screenWidth = width;
 		_screenHeight = height;

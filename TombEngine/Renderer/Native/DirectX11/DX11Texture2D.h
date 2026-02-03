@@ -7,12 +7,11 @@
 #include <WICTextureLoader.h>
 #include <DDSTextureLoader.h>
 #include "Renderer/Native/DirectX11/DX11TextureBase.h"
-#include "Renderer/RendererUtils.h"
 #include "Renderer/Graphics/ITexture2D.h"
+#include "Renderer/Graphics/VRAMAllocation.h"
 
 namespace TEN::Renderer::Native::DirectX11
 {
-	using namespace TEN::Renderer::Utils;
 	using namespace TEN::Renderer::Graphics;
 	using namespace DirectX;
 
@@ -25,11 +24,12 @@ namespace TEN::Renderer::Native::DirectX11
 		int _height;
 		ComPtr<ID3D11Texture2D> _texture;
 		ComPtr<ID3D11ShaderResourceView> _shaderResourceView;
+		VRAMAllocation _vram;
 
 	public:
 		DX11Texture2D() = default;
 		~DX11Texture2D() = default;
-		
+
 		int GetWidth() override { return _width; }
 		int GetHeight() override { return _height; }
 		ID3D11ShaderResourceView* GetD3D11ShaderResourceView() const noexcept { return _shaderResourceView.Get(); }

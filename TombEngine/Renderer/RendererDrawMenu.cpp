@@ -1,5 +1,6 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/Graphics/VRAMTracker.h"
 
 #include "Game/Animation/Animation.h"
 #include "Game/control/control.h"
@@ -1586,6 +1587,27 @@ namespace TEN::Renderer
 			PrintDebugMessage("Constant buffer updates: %d", _numConstantBufferUpdates);
 			PrintDebugMessage("Material updates: %d requested, %d executed", _numRequestedMaterialsUpdates, _numExecutedMaterialsUpdates);
 			break;
+
+		case RendererDebugPage::MemoryStats:
+		{
+			auto& vram = Graphics::VRAMTracker::Get();
+			const auto& adapter = vram.GetAdapterInfo();
+			auto toMB = [](size_t bytes) { return bytes / (1024.0f * 1024.0f); };
+
+			PrintDebugMessage("MEMORY STATS");
+			PrintDebugMessage(" ");
+			PrintDebugMessage("GPU: %s", adapter.Name.c_str());
+			PrintDebugMessage("Installed VRAM: %.0f MB", toMB(adapter.DedicatedVideoMemory));
+			PrintDebugMessage("Dedicated System Memory: %.0f MB", toMB(adapter.DedicatedSystemMemory));
+			PrintDebugMessage("Shared System Memory: %.0f MB", toMB(adapter.SharedSystemMemory));
+			PrintDebugMessage(" ");
+			PrintDebugMessage("Tracked VRAM Usage: %.2f MB", toMB(vram.GetTotal()));
+			PrintDebugMessage("    Textures: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::Texture)));
+			PrintDebugMessage("    Render Targets: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::RenderTarget)));
+			PrintDebugMessage("    Vertex Buffers: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::VertexBuffer)));
+			PrintDebugMessage("    Index Buffers: %.2f MB", toMB(vram.GetCategory(Graphics::VRAMCategory::IndexBuffer)));
+			break;
+		}
 
 		case RendererDebugPage::DimensionStats:
 			PrintDebugMessage("DIMENSION STATS");

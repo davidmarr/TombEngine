@@ -11,6 +11,7 @@
 #include "Specific/Video/Video.h"
 #include "Specific/EngineMain.h"
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
+#include "Renderer/Graphics/VRAMTracker.h"
 
 extern GameConfiguration g_Configuration;
 
@@ -387,6 +388,10 @@ namespace TEN::Renderer
 
 		_graphicsDevice = std::make_unique<TEN::Renderer::Native::DirectX11::DX11GraphicsDevice>();
 		_graphicsDevice->CreateDevice();
+
+		// Populate adapter info and store in VRAM tracker.
+		_adapterInfo = _graphicsDevice->GetAdapterInfo();
+		Graphics::VRAMTracker::Get().SetAdapterInfo(_adapterInfo);
 
 		// Initialize shader manager.
 		_shaders.Initialize(_graphicsDevice.get());

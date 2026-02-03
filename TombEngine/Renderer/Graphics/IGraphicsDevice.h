@@ -17,6 +17,7 @@
 #include "Renderer/Graphics/ISpriteBatch.h"
 #include "Renderer/Graphics/ISpriteFont.h"
 #include "Renderer/RendererEnums.h"
+#include "Renderer/Graphics/AdapterInfo.h"
 #include "Renderer/Structures/RendererRectangle.h"
 #include "Renderer/Structures/RendererInputLayout.h"
 #include "Renderer/Structures/RendererViewport.h"
@@ -92,6 +93,7 @@ namespace TEN::Renderer::Graphics
 		virtual void Initialize() = 0;
 		virtual std::unique_ptr<IRenderSurface2D> InitializeSwapChain(int width, int height) = 0;
 		virtual std::string GetDefaultAdapterName() = 0;
+		virtual AdapterInfo GetAdapterInfo() = 0;
 		virtual void ResizeSwapChain(int width, int height) = 0;
 
 		virtual std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) = 0;

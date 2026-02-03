@@ -3,6 +3,8 @@
 #ifdef SDL_PLATFORM_WIN32
 
 #include "Renderer/Native/DirectX11/DX11Texture2D.h"
+#include "Renderer/Native/DirectX11/DX11ErrorHelper.h"
+#include "Renderer/Native/DirectX11/DX11Utils.h"
 #include "Specific/trutils.h"
 
 namespace TEN::Renderer::Native::DirectX11
@@ -34,7 +36,8 @@ namespace TEN::Renderer::Native::DirectX11
 		subresourceData.SysMemSlicePitch = 0;
 
 		res = device->CreateTexture2D(&desc, &subresourceData, _texture.GetAddressOf());
-		throwIfFailed(res);
+		throwIfFailed(res, device,
+			"CreateTexture2D (" + std::to_string(width) + "x" + std::to_string(height) + " RGBA8_UNORM):");
 
 		// SRV
 		auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
@@ -43,7 +46,14 @@ namespace TEN::Renderer::Native::DirectX11
 		shaderDesc.Texture2D.MostDetailedMip = 0;
 		shaderDesc.Texture2D.MipLevels = 1;
 		res = device->CreateShaderResourceView(_texture.Get(), &shaderDesc, _shaderResourceView.GetAddressOf());
-		throwIfFailed(res);
+		throwIfFailed(res, device,
+			"CreateSRV for Texture2D (" + std::to_string(width) + "x" + std::to_string(height) + "):");
+
+		int vramSize = ComputeTextureSize(width, height, 1, 1, desc.Format);
+		_vram = VRAMAllocation(VRAMCategory::Texture, vramSize,
+			"Texture2D allocated: " + std::to_string(width) + "x" + std::to_string(height) +
+			" " + DXGIFormatToString(desc.Format) +
+			" (" + BytesToMBString(vramSize) + " MB)");
 	}
 
 	DX11Texture2D::DX11Texture2D(ID3D11Device* device, int width, int height, DXGI_FORMAT format)
@@ -67,6 +77,11 @@ namespace TEN::Renderer::Native::DirectX11
 		desc.SampleDesc.Quality = 0;
 		desc.Usage = D3D11_USAGE_DYNAMIC;
 
+		res = device->CreateTexture2D(&desc, nullptr, _texture.GetAddressOf());
+		throwIfFailed(res, device,
+			"CreateTexture2D (" + std::to_string(width) + "x" + std::to_string(height) +
+			" " + DXGIFormatToString(format) + "):");
+
 		// SRV
 		auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
 		shaderDesc.Format = desc.Format;
@@ -74,7 +89,15 @@ namespace TEN::Renderer::Native::DirectX11
 		shaderDesc.Texture2D.MostDetailedMip = 0;
 		shaderDesc.Texture2D.MipLevels = 1;
 		res = device->CreateShaderResourceView(_texture.Get(), &shaderDesc, _shaderResourceView.GetAddressOf());
-		throwIfFailed(res);
+		throwIfFailed(res, device,
+			"CreateSRV for Texture2D (" + std::to_string(width) + "x" + std::to_string(height) +
+			" " + DXGIFormatToString(format) + "):");
+
+		int vramSize = ComputeTextureSize(width, height, 1, 1, format);
+		_vram = VRAMAllocation(VRAMCategory::Texture, vramSize,
+			"Texture2D allocated: " + std::to_string(width) + "x" + std::to_string(height) +
+			" " + DXGIFormatToString(format) +
+			" (" + BytesToMBString(vramSize) + " MB)");
 	}
 
 	DX11Texture2D::DX11Texture2D(ID3D11Device* device, int width, int height, DXGI_FORMAT format, int pitch, const void* data)
@@ -104,7 +127,9 @@ namespace TEN::Renderer::Native::DirectX11
 		subresourceData.SysMemSlicePitch = 0;
 
 		res = device->CreateTexture2D(&desc, &subresourceData, _texture.GetAddressOf());
-		throwIfFailed(res);
+		throwIfFailed(res, device,
+			"CreateTexture2D (" + std::to_string(width) + "x" + std::to_string(height) +
+			" " + DXGIFormatToString(format) + "):");
 
 		// SRV
 		auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
@@ -113,7 +138,15 @@ namespace TEN::Renderer::Native::DirectX11
 		shaderDesc.Texture2D.MostDetailedMip = 0;
 		shaderDesc.Texture2D.MipLevels = 1;
 
-		throwIfFailed(device->CreateShaderResourceView(_texture.Get(), &shaderDesc, _shaderResourceView.GetAddressOf()));
+		res = device->CreateShaderResourceView(_texture.Get(), &shaderDesc, _shaderResourceView.GetAddressOf());
+		throwIfFailed(res, device,
+			"CreateSRV for Texture2D (" + std::to_string(width) + "x" + std::to_string(height) + "):");
+
+		int vramSize = ComputeTextureSize(width, height, 1, 1, format);
+		_vram = VRAMAllocation(VRAMCategory::Texture, vramSize,
+			"Texture2D allocated: " + std::to_string(width) + "x" + std::to_string(height) +
+			" " + DXGIFormatToString(format) +
+			" (" + BytesToMBString(vramSize) + " MB)");
 	}
 
 	DX11Texture2D::DX11Texture2D(ID3D11Device* device, const std::wstring& fileName)
@@ -128,13 +161,19 @@ namespace TEN::Renderer::Native::DirectX11
 		throwIfFailed(res, L"Opening Texture file '" + fileName + L"': ");
 
 		res = resource->QueryInterface(_texture.GetAddressOf());
-		throwIfFailed(res);
+		throwIfFailed(res, device, "QueryInterface for Texture2D from file:");
 
 		D3D11_TEXTURE2D_DESC desc;
 		_texture->GetDesc(&desc);
 
 		_width = desc.Width;
 		_height = desc.Height;
+
+		int vramSize = ComputeTextureSize(desc.Width, desc.Height, desc.ArraySize, desc.MipLevels, desc.Format);
+		_vram = VRAMAllocation(VRAMCategory::Texture, vramSize,
+			"Texture2D allocated: " + std::to_string(desc.Width) + "x" + std::to_string(desc.Height) +
+			" " + DXGIFormatToString(desc.Format) + " mips=" + std::to_string(desc.MipLevels) +
+			" (" + BytesToMBString(vramSize) + " MB)");
 	}
 
 	DX11Texture2D::DX11Texture2D(ID3D11Device* device, byte* data, int length)
@@ -155,7 +194,7 @@ namespace TEN::Renderer::Native::DirectX11
 				length,
 				resource.GetAddressOf(),
 				_shaderResourceView.GetAddressOf());
-			throwIfFailed(res);
+			throwIfFailed(res, device, "CreateDDSTextureFromMemory (" + std::to_string(length) + " bytes):");
 		}
 		else
 		{
@@ -167,18 +206,25 @@ namespace TEN::Renderer::Native::DirectX11
 				length,
 				resource.GetAddressOf(),
 				_shaderResourceView.GetAddressOf());
-			throwIfFailed(res);
+			throwIfFailed(res, device, "CreateWICTextureFromMemory (" + std::to_string(length) + " bytes):");
 		}
 
 		context->GenerateMips(_shaderResourceView.Get());
 
-		throwIfFailed(resource->QueryInterface(_texture.GetAddressOf()));
+		res = resource->QueryInterface(_texture.GetAddressOf());
+		throwIfFailed(res, device, "QueryInterface for Texture2D from memory:");
 
 		D3D11_TEXTURE2D_DESC desc;
 		_texture->GetDesc(&desc);
 
 		_width = desc.Width;
 		_height = desc.Height;
+
+		int vramSize = ComputeTextureSize(desc.Width, desc.Height, desc.ArraySize, desc.MipLevels, desc.Format);
+		_vram = VRAMAllocation(VRAMCategory::Texture, vramSize,
+			"Texture2D allocated: " + std::to_string(desc.Width) + "x" + std::to_string(desc.Height) +
+			" " + DXGIFormatToString(desc.Format) + " mips=" + std::to_string(desc.MipLevels) +
+			" (" + BytesToMBString(vramSize) + " MB)");
 	}
 }
 
