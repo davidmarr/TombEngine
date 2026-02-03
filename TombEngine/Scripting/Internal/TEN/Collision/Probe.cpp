@@ -1,12 +1,13 @@
 #include "framework.h"
 #include "Scripting/Internal/TEN/Collision/Probe.h"
-#include "Scripting/Internal/TEN/Collision/MaterialTypes.h"
 
 #include "Game/collision/Point.h"
 #include "Game/Lara/lara_climb.h"
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
+#include "Scripting/Internal/TEN/Collision/MaterialTypes.h"
+#include "Scripting/Internal/TEN/Collision/Los.h"
 #include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
 #include "Scripting/Internal/TEN/Objects/Room/RoomObject.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
@@ -367,16 +368,5 @@ namespace TEN::Scripting::Collision
 			DrawDebugTarget(waterSurfacePos, Quaternion::Identity, TARGET_RADIUS, COLOR, DEBUG_PAGE);
 			DrawDebugLine(pos, waterSurfacePos, COLOR, DEBUG_PAGE);
 		}
-	}
-
-	void Register(sol::state* state, sol::table& parent)
-	{
-		auto collTable = sol::table(state->lua_state(), sol::create);
-		parent.set(ScriptReserved_Collision, collTable);
-
-		Probe::Register(collTable);
-
-		auto handler = LuaHandler(state);
-		handler.MakeReadOnlyTable(collTable, ScriptReserved_MaterialType, MATERIAL_TYPES);
 	}
 }

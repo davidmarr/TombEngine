@@ -37,7 +37,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed water resurfacing threshold. The player will now resurface when half of the head is above the surface.
 * Fixed animated textures appearing incorrectly when also alpha blended faces were involved.
 * Fixed random textures appearing on enemy gunflashes.
-* Fixed flickering pickup highlighter item count in high FPS mode.
+* Fixed flickering pickup summary item count in high FPS mode.
 * Fixed flickering debug page information.
 * Fixed linear inventory not fading ammo and combine selectors.
 
@@ -45,6 +45,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added new `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
 * Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
 * Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
+* Added `Collision.Ray` class for raycasting to detect rooms, items, and static meshes.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `Strings.DisplayStringOption.VERTICAL_BOTTOM` flag.
