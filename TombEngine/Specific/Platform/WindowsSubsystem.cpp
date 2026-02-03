@@ -321,6 +321,27 @@ namespace TEN::Platform
 		CoUninitialize();
 	}
 
+	std::wstring WindowsSubsystem::GetBinaryPath(bool includeExeName)
+	{
+		static const int MAX_PATH_LENGTH = 1024;
+		wchar_t fileName[MAX_PATH_LENGTH] = {};
+
+		if (!GetModuleFileNameW(nullptr, fileName, MAX_PATH_LENGTH))
+		{
+			TENLog("Can't get current assembly path", LogLevel::Error);
+			return std::wstring();
+		}
+
+		auto result = std::wstring(fileName);
+		std::replace(result.begin(), result.end(), '\\', '/');
+
+		if (includeExeName)
+			return result;
+
+		size_t pos = result.find_last_of(L"/");
+		return (pos != std::wstring::npos) ? result.substr(0, pos + 1) : std::wstring();
+	}
+
 	std::vector<unsigned short> WindowsSubsystem::GetProductOrFileVersion(bool productVersion)
 	{
 		auto fileName = GetBinaryPath(true);

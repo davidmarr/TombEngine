@@ -168,7 +168,7 @@ namespace TEN::Video
 	{
 		TENLog("Initializing video player...", LogLevel::Info);
 
-		auto pluginCachePath = GetBinaryPath(false) + VIDEO_PLUGIN_CACHE_PATH;
+		auto pluginCachePath = g_Platform->GetBinaryPath(false) + VIDEO_PLUGIN_CACHE_PATH;
 
 		std::vector<const char*> vlcArgs;
 		vlcArgs.push_back("--vout=none");		 // Disable video output and title because rendering is done to a D3D texture.
