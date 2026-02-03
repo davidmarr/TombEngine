@@ -78,7 +78,7 @@ namespace TEN::Renderer::Graphics
 			desc.MiscFlags = 0x0;
 
 			HRESULT res = device->CreateTexture2D(&desc, NULL, Texture.GetAddressOf());
-			throwIfFailed(res, device, "CreateTexture2D (texture array color): ");
+			throwIfFailed(res, device, "CreateTexture2D (texture array color)");
 
 			_vramSize = VRAMTracker::ComputeTexture2DSize(desc);
 
@@ -91,7 +91,7 @@ namespace TEN::Renderer::Graphics
 			{
 				viewDesc.Texture2DArray.FirstArraySlice = D3D11CalcSubresource(0, i, 1);
 				res = device->CreateRenderTargetView(Texture.Get(), &viewDesc, RenderTargetView[i].GetAddressOf());
-				throwIfFailed(res, device, "CreateRenderTargetView (texture array slice " + std::to_string(i) + "): ");
+				throwIfFailed(res, device, "CreateRenderTargetView (texture array slice " + std::to_string(i) + ")");
 			}
 
 			// Setup the description of the shader resource view.
@@ -103,7 +103,7 @@ namespace TEN::Renderer::Graphics
 			shaderDesc.Texture2DArray.ArraySize = count;
 			shaderDesc.Texture2DArray.FirstArraySlice = 0;
 			res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf());
-			throwIfFailed(res, device, "CreateSRV (texture array): ");
+			throwIfFailed(res, device, "CreateSRV (texture array)");
 
 			D3D11_TEXTURE2D_DESC depthTexDesc = {};
 			depthTexDesc.Width = resolution;
@@ -119,7 +119,7 @@ namespace TEN::Renderer::Graphics
 			depthTexDesc.MiscFlags = 0x0;
 
 			res = device->CreateTexture2D(&depthTexDesc, NULL, DepthStencilTexture.GetAddressOf());
-			throwIfFailed(res, device, "CreateTexture2D (texture array depth): ");
+			throwIfFailed(res, device, "CreateTexture2D (texture array depth)");
 
 			_vramSize += VRAMTracker::ComputeTexture2DSize(depthTexDesc);
 
@@ -133,7 +133,7 @@ namespace TEN::Renderer::Graphics
 			{
 				dsvDesc.Texture2DArray.FirstArraySlice = D3D11CalcSubresource(0, i, 1);
 				res = device->CreateDepthStencilView(DepthStencilTexture.Get(), &dsvDesc, DepthStencilView[i].GetAddressOf());
-				throwIfFailed(res, device, "CreateDepthStencilView (texture array slice " + std::to_string(i) + "): ");
+				throwIfFailed(res, device, "CreateDepthStencilView (texture array slice " + std::to_string(i) + ")");
 			}
 
 			VRAMTracker::Get().Add(VRAMCategory::RenderTarget, _vramSize);
