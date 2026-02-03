@@ -2499,88 +2499,112 @@ end
 -- Utilities for interpolating between values.
 -- Different interpolation methods provide various speed curves and behaviors.
 --
--- **IMPORTANT: Using interpolation functions with TEN primitives**
+-- <h3>Interpolation methods comparison:</h3>
+-- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
+-- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;} .tableSP tr:hover {background-color: #ddd;}</style>
+-- <table class="tableSP">
+-- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
+-- <tr><td>`Lerp`</td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations, mechanical movements</td></tr>
+-- <tr><td>`Smoothstep`</td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions, standard animations</td></tr>
+-- <tr><td>`Smootherstep`</td><td>Ultra-smooth S-curve</td><td>Very gentle ease-in/out (C² continuity)</td><td>Cinematic effects, premium visuals</td></tr>
+-- <tr><td>`EaseInOut`</td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Dramatic movements, elevators</td></tr>
+-- <tr><td>`Elastic`</td><td>Spring oscillation</td><td>Overshoot with smooth bounce back</td><td>Playful UI, cartoon effects</td></tr>
+-- <tr><td>`Bounce`</td><td>Damped oscillation</td><td>Smooth bounces with energy decay</td><td>Falling objects, ball physics, collision effects</td></tr>
+-- </table>
 --
--- When you use `LuaUtil.Lerp`, `LuaUtil.Smoothstep`, `LuaUtil.Smootherstep`, `LuaUtil.EaseInOut`, and `LuaUtil.Elastic`
+-- <br>Comparison of interpolation methods (0 to 10):
+-- <table class="tableSP">
+-- <tr><th>t</th><th>Lerp</th><th>Smoothstep</th><th>Smootherstep</th><th>EaseInOut</th><th>Elastic</th><th>Bounce</th></tr>
+-- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+-- <tr><td>0.10</td><td>1.00</td><td>0.28</td><td>0.16</td><td>0.20</td><td>-0.04</td><td>0.95</td></tr>
+-- <tr><td>0.25</td><td>2.50</td><td>1.56</td><td>1.04</td><td>1.25</td><td>0.44</td><td>3.75</td></tr>
+-- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>7.50</td></tr>
+-- <tr><td>0.75</td><td>7.50</td><td>8.44</td><td>8.96</td><td>8.75</td><td>9.56</td><td>9.82</td></tr>
+-- <tr><td>0.90</td><td>9.00</td><td>9.72</td><td>9.84</td><td>9.80</td><td>10.04</td><td>9.98</td></tr>
+-- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
+-- </table>
+--
+-- <br>IMPORTANT: Using interpolation functions with TEN primitives
+--
+-- When you use `Lerp`, `Smoothstep`, `Smootherstep`, `EaseInOut`, and `Elastic`
 -- with TEN primitives (`Rotation`, `Vec2`, `Vec3`, `Color`), these functions automatically call the native methods
 -- of those primitives (e.g., `Rotation:Lerp()`, `Vec3:Lerp()`, `Color:Lerp()`).
 --
--- **For Rotation primitives specifically:**
+-- For Rotation primitives specifically:
 --
--- - `Rotation:Lerp()` already calculates the **shortest angular distance** for each component (x, y, z)
+-- `Rotation:Lerp()` always calculates the **shortest angular distance** for each component (x, y, z)
 --
--- - `LuaUtil.LerpAngle()` is **NOT needed** when working with `Rotation` primitives
---
--- - Use `Rotation:Lerp()` directly instead of interpolating individual rotation components
---
--- **Example - CORRECT approach with Rotation:**
---
+-- Example
 --     local currentRot = obj:GetRotation()
 --     local targetRot = TEN.Rotation(0, 350, 0)
---     local newRot = currentRot:Lerp(targetRot, 0.5)  -- Automatically takes shortest path
+--     local newRot = LuaUtil.Lerp(currentRot, targetRot, 0.5)  -- Automatically takes shortest path
 --     obj:SetRotation(newRot)
 --
--- **Example - INCORRECT (redundant) approach:**
+-- <h3>Special interpolations:</h3>
+-- There are two special interpolation functions for specific use cases:
+-- <table class="tableSP">
+-- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
+-- <tr><td>`LerpAngle`</td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>2D UI sprites (compass, indicators)</td></tr>
+-- <tr><td>`InterpolateColor`</td><td>Configurable (Linear/HSL/OKLch)</td><td>Component-wise color interpolation</td><td>Color transitions, fades</td></tr>
+-- </table>
+--
+-- <br>**LerpAngle** behaves like Lerp when not crossing 0°/360° boundary.
+--
+-- When to use LerpAngle:
+--
+-- - Only when interpolating _single float values_ that represent angles (not `Rotation` primitives)
+-- - When you need custom angle ranges (e.g., -180 to 180 instead of 0-360)
+-- - External data where you only have float values
+--
+-- <br>When interpolating angles (rotations, compass, turrets):
+-- <table class="tableSP">
+-- <tr><th>Start</th><th>End</th><th>t</th><th>Lerp result</th><th>LerpAngle result</th><th>Which is correct?</th></tr>
+-- <tr><td>350°</td><td>10°</td><td>0.5</td><td>180°</td><td>0° (crosses 0°)</td><td>LerpAngle</td></tr>
+-- <tr><td>10°</td><td>350°</td><td>0.5</td><td>180°</td><td>0° (crosses 0°)</td><td>LerpAngle</td></tr>
+-- <tr><td>90°</td><td>270°</td><td>0.5</td><td>180°</td><td>180°</td><td>Both same</td></tr>
+-- <tr><td>5°</td><td>15°</td><td>0.5</td><td>10°</td><td>10°</td><td>Both same</td></tr>
+-- </table>
+--
+-- <br>LerpAngle is NOT needed when working with `Rotation` primitives
+--
+-- Example - INCORRECT (redundant) approach:
 --
 --     local currentRot = obj:GetRotation()
 --     local targetRot = TEN.Rotation(0, 350, 0)
 --     currentRot.y = LuaUtil.LerpAngle(currentRot.y, targetRot.y, 0.5)  -- Redundant!
 --     obj:SetRotation(currentRot)
 --
--- **When to use LerpAngle:**
+-- <br>**InterpolateColor** supports multiple color spaces for different use cases:
+-- 
+-- When to use each color space:
 --
--- - Only when interpolating **single float values** that represent angles (not `Rotation` primitives)
--- - When you need custom angle ranges (e.g., -180 to 180 instead of 0-360)
--- - External data where you only have float values
+-- - `RGB (0)`: Simple fades, alpha transitions, color to gray/black/white
+-- - `HSL (1)`: Rainbow effects, hue rotation, color wheel animations  
+-- - `OKLch (2)`: Perceptually uniform transitions, professional color grading
 --
--- **Interpolation methods comparison:**
--- <style> table, th, td {border: 1px solid black;} .tableSP {border-collapse: collapse; width: 100%; text-align: center; } .tableSP th {background-color: #525252; color: white; padding: 6px;}</style>
--- <style> .tableSP td {padding: 4px;} .tableSP tr:nth-child(even) {background-color: #f2f2f2;} .tableSP tr:hover {background-color: #ddd;}</style>
+-- <br>huePath options (HSL/OKLch only):
 -- <table class="tableSP">
--- <tr><th>Method</th><th>Speed curve</th><th>Behavior</th><th>Use case</th></tr>
--- <tr><td><a href="#Lerp">Lerp</a></td><td>Linear</td><td>Constant speed throughout</td><td>Simple animations, mechanical movements</td></tr>
--- <tr><td><a href="#Smoothstep">Smoothstep</a></td><td>Smooth S-curve</td><td>Gentle ease-in and ease-out</td><td>UI transitions, standard animations</td></tr>
--- <tr><td><a href="#Smootherstep">Smootherstep</a></td><td>Ultra-smooth S-curve</td><td>Very gentle ease-in/out (C² continuity)</td><td>Cinematic effects, premium visuals</td></tr>
--- <tr><td><a href="#EaseInOut">EaseInOut</a></td><td>Quadratic curve</td><td>Pronounced acceleration/deceleration</td><td>Dramatic movements, elevators</td></tr>
--- <tr><td><a href="#Elastic">Elastic</a></td><td>Spring oscillation</td><td>Overshoot with smooth bounce back</td><td>Playful UI, cartoon effects</td></tr>
--- <tr><td><a href="#Bounce">Bounce</a></td><td>Damped oscillation</td><td>Smooth bounces with energy decay</td><td>Falling objects, ball physics, collision effects</td></tr>
--- <tr><td><a href="#LerpAngle">LerpAngle</a></td><td>Linear (shortest)</td><td>Constant speed, wraps around 0°/360°</td><td>2D UI sprites (compass, indicators)</td></tr>
+-- <tr><th>huePath</th><th>Red → Cyan</th><th>Use case</th></tr>
+-- <tr><td>"shortest"</td><td>Red → Yellow → Green → Cyan</td><td>Natural transitions (default)</td></tr>
+-- <tr><td>"longest"</td><td>Red → Magenta → Blue → Cyan</td><td>Full spectrum effects</td></tr>
+-- <tr><td>"increasing"</td><td>Red → Yellow → Green → Cyan</td><td>Always clockwise (0° → 360°)</td></tr>
+-- <tr><td>"decreasing"</td><td>Red → Magenta → Blue → Cyan</td><td>Always counter-clockwise (360° → 0°)</td></tr>
 -- </table>
 --
--- <br>**Comparison of interpolation methods (0 to 10):**
--- <table class="tableSP">
--- <tr><th>t</th><th>Lerp</th><th>LerpAngle¹</th><th>Smoothstep</th><th>Smootherstep</th><th>EaseInOut</th><th>Elastic</th><th>Bounce</th></tr>
--- <tr><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
--- <tr><td>0.10</td><td>1.00</td><td>1.00</td><td>0.28</td><td>0.16</td><td>0.20</td><td>-0.04</td><td>0.95</td></tr>
--- <tr><td>0.25</td><td>2.50</td><td>2.50</td><td>1.56</td><td>1.04</td><td>1.25</td><td>0.44</td><td>3.75</td></tr>
--- <tr><td>0.50</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>5.00</td><td>7.50</td></tr>
--- <tr><td>0.75</td><td>7.50</td><td>7.50</td><td>8.44</td><td>8.96</td><td>8.75</td><td>9.56</td><td>9.82</td></tr>
--- <tr><td>0.90</td><td>9.00</td><td>9.00</td><td>9.72</td><td>9.84</td><td>9.80</td><td>10.04</td><td>9.98</td></tr>
--- <tr><td>1.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td><td>10.00</td></tr>
--- </table>
+-- <br>Additional options: `preserveSaturation` and `preserveLightness` keep the starting color's saturation/lightness throughout the transition (useful for rainbow effects with consistent intensity).
 --
--- ¹ LerpAngle behaves like Lerp when not crossing 0°/360° boundary.
---
--- <br>**When interpolating angles (rotations, compass, turrets):**
--- <table class="tableSP">
--- <tr><th>Start</th><th>End</th><th>Lerp result</th><th>LerpAngle result</th><th>Which is correct?</th></tr>
--- <tr><td>350°</td><td>10°</td><td>180°</td><td>0° (crosses 0°)</td><td>LerpAngle</td></tr>
--- <tr><td>10°</td><td>350°</td><td>180°</td><td>0° (crosses 0°)</td><td>LerpAngle</td></tr>
--- <tr><td>90°</td><td>270°</td><td>180°</td><td>180°</td><td>Both same</td></tr>
--- <tr><td>5°</td><td>15°</td><td>10°</td><td>10°</td><td>Both same</td></tr>
--- </table>
---
--- <br>**Rule of thumb:**
+-- <h3>Choosing the right interpolation method:</h3>
 --
 -- - Use `Lerp` for: numbers, positions (Vec2/Vec3), colors, sizes, mechanical movements
--- - Use `LerpAngle` for: 2D UI sprite rotations (DisplaySprite with single float angles)
 -- - Use `Smoothstep` for: UI fades, smooth transitions, general animations
 -- - Use `Smootherstep` for: cinematic camera movements, premium effects, AAA-quality visuals
 -- - Use `EaseInOut` for: dramatic movements, pronounced acceleration/deceleration
 -- - Use `Elastic` for: bouncy UI, cartoon effects, playful feedback, spring animations
 -- - Use `Bounce` for: falling objects, ball physics, collision effects (with aggressive parameters)
+-- - Use `LerpAngle` for: 2D UI sprite rotations (DisplaySprite with single float angles)
+-- - Use `InterpolateColor` for: color transitions, fades between colors
 --
--- **Note about practical examples:**
+-- <h3>Note about practical examples:</h3>
 -- All examples below use `LevelFuncs.OnLoop` to demonstrate the interpolation logic.
 -- 
 --
