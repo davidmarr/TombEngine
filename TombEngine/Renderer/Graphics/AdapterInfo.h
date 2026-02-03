@@ -11,8 +11,8 @@ namespace TEN::Renderer::Graphics
 		unsigned int DeviceId = 0;
 		unsigned int SubSysId = 0;
 		unsigned int Revision = 0;
-		size_t DedicatedVideoMemory = 0;
-		size_t DedicatedSystemMemory = 0;
-		size_t SharedSystemMemory = 0;
+		int DedicatedVideoMemory = 0;
+		int DedicatedSystemMemory = 0;
+		int SharedSystemMemory = 0;
 	};
 }
