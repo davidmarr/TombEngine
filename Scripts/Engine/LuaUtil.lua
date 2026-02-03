@@ -3880,7 +3880,7 @@ end
 -- --  0.50  | 180 | 0   | 186
 -- --  0.75  | 117 | 25  | 224
 -- --  1.00  | 2   | 52  | 225
--- Note: Enabling preserveSaturation, with t = 1 does not yield pure blue due to saturation preservation.
+-- -- Note: Enabling preserveSaturation, with t = 1 does not yield pure blue due to saturation preservation.
 --
 -- -- Example with OKLch interpolation (red to blue, preserving lightness):
 -- local oklchLightColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 2, { preserveLightness = true })
@@ -3891,7 +3891,7 @@ end
 -- --  0.50  | 217 | 17  | 224
 -- --  0.75  | 159 | 62  | 255
 -- --  1.00  | 28  | 103 | 255
--- Note: Enabling preserveLightness, with t = 1 does not yield pure blue due to lightness preservation.
+-- -- Note: Enabling preserveLightness, with t = 1 does not yield pure blue due to lightness preservation.
 LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
 
     -- Validate input parameters
