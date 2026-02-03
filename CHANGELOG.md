@@ -42,10 +42,11 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed linear inventory not fading ammo and combine selectors.
 
 ### Lua API changes
-* Added new `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
+* Added `Collision.Ray` class for raycasting to detect rooms, items, and static meshes.
+* Added `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
+* Added `View.DisplayAnchors` primitive class and `View.DisplaySprite:GetAnchors` method.
 * Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
 * Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
-* Added `Collision.Ray` class for raycasting to detect rooms, items, and static meshes.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `Strings.DisplayStringOption.VERTICAL_BOTTOM` flag.
@@ -56,7 +57,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added overloads for `TEN.Util.PercentToScreen(Vec2(x, y))` and `TEN.Util.ScreenToPercent(Vec2(x, y))`.
 * Added special tables `LevelVars`, `GameVars` and `LevelFunc` to the documentation.
 * Added `Logic.CallbackPoint`, `Logic.EventType` and `Logic.EndReason` enums to the documentation.
-* Added `View.DisplayAnchors` primitive class and `View.DisplaySprite:GetAnchors` method.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 * Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
 
