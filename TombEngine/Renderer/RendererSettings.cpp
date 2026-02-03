@@ -26,6 +26,11 @@ namespace TEN::Renderer
 		return _graphicsDevice->GetDefaultAdapterName();
 	}
 
+	const AdapterInfo& Renderer::GetAdapterInfo() const
+	{
+		return _adapterInfo;
+	}
+
 	std::unique_ptr<ITexture2D> Renderer::SetTextureOrDefault(std::wstring path)
 	{
 		std::unique_ptr<ITexture2D> texture;

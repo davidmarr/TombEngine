@@ -1,12 +1,12 @@
 #include "framework.h"
-#include "Renderer/Renderer.h"
 
+#include "Renderer/Renderer.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/trutils.h"
 
 namespace TEN::Renderer::Utils
 {
-	void throwIfFailed(const HRESULT& res) 
+	void throwIfFailed(const HRESULT& res)
 	{
 		if (FAILED(res))
 		{
@@ -16,7 +16,7 @@ namespace TEN::Renderer::Utils
 		}
 	}
 
-	void throwIfFailed(const HRESULT& res, const std::string &info) 
+	void throwIfFailed(const HRESULT& res, const std::string& info)
 	{
 		if (FAILED(res))
 		{
@@ -26,7 +26,7 @@ namespace TEN::Renderer::Utils
 		}
 	}
 
-	void throwIfFailed(const HRESULT& res, const std::wstring &info) 
+	void throwIfFailed(const HRESULT& res, const std::wstring& info)
 	{
 		if (FAILED(res))
 		{
@@ -35,6 +35,7 @@ namespace TEN::Renderer::Utils
 			throw std::runtime_error("An error occured!");
 		}
 	}
+
 
 	std::wstring GetAssetPath(const wchar_t* fileName)
 	{

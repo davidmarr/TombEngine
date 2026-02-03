@@ -80,6 +80,18 @@ namespace TEN::Renderer
 		std::unique_ptr<ITexture2D>, 
 		std::unique_ptr<ITexture2D>>;
 
+	struct AdapterInfo
+	{
+		std::string Name = {};
+		unsigned int VendorId = 0;
+		unsigned int DeviceId = 0;
+		unsigned int SubSysId = 0;
+		unsigned int Revision = 0;
+		size_t DedicatedVideoMemory = 0;
+		size_t DedicatedSystemMemory = 0;
+		size_t SharedSystemMemory = 0;
+	};
+
 	class Renderer
 	{
 	private:
@@ -87,6 +99,9 @@ namespace TEN::Renderer
 
 		std::unique_ptr<IInputLayout> _vertexInputLayout;
 		std::unique_ptr<IInputLayout> _fullScreenVertexInputLayout;
+
+		// Adapter info
+		AdapterInfo _adapterInfo = {};
 
 		// Render targets
 
@@ -265,7 +280,7 @@ namespace TEN::Renderer
 		int _numExecutedMaterialsUpdates = 0;
 		int _numRequestedMaterialsUpdates = 0;
 
-		float _currentLineHeight = 0.0f;;
+		float _currentLineHeight = 0.0f;
 
 		RendererDebugPage _debugPage = RendererDebugPage::None;
 
@@ -718,6 +733,7 @@ namespace TEN::Renderer
 		void PrintDebugMessage(LPCSTR msg, va_list args);
 		void PrintDebugMessage(LPCSTR msg, ...);
 		void DrawDebugInfo(RenderView& view);
+		void DrawDebugRenderTargets(RenderView& view);
 		void SwitchDebugPage(bool goBack);
 		RendererDebugPage GetCurrentDebugPage();
 
@@ -733,6 +749,7 @@ namespace TEN::Renderer
 		void SetLoadingScreen(std::wstring& fileName);
 		std::unique_ptr<ITexture2D> SetTextureOrDefault(std::wstring path);
 		std::string GetDefaultAdapterName();
+		const AdapterInfo& GetAdapterInfo() const;
 		void SaveOldState();
 
 		float						GetFramerateMultiplier() const;

@@ -505,20 +505,12 @@ namespace TEN::Gui
 			AmbientOcclusion,
 			HighFramerate,
 			Save,
-			Cancel
+			Cancel,
+
+			Count
 		};
 
-		static const int numDisplaySettingsOptions = 8;
-
-		OptionCount = numDisplaySettingsOptions;
-
-		if (GuiIsDeselected())
-		{
-			SoundEffect(SFX_TR4_MENU_SELECT, nullptr);
-			MenuToDisplay = Menu::Options;
-			SelectedOption = 0;
-			return;
-		}
+		OptionCount = (int)DisplaySettingsOption::Count - 1;
 
 		if (GuiIsPulsed(In::Left))
 		{
@@ -650,43 +642,51 @@ namespace TEN::Gui
 
 		SelectedOption = GetLoopedSelectedOption(SelectedOption, OptionCount, g_Configuration.MenuOptionLoopingMode == MenuOptionLoopingMode::AllMenus);
 
-		if (GuiIsSelected())
+		if (GuiIsSelected() || GuiIsDeselected())
 		{
-			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-
-			if (SelectedOption == DisplaySettingsOption::Save)
+			if (SelectedOption == DisplaySettingsOption::Save || GuiIsDeselected())
 			{
 				// Save the configuration.
 				auto screenResolution = g_Configuration.SupportedScreenResolutions[CurrentSettings.SelectedScreenResolution];
 
 				bool screenResolutionChanged = CurrentSettings.Configuration.ScreenWidth != screenResolution.x ||
-											   CurrentSettings.Configuration.ScreenHeight != screenResolution.y;
+					CurrentSettings.Configuration.ScreenHeight != screenResolution.y;
 
 				CurrentSettings.Configuration.ScreenWidth = screenResolution.x;
 				CurrentSettings.Configuration.ScreenHeight = screenResolution.y;
 
 				// Determine whether we should update AA shaders.
 				bool shouldRecompileAAShaders = CurrentSettings.Configuration.AntialiasingMode != AntialiasingMode::Low &&
-												(screenResolutionChanged || g_Configuration.AntialiasingMode != CurrentSettings.Configuration.AntialiasingMode);
+					(screenResolutionChanged || g_Configuration.AntialiasingMode != CurrentSettings.Configuration.AntialiasingMode);
 
 				g_Configuration = CurrentSettings.Configuration;
 				SaveConfiguration();
 
 				// Reset screen and go back.
-				g_Renderer.ChangeScreenResolution(CurrentSettings.Configuration.ScreenWidth, CurrentSettings.Configuration.ScreenHeight,
-					CurrentSettings.Configuration.EnableWindowedMode);
+				if (screenResolutionChanged)
+				{
+					g_Renderer.ChangeScreenResolution(CurrentSettings.Configuration.ScreenWidth, CurrentSettings.Configuration.ScreenHeight,
+						CurrentSettings.Configuration.EnableWindowedMode);
+				}
 
 				g_Renderer.ReloadShaders(shouldRecompileAAShaders);
 				g_Renderer.SetGraphicsSettingsChanged();
 
-				MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
-				SelectedOption = fromPauseMenu ? 1 : 0;
+				MenuToDisplay = Menu::Options;
+				SelectedOption = 0;
 			}
 			else if (SelectedOption == DisplaySettingsOption::Cancel)
 			{
-				MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
-				SelectedOption = fromPauseMenu ? 1 : 0;
+				MenuToDisplay = Menu::Options;
+				SelectedOption = 0;
 			}
+			else
+			{
+				// No action was taken, no need to play confirmation sound.
+				return;
+			}
+
+			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 		}
 	}
 
@@ -886,49 +886,25 @@ namespace TEN::Gui
 				}
 			}
 
-			if (GuiIsSelected())
-			{
-				// Defaults.
-				if (SelectedOption == (OptionCount - 2))
-				{
-					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-
-					ApplyDefaultBindings();
-					return;
-				}
-
-				// Apply.
-				if (SelectedOption == (OptionCount - 1))
-				{
-					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-
-					CurrentSettings.Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Custom);
-					g_Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Custom);
-					SaveConfiguration();
-
-					MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
-					SelectedOption = 2;
-					return;
-				}
-
-				// Cancel.
-				if (SelectedOption == OptionCount)
-				{
-					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-
-					g_Bindings.SetBindingProfile(BindingProfileID::Custom, CurrentSettings.Configuration.Bindings);
-
-					MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
-					SelectedOption = 2;
-					return;
-				}
-			}
-
-			if (GuiIsDeselected())
+			if (GuiIsSelected() || GuiIsDeselected())
 			{
 				SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 
-				g_Bindings.SetBindingProfile(BindingProfileID::Custom, CurrentSettings.Configuration.Bindings);
+				if (SelectedOption == (OptionCount - 1) || GuiIsDeselected()) // Apply.
+				{
+					CurrentSettings.Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Custom);
+					g_Configuration.Bindings = g_Bindings.GetBindingProfile(BindingProfileID::Custom);
+					SaveConfiguration();
+				}
+				else if (SelectedOption == OptionCount) // Cancel.
+				{
+					g_Bindings.SetBindingProfile(BindingProfileID::Custom, CurrentSettings.Configuration.Bindings);
+				}
+				else if (SelectedOption == (OptionCount - 2)) // Defaults.
+				{
+					ApplyDefaultBindings();
+					return;
+				}
 
 				MenuToDisplay = Menu::Options;
 				SelectedOption = 2;
@@ -998,18 +974,6 @@ namespace TEN::Gui
 		};
 
 		OptionCount = (int)OtherSettingsOption::Count - 1;
-
-		if (GuiIsDeselected())
-		{
-			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-
-			MenuToDisplay = Menu::Options;
-			SelectedOption = 1;
-
-			SetVolumeTracks(g_Configuration.MusicVolume);
-			SetVolumeFX(g_Configuration.SfxVolume);
-			return;
-		}
 
 		if (GuiIsPulsed(In::Left) || GuiIsPulsed(In::Right))
 		{
@@ -1164,11 +1128,9 @@ namespace TEN::Gui
 
 		SelectedOption = GetLoopedSelectedOption(SelectedOption, OptionCount, g_Configuration.MenuOptionLoopingMode == MenuOptionLoopingMode::AllMenus);
 
-		if (GuiIsSelected())
+		if (GuiIsSelected() || GuiIsDeselected())
 		{
-			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
-
-			if (SelectedOption == OtherSettingsOption::Apply)
+			if (SelectedOption == OtherSettingsOption::Apply || GuiIsDeselected())
 			{
 				// Was rumble setting changed?
 				bool indicateRumble = CurrentSettings.Configuration.EnableRumble && !g_Configuration.EnableRumble;
@@ -1197,12 +1159,18 @@ namespace TEN::Gui
 			}
 			else if (SelectedOption == OtherSettingsOption::Cancel)
 			{
-				SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 				SetVolumeTracks(g_Configuration.MusicVolume);
 				SetVolumeFX(g_Configuration.SfxVolume);
-				MenuToDisplay = fromPauseMenu ? Menu::Pause : Menu::Options;
-				SelectedOption = 1;
 			}
+			else
+			{
+				// No action was taken, no need to play confirmation sound.
+				return;
+			}
+
+			MenuToDisplay = Menu::Options;
+			SelectedOption = 1;
+			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 		}
 	}
 
@@ -1260,10 +1228,11 @@ namespace TEN::Gui
 
 		if (GuiIsDeselected() || IsClicked(In::Pause))
 		{
+			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
+
 			if (MenuToDisplay == Menu::Pause)
 			{
 				SetInventoryMode(InventoryMode::None);
-				SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 				return InventoryResult::None;
 			}
 
@@ -1272,12 +1241,12 @@ namespace TEN::Gui
 			{
 				SelectedOption = ((MenuToDisplay == Menu::Statistics) ? PauseMenuOption::Statistics : PauseMenuOption::Options);
 				MenuToDisplay = Menu::Pause;
-				SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 			}
 		}
-
-		if (GuiIsSelected())
+		else if (GuiIsSelected())
 		{
+			SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
+
 			switch (MenuToDisplay)
 			{
 			case Menu::Pause:
@@ -1309,7 +1278,6 @@ namespace TEN::Gui
 
 			case Menu::Statistics:
 				MenuToDisplay = Menu::Pause;
-				SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 				break;
 			}
 		}
@@ -2086,7 +2054,7 @@ namespace TEN::Gui
 
 	void GuiController::FadeAmmoSelector()
 	{
-		if (!Rings[(int)RingTypes::Inventory].RingActive)
+		if (!Rings[(int)RingTypes::Inventory].RingActive && !AmmoSelectorFlag)
 		{
 			AmmoSelectorFadeVal = 0;
 		}
@@ -2162,6 +2130,7 @@ namespace TEN::Gui
 			if (player.Control.HandStatus == HandStatus::Free &&
 				player.Control.Weapon.GunType == player.Control.Weapon.RequestGunType)
 			{
+				InitializeNewWeapon(item);
 				player.Control.HandStatus = HandStatus::WeaponDraw;
 			}
 
@@ -3340,24 +3309,26 @@ namespace TEN::Gui
 				UpdateInputActions();
 
 				if (GuiIsDeselected() || IsClicked(In::Inventory))
-				{
-					SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
 					exitLoop = true;
-				}
 
 				g_Renderer.PrepareScene();
 
 				switch (InvMode)
 				{
 				case InventoryMode::InGame:
+					if (exitLoop)
+						SoundEffect(SFX_TR4_MENU_SELECT, nullptr, SoundEnvironment::Always);
+
 					DoInventory(item);
 					break;
 
 				case InventoryMode::Statistics:
+					exitLoop = !resetMode;
 					DoStatisticsMode();
 					break;
 
 				case InventoryMode::Examine:
+					exitLoop = !resetMode;
 					DoExamineMode();
 					break;
 
