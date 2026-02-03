@@ -77,7 +77,7 @@ namespace TEN::Renderer::Graphics
 			desc.MiscFlags = 0;
 
 			auto res = device->CreateTexture2D(&desc, nullptr, &Texture);
-			throwIfFailed(res, device, "CreateTexture2D (render target color): ");
+			throwIfFailed(res, device, "CreateTexture2D (render target color)");
 
 			_vramSize = VRAMTracker::ComputeTexture2DSize(desc);
 
@@ -87,7 +87,7 @@ namespace TEN::Renderer::Graphics
 			viewDesc.Texture2D.MipSlice = 0;
 
 			res = device->CreateRenderTargetView(Texture.Get(), &viewDesc, &RenderTargetView);
-			throwIfFailed(res, device, "CreateRenderTargetView: ");
+			throwIfFailed(res, device, "CreateRenderTargetView");
 
 			// Set up description of shader resource view.
 			auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
@@ -97,7 +97,7 @@ namespace TEN::Renderer::Graphics
 			shaderDesc.Texture2D.MipLevels = 1;
 
 			res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, &ShaderResourceView);
-			throwIfFailed(res, device, "CreateSRV (render target): ");
+			throwIfFailed(res, device, "CreateSRV (render target)");
 
 			if (depthFormat != DXGI_FORMAT_UNKNOWN)
 			{
@@ -115,7 +115,7 @@ namespace TEN::Renderer::Graphics
 				depthTexDesc.MiscFlags = 0;
 
 				res = device->CreateTexture2D(&depthTexDesc, NULL, &DepthStencilTexture);
-				throwIfFailed(res, device, "CreateTexture2D (render target depth): ");
+				throwIfFailed(res, device, "CreateTexture2D (render target depth)");
 
 				_vramSize += VRAMTracker::ComputeTexture2DSize(depthTexDesc);
 
@@ -126,7 +126,7 @@ namespace TEN::Renderer::Graphics
 				dsvDesc.Texture2D.MipSlice = 0;
 
 				res = device->CreateDepthStencilView(DepthStencilTexture.Get(), &dsvDesc, &DepthStencilView);
-				throwIfFailed(res, device, "CreateDepthStencilView: ");
+				throwIfFailed(res, device, "CreateDepthStencilView");
 			}
 
 			VRAMTracker::Get().Add(VRAMCategory::RenderTarget, _vramSize);
@@ -148,7 +148,7 @@ namespace TEN::Renderer::Graphics
 			viewDesc.Texture2D.MipSlice = 0;
 
 			auto res = device->CreateRenderTargetView(Texture.Get(), &viewDesc, &RenderTargetView);
-			throwIfFailed(res, device, "CreateRenderTargetView (shared texture): ");
+			throwIfFailed(res, device, "CreateRenderTargetView (shared texture)");
 
 			// Set up description of shader resource view.
 			auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
@@ -158,7 +158,7 @@ namespace TEN::Renderer::Graphics
 			shaderDesc.Texture2D.MipLevels = 1;
 
 			res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, &ShaderResourceView);
-			throwIfFailed(res, device, "CreateSRV (shared texture): ");
+			throwIfFailed(res, device, "CreateSRV (shared texture)");
 
 			// Shared texture: don't count VRAM again, texture is owned by parent.
 		}
@@ -181,7 +181,7 @@ namespace TEN::Renderer::Graphics
 			viewDesc.Texture2D.MipSlice = 0;
 
 			HRESULT res = device->CreateRenderTargetView(Texture.Get(), &viewDesc, &RenderTargetView);
-			throwIfFailed(res, device, "CreateRenderTargetView (existing texture): ");
+			throwIfFailed(res, device, "CreateRenderTargetView (existing texture)");
 
 			// Setup the description of the shader resource view.
 			if (desc.BindFlags & D3D11_BIND_SHADER_RESOURCE)
@@ -193,7 +193,7 @@ namespace TEN::Renderer::Graphics
 				shaderDesc.Texture2D.MipLevels = 1;
 
 				res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, &ShaderResourceView);
-				throwIfFailed(res, device, "CreateSRV (existing texture): ");
+				throwIfFailed(res, device, "CreateSRV (existing texture)");
 			}
 
 			if (depthFormat != DXGI_FORMAT_UNKNOWN)
@@ -212,7 +212,7 @@ namespace TEN::Renderer::Graphics
 				depthTexDesc.MiscFlags = 0;
 
 				res = device->CreateTexture2D(&depthTexDesc, NULL, &DepthStencilTexture);
-				throwIfFailed(res, device, "CreateTexture2D (existing texture depth): ");
+				throwIfFailed(res, device, "CreateTexture2D (existing texture depth)");
 
 				_vramSize = VRAMTracker::ComputeTexture2DSize(depthTexDesc);
 
@@ -223,7 +223,7 @@ namespace TEN::Renderer::Graphics
 				dsvDesc.Texture2D.MipSlice = 0;
 
 				res = device->CreateDepthStencilView(DepthStencilTexture.Get(), &dsvDesc, &DepthStencilView);
-				throwIfFailed(res, device, "CreateDepthStencilView (existing texture): ");
+				throwIfFailed(res, device, "CreateDepthStencilView (existing texture)");
 			}
 
 			// External texture: count only the depth texture we created, not the color texture.

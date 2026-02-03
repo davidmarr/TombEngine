@@ -131,7 +131,7 @@ namespace TEN::Renderer::Utils
 	{
 		if (FAILED(res))
 		{
-			std::string message = info.empty() ? GetHResultDescription(res) : info + GetHResultDescription(res);
+			auto message = info.empty() ? GetHResultDescription(res) : (info + ": " + GetHResultDescription(res));
 
 			auto debugMessages = GetDeviceDebugMessages(device, res);
 			if (!debugMessages.empty())

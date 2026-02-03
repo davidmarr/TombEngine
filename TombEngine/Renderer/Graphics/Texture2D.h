@@ -24,10 +24,7 @@ namespace TEN::Renderer::Graphics
 		ComPtr<ID3D11Texture2D> Texture;
 
 		Texture2D() = default;
-
-		Texture2D(Texture2D&& other) noexcept
-			: TextureBase(std::move(other)), Width(other.Width), Height(other.Height),
-			  Texture(std::move(other.Texture)), _vramSize(other._vramSize)
+		Texture2D(Texture2D&& other) noexcept : TextureBase(std::move(other)), Width(other.Width), Height(other.Height), Texture(std::move(other.Texture)), _vramSize(other._vramSize)
 		{
 			other._vramSize = 0;
 		}
@@ -74,14 +71,14 @@ namespace TEN::Renderer::Graphics
 			subresourceData.pSysMem = data;
 			subresourceData.SysMemPitch = width * 4;
 			subresourceData.SysMemSlicePitch = 0;
-			throwIfFailed(device->CreateTexture2D(&desc, &subresourceData, &Texture), device, "CreateTexture2D (dynamic RGBA): ");
+			throwIfFailed(device->CreateTexture2D(&desc, &subresourceData, &Texture), device, "CreateTexture2D (dynamic RGBA)");
 
 			auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
 			shaderDesc.Format = desc.Format;
 			shaderDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			shaderDesc.Texture2D.MostDetailedMip = 0;
 			shaderDesc.Texture2D.MipLevels = 1;
-			throwIfFailed(device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf()), device, "CreateSRV (dynamic RGBA): ");
+			throwIfFailed(device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf()), device, "CreateSRV (dynamic RGBA)");
 
 			_vramSize = VRAMTracker::ComputeTexture2DSize(desc);
 			VRAMTracker::Get().Add(VRAMCategory::Texture, _vramSize);
@@ -110,7 +107,7 @@ namespace TEN::Renderer::Graphics
 			subresourceData.SysMemPitch = pitch;
 			subresourceData.SysMemSlicePitch = 0;
 
-			throwIfFailed(device->CreateTexture2D(&desc, &subresourceData, &Texture), device, "CreateTexture2D (custom format): ");
+			throwIfFailed(device->CreateTexture2D(&desc, &subresourceData, &Texture), device, "CreateTexture2D (custom format)");
 
 			auto shaderDesc = D3D11_SHADER_RESOURCE_VIEW_DESC{};
 			shaderDesc.Format = desc.Format;
@@ -118,7 +115,7 @@ namespace TEN::Renderer::Graphics
 			shaderDesc.Texture2D.MostDetailedMip = 0;
 			shaderDesc.Texture2D.MipLevels = 1;
 
-			throwIfFailed(device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf()), device, "CreateSRV (custom format): ");
+			throwIfFailed(device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf()), device, "CreateSRV (custom format)");
 
 			_vramSize = VRAMTracker::ComputeTexture2DSize(desc);
 			VRAMTracker::Get().Add(VRAMCategory::Texture, _vramSize);
@@ -130,8 +127,8 @@ namespace TEN::Renderer::Graphics
 			ID3D11DeviceContext* context = nullptr;
 			device->GetImmediateContext(&context);
 
-			throwIfFailed(CreateWICTextureFromFile(device, context, fileName.c_str(), resource.GetAddressOf(), ShaderResourceView.GetAddressOf(), (size_t)0), L"CreateWICTextureFromFile '" + fileName + L"': ");
-			throwIfFailed(resource->QueryInterface(Texture.GetAddressOf()), device, "QueryInterface (Texture2D from file): ");
+			throwIfFailed(CreateWICTextureFromFile(device, context, fileName.c_str(), resource.GetAddressOf(), ShaderResourceView.GetAddressOf(), (size_t)0), L"CreateWICTextureFromFile '" + fileName + L"'");
+			throwIfFailed(resource->QueryInterface(Texture.GetAddressOf()), device, "QueryInterface (Texture2D from file)");
 
 			D3D11_TEXTURE2D_DESC desc;
 			Texture->GetDesc(&desc);
@@ -157,7 +154,7 @@ namespace TEN::Renderer::Graphics
 					data,
 					length,
 					resource.GetAddressOf(),
-					ShaderResourceView.GetAddressOf()), device, "CreateDDSTextureFromMemory: ");
+					ShaderResourceView.GetAddressOf()), device, "CreateDDSTextureFromMemory");
 			}
 			else
 			{
@@ -168,12 +165,12 @@ namespace TEN::Renderer::Graphics
 					data,
 					length,
 					resource.GetAddressOf(),
-					ShaderResourceView.GetAddressOf()), device, "CreateWICTextureFromMemory: ");
+					ShaderResourceView.GetAddressOf()), device, "CreateWICTextureFromMemory");
 			}
 
 			context->GenerateMips(ShaderResourceView.Get());
 
-			throwIfFailed(resource->QueryInterface(Texture.GetAddressOf()), device, "QueryInterface (Texture2D from memory): ");
+			throwIfFailed(resource->QueryInterface(Texture.GetAddressOf()), device, "QueryInterface (Texture2D from memory)");
 
 			D3D11_TEXTURE2D_DESC desc;
 			Texture->GetDesc(&desc);
