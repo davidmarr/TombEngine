@@ -19,11 +19,9 @@ namespace TEN::Renderer::Graphics
 
 	public:
 		Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
-		IndexBuffer() {};
 
-		IndexBuffer(IndexBuffer&& other) noexcept
-			: _numIndices(other._numIndices), _vramSize(other._vramSize),
-			  Buffer(std::move(other.Buffer))
+		IndexBuffer() {};
+		IndexBuffer(IndexBuffer&& other) noexcept : _numIndices(other._numIndices), _vramSize(other._vramSize), Buffer(std::move(other.Buffer))
 		{
 			other._vramSize = 0;
 		}

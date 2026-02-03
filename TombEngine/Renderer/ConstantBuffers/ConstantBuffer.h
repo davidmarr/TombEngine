@@ -15,11 +15,7 @@ namespace TEN::Renderer::ConstantBuffers
 
 	public:
 		ConstantBuffer() = default;
-
-		ConstantBuffer(ConstantBuffer&& other) noexcept
-			: buffer(std::move(other.buffer))
-		{
-		}
+		ConstantBuffer(ConstantBuffer&& other) noexcept : buffer(std::move(other.buffer)) { }
 
 		ConstantBuffer& operator=(ConstantBuffer&& other) noexcept
 		{

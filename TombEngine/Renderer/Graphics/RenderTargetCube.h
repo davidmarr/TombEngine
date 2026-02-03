@@ -103,7 +103,7 @@ namespace TEN::Renderer::Graphics
 			desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 
 			HRESULT res = device->CreateTexture2D(&desc, NULL, Texture.GetAddressOf());
-			throwIfFailed(res, device, "CreateTexture2D (cubemap color): ");
+			throwIfFailed(res, device, "CreateTexture2D (cubemap color)");
 
 			_vramSize = VRAMTracker::ComputeTexture2DSize(desc);
 
@@ -116,7 +116,7 @@ namespace TEN::Renderer::Graphics
 			{
 				viewDesc.Texture2DArray.FirstArraySlice = D3D11CalcSubresource(0, i, 1);
 				res = device->CreateRenderTargetView(Texture.Get(), &viewDesc, RenderTargetView[i].GetAddressOf());
-				throwIfFailed(res, device, "CreateRenderTargetView (cubemap face " + std::to_string(i) + "): ");
+				throwIfFailed(res, device, "CreateRenderTargetView (cubemap face " + std::to_string(i) + ")");
 			}
 
 			// Setup the description of the shader resource view.
@@ -128,7 +128,7 @@ namespace TEN::Renderer::Graphics
 			shaderDesc.Texture2DArray.ArraySize = 6;
 			shaderDesc.Texture2DArray.FirstArraySlice = 0;
 			res = device->CreateShaderResourceView(Texture.Get(), &shaderDesc, ShaderResourceView.GetAddressOf());
-			throwIfFailed(res, device, "CreateSRV (cubemap): ");
+			throwIfFailed(res, device, "CreateSRV (cubemap)");
 
 			D3D11_TEXTURE2D_DESC depthTexDesc = {};
 			depthTexDesc.Width = resolution;
@@ -144,7 +144,7 @@ namespace TEN::Renderer::Graphics
 			depthTexDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 
 			res = device->CreateTexture2D(&depthTexDesc, NULL, DepthStencilTexture.GetAddressOf());
-			throwIfFailed(res, device, "CreateTexture2D (cubemap depth): ");
+			throwIfFailed(res, device, "CreateTexture2D (cubemap depth)");
 
 			_vramSize += VRAMTracker::ComputeTexture2DSize(depthTexDesc);
 
@@ -158,7 +158,7 @@ namespace TEN::Renderer::Graphics
 			{
 				dsvDesc.Texture2DArray.FirstArraySlice = D3D11CalcSubresource(0, i, 1);
 				res = device->CreateDepthStencilView(DepthStencilTexture.Get(), &dsvDesc, DepthStencilView[i].GetAddressOf());
-				throwIfFailed(res, device, "CreateDepthStencilView (cubemap face " + std::to_string(i) + "): ");
+				throwIfFailed(res, device, "CreateDepthStencilView (cubemap face " + std::to_string(i) + ")");
 			}
 
 			VRAMTracker::Get().Add(VRAMCategory::RenderTarget, _vramSize);
