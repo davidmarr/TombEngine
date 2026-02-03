@@ -2535,10 +2535,11 @@ end
 -- `Rotation:Lerp()` always calculates the **shortest angular distance** for each component (x, y, z)
 --
 -- Example
---     local currentRot = obj:GetRotation()
---     local targetRot = TEN.Rotation(0, 350, 0)
---     local newRot = LuaUtil.Lerp(currentRot, targetRot, 0.5)  -- Automatically takes shortest path
---     obj:SetRotation(newRot)
+-- <pre class="example">
+--<span class="keyword">local</span> currentRot = obj:GetRotation()
+--<span class="keyword">local</span> targetRot = TEN.Rotation(<span class="number">0</span>, <span class="number">350</span>, <span class="number">0</span>)
+--<span class="keyword">local</span> newRot = LuaUtil.Lerp(currentRot, targetRot, <span class="number">0.5</span>)  <span class="comment">-- Automatically takes shortest path
+--</span>obj:SetRotation(newRot)</pre>
 --
 -- <h3>Special interpolations:</h3>
 -- There are two special interpolation functions for specific use cases:
@@ -2569,10 +2570,11 @@ end
 --
 -- Example - INCORRECT (redundant) approach:
 --
---     local currentRot = obj:GetRotation()
---     local targetRot = TEN.Rotation(0, 350, 0)
---     currentRot.y = LuaUtil.LerpAngle(currentRot.y, targetRot.y, 0.5)  -- Redundant!
---     obj:SetRotation(currentRot)
+-- <pre class="example">
+--<span class="keyword">local</span> currentRot = obj:GetRotation()
+--<span class="keyword">local</span> targetRot = TEN.Rotation(<span class="number">0</span>, <span class="number">350</span>, <span class="number">0</span>)
+--currentRot.y = LuaUtil.LerpAngle(currentRot.y, targetRot.y, <span class="number">0.5</span>)  <span class="comment">-- Redundant!
+--</span>obj:SetRotation(currentRot)</pre>
 --
 -- <br>**InterpolateColor** supports multiple color spaces for different use cases:
 -- 
@@ -2615,16 +2617,15 @@ end
 -- 
 -- **In your actual level script, you would combine logic like this:**
 -- 
---     LevelFuncs.OnLoop = function()
---          -- Update fog (from Lerp example)
---          -- Copy the fog interpolation code from the Lerp example
---
---          -- Update elevator (from EaseInOut example)
---          -- Copy the elevator interpolation code from the EaseInOut example
---
---          -- Update door (from LerpAngle example)
---          -- Copy the door interpolation code from the LerpAngle example
---     end
+-- <pre class="example">
+--LevelFuncs.OnLoop = <span class="keyword">function</span>()
+--<span class="comment">   -- Update fog (from Lerp example)</span>
+--<span class="comment">   -- Copy the fog interpolation code from the Lerp example</span><br>
+--<span class="comment">   -- Update elevator (from EaseInOut example)</span>
+--<span class="comment">   -- Copy the elevator interpolation code from the EaseInOut example</span><br>
+--<span class="comment">   -- Update door (from LerpAngle example)</span>
+--<span class="comment">   -- Copy the door interpolation code from the LerpAngle example</span>
+--<span class="keyword">end</span></pre>
 --
 -- @section interpolation
 
