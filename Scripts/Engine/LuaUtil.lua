@@ -3851,6 +3851,7 @@ end
 -- --  0.50  | 127 | 127 | 0
 -- --  0.75  | 64  | 191 | 0
 -- --  1.00  | 0   | 255 | 0
+--
 -- -- Example with HSL interpolation (red to green, longest hue path):
 -- local hslLongColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 1, { huePath = "longest" })
 -- --   t    | R   | G   | B
