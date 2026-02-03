@@ -26,10 +26,7 @@ namespace TEN::Renderer::Graphics
 		ComPtr<ID3D11Buffer> Buffer;
 
 		VertexBuffer() {};
-
-		VertexBuffer(VertexBuffer&& other) noexcept
-			: _numVertices(other._numVertices), _vramSize(other._vramSize),
-			  Buffer(std::move(other.Buffer))
+		VertexBuffer(VertexBuffer&& other) noexcept : _numVertices(other._numVertices), _vramSize(other._vramSize), Buffer(std::move(other.Buffer))
 		{
 			other._vramSize = 0;
 		}

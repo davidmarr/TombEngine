@@ -24,10 +24,7 @@ namespace TEN::Renderer::Graphics
 		ComPtr<ID3D11Texture2D> Texture;
 
 		Texture2D() = default;
-
-		Texture2D(Texture2D&& other) noexcept
-			: TextureBase(std::move(other)), Width(other.Width), Height(other.Height),
-			  Texture(std::move(other.Texture)), _vramSize(other._vramSize)
+		Texture2D(Texture2D&& other) noexcept : TextureBase(std::move(other)), Width(other.Width), Height(other.Height), Texture(std::move(other.Texture)), _vramSize(other._vramSize)
 		{
 			other._vramSize = 0;
 		}
