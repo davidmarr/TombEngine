@@ -9,6 +9,7 @@
 #include <iostream>
 #include <commctrl.h>
 
+#include "Game/control/control.h"
 #include "Specific/trutils.h"
 
 extern "C"
@@ -19,81 +20,81 @@ extern "C"
 
 namespace TEN::Platform
 {
+	// Free function to show error via external crashmsg.exe.
+	// Must be a free function (not an instance method) because it is called
+	// from the static SEH handler where no object instance is available.
+	static void ShowExternalMessageBox(const std::string& text)
+	{
+		// Try to locate error message utility resource.
+		HRSRC res = FindResource(nullptr, MAKEINTRESOURCE(IDR_CRASHMSG), "EXE");
+		if (!res)
+			return;
+
+		// Load executable, if found.
+		auto resData = LoadResource(nullptr, res);
+		if (resData == nullptr)
+			return;
+
+		// Lock executable resource to get data pointer.
+		void* resPtr = LockResource(resData);
+		if (resPtr == nullptr)
+			return;
+
+		const auto exePath = std::string("crashmsg.exe");
+
+		// Write executable to disk.
+		auto handleFile = CreateFileA(exePath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (handleFile == INVALID_HANDLE_VALUE)
+			return;
+
+		DWORD written = 0;
+		WriteFile(handleFile, resPtr, SizeofResource(nullptr, res), &written, nullptr);
+		CloseHandle(handleFile);
+
+		STARTUPINFOA startupInfo = { sizeof(startupInfo) };
+		auto processInfo = PROCESS_INFORMATION{};
+
+		// Execute the error message utility with the provided text.
+		auto cmdLine = std::string("\"" + exePath + "\" " + "\"" + text + "\"");
+		if (CreateProcessA(nullptr, cmdLine.data(), nullptr, nullptr, false, 0, nullptr, nullptr, &startupInfo, &processInfo))
+		{
+			WaitForSingleObject(processInfo.hProcess, INFINITE);
+			CloseHandle(processInfo.hProcess);
+			CloseHandle(processInfo.hThread);
+		}
+
+		// Clean up error message utility afterwards.
+		DeleteFileA(exePath.c_str());
+	}
+
 	static LONG WINAPI HandleException(EXCEPTION_POINTERS* exceptionInfo)
 	{
 		DWORD code = exceptionInfo->ExceptionRecord->ExceptionCode;
-		const char* codeName = "Unknown exception.";
+		const char* codeName = "Unknown exception";
 
-		// Translate common exception codes to human-readable text.
+		// Map exception codes to strings.
 		switch (code)
 		{
-		case EXCEPTION_ACCESS_VIOLATION:
-			codeName = "Access violation.";
-			break;
-
-		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-			codeName = "Array out of bounds.";
-			break;
-
-		case EXCEPTION_BREAKPOINT:
-			codeName = "Breakpoint encountered.";
-			break;
-
-		case EXCEPTION_DATATYPE_MISALIGNMENT:
-			codeName = "Data type misalignment.";
-			break;
-
-		case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-			codeName = "Floating-point division by zero.";
-			break;
-
-		case EXCEPTION_FLT_OVERFLOW:
-			codeName = "Floating-point overflow.";
-			break;
-
-		case EXCEPTION_ILLEGAL_INSTRUCTION:
-			codeName = "Illegal instruction.";
-			break;
-
-		case EXCEPTION_IN_PAGE_ERROR:
-			codeName = "Exception in page error.";
-			break;
-
-		case EXCEPTION_INT_DIVIDE_BY_ZERO:
-			codeName = "Integer division by zero.";
-			break;
-
-		case EXCEPTION_INT_OVERFLOW:
-			codeName = "Integer overflow.";
-			break;
-
-		case EXCEPTION_INVALID_DISPOSITION:
-			codeName = "Invalid disposition.";
-			break;
-
-		case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-			codeName = "Non-continuable exception.";
-			break;
-
-		case EXCEPTION_PRIV_INSTRUCTION:
-			codeName = "Privileged instruction.";
-			break;
-
-		case EXCEPTION_SINGLE_STEP:
-			codeName = "Single-step exception.";
-			break;
-
-		case EXCEPTION_STACK_OVERFLOW:
-			codeName = "Stack overflow.";
-			break;
-
-		default:
-			break;
+		case EXCEPTION_ACCESS_VIOLATION:         codeName = "Access violation"; break;
+		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    codeName = "Array out of bounds"; break;
+		case EXCEPTION_BREAKPOINT:               codeName = "Breakpoint encountered"; break;
+		case EXCEPTION_DATATYPE_MISALIGNMENT:    codeName = "Data type misalignment"; break;
+		case EXCEPTION_FLT_DIVIDE_BY_ZERO:       codeName = "Floating-point division by zero"; break;
+		case EXCEPTION_FLT_OVERFLOW:             codeName = "Floating-point overflow"; break;
+		case EXCEPTION_ILLEGAL_INSTRUCTION:      codeName = "Illegal instruction"; break;
+		case EXCEPTION_IN_PAGE_ERROR:            codeName = "Exception in page error"; break;
+		case EXCEPTION_INT_DIVIDE_BY_ZERO:       codeName = "Integer division by zero"; break;
+		case EXCEPTION_INT_OVERFLOW:             codeName = "Integer overflow"; break;
+		case EXCEPTION_INVALID_DISPOSITION:      codeName = "Invalid disposition"; break;
+		case EXCEPTION_NONCONTINUABLE_EXCEPTION: codeName = "Non-continuable exception"; break;
+		case EXCEPTION_PRIV_INSTRUCTION:         codeName = "Private instruction exception"; break;
+		case EXCEPTION_SINGLE_STEP:              codeName = "Single-step exception"; break;
+		case EXCEPTION_STACK_OVERFLOW:           codeName = "Stack overflow"; break;
 		}
 
-		// Initialize symbol handler to resolve function name addresses.
+		// Try to resolve symbol name from address.
 		auto process = GetCurrentProcess();
-		SymInitialize(process, nullptr, true);
+		SymInitialize(process, nullptr, TRUE);
 
 		DWORD64 address = (DWORD64)exceptionInfo->ExceptionRecord->ExceptionAddress;
 		char symbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
@@ -101,33 +102,71 @@ namespace TEN::Platform
 		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 		symbol->MaxNameLen = MAX_SYM_NAME;
 
-		// Build string describing where crash happened.
+		// Display function name if debug symbols are available, otherwise display address only.
 		auto oss = std::ostringstream();
 		if (SymFromAddr(process, address, 0, symbol))
 		{
-			// If debug symbols are available, show function name + address.
 			oss << "address " << symbol->Name << " (0x" << std::hex << address << ")";
 		}
 		else
 		{
-			// FALLBACK: Only show raw address if a symbol cannot be resolved.
 			oss << "address 0x" << std::hex << address;
 		}
 
-		auto errorMsg = std::string("Unhandled exception: ");
-		errorMsg += codeName;
-		errorMsg += " at ";
-		errorMsg += oss.str();
-		errorMsg += ".";
+		auto errorMessage = "Unhandled exception: " + std::string(codeName) + " at " + oss.str() + ".";
 
-		TENLog(errorMsg, LogLevel::Error);
+		// Log the exception.
+		TENLog(errorMessage, LogLevel::Error);
 
-		// Show blocking message box to user.
-		MessageBoxA(
-			nullptr,
-			errorMsg.c_str(),
-			"TombEngine - Crash",
-			MB_ICONERROR | MB_OK);
+		// Print stack trace if engine is in debug mode.
+		if (DebugMode)
+		{
+			oss = std::ostringstream{};
+			oss << "Stack trace:\n";
+
+			CONTEXT ctx = *exceptionInfo->ContextRecord;
+			STACKFRAME64 stack = {};
+
+			stack.AddrPC.Mode =
+			stack.AddrFrame.Mode =
+			stack.AddrStack.Mode = AddrModeFlat;
+
+#ifdef _M_IX86
+			DWORD machineType = IMAGE_FILE_MACHINE_I386;
+			stack.AddrPC.Offset = ctx.Eip;
+			stack.AddrFrame.Offset = ctx.Ebp;
+			stack.AddrStack.Offset = ctx.Esp;
+#elif _M_X64
+			DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
+			stack.AddrPC.Offset = ctx.Rip;
+			stack.AddrFrame.Offset = ctx.Rsp;
+			stack.AddrStack.Offset = ctx.Rsp;
+#endif
+
+			auto thread = GetCurrentThread();
+
+			constexpr int STACK_DEPTH = 32;
+			for (int frame = 0; frame < STACK_DEPTH; ++frame)
+			{
+				if (!StackWalk64(machineType, process, thread, &stack, &ctx, nullptr,
+					SymFunctionTableAccess64, SymGetModuleBase64, nullptr))
+					break;
+
+				if (stack.AddrPC.Offset == 0)
+					break;
+
+				if (SymFromAddr(process, stack.AddrPC.Offset, 0, symbol))
+					oss << "  [" << frame << "] " << symbol->Name << " (0x" << std::hex << stack.AddrPC.Offset << ")\n";
+				else
+					oss << "  [" << frame << "] " << "0x" << std::hex << stack.AddrPC.Offset << "\n";
+			}
+
+			TENLog(oss.str(), LogLevel::Error);
+		}
+
+		// Set engine to debug mode to prevent losing focus in fullscreen mode, then show error message.
+		DebugMode = true;
+		ShowExternalMessageBox(errorMessage);
 
 		// Instruct Windows to terminate process after handling exception.
 		return EXCEPTION_EXECUTE_HANDLER;
@@ -174,7 +213,7 @@ namespace TEN::Platform
 
 	void WindowsSubsystem::CheckVcRedist()
 	{
-		// Registry path where the VC++ 2015–2022 runtime stores its version info.
+		// Registry path where the VC++ 2015ï¿½2022 runtime stores its version info.
 		const char* redistKey =
 #ifdef _WIN64
 			R"(SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64)";
@@ -267,48 +306,7 @@ namespace TEN::Platform
 
 	void WindowsSubsystem::ShowErrorMessage(const std::string& msg)
 	{
-		// Try to locate error message utility resource.
-		HRSRC res = FindResource(nullptr, MAKEINTRESOURCE(IDR_CRASHMSG), "EXE");
-		if (!res)
-			return;
-
-		// Load executable, if found.
-		auto resData = LoadResource(nullptr, res);
-		if (resData == nullptr)
-			return;
-
-		// Lock executable resource to get data pointer.
-		void* resPtr = LockResource(resData);
-		if (resPtr == nullptr)
-			return;
-
-		const auto exePath = std::string("crashmsg.exe");
-
-		// Write executable to a disk.
-		auto handleFile = CreateFileA(exePath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (handleFile == INVALID_HANDLE_VALUE)
-			return;
-
-		DWORD written = 0;
-		WriteFile(handleFile, resPtr, SizeofResource(nullptr, res), &written, nullptr);
-		CloseHandle(handleFile);
-
-		// TODO: Weird line. Check if commented one works instead.
-		STARTUPINFOA startupInfo = { sizeof(startupInfo) };
-		//auto startupInfo = STARTUPINFOA{ sizeof(STARTUPINFOA) };
-		auto processInfo = PROCESS_INFORMATION{};
-
-		// Execute the error message utility with the provided text.
-		auto cmdLine = std::string("\"" + exePath + "\" " + "\"" + msg + "\"");
-		if (CreateProcessA(nullptr, cmdLine.data(), nullptr, nullptr, false, 0, nullptr, nullptr, &startupInfo, &processInfo))
-		{
-			WaitForSingleObject(processInfo.hProcess, INFINITE);
-			CloseHandle(processInfo.hProcess);
-			CloseHandle(processInfo.hThread);
-		}
-
-		// Clean up error message utility afterwards.
-		DeleteFileA(exePath.c_str());
+		ShowExternalMessageBox(msg);
 	}
 
 	void WindowsSubsystem::Tick()
