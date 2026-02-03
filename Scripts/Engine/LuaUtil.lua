@@ -3832,55 +3832,66 @@ end
 -- -- Example with RGB interpolation (red to blue):
 -- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
 -- local color2 = TEN.Color(0, 0, 255, 255)  -- Blue
--- 
+-- local rgbColor = LuaUtil.InterpolateColor(color1, color2, 0.5) -- t = 0.5, RGB space
 -- --   t    | R   | G | B
 -- --  ------|-----|---|-----
 -- --  0.00  | 255 | 0 | 0
 -- --  0.25  | 191 | 0 | 64
--- --  0.50  | 127 | 0 | 127
+-- --  0.50  | 128 | 0 | 128
 -- --  0.75  | 64  | 0 | 191
 -- --  1.00  | 0   | 0 | 255
--- local rgbColor = LuaUtil.InterpolateColor(color1, color2, 0.5)
 --
--- -- Example with HSL interpolation (red to green, shortest hue path):
+-- -- Example with HSL interpolation (red to blue, shortest hue path):
 -- local hslColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 1)
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
--- --  0.25  | 191 | 64  | 0
--- --  0.50  | 127 | 127 | 0
--- --  0.75  | 64  | 191 | 0
--- --  1.00  | 0   | 255 | 0
+-- --  0.25  | 255 | 0   | 128
+-- --  0.50  | 255 | 0   | 255
+-- --  0.75  | 127 | 0   | 255
+-- --  1.00  | 0   | 0   | 255
 --
--- -- Example with HSL interpolation (red to green, longest hue path):
+-- -- Example with HSL interpolation (red to blue, longest hue path):
 -- local hslLongColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 1, { huePath = "longest" })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
--- --  0.25  | 191 | 0   | 64
--- --  0.50  | 127 | 0   | 127
--- --  0.75  | 64  | 0   | 191
+-- --  0.25  | 255 | 255 | 0
+-- --  0.50  | 0   | 255 | 0
+-- --  0.75  | 0   | 255 | 255
 -- --  1.00  | 0   | 0   | 255
 --
--- -- Example with OKLch interpolation (red to green, preserving saturation):
+-- -- Example with OKLch interpolation (red to blue, shortest hue path):
+-- local oklchShortColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 2)
+-- --   t    | R   | G   | B
+-- --  ------|-----|-----|-----
+-- --  0.00  | 255 | 0   | 0
+-- --  0.25  | 232 | 0   | 123
+-- --  0.50  | 186 | 0   | 194
+-- --  0.75  | 122 | 25  | 244
+-- --  1.00  | 0   | 0   | 255
+--
+-- -- Example with OKLch interpolation (red to blue, preserving saturation):
 -- local oklchColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 2, { preserveSaturation = true })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
--- --  0.25  | 223 | 32  | 0
--- --  0.50  | 191 | 95  | 0
--- --  0.75  | 95  | 223 | 0
--- --  1.00  | 0   | 255 | 0
+-- --  0.25  | 228 | 0   | 123
+-- --  0.50  | 180 | 0   | 186
+-- --  0.75  | 117 | 25  | 224
+-- --  1.00  | 2   | 52  | 225
+-- Note: Enabling preserveSaturation, with t = 1 does not yield pure blue due to saturation preservation.
 --
--- -- Example with OKLch interpolation (red to green, preserving lightness):
+-- -- Example with OKLch interpolation (red to blue, preserving lightness):
 -- local oklchLightColor = LuaUtil.InterpolateColor(color1, color2, 0.5, 2, { preserveLightness = true })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
--- --  0.25  | 223 | 32  | 0
--- --  0.50  | 191 | 95  | 0
--- --  0.75  | 95  | 223 | 0
--- --  1.00  | 0   | 255 | 0
+-- --  0.25  | 249 | 0   | 136
+-- --  0.50  | 217 | 17  | 224
+-- --  0.75  | 159 | 62  | 255
+-- --  1.00  | 28  | 103 | 255
+-- Note: Enabling preserveLightness, with t = 1 does not yield pure blue due to lightness preservation.
 LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
 
     -- Validate input parameters
