@@ -167,7 +167,10 @@ namespace TEN::Entities::Switches
 		bool isDisabled = switchItem->Animation.ActiveState == SWITCH_ON;
 
 		if (!isDisabled)
-			g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem, InteractionMode::Activation);
+		{
+			auto offset = Vector3(0, switchItem->GetAabb().Extents.y, 0);
+			g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem, InteractionMode::Activation, InteractionType::Use, offset);
+		}
 
 		bool isUnderwater = (lara->Control.WaterStatus == WaterStatus::Underwater);
 
