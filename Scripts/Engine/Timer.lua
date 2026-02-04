@@ -374,10 +374,17 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 	local remainingTime = LevelVars.Engine.Timer.timers[self.name].remainingTime
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
-	if LevelVars.Engine.Timer.timers[self.name].hasTicked then
-		return Utility.CompareValue(remainingTime, time, operator)
+
+	-- Only for equality/difference operators (==, !=) we check hasTicked.
+	-- This avoids false results due to the internal tick (0.1s) and ensures relational comparisons (> < >= <=) are always valid every 0.03s.
+	if operator == 0 or operator == 1 then
+		if LevelVars.Engine.Timer.timers[self.name].hasTicked then
+			return Utility.CompareValue(remainingTime, time, operator)
+		else
+			return false
+		end
 	else
-		return false
+		return Utility.CompareValue(remainingTime, time, operator)
 	end
 end
 
