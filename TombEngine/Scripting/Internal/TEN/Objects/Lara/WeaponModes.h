@@ -12,10 +12,6 @@ namespace TEN::Scripting
 
 	static const auto WEAPON_MODES = std::unordered_map<std::string, PlayerWeaponMode>
 	{
-		/// No weapon mode.
-		// @mem NONE
-		{ "NONE", PlayerWeaponMode::None },
-
 		/// Rapid fire mode.
 		// @mem RAPID
 		{ "RAPID", PlayerWeaponMode::Rapid },
