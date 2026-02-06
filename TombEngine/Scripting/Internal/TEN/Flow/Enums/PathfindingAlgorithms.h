@@ -24,7 +24,7 @@ namespace TEN::Scripting
 
 		/// A* algorithm with distance weights and heuristic (default).
 		// Combines Dijkstra's accuracy with a heuristic that guides the search toward the creature.
-		// Generally the fastest and most accurate option.
+		// Generally the fastest and most accurate option commonly used in games.
 		// @mem ASTAR
 		{ "ASTAR", PathfindingMode::AStar }
 	};

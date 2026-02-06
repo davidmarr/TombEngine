@@ -290,8 +290,7 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(PathfindingSettings, ScriptReserved_PFSettings),
 
 		/// Pathfinding mode.
-		// @tfield Flow.PathfindingMode mode The algorithm used for pathfinding. Options are BFS (original),
-		// DIJKSTRA (distance-weighted), or ASTAR (distance-weighted with heuristic).
+		// @tfield Flow.PathfindingMode mode The algorithm used for pathfinding. For more information, refer to @{Flow.PathfindingMode}.
 		"mode", &PathfindingSettings::Mode,
 
 		/// Pathfinding graph search depth.
