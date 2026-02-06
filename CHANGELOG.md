@@ -10,6 +10,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Optimized pause and options menu handling and apply settings while exiting the menu instead of canceling them.
 * Added faster Xorshift32 random number generation method.
 * Added explosion decal effects to Atlantean enemy projectiles.
+* Added new debug page with memory usage statistics and more verbose logging for memory-related crashes.
 
 ### Bug fixes
 * Fixed incorrect handling of negative timer values in classic triggers.
