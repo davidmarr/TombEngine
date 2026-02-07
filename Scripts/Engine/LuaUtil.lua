@@ -3906,7 +3906,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
         return colorA
     end
 
-    t = LuaUtil.Clamp(t, 0, 1)
+    t = max(0, min(1, t))  -- Clamp t to [0, 1]
 
     colorSpace = colorSpace or 0
 
