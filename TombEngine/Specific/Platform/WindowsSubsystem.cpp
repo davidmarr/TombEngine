@@ -438,6 +438,23 @@ namespace TEN::Platform
 		return _window;
 	}
 
+	void WindowsSubsystem::InitialiseAudioCodecs()
+	{
+		// HACK: Manually force-load ADPCM codec, because on Win11 systems
+		// it may suddenly unload otherwise. BASS supports MSADPCM natively
+		// on all platforms, but on Windows it relies on the system ACM codec.
+		_adpcmLibrary = LoadLibrary("msadp32.acm");
+	}
+
+	void WindowsSubsystem::ReleaseAudioCodecs()
+	{
+		if (_adpcmLibrary != nullptr)
+		{
+			FreeLibrary(_adpcmLibrary);
+			_adpcmLibrary = nullptr;
+		}
+	}
+
 	void WindowsSubsystem::HideConsole()
 	{
 		FreeConsole();

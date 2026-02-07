@@ -28,8 +28,9 @@ namespace TEN::Platform
 	private:
 		// Fields
 
-		SDL_Window* _window    = nullptr;
-		HINSTANCE   _hInstance = nullptr;
+		SDL_Window* _window        = nullptr;
+		HINSTANCE   _hInstance     = nullptr;
+		HMODULE     _adpcmLibrary = nullptr;
 
 	public:
 		// Constructors
@@ -62,6 +63,9 @@ namespace TEN::Platform
 		void CheckPrerequisites() override;
 		void HideConsole() override;
 		void ShowErrorMessage(const std::string& msg) override;
+
+		void InitialiseAudioCodecs() override;
+		void ReleaseAudioCodecs() override;
 
 	private:
 		// Helpers

@@ -40,6 +40,9 @@ namespace TEN::Platform
 		void CheckPrerequisites() override;
 		void HideConsole() override;
 		void ShowErrorMessage(const std::string& msg) override;
+
+		void InitialiseAudioCodecs() override;
+		void ReleaseAudioCodecs() override;
 	};
 }
 

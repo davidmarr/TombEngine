@@ -32,6 +32,18 @@ constexpr auto SOUND_BGM_DAMP_COEFFICIENT    = 0.5f;
 constexpr auto SOUND_MIN_PARAM_MULTIPLIER    = 0.05f;
 constexpr auto SOUND_MAX_PARAM_MULTIPLIER    = 5.0f;
 
+#pragma pack(push, 1)
+struct WaveFormatPCM
+{
+    unsigned short FormatTag;
+	unsigned short Channels;
+	unsigned int SamplesPerSec;
+	unsigned int AverageBytesPerSec;
+	unsigned short BlockAlign;
+	unsigned short BitsPerSample;
+};
+#pragma pack(pop)
+
 enum class SoundPauseMode
 {
 	Global,

@@ -41,6 +41,10 @@ namespace TEN::Platform
 		virtual void CheckPrerequisites() = 0;
 		virtual void HideConsole() = 0;
 		virtual void ShowErrorMessage(const std::string& text) = 0;
+
+		// Platform-specific audio codec workarounds.
+		virtual void InitialiseAudioCodecs() = 0;
+		virtual void ReleaseAudioCodecs() = 0;
 	};
 
 	std::unique_ptr<ISubsystem> CreatePlatformSubsystem();

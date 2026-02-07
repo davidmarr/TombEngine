@@ -131,6 +131,16 @@ namespace TEN::Platform
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Tomb Engine", msg.c_str(), _window);
 	}
 
+	void MacOSSubsystem::InitialiseAudioCodecs()
+	{
+		// No-op: BASS handles MSADPCM internally on macOS.
+	}
+
+	void MacOSSubsystem::ReleaseAudioCodecs()
+	{
+		// No-op: BASS handles MSADPCM internally on macOS.
+	}
+
 	bool MacOSSubsystem::CreateDummyTitleLevel(const std::string& levelPath)
 	{
 		// Look for dummy.ten next to the executable.

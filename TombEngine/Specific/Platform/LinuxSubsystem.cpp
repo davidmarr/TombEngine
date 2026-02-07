@@ -125,6 +125,16 @@ namespace TEN::Platform
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Tomb Engine", msg.c_str(), _window);
 	}
 
+	void LinuxSubsystem::InitialiseAudioCodecs()
+	{
+		// No-op: BASS handles MSADPCM internally on Linux.
+	}
+
+	void LinuxSubsystem::ReleaseAudioCodecs()
+	{
+		// No-op: BASS handles MSADPCM internally on Linux.
+	}
+
 	bool LinuxSubsystem::CreateDummyTitleLevel(const std::string& levelPath)
 	{
 		// Look for dummy.ten next to the executable.

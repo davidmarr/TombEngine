@@ -30,8 +30,6 @@ HSTREAM BASS_3D_Mixdown;
 HSTREAM BASS_Video;
 HFX     BASS_FXHandler[(int)SoundFilter::Count];
 
-HMODULE ADPCMLibrary = NULL; // Temporary hack for unexpected ADPCM codec unload on Win11 systems.
-
 SoundEffectSlot SoundSlot[SOUND_MAX_CHANNELS];
 SoundTrackSlot  SoundtrackSlot[(int)SoundTrackType::Count];
 
@@ -123,14 +121,14 @@ bool LoadSample(char* pointer, int compSize, int uncompSize, int index)
 	memcpy(uncompBuffer, "RIFF\0\0\0\0WAVEfmt \20\0\0\0", 20);
 	memcpy(uncompBuffer + 36, "data\0\0\0\0", 8);
 
-	WAVEFORMATEX *wf = (WAVEFORMATEX*)(uncompBuffer + 20);
+	auto* wf = (WaveFormatPCM*)(uncompBuffer + 20);
 
-	wf->wFormatTag = 3;
-	wf->nChannels = info.chans;
-	wf->wBitsPerSample = 32;
-	wf->nSamplesPerSec = info.freq;
-	wf->nBlockAlign = wf->nChannels * wf->wBitsPerSample / 8;
-	wf->nAvgBytesPerSec = wf->nSamplesPerSec * wf->nBlockAlign;
+	wf->FormatTag = 3;
+	wf->Channels = info.chans;
+	wf->BitsPerSample = 32;
+	wf->SamplesPerSec = info.freq;
+	wf->BlockAlign = wf->Channels * wf->BitsPerSample / 8;
+	wf->AverageBytesPerSec = wf->SamplesPerSec * wf->BlockAlign;
 
 	// Copy raw PCM data from temporary sample buffer to actual buffer which will be used by engine.
 	BASS_SampleGetData(sample, uncompBuffer + 44);
@@ -143,7 +141,7 @@ bool LoadSample(char* pointer, int compSize, int uncompSize, int index)
 		float *currentSample = reinterpret_cast<float*>(uncompBuffer + finalLength - i);
 		if (*currentSample > SOUND_32BIT_SILENCE_LEVEL || *currentSample < -SOUND_32BIT_SILENCE_LEVEL)
 		{
-			int alignment = i % wf->nBlockAlign;
+			int alignment = i % wf->BlockAlign;
 			cleanLength -= (i - alignment);
 			break;
 		}
@@ -1008,8 +1006,7 @@ void Sound_Init(const std::string& gameDirectory)
 		return;
 	}
 
-	// HACK: Manually force-load ADPCM codec, because on Win11 systems it may suddenly unload otherwise.
-	ADPCMLibrary = LoadLibrary("msadp32.acm");
+	g_Platform->InitialiseAudioCodecs();
 
 	int soundDevice = g_Configuration.SoundDevice;
 
@@ -1085,9 +1082,7 @@ void Sound_DeInit()
 	TENLog("Shutting down BASS...", LogLevel::Info);
 	BASS_Free();
 
-	// HACK: Manually unload previously loaded ADPCM codec.
-	if (ADPCMLibrary != NULL)
-		FreeLibrary(ADPCMLibrary);
+	g_Platform->ReleaseAudioCodecs();
 }
 
 void Sound_Reset()
