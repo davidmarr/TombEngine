@@ -1,4 +1,7 @@
 -- ldignore
+
+-- Internal functions specific to modules. These are not intended for end users. These functions are not documented in the API reference.
+
 local Util = {}
 local Type = require("Engine.Type")
 local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true }
@@ -11,6 +14,7 @@ Util.ShortenTENCalls = function()
 end
 
 -- Check if the time format is correct.
+-- Used by: Timer.lua
 Util.CheckTimeFormat = function(timerFormat, errorText)
 	errorText = errorText and Type.IsString(errorText) and errorText or false
 	if Type.IsTable(timerFormat) then
@@ -33,6 +37,7 @@ Util.CheckTimeFormat = function(timerFormat, errorText)
 end
 
 -- Generate a formatted string from a time.
+-- Used by: Timer.lua
 Util.GenerateTimeFormattedString = function(time, timerFormat)
 	if not timerFormat then
 		return ""
