@@ -109,13 +109,8 @@ local _activeCompares = {}     -- Tracks active comparisons: { [id] = { depth, e
 local _nextCopyId = 1          -- Progressive ID generator for each copy operation
 local _activeCopies = {}       -- Tracks active copy operations: { [id] = { depth, elementCount, visited } }
 
-LevelFuncs.Engine.LuaUtil = {}
-
--- Local reference to exported functions for internal use
-local F = LevelFuncs.Engine.LuaUtil
-
 -- Helper function for type checking and interpolation
-F.InterpolateValues = function(a, b, clampedT, functionName)
+local function InterpolateValues(a, b, clampedT, functionName)
     if IsNumber(a) then
         if not IsNumber(b) then
             TEN.Util.PrintLog("Error in " .. functionName .. ": type mismatch.", TEN.Util.LogLevel.ERROR)
@@ -161,7 +156,7 @@ F.InterpolateValues = function(a, b, clampedT, functionName)
 end
 
 -- Helper function for hue interpolation with different modes
-F.InterpolateHue = function(h1, h2, t, mode)
+local function InterpolateHue(h1, h2, t, mode)
     local delta = h2 - h1
 
     if mode == "shortest" then
@@ -183,7 +178,7 @@ end
 
 
 -- Helper function for HSL to RGB conversion
-F.HueToRgb = function(p, q, t)
+local function HueToRgb(p, q, t)
     if t < 0 then
         t = t + 1
     end
@@ -203,7 +198,7 @@ F.HueToRgb = function(p, q, t)
 end
 
 -- Helper functions for sRGB and Linear color space conversion
-F.SrgbToLinear = function(c)
+local function SrgbToLinear(c)
     if c <= 0.04045 then
         return c / 12.92
     else
@@ -212,7 +207,7 @@ F.SrgbToLinear = function(c)
 end
 
 -- Helper function for Linear to sRGB color space conversion
-F.LinearToSrgb = function(c)
+local function LinearToSrgb(c)
     if c <= 0.0031308 then
         return c * 12.92
     else
@@ -221,7 +216,7 @@ F.LinearToSrgb = function(c)
 end
 
 -- Support function for deep table copy
-F.DeepCopyRecursive = function(original, copyId)
+local function DeepCopyRecursive(original, copyId)
     local context = _activeCopies[copyId]
 
     -- Check maximum depth
@@ -252,7 +247,7 @@ F.DeepCopyRecursive = function(original, copyId)
 
         -- Deep copy nested tables
         if IsTable(value) then
-            copy[key] = F.DeepCopyRecursive(value, copyId)
+            copy[key] = DeepCopyRecursive(value, copyId)
         else
             copy[key] = value
         end
@@ -263,7 +258,7 @@ F.DeepCopyRecursive = function(original, copyId)
 end
 
 -- Support function for recursive comparison
-F.CompareRecursive = function(t1, t2, compareId)
+local function CompareRecursive(t1, t2, compareId)
     local context = _activeCompares[compareId]
 
     -- Check maximum depth
@@ -306,7 +301,7 @@ F.CompareRecursive = function(t1, t2, compareId)
 
         -- Compare values
         if IsTable(value1) and IsTable(value2) then
-            if not F.CompareRecursive(value1, value2, compareId) then
+            if not CompareRecursive(value1, value2, compareId) then
                 context.depth = context.depth - 1
                 return false
             end
@@ -327,6 +322,11 @@ F.CompareRecursive = function(t1, t2, compareId)
     -- Decrement depth before returning
     context.depth = context.depth - 1
     return true
+end
+
+-- Support function for angle wrapping (used in interpolation)
+local function wrapAngleRaw(angle, minVal, range)
+    return angle - range * floor((angle - minVal) / range)
 end
 
 --- General utilities.
@@ -424,7 +424,7 @@ LuaUtil.CloneValue = function(value)
         }
 
         -- Execute deep copy
-        local result = F.DeepCopyRecursive(value, copyId)
+        local result = DeepCopyRecursive(value, copyId)
 
         -- Cleanup: remove context for this copy
         _activeCopies[copyId] = nil
@@ -1202,7 +1202,8 @@ LuaUtil.WrapAngle = function(angle, minValue, maxValue)
         return angle
     end
 
-    return angle - range * floor((angle - minValue) / range)
+    -- return angle - range * floor((angle - minValue) / range)
+    return wrapAngleRaw(angle, minValue, range)
 end
 
 --- Checks if a value is an integer (a number without fractional part).
@@ -2191,9 +2192,9 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
         local p = 2 * l - q
         local hNorm = h / 360
 
-        r = F.HueToRgb(p, q, hNorm + 1/3)
-        g = F.HueToRgb(p, q, hNorm)
-        b = F.HueToRgb(p, q, hNorm - 1/3)
+        r = HueToRgb(p, q, hNorm + 1/3)
+        g = HueToRgb(p, q, hNorm)
+        b = HueToRgb(p, q, hNorm - 1/3)
     end
 
     -- Convert to 0-255 range and create TEN.Color
@@ -2337,9 +2338,9 @@ LuaUtil.ColorToOKLch = function(color)
     end
 
     -- Convert sRGB to linear RGB (0-1 range)
-    local r = F.SrgbToLinear(color.r / 255)
-    local g = F.SrgbToLinear(color.g / 255)
-    local b = F.SrgbToLinear(color.b / 255)
+    local r = SrgbToLinear(color.r / 255)
+    local g = SrgbToLinear(color.g / 255)
+    local b = SrgbToLinear(color.b / 255)
     local a = color.a / 255
 
     -- Linear RGB to OKLab (using matrix multiplication)
@@ -2482,9 +2483,9 @@ LuaUtil.OKLchToColor = function(l, c, h, a)
     b_lin = max(0, min(1, b_lin))
 
     -- Linear RGB to sRGB
-    local r = F.LinearToSrgb(r_lin)
-    local g = F.LinearToSrgb(g_lin)
-    local b = F.LinearToSrgb(b_lin)
+    local r = LinearToSrgb(r_lin)
+    local g = LinearToSrgb(g_lin)
+    local b = LinearToSrgb(b_lin)
 
     -- Clamp and convert to 0-255 range
     r = floor(max(0, min(1, r)) * 255 + 0.5)
@@ -2760,7 +2761,7 @@ LuaUtil.Lerp = function(a, b, t)
     end
     -- Clamp t to the range [0, 1]
     local clampedT = max(0, min(1, t))
-    return F.InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
+    return InterpolateValues(a, b, clampedT, "LuaUtil.Lerp")
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -2880,7 +2881,7 @@ LuaUtil.Smoothstep = function (a, b, t, edge0, edge1)
     -- Evaluate polynomial
     -- Smoothstep formula: t²(3 - 2t) = 3t² - 2t³
     local smoothedT = normalizedT * normalizedT * (3 - 2 * normalizedT)
-    return F.InterpolateValues(a, b, smoothedT, "LuaUtil.Smoothstep")
+    return InterpolateValues(a, b, smoothedT, "LuaUtil.Smoothstep")
 end
 
 --- Smoothly interpolate with smootherstep curve (Ken Perlin's improved version).
@@ -3154,7 +3155,7 @@ LuaUtil.Smootherstep = function (a, b, t, edge0, edge1)
     -- This is identical to LevelFuncs.Engine.Node.Smoothstep
     local smootherT = (normalizedT ^ 3) * (normalizedT * (normalizedT * 6 - 15) + 10)
 
-    return F.InterpolateValues(a, b, smootherT, "LuaUtil.Smootherstep")
+    return InterpolateValues(a, b, smootherT, "LuaUtil.Smootherstep")
 end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
@@ -3256,7 +3257,7 @@ LuaUtil.EaseInOut = function(a, b, t)
         easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
     end
 
-    return F.InterpolateValues(a, b, easedT, "LuaUtil.EaseInOut")
+    return InterpolateValues(a, b, easedT, "LuaUtil.EaseInOut")
 end
 
 --- Elastic interpolation with overshoot and bounce effect.
@@ -3415,7 +3416,7 @@ LuaUtil.Elastic = function(a, b, t, amplitude, period)
         easedT = (amplitude * (2 ^ (-10 * t)) * sin((t - s) * periodOverTwoPi)) / 2 + 1
     end
 
-    return F.InterpolateValues(a, b, easedT, "LuaUtil.Elastic")
+    return InterpolateValues(a, b, easedT, "LuaUtil.Elastic")
 end
 
 --- Bounce interpolation with damped oscillation physics.
@@ -3654,7 +3655,7 @@ LuaUtil.Bounce = function(a, b, t, bounces, damping)
     local oscillation = abs(cos(t * pi * bounces))
     local easedT = 1 - (oscillation * decay)
 
-    return F.InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
+    return InterpolateValues(a, b, easedT, "LuaUtil.Bounce")
 end
 
 --- Linearly interpolate between two angles, taking the shortest path.
@@ -3794,13 +3795,13 @@ LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
     -- Clamp t to [0, 1]
     t = max(0, min(1, t))
 
-    -- Normalize angles to range
-    a = LuaUtil.WrapAngle(a, minValue, maxValue)
-    b = LuaUtil.WrapAngle(b, minValue, maxValue)
-
     -- Calculate shortest delta
     local delta = b - a
     local range = maxValue - minValue
+
+    -- Normalize angles to range
+    a = wrapAngleRaw(a, minValue, range)
+    b = wrapAngleRaw(b, minValue, range)
 
     -- Wrap delta to [-range/2, range/2] for shortest path
     if delta > range / 2 then
@@ -3956,7 +3957,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
         local HSLcolorA = LuaUtil.ColorToHSL(colorA)
         local HSLcolorB = LuaUtil.ColorToHSL(colorB)
 
-        local h = F.InterpolateHue(HSLcolorA.h, HSLcolorB.h, t, huePath)
+        local h = InterpolateHue(HSLcolorA.h, HSLcolorB.h, t, huePath)
         local s = preserveS and HSLcolorA.s or LuaUtil.Lerp(HSLcolorA.s, HSLcolorB.s, t)
         local l = preserveL and HSLcolorA.l or LuaUtil.Lerp(HSLcolorA.l, HSLcolorB.l, t)
 
@@ -3972,7 +3973,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
 
         local l = preserveL and OKLchColorA.l or LuaUtil.Lerp(OKLchColorA.l, OKLchColorB.l, t)
         local c = preserveS and OKLchColorA.c or LuaUtil.Lerp(OKLchColorA.c, OKLchColorB.c, t)
-        local h = F.InterpolateHue(OKLchColorA.h, OKLchColorB.h, t, huePath)
+        local h = InterpolateHue(OKLchColorA.h, OKLchColorB.h, t, huePath)
 
         local finalColor = LuaUtil.OKLchToColor(l, c, h)
         local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
@@ -4078,7 +4079,7 @@ LuaUtil.CompareTablesDeep = function (tbl1, tbl2)
     }
 
     -- Execute comparison
-    local result = F.CompareRecursive(tbl1, tbl2, compareId)
+    local result = CompareRecursive(tbl1, tbl2, compareId)
 
     -- Cleanup: remove context for this comparison
     _activeCompares[compareId] = nil
