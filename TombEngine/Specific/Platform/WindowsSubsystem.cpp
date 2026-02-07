@@ -257,13 +257,23 @@ namespace TEN::Platform
 			"Tomb Engine requires the Microsoft Visual C++ 2015-2022 Redistributable to be installed.\n"
 			"Would you like to download it now?";
 
-		int msgBoxResult = MessageBoxA(
-			nullptr,
-			message,
-			"Missing libraries",
-			MB_ICONWARNING | MB_OKCANCEL);
+		SDL_MessageBoxButtonData buttons[] =
+		{
+			{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "OK" }
+		};
 
-		if (msgBoxResult == IDOK)
+		SDL_MessageBoxData msgBoxData = {};
+		msgBoxData.flags = SDL_MESSAGEBOX_WARNING;
+		msgBoxData.title = "Missing libraries";
+		msgBoxData.message = message;
+		msgBoxData.numbuttons = 2;
+		msgBoxData.buttons = buttons;
+
+		int buttonID = 0;
+		SDL_ShowMessageBox(&msgBoxData, &buttonID);
+
+		if (buttonID == 1)
 		{
 			// Launch default browser to download redistributable.
 			auto hResult = ShellExecuteA(
@@ -280,11 +290,7 @@ namespace TEN::Platform
 				auto err = std::string("Failed to start browser to download runtimes. Error code: ");
 				err += std::to_string(static_cast<long>(reinterpret_cast<intptr_t>(hResult)));
 
-				MessageBoxA(
-					nullptr,
-					err.c_str(),
-					"Error",
-					MB_ICONERROR | MB_OK);
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err.c_str(), nullptr);
 			}
 		}
 	}
@@ -323,23 +329,29 @@ namespace TEN::Platform
 
 	std::wstring WindowsSubsystem::GetBinaryPath(bool includeExeName)
 	{
-		static const int MAX_PATH_LENGTH = 1024;
-		wchar_t fileName[MAX_PATH_LENGTH] = {};
-
-		if (!GetModuleFileNameW(nullptr, fileName, MAX_PATH_LENGTH))
+		const char* basePath = SDL_GetBasePath();
+		if (basePath == nullptr)
 		{
 			TENLog("Can't get current assembly path", LogLevel::Error);
 			return std::wstring();
 		}
 
-		auto result = std::wstring(fileName);
-		std::replace(result.begin(), result.end(), '\\', '/');
+		auto dirPath = std::filesystem::path(basePath);
+		auto result = dirPath.wstring();
+		std::replace(result.begin(), result.end(), L'\\', L'/');
 
-		if (includeExeName)
+		if (!includeExeName)
 			return result;
 
-		size_t pos = result.find_last_of(L"/");
-		return (pos != std::wstring::npos) ? result.substr(0, pos + 1) : std::wstring();
+		// Append executable filename for the rare callers that need it.
+		static const int MAX_PATH_LENGTH = 1024;
+		wchar_t fileName[MAX_PATH_LENGTH] = {};
+
+		if (!GetModuleFileNameW(nullptr, fileName, MAX_PATH_LENGTH))
+			return result;
+
+		auto exeName = std::filesystem::path(fileName).filename().wstring();
+		return result + exeName;
 	}
 
 	std::vector<unsigned short> WindowsSubsystem::GetProductOrFileVersion(bool productVersion)

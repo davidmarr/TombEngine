@@ -51,7 +51,7 @@ namespace TEN::Renderer
 		constexpr auto SCALE		= 0.8f;
 
 		char buffer[255];
-		ZeroMemory(buffer, 255);
+		memset(buffer, 0, 255);
 		_vsprintf_l(buffer, msg, nullptr, args);
 		AddString(buffer, Vector2(LINE_X_POS, _currentLineHeight), COLOR, SCALE, (int)PrintStringFlags::Outline);
 

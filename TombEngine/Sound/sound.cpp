@@ -119,7 +119,7 @@ bool LoadSample(char* pointer, int compSize, int uncompSize, int index)
 	// Generate RIFF/WAV header to simplify loading sample data to stream. In case if RIFF/WAV header
 	// exists, stream could be completely created just by calling BASS_StreamCreateFile().
 	char* uncompBuffer = new char[finalLength];
-	ZeroMemory(uncompBuffer, finalLength);
+	memset(uncompBuffer, 0, finalLength);
 	memcpy(uncompBuffer, "RIFF\0\0\0\0WAVEfmt \20\0\0\0", 20);
 	memcpy(uncompBuffer + 36, "data\0\0\0\0", 8);
 
@@ -398,7 +398,7 @@ void StopAllSounds()
 	for (int i = 0; i < SOUND_MAX_CHANNELS; i++)
 		Sound_FreeSlot(i, SOUND_XFADETIME_CUTSOUND);
 
-	ZeroMemory(SoundSlot, (sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS));
+	memset(SoundSlot, 0, sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS);
 }
 
 void FreeSamples()
@@ -1055,7 +1055,7 @@ void Sound_Init(const std::string& gameDirectory)
 		return;
 
 	// Initialize channels and tracks array
-	ZeroMemory(SoundSlot, (sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS));
+	memset(SoundSlot, 0, sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS);
 
 	// Attach reverb effect to 3D channel
  	BASS_FXHandler[(int)SoundFilter::Reverb] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_FREEVERB, 0);
