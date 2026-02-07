@@ -2109,6 +2109,9 @@ namespace TEN::Gui
 				return;
 			}
 
+			if (player.Context.Vehicle != NO_VALUE)
+				return;
+
 			switch (InventoryItemChosen)
 			{
 				case ID_PISTOLS_ITEM:
@@ -2157,6 +2160,9 @@ namespace TEN::Gui
 			{
 				return;
 			}
+
+			if (player.Context.Vehicle != NO_VALUE)
+				return;
 
 			switch (InventoryItemChosen)
 			{

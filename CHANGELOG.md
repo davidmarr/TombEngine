@@ -6,18 +6,19 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 1.11]
 
 ### New features
+* Overhauled enemy AI with weighted pathfinding, predictive targeting, penalty system, and collision avoidance.
+* Optimized pause and options menu handling and apply settings while exiting the menu instead of canceling them.
 * Added faster Xorshift32 random number generation method.
 * Added explosion decal effects to Atlantean enemy projectiles.
-* Optimized pause and options menu handling and apply settings while exiting the menu instead of canceling them.
+* Added new debug page with memory usage statistics and more verbose logging for memory-related crashes.
 
 ### Bug fixes
 * Fixed incorrect handling of negative timer values in classic triggers.
-* Fixed interaction highlighter not working for pushable climbable blocks.
+* Fixed interaction highlighter not working for pushable climbable blocks and underwater switches.
 * Fixed pushables being ignored by other collidable objects after savegame reload.
 * Fixed pushables not updating their properties while changing OCB on the fly.
 * Fixed sector box flags being reset after savegame reload.
-* Fixed several enemy AI issues.
-* Fixed incorrect CLOCKWORK_BEETLE, HORSEMAN, MONK1/2 and MERCENARY_UZI behaviour.
+* Fixed incorrect CLOCKWORK_BEETLE, SCUBA_DIVER, HORSEMAN, MONK1/2 and MERCENARY_UZI behaviour.
 * Fixed CIVVY crashing the game.
 * Fixed missing SHARK final attack animation.
 * Fixed SEARCH_OBJECT4 not always collecting pickup items.
@@ -46,6 +47,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `View.DisplayItem` class that can be used to render 3D items on top of the viewport.
 * Added `View.DisplayAnchors` primitive class and `View.DisplaySprite:GetAnchors` method.
 * Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
+* Added `Inventory.Reset` function to reset inventory state to default.
 * Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
