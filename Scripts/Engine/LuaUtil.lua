@@ -3820,7 +3820,7 @@ end
 -- @tparam Color colorA Starting color.
 -- @tparam Color colorB Ending color.
 -- @tparam float t Interpolation factor (0.0 to 1.0).
--- @tparam[opt=0] int colorSpace Color space to use (0 = RGB, 1 = HSL, 2 = OKLch).
+-- @tparam[opt=0] int space Color space to use (0 = RGB, 1 = HSL, 2 = OKLch).
 -- @tparam[opt={}] table options Additional options.
 --
 -- - `huePath` (string): Path for hue interpolation in HSL/OKLch<br>`("shortest", "longest", "increasing", "decreasing")`<br>*Default: "shortest"*.
@@ -3894,7 +3894,7 @@ end
 -- --  0.75  | 159 | 62  | 255
 -- --  1.00  | 28  | 103 | 255
 -- -- Note: Enabling preserveLightness, with t = 1 does not yield pure blue due to lightness preservation.
-LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
+LuaUtil.InterpolateColor = function(colorA, colorB, t, space, options)
 
     -- Validate input parameters
     if not IsColor(colorA) or not IsColor(colorB) then
@@ -3909,11 +3909,11 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
 
     t = max(0, min(1, t))  -- Clamp t to [0, 1]
 
-    colorSpace = colorSpace or 0
+    space = space or 0
 
-    if not IsNumber(colorSpace) or (colorSpace ~= 0  and colorSpace ~= 1 and colorSpace ~= 2) then
+    if not IsNumber(space) or (space ~= 0  and space ~= 1 and space ~= 2) then
         TEN.Util.PrintLog("Warning in LuaUtil.InterpolateColor: invalid colorSpace, using RGB.", TEN.Util.LogLevel.WARNING)
-        colorSpace = 0
+        space = 0
     end
 
     -- Validate options (optional parameter)
@@ -3944,7 +3944,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
     preserveL = preserveL or false
 
     -- RBG
-    if colorSpace == 0 then
+    if space == 0 then
         local r = LuaUtil.Lerp(colorA.r, colorB.r, t)
         local g = LuaUtil.Lerp(colorA.g, colorB.g, t)
         local b = LuaUtil.Lerp(colorA.b, colorB.b, t)
@@ -3953,7 +3953,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
     end
 
     -- HSL
-    if colorSpace == 1 then
+    if space == 1 then
         local HSLcolorA = LuaUtil.ColorToHSL(colorA)
         local HSLcolorB = LuaUtil.ColorToHSL(colorB)
 
@@ -3967,7 +3967,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
     end
 
     -- OKLch
-    if colorSpace == 2 then
+    if space == 2 then
         local OKLchColorA = LuaUtil.ColorToOKLch(colorA)
         local OKLchColorB = LuaUtil.ColorToOKLch(colorB)
 
@@ -3979,9 +3979,6 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, colorSpace, options)
         local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
         return TEN.Color(finalColor.r, finalColor.g, finalColor.b, a)
     end
-
-    -- Fallback (non dovrebbe mai accadere)
-    -- return colorA
 end
 
 --- Table functions.
