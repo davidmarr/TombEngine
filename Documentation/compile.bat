@@ -27,7 +27,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo Organizing CSS files...
-mkdir %CSS_DIR%
+if not exist "%CSS_DIR%" mkdir "%CSS_DIR%"
 if exist "%DOC_DIR%\ldoc.css" (
     move /Y %DOC_DIR%\ldoc.css %CSS_DIR%\
     echo CSS moved to css folder
