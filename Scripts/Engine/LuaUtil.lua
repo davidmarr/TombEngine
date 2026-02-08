@@ -345,6 +345,11 @@ local function wrapAngleRaw(angle, minVal, range)
     return angle - range * floor((angle - minVal) / range)
 end
 
+-- Support function for rounding numbers to a specified number of decimal places
+local function Round(num, mult)
+    return floor(num * mult + 0.5) / mult
+end
+
 --- General utilities.
 -- Generic helper functions that work with multiple data types.
 -- @section general
@@ -682,8 +687,18 @@ LuaUtil.SplitString = function(inputStr, delimiter)
     end
 
     local t = {}
-    for str in string.gmatch(inputStr, "([^" .. delimiter .. "]+)") do
-        table.insert(t, str)
+    local start = 1
+    local delimLen = #delimiter
+    while true do
+        local pos = inputStr:find(delimiter, start, true)  -- plain match
+        if not pos then
+            local last = inputStr:sub(start)
+            if #last > 0 then t[#t + 1] = last end
+            break
+        end
+        local segment = inputStr:sub(start, pos - 1)
+        if #segment > 0 then t[#t + 1] = segment end
+        start = pos + delimLen
     end
     return t
 end
@@ -693,17 +708,19 @@ end
 -- @section math
 
 --- Get the minimum value between multiple arguments (supports numbers, Vec2, Vec3, Time).
--- For Vec2/Vec3, returns component-wise minimum.
--- @tparam number|Vec2|Vec3|Time ... Values to compare (at least 2).
+-- For Vec2/Vec3, returns component-wise minimum. Values to compare (at least 2)
+-- @tparam number|Vec2|Vec3|Time a
+-- @tparam number|Vec2|Vec3|Time b (same type as a)
+-- @tparam number|Vec2|Vec3|Time ... (same type as a and b)
 -- @treturn[1] number|Vec2|Vec3|Time The minimum value.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] number|Vec2|Vec3|Time the value of `*a*` if an error occurs (type mismatch or unsupported type), with an error message.
 -- @usage
 -- local min = LuaUtil.Min(5, 10, 3) -- Result: 3
 -- local minVec = LuaUtil.Min(TEN.Vec3(1, 5, 3), TEN.Vec3(2, 4, 6)) -- Result: Vec3(1, 4, 3)
 -- local minTime = LuaUtil.Min(TEN.Time(30), TEN.Time(60)) -- Result: Time(30)
 --
 -- -- Error handling example:
--- local min = LuaUtil.Min(5, "10", 3) -- Result: nil (type mismatch)
+-- local min = LuaUtil.Min(5, "10", 3) -- Result: 5 (type mismatch, error logged)
 -- if min == nil then
 --     TEN.Util.PrintLog("Failed to compute minimum value", TEN.Util.LogLevel.ERROR)
 --     return  -- or use a fallback value
@@ -718,79 +735,96 @@ end
 -- local minVec = LuaUtil.Min(vec1, vec2, vec3) or TEN.Vec3(0, 0, 0)
 -- -- with Time
 -- local minTime = LuaUtil.Min(time1, time2) or TEN.Time(0)
-LuaUtil.Min = function(...)
-    local args = {...}
-    if #args < 2 then
-        LogMessage("Error in LuaUtil.Min: at least 2 arguments required.", logLevelError)
-        return nil
-    end
+LuaUtil.Min = function(a, b, ...)
+    -- Fast path: exactly 2 arguments (most common case)
+    local extraCount = select("#", ...)
 
-    local first = args[1]
-
-    if IsNumber(first) then
-        local minVal = args[1]
-        for i = 2, #args do
-            if not IsNumber(args[i]) then
+    if IsNumber(a) then
+        if not IsNumber(b) then
+            LogMessage("Error in LuaUtil.Min: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local minVal = a < b and a or b
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsNumber(v) then
                 LogMessage("Error in LuaUtil.Min: all arguments must be numbers.", logLevelError)
-                return nil
+                return a
             end
-            if args[i] < minVal then
-                minVal = args[i]
-            end
+            if v < minVal then minVal = v end
         end
         return minVal
-    elseif IsTime(first) then
-        local minTime = first
-        for i = 2, #args do
-            if not IsTime(args[i]) then
+
+    elseif IsVec2(a) then
+        if not IsVec2(b) then
+            LogMessage("Error in LuaUtil.Min: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local rx, ry = min(a.x, b.x), min(a.y, b.y)
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsVec2(v) then
+                LogMessage("Error in LuaUtil.Min: all arguments must be Vec2.", logLevelError)
+                return a
+            end
+            rx = min(rx, v.x)
+            ry = min(ry, v.y)
+        end
+        return Vec2(rx, ry)
+
+    elseif IsVec3(a) then
+        if not IsVec3(b) then
+            LogMessage("Error in LuaUtil.Min: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local rx, ry, rz = min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsVec3(v) then
+                LogMessage("Error in LuaUtil.Min: all arguments must be Vec3.", logLevelError)
+                return a
+            end
+            rx = min(rx, v.x)
+            ry = min(ry, v.y)
+            rz = min(rz, v.z)
+        end
+        return Vec3(rx, ry, rz)
+
+    elseif IsTime(a) then
+        if not IsTime(b) then
+            LogMessage("Error in LuaUtil.Min: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local minTime = a:GetFrameCount() < b:GetFrameCount() and a or b
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsTime(v) then
                 LogMessage("Error in LuaUtil.Min: all arguments must be Time.", logLevelError)
-                return nil
+                return a
             end
-            if args[i]:GetFrameCount() < minTime:GetFrameCount() then
-                minTime = args[i]
-            end
+            if v:GetFrameCount() < minTime:GetFrameCount() then minTime = v end
         end
         return minTime
-    elseif IsVec2(first) then
-        local result = Vec2(first.x, first.y)
-        for i = 2, #args do
-            if not IsVec2(args[i]) then
-                LogMessage("Error in LuaUtil.Min: all arguments must be Vec2.", logLevelError)
-                return nil
-            end
-            result.x = min(result.x, args[i].x)
-            result.y = min(result.y, args[i].y)
-        end
-        return result
-    elseif IsVec3(first) then
-        local result = Vec3(first.x, first.y, first.z)
-        for i = 2, #args do
-            if not IsVec3(args[i]) then
-                LogMessage("Error in LuaUtil.Min: all arguments must be Vec3.", logLevelError)
-                return nil
-            end
-            result.x = min(result.x, args[i].x)
-            result.y = min(result.y, args[i].y)
-            result.z = min(result.z, args[i].z)
-        end
-        return result
     end
+
     LogMessage("Error in LuaUtil.Min: unsupported type.", logLevelError)
-    return nil
+    return a
 end
 
 --- Get the maximum value between multiple arguments (supports numbers, Vec2, Vec3, Time).
--- For Vec2/Vec3, returns component-wise maximum.
--- @tparam number|Vec2|Vec3|Time ... Values to compare (at least 2).
+-- For Vec2/Vec3, returns component-wise maximum. Values to compare (at least 2)
+-- @tparam number|Vec2|Vec3|Time a
+-- @tparam number|Vec2|Vec3|Time b (same type as a)
+-- @tparam number|Vec2|Vec3|Time ... (same type as a and b)
 -- @treturn[1] number|Vec2|Vec3|Time The maximum value.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] number|Vec2|Vec3|Time the value of the first argument if an error occurs (type mismatch or unsupported type), with an error message.
 -- @usage
 -- local max = LuaUtil.Max(5, 10, 3) -- Result: 10
 -- local maxVec = LuaUtil.Max(TEN.Vec3(1, 5, 3), TEN.Vec3(2, 4, 6)) -- Result: Vec3(2, 5, 6)
 -- local maxTime = LuaUtil.Max(TEN.Time(30), TEN.Time(60)) -- Result: Time(60)
 --
 -- -- Error handling example:
--- local max = LuaUtil.Max(5, "10", 3) -- Result: nil (type mismatch)
+-- local max = LuaUtil.Max(5, "10", 3) -- Result: 5 (type mismatch, error logged)
 -- if max == nil then
 --     -- Handle error
 -- end
@@ -804,65 +838,80 @@ end
 -- local maxVec3 = LuaUtil.Max(vec3_1, vec3_2) or TEN.Vec3(0, 0, 0)
 -- -- with Time
 -- local maxTime = LuaUtil.Max(time1, time2) or TEN.Time(0)
-LuaUtil.Max = function(...)
-    local args = {...}
-    if #args < 2 then
-        LogMessage("Error in LuaUtil.Max: at least 2 arguments required.", logLevelError)
-        return nil
-    end
+LuaUtil.Max = function(a, b, ...)
+    -- Fast path: exactly 2 arguments (most common case)
+    local extraCount = select("#", ...)
 
-    local first = args[1]
-
-    if IsNumber(first) then
-        local maxVal = args[1]
-        for i = 2, #args do
-            if not IsNumber(args[i]) then
+    if IsNumber(a) then
+        if not IsNumber(b) then
+            LogMessage("Error in LuaUtil.Max: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local maxVal = a > b and a or b
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsNumber(v) then
                 LogMessage("Error in LuaUtil.Max: all arguments must be numbers.", logLevelError)
-                return nil
+                return a
             end
-            if args[i] > maxVal then
-                maxVal = args[i]
-            end
+            if v > maxVal then maxVal = v end
         end
         return maxVal
-    elseif IsTime(first) then
-        local maxTime = first
-        for i = 2, #args do
-            if not IsTime(args[i]) then
+
+    elseif IsVec2(a) then
+        if not IsVec2(b) then
+            LogMessage("Error in LuaUtil.Max: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local rx, ry = max(a.x, b.x), max(a.y, b.y)
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsVec2(v) then
+                LogMessage("Error in LuaUtil.Max: all arguments must be Vec2.", logLevelError)
+                return a
+            end
+            rx = max(rx, v.x)
+            ry = max(ry, v.y)
+        end
+        return Vec2(rx, ry)
+
+    elseif IsVec3(a) then
+        if not IsVec3(b) then
+            LogMessage("Error in LuaUtil.Max: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local rx, ry, rz = max(a.x, b.x), max(a.y, b.y), max(a.z, b.z)
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsVec3(v) then
+                LogMessage("Error in LuaUtil.Max: all arguments must be Vec3.", logLevelError)
+                return a
+            end
+            rx = max(rx, v.x)
+            ry = max(ry, v.y)
+            rz = max(rz, v.z)
+        end
+        return Vec3(rx, ry, rz)
+
+    elseif IsTime(a) then
+        if not IsTime(b) then
+            LogMessage("Error in LuaUtil.Max: all arguments must be the same type.", logLevelError)
+            return a
+        end
+        local maxTime = a:GetFrameCount() > b:GetFrameCount() and a or b
+        for i = 1, extraCount do
+            local v = select(i, ...)
+            if not IsTime(v) then
                 LogMessage("Error in LuaUtil.Max: all arguments must be Time.", logLevelError)
-                return nil
+                return a
             end
-            if args[i]:GetFrameCount() > maxTime:GetFrameCount() then
-                maxTime = args[i]
-            end
+            if v:GetFrameCount() > maxTime:GetFrameCount() then maxTime = v end
         end
         return maxTime
-    elseif IsVec2(first) then
-        local result = Vec2(first.x, first.y)
-        for i = 2, #args do
-            if not IsVec2(args[i]) then
-                LogMessage("Error in LuaUtil.Max: all arguments must be Vec2.", logLevelError)
-                return nil
-            end
-            result.x = max(result.x, args[i].x)
-            result.y = max(result.y, args[i].y)
-        end
-        return result
-    elseif IsVec3(first) then
-        local result = Vec3(first.x, first.y, first.z)
-        for i = 2, #args do
-            if not IsVec3(args[i]) then
-                LogMessage("Error in LuaUtil.Max: all arguments must be Vec3.", logLevelError)
-                return nil
-            end
-            result.x = max(result.x, args[i].x)
-            result.y = max(result.y, args[i].y)
-            result.z = max(result.z, args[i].z)
-        end
-        return result
     end
+
     LogMessage("Error in LuaUtil.Max: unsupported type.", logLevelError)
-    return nil
+    return a
 end
 
 --- Round a number to a specified number of decimal places.
@@ -882,7 +931,7 @@ LuaUtil.Round = function(num, decimals)
         return 0
     end
     local mult = 10 ^ decimals
-    return floor(num * mult + 0.5) / mult
+    return Round(num, mult)
 end
 
 --- Truncate a number to a specified number of decimal places (without rounding).
@@ -3820,18 +3869,21 @@ LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
     -- Clamp t to [0, 1]
     t = max(0, min(1, t))
 
-    -- Calculate shortest delta
-    local delta = b - a
+    -- Precalculate range
     local range = maxValue - minValue
 
     -- Normalize angles to range
     a = wrapAngleRaw(a, minValue, range)
     b = wrapAngleRaw(b, minValue, range)
 
+    -- Calculate shortest delta
+    local delta = b - a
+    local halfRange = range * 0.5
+
     -- Wrap delta to [-range/2, range/2] for shortest path
-    if delta > range / 2 then
+    if delta > halfRange then
         delta = delta - range
-    elseif delta < -range / 2 then
+    elseif delta < -halfRange then
         delta = delta + range
     end
 
@@ -3968,13 +4020,15 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, space, options)
     end
     preserveL = preserveL or false
 
-    -- RBG
+    -- RGB
     if space == 0 then
-        local r = LuaUtil.Lerp(colorA.r, colorB.r, t)
-        local g = LuaUtil.Lerp(colorA.g, colorB.g, t)
-        local b = LuaUtil.Lerp(colorA.b, colorB.b, t)
-        local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
-        return TEN.Color(r, g, b, a)
+        local inv = 1 - t
+        return Color(
+            Round(colorA.r * inv + colorB.r * t, 1),
+            Round(colorA.g * inv + colorB.g * t, 1),
+            Round(colorA.b * inv + colorB.b * t, 1),
+            Round(colorA.a * inv + colorB.a * t, 1)
+        )
     end
 
     -- HSL
@@ -4157,12 +4211,7 @@ LuaUtil.TableHasKey = function (tbl, key)
         LogMessage("Error in LuaUtil.TableHasKey: input is not a table.", logLevelError)
         return false
     end
-    for k, _ in pairs(tbl) do
-        if k == key then
-            return true
-        end
-    end
-    return false
+    return tbl[key] ~= nil
 end
 
 --- Create a shallow copy of a table.
@@ -4270,6 +4319,8 @@ end
 --- Remove the first occurrence of a value from an array table.
 -- This function searches for the value using pairs() and removes the first match found.
 -- The array is compacted after removal (subsequent elements are shifted down).
+--
+-- **Note:** This function is designed for array tables (numeric indices).
 -- @tparam table tbl The array table from which to remove the value.
 -- @tparam any value The value to search for and remove.
 -- @treturn[1] bool True if the value was found and removed, false otherwise.
@@ -4300,7 +4351,7 @@ LuaUtil.RemoveValue = function(tbl, value)
         return false
     end
 
-    for i, v in pairs(tbl) do
+    for i, v in ipairs(tbl) do
         if v == value then
             table.remove(tbl, i)
             return true
