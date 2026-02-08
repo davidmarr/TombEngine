@@ -903,7 +903,16 @@ LuaUtil.Truncate = function(num, decimals)
         return 0
     end
     local mult = 10 ^ decimals
-    return floor(num * mult) / mult
+        local result
+    if num >= 0 then
+        result = floor(num * mult) / mult
+    else
+        result = -floor(-num * mult) / mult
+    end
+    if decimals == 0 then
+        result = floor(result)
+    end
+    return result
 end
 
 --- Generate a random number or vector/color/time with optional seed.
