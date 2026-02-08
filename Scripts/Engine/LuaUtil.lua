@@ -3889,7 +3889,7 @@ LuaUtil.LerpAngle = function(a, b, t, minValue, maxValue)
 
     -- Interpolate and wrap result
     local result = a + delta * t
-    return LuaUtil.WrapAngle(result, minValue, maxValue)
+    return wrapAngleRaw(result, minValue, range)
 end
 
 --- Interpolates between two colors in specified color space with options.
@@ -4042,7 +4042,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, space, options)
 
         local finalColor = LuaUtil.HSLtoColor(h, s, l)
         local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
-        return TEN.Color(finalColor.r, finalColor.g, finalColor.b, a)
+        return Color(finalColor.r, finalColor.g, finalColor.b, a)
     end
 
     -- OKLch
@@ -4056,7 +4056,7 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, space, options)
 
         local finalColor = LuaUtil.OKLchToColor(l, c, h)
         local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
-        return TEN.Color(finalColor.r, finalColor.g, finalColor.b, a)
+        return Color(finalColor.r, finalColor.g, finalColor.b, a)
     end
 end
 
