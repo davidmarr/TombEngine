@@ -39,7 +39,7 @@ local LuaUtil = {}
 -- - 200 particles × 15 calls/frame × 30 FPS = 90,000 table lookups/second
 -- - Direct access saves ~45,000 opcodes/second in such scenarios
 --
--- Trade-off: More variables in local scope (34 total), but well below Lua's 200 limit.
+-- Trade-off: More variables in local scope (~50 total), but well below Lua's 200 limit.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -1063,7 +1063,7 @@ end
 -- local minBounds = TEN.Vec2(0, 0)
 -- local maxBounds = TEN.Vec2(1920, 1080)
 -- local clampedPosition = LuaUtil.Clamp(position, minBounds, maxBounds)
--- -- Result: Vec2(1920, 0)
+-- -- Result: Vec2(1200, 0)
 --
 -- -- Example: Clamp a Vec3 position within a bounding box
 -- local position = TEN.Vec3(150, -20, 300)
@@ -4118,7 +4118,7 @@ end
 -- -- Example with associative table:
 -- local tbl = { apple = 1, banana = 2, cherry = 3 }
 -- local hasBanana = LuaUtil.TableHasValue(tbl, 3) -- Result: true
--- local hasGrape = Utility.TableHasValue(tbl, 0) -- Result: false
+-- local hasGrape = LuaUtil.TableHasValue(tbl, 0) -- Result: false
 --
 -- -- Example with array table:
 -- local tbl = { "apple", "banana", "cherry" }
