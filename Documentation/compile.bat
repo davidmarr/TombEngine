@@ -43,7 +43,7 @@ if exist "%CUSTOM_CSS_DIR%" (
     echo Adding custom CSS links to HTML files...
     for %%d in ("%DOC_DIR%") do set "docFullPath=%%~fd"
     
-    for %%f in (%CUSTOM_CSS_DIR%\*.css) do (
+    for %%f in ("%CUSTOM_CSS_DIR%\*.css") do (
         set "cssName=%%~nf"
         
         for /r "%DOC_DIR%" %%h in (!cssName!.html) do (
