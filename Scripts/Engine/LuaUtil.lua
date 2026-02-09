@@ -233,6 +233,130 @@ local function LinearToSrgb(c)
     end
 end
 
+-- Support function for Color to HSL conversion (no type checking, used internally)
+-- Returns h, s, l as multiple values (no table allocation)
+local function colorToHSLRaw(color)
+    local r = color.r / 255
+    local g = color.g / 255
+    local b = color.b / 255
+
+    local h = color:GetHue()
+
+    local maxValue = max(r, g, b)
+    local minValue = min(r, g, b)
+    local l = (maxValue + minValue) / 2
+
+    local s
+    if maxValue == minValue then
+        s = 0
+    else
+        local delta = maxValue - minValue
+        s = l > 0.5 and delta / (2 - maxValue - minValue) or delta / (maxValue + minValue)
+    end
+
+    return h, s, l
+end
+
+-- Support function for Color to OKLch conversion (no type checking, used internally)
+-- Returns L, C, h as multiple values (no table allocation)
+local function colorToOKLchRaw(color)
+    local r = SrgbToLinear(color.r / 255)
+    local g = SrgbToLinear(color.g / 255)
+    local b = SrgbToLinear(color.b / 255)
+
+    local l_ = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
+    local m_ = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
+    local s_ = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
+
+    local l_cbrt = l_ >= 0 and l_ ^ (1/3) or -((-l_) ^ (1/3))
+    local m_cbrt = m_ >= 0 and m_ ^ (1/3) or -((-m_) ^ (1/3))
+    local s_cbrt = s_ >= 0 and s_ ^ (1/3) or -((-s_) ^ (1/3))
+
+    local L = 0.2104542553 * l_cbrt + 0.7936177850 * m_cbrt - 0.0040720468 * s_cbrt
+    local A = 1.9779984951 * l_cbrt - 2.4285922050 * m_cbrt + 0.4505937099 * s_cbrt
+    local B = 0.0259040371 * l_cbrt + 0.7827717662 * m_cbrt - 0.8086757660 * s_cbrt
+
+    local C = sqrt(A * A + B * B)
+    local h = deg(atan(B, A))
+    if h < 0 then
+        h = h + 360
+    end
+
+    return L, C, h
+end
+
+-- Support function for HSL to Color conversion (no type checking, used internally)
+-- Takes h, s, l, a as separate parameters to avoid table allocation
+-- Returns a Color object directly
+local function HSLtoColorRaw(h, s, l, a)
+    local r, g, b
+    a = a or 1  -- Default alpha to 1 if not provided
+
+    if s == 0 then
+        r, g, b = l, l, l  -- Achromatic (gray)
+    else
+        local q = l < 0.5 and l * (1 + s) or l + s - l * s
+        local p = 2 * l - q
+        local hk = h / 360
+        r = HueToRgb(p, q, hk + 1/3)
+        g = HueToRgb(p, q, hk)
+        b = HueToRgb(p, q, hk - 1/3)
+    end
+
+    -- Round to nearest integer and convert to 0-255 range
+    return Color(
+        floor(r * 255 + 0.5),
+        floor(g * 255 + 0.5),
+        floor(b * 255 + 0.5),
+        floor(a * 255 + 0.5)
+    )
+end
+
+-- Support function for OKLch to Color conversion (no type checking, used internally)
+-- Takes L, C, h, a as separate parameters to avoid table allocation
+-- Returns a Color object directly
+local function OKLchToColorRaw(L, C, h, a)
+
+    -- Convert back to OKLab
+    local hRad = rad(h)
+    local A = C * cos(hRad)
+    local B = C * sin(hRad)
+    a = a or 1  -- Default alpha to 1 if not provided
+
+    -- OKLab to LMS (inverse matrix)
+    local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B
+    local m_cbrt = L - 0.1055613458 * A - 0.0638541728 * B
+    local s_cbrt = L - 0.0894841775 * A - 1.2914855480 * B
+
+    -- Cube (inverse of cube root)
+    local l_ = l_cbrt * l_cbrt * l_cbrt
+    local m_ = m_cbrt * m_cbrt * m_cbrt
+    local s_ = s_cbrt * s_cbrt * s_cbrt
+
+    -- LMS to linear RGB (inverse matrix)
+    local r_lin =  4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
+    local g_lin = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
+    local b_lin = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
+
+    -- Clamp to valid range before gamma correction
+    r_lin = max(0, min(1, r_lin))
+    g_lin = max(0, min(1, g_lin))
+    b_lin = max(0, min(1, b_lin))
+
+    -- Linear RGB to sRGB
+    local r = LinearToSrgb(r_lin)
+    local g = LinearToSrgb(g_lin)
+    local b = LinearToSrgb(b_lin)
+
+    -- Clamp and convert to 0-255 range
+    r = floor(r * 255 + 0.5)
+    g = floor(g * 255 + 0.5)
+    b = floor(b * 255 + 0.5)
+    local alpha = floor(max(0, min(1, a)) * 255 + 0.5)
+
+    return Color(r, g, b, alpha)
+end
+
 -- Support function for deep table copy
 local function DeepCopyRecursive(original, copyId)
     local context = _activeCopies[copyId]
@@ -2255,29 +2379,7 @@ LuaUtil.HSLtoColor = function(h, s, l, a)
     l = max(0, min(1, l))
     a = max(0, min(1, a))
 
-    -- HSL to RGB conversion
-    local r, g, b
-
-    if s == 0 then
-        -- Achromatic (gray)
-        r, g, b = l, l, l
-    else
-        local q = l < 0.5 and l * (1 + s) or l + s - l * s
-        local p = 2 * l - q
-        local hNorm = h / 360
-
-        r = HueToRgb(p, q, hNorm + 1/3)
-        g = HueToRgb(p, q, hNorm)
-        b = HueToRgb(p, q, hNorm - 1/3)
-    end
-
-    -- Convert to 0-255 range and create TEN.Color
-    return Color(
-        floor(r * 255 + 0.5),
-        floor(g * 255 + 0.5),
-        floor(b * 255 + 0.5),
-        floor(a * 255 + 0.5)
-    )
+    return HSLtoColorRaw(h, s, l, a)
 end
 
 --- Convert a TEN.Color object to HSL (Hue, Saturation, Lightness) values.
@@ -2325,29 +2427,8 @@ LuaUtil.ColorToHSL = function(color)
         return nil
     end
 
-    -- Convert RGB to 0-1 range
-    local r = color.r / 255
-    local g = color.g / 255
-    local b = color.b / 255
-    local a = color.a / 255
-
-    -- Get hue directly from Color method
-    local h = color:GetHue()
-
-    -- Calculate saturation and lightness
-    local maxValue = max(r, g, b)
-    local minValue = min(r, g, b)
-    local l = (maxValue + minValue) / 2
-
-    local s
-    if maxValue == minValue then
-        s = 0  -- Achromatic (gray)
-    else
-        local delta = maxValue - minValue
-        s = l > 0.5 and delta / (2 - maxValue - minValue) or delta / (maxValue + minValue)
-    end
-
-    return { h = h, s = s, l = l, a = a }
+    local h, s, l = colorToHSLRaw(color)
+    return { h = h, s = s, l = l, a = color.a / 255 }
 end
 
 --- Convert a TEN.Color object to OKLch (Lightness, Chroma, Hue) values.
@@ -2411,36 +2492,8 @@ LuaUtil.ColorToOKLch = function(color)
         return nil
     end
 
-    -- Convert sRGB to linear RGB (0-1 range)
-    local r = SrgbToLinear(color.r / 255)
-    local g = SrgbToLinear(color.g / 255)
-    local b = SrgbToLinear(color.b / 255)
-    local a = color.a / 255
-
-    -- Linear RGB to OKLab (using matrix multiplication)
-    -- Step 1: RGB to LMS (cone response)
-    local l_ = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
-    local m_ = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
-    local s_ = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
-
-    -- Step 2: Cube root (perceptual nonlinearity)
-    local l_cbrt = l_ >= 0 and l_ ^ (1/3) or -((-l_) ^ (1/3))
-    local m_cbrt = m_ >= 0 and m_ ^ (1/3) or -((-m_) ^ (1/3))
-    local s_cbrt = s_ >= 0 and s_ ^ (1/3) or -((-s_) ^ (1/3))
-
-    -- Step 3: LMS to OKLab
-    local L = 0.2104542553 * l_cbrt + 0.7936177850 * m_cbrt - 0.0040720468 * s_cbrt
-    local A = 1.9779984951 * l_cbrt - 2.4285922050 * m_cbrt + 0.4505937099 * s_cbrt
-    local B = 0.0259040371 * l_cbrt + 0.7827717662 * m_cbrt - 0.8086757660 * s_cbrt
-
-    -- OKLab to OKLch (cartesian to polar)
-    local C = sqrt(A * A + B * B)
-    local h = deg(atan(B, A))
-    if h < 0 then
-        h = h + 360
-    end
-
-    return { l = L, c = C, h = h, a = a }
+    local L, C, h = colorToOKLchRaw(color)
+    return { l = L, c = C, h = h, a = color.a / 255 }
 end
 
 --- Convert OKLch (Lightness, Chroma, Hue) values to a TEN.Color object.
@@ -2530,44 +2583,7 @@ LuaUtil.OKLchToColor = function(l, c, h, a)
         return nil
     end
 
-    -- OKLch to OKLab (polar to cartesian)
-    local h_rad = rad(h)
-    local A = c * cos(h_rad)
-    local B = c * sin(h_rad)
-    local L = l
-
-    -- OKLab to LMS (inverse matrix)
-    local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B
-    local m_cbrt = L - 0.1055613458 * A - 0.0638541728 * B
-    local s_cbrt = L - 0.0894841775 * A - 1.2914855480 * B
-
-    -- Cube (inverse of cube root)
-    local l_ = l_cbrt * l_cbrt * l_cbrt
-    local m_ = m_cbrt * m_cbrt * m_cbrt
-    local s_ = s_cbrt * s_cbrt * s_cbrt
-
-    -- LMS to linear RGB (inverse matrix)
-    local r_lin =  4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
-    local g_lin = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
-    local b_lin = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
-
-    -- Clamp to valid range before gamma correction
-    r_lin = max(0, min(1, r_lin))
-    g_lin = max(0, min(1, g_lin))
-    b_lin = max(0, min(1, b_lin))
-
-    -- Linear RGB to sRGB
-    local r = LinearToSrgb(r_lin)
-    local g = LinearToSrgb(g_lin)
-    local b = LinearToSrgb(b_lin)
-
-    -- Clamp and convert to 0-255 range
-    r = floor(max(0, min(1, r)) * 255 + 0.5)
-    g = floor(max(0, min(1, g)) * 255 + 0.5)
-    b = floor(max(0, min(1, b)) * 255 + 0.5)
-    local alpha = floor(max(0, min(1, a)) * 255 + 0.5)
-
-    return Color(r, g, b, alpha)
+    return OKLchToColorRaw(l, c, h, a)
 end
 
 --- Interpolation functions.
@@ -4033,30 +4049,30 @@ LuaUtil.InterpolateColor = function(colorA, colorB, t, space, options)
 
     -- HSL
     if space == 1 then
-        local HSLcolorA = LuaUtil.ColorToHSL(colorA)
-        local HSLcolorB = LuaUtil.ColorToHSL(colorB)
+        local hA, sA, lA = colorToHSLRaw(colorA)
+        local hB, sB, lB = colorToHSLRaw(colorB)
 
-        local h = InterpolateHue(HSLcolorA.h, HSLcolorB.h, t, huePath)
-        local s = preserveS and HSLcolorA.s or LuaUtil.Lerp(HSLcolorA.s, HSLcolorB.s, t)
-        local l = preserveL and HSLcolorA.l or LuaUtil.Lerp(HSLcolorA.l, HSLcolorB.l, t)
+        local h = InterpolateHue(hA, hB, t, huePath)
+        local s = preserveS and sA or (sA + (sB - sA) * t)
+        local l = preserveL and lA or (lA + (lB - lA) * t)
 
-        local finalColor = LuaUtil.HSLtoColor(h, s, l)
-        local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
-        return Color(finalColor.r, finalColor.g, finalColor.b, a)
+        local finalColor = HSLtoColorRaw(h, s, l)
+        finalColor.a = colorA.a + (colorB.a - colorA.a) * t
+        return finalColor
     end
 
     -- OKLch
     if space == 2 then
-        local OKLchColorA = LuaUtil.ColorToOKLch(colorA)
-        local OKLchColorB = LuaUtil.ColorToOKLch(colorB)
+        local lA, cA, hA = colorToOKLchRaw(colorA)
+        local lB, cB, hB = colorToOKLchRaw(colorB)
 
-        local l = preserveL and OKLchColorA.l or LuaUtil.Lerp(OKLchColorA.l, OKLchColorB.l, t)
-        local c = preserveS and OKLchColorA.c or LuaUtil.Lerp(OKLchColorA.c, OKLchColorB.c, t)
-        local h = InterpolateHue(OKLchColorA.h, OKLchColorB.h, t, huePath)
+        local l = preserveL and lA or (lA + (lB - lA) * t)
+        local c = preserveS and cA or (cA + (cB - cA) * t)
+        local h = InterpolateHue(hA, hB, t, huePath)
 
-        local finalColor = LuaUtil.OKLchToColor(l, c, h)
-        local a = LuaUtil.Lerp(colorA.a, colorB.a, t)
-        return Color(finalColor.r, finalColor.g, finalColor.b, a)
+        local finalColor = OKLchToColorRaw(l, c, h)
+        finalColor.a = colorA.a + (colorB.a - colorA.a) * t
+        return finalColor
     end
 end
 
