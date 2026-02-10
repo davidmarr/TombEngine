@@ -56,6 +56,7 @@ local unpack = table.unpack
 local floor = math.floor
 local tableInsert = table.insert
 local tableRemove = table.remove
+local setmetatable = setmetatable
 
 -- Utility functions from Engine.Util that are used in this module
 local CheckTimeFormat = Utility.CheckTimeFormat
