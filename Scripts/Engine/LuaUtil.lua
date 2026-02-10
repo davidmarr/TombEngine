@@ -76,6 +76,13 @@ local sqrt = math.sqrt
 local rad = math.rad
 local pi = math.pi
 
+-- -------------------------------------------------------------------------------
+-- TABLE FUNCTIONS
+-- Cached from Lua's table library - used for deep copying and comparison of tables
+-- -------------------------------------------------------------------------------
+local pairs = pairs
+local ipairs = ipairs
+
 -- ----------------------------------------------------------------------------
 -- IMMUTABLE CONSTANTS
 -- Configuration values that never change during runtime (SCREAMING_SNAKE_CASE)
@@ -193,7 +200,6 @@ local function InterpolateHue(h1, h2, t, mode)
 
     return (h1 + delta * t) % 360
 end
-
 
 -- Helper function for HSL to RGB conversion
 local function HueToRgb(p, q, t)
@@ -472,6 +478,45 @@ end
 -- Support function for rounding numbers to a specified number of decimal places
 local function Round(num, mult)
     return floor(num * mult + 0.5) / mult
+end
+
+-- Support function for local-to-world transform (no type checking, used internally)
+-- localRotation can be nil (position-only) or a Rotation (position + rotation)
+-- Returns worldPos, worldRot (worldRot is nil when localRotation is nil)
+local function transformLocalToWorldRaw(parentPos, parentRot, localOffset, localRotation)
+    local worldPos = parentPos + localOffset:Rotate(parentRot)
+    if localRotation then
+        return worldPos, Rotation(
+            parentRot.x + localRotation.x,
+            parentRot.y + localRotation.y,
+            parentRot.z + localRotation.z
+        )
+    end
+    return worldPos, nil
+end
+
+-- Support function for orbit position calculation (no type checking, used internally)
+-- axis: lowercase string ("x", "y", "z") or Vec3; angle in degrees
+-- Returns center + offset on the orbital plane
+local function orbitPositionRaw(center, radius, angle, axis)
+    local angleRad = rad(angle)
+    local c = cos(angleRad)
+    local s = sin(angleRad)
+
+    if axis == "y" then
+        return center + Vec3(c * radius, 0, s * radius)
+    elseif axis == "x" then
+        return center + Vec3(0, c * radius, s * radius)
+    elseif axis == "z" then
+        return center + Vec3(c * radius, s * radius, 0)
+    end
+
+    -- Vec3 custom axis
+    local axisN = axis:Normalize()
+    local arbitrary = (abs(axisN.y) > 0.99) and Vec3(1, 0, 0) or Vec3(0, 1, 0)
+    local perp1 = axisN:Cross(arbitrary):Normalize()
+    local perp2 = axisN:Cross(perp1):Normalize()
+    return center + (perp1 * c + perp2 * s) * radius
 end
 
 --- General utilities.
@@ -1653,7 +1698,6 @@ end
 -- -- Safe approach with default fallback:
 -- local orbitPos = LuaUtil.OrbitPosition(center, radius, angle, "y") or center
 LuaUtil.OrbitPosition = function(center, radius, angle, axis)
-    -- Type validation
     if not IsVec3(center) then
         LogMessage("Error in LuaUtil.OrbitPosition: center must be a Vec3.", logLevelError)
         return nil
@@ -1667,53 +1711,20 @@ LuaUtil.OrbitPosition = function(center, radius, angle, axis)
         return nil
     end
 
-    -- Default axis to "y" if not provided
     axis = axis or "y"
 
-    -- Convert angle to radians
-    local angleRad = rad(angle)
-    local cosAngle = cos(angleRad)
-    local sinAngle = sin(angleRad)
-
-    -- Calculate offset based on axis
-    local offset
     if IsString(axis) then
-        local axisLower = axis:lower()
-        if axisLower == "y" then
-            -- Orbit on XZ plane (around Y axis)
-            offset = Vec3(cosAngle * radius, 0, sinAngle * radius)
-        elseif axisLower == "x" then
-            -- Orbit on YZ plane (around X axis)
-            offset = Vec3(0, cosAngle * radius, sinAngle * radius)
-        elseif axisLower == "z" then
-            -- Orbit on XY plane (around Z axis)
-            offset = Vec3(cosAngle * radius, sinAngle * radius, 0)
-        else
+        axis = axis:lower()
+        if axis ~= "x" and axis ~= "y" and axis ~= "z" then
             LogMessage("Error in LuaUtil.OrbitPosition: axis string must be 'x', 'y', or 'z'.", logLevelError)
             return nil
         end
-    elseif IsVec3(axis) then
-        -- Custom axis: calculate perpendicular vectors for orbital plane
-        local axisNormalized = axis:Normalize()
-
-        -- Find perpendicular vector (use cross product with arbitrary vector)
-        local arbitrary = Vec3(0, 1, 0)
-        if abs(axisNormalized.y) > 0.99 then
-            arbitrary = Vec3(1, 0, 0)
-        end
-
-        -- Create two perpendicular vectors in the orbital plane
-        local perp1 = axisNormalized:Cross(arbitrary):Normalize()
-        local perp2 = axisNormalized:Cross(perp1):Normalize()
-
-        -- Calculate position on circular orbit
-        offset = (perp1 * cosAngle + perp2 * sinAngle) * radius
-    else
+    elseif not IsVec3(axis) then
         LogMessage("Error in LuaUtil.OrbitPosition: axis must be a string ('x', 'y', 'z') or Vec3.", logLevelError)
         return nil
     end
 
-    return center + offset
+    return orbitPositionRaw(center, radius, angle, axis)
 end
 
 --- Arrange multiple objects in a circular formation around a center point.
@@ -1838,10 +1849,10 @@ LuaUtil.ArrangeInCircle = function(center, objects, radius, options)
     local startAngle = options.startAngle or 0
     local faceDirection = options.faceDirection
 
-    -- Validate axis
+    -- Validate axis (normalize string to lowercase once, before the loop)
     if IsString(axis) then
-        local axisLower = axis:lower()
-        if axisLower ~= "x" and axisLower ~= "y" and axisLower ~= "z" then
+        axis = axis:lower()
+        if axis ~= "x" and axis ~= "y" and axis ~= "z" then
             LogMessage("Error in LuaUtil.ArrangeInCircle: axis string must be 'x', 'y', or 'z'.", logLevelError)
             return false
         end
@@ -1875,12 +1886,8 @@ LuaUtil.ArrangeInCircle = function(center, objects, radius, options)
         -- Calculate position angle
         local angle = startAngle + (i - 1) * angleStep
 
-        -- Calculate position using OrbitPosition
-        local position = LuaUtil.OrbitPosition(centerPos, radius, angle, axis)
-        if position == nil then
-            LogMessage("Error in LuaUtil.ArrangeInCircle: failed to calculate position for object " .. i .. ".", logLevelError)
-            return false
-        end
+        -- Calculate position using raw function (all inputs already validated)
+        local position = orbitPositionRaw(centerPos, radius, angle, axis)
 
         -- Set position
         if not obj or not obj.SetPosition then
@@ -1961,7 +1968,6 @@ end
 -- -- Safe approach with fallback:
 -- local worldPos = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset) or parentPos
 LuaUtil.TransformLocalToWorld = function(parentPos, parentRot, localOffset, localRotation)
-    -- Type validation
     if not IsVec3(parentPos) then
         LogMessage("Error in LuaUtil.TransformLocalToWorld: parentPos must be a Vec3.", logLevelError)
         return nil
@@ -1979,25 +1985,7 @@ LuaUtil.TransformLocalToWorld = function(parentPos, parentRot, localOffset, loca
         return nil
     end
 
-    -- Rotate local offset by parent rotation to get world-space offset
-    local worldOffset = localOffset:Rotate(parentRot)
-
-    -- Calculate world position
-    local worldPos = parentPos + worldOffset
-
-    -- Calculate world rotation if local rotation provided
-    local worldRot = nil
-    if localRotation then
-        -- Combine parent rotation with local rotation
-        -- In TEN, rotations are combined by adding components
-        worldRot = Rotation(
-            parentRot.x + localRotation.x,
-            parentRot.y + localRotation.y,
-            parentRot.z + localRotation.z
-        )
-    end
-
-    return worldPos, worldRot
+    return transformLocalToWorldRaw(parentPos, parentRot, localOffset, localRotation)
 end
 
 --- Calculate local offset from child to parent in parent's local space.
@@ -2192,18 +2180,14 @@ LuaUtil.AttachToObject = function(parent, child, localOffset, inheritRotation)
         return false
     end
 
-    -- Transform local offset to world space
-    local localRot = (inheritRotation and Rotation(0, 0, 0)) or nil
-    local worldPos, worldRot = LuaUtil.TransformLocalToWorld(parentPos, parentRot, localOffset, localRot)
-
-    if not worldPos then
-        return false
-    end
+    -- Transform local offset to world space (all inputs already validated)
+    local localRot = inheritRotation and Rotation(0, 0, 0) or nil
+    local worldPos, worldRot = transformLocalToWorldRaw(parentPos, parentRot, localOffset, localRot)
 
     -- Apply transforms
     child:SetPosition(worldPos)
 
-    if inheritRotation and worldRot and child.SetRotation then
+    if worldRot and child.SetRotation then
         child:SetRotation(worldRot)
     end
 
