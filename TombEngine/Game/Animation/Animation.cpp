@@ -455,16 +455,16 @@ namespace TEN::Animation
 		SetAnimation(item, item.ObjectNumber, animNumber, frameNumber);
 	}
 
-	void SetExtendedAnimation(ItemInfo& laraItem, int rawAnimNumber)
+	void SetExtendedAnimation(ItemInfo& item, int rawAnimNumber)
 	{
 		constexpr int ANIM_NUMBER_MAX = 1000;
 
-		int nativeAnimCount = (int)Objects[laraItem.ObjectNumber].Animations.size();
+		int nativeAnimCount = (int)Objects[item.ObjectNumber].Animations.size();
 		rawAnimNumber = std::abs(rawAnimNumber);
 
 		if (rawAnimNumber < nativeAnimCount)
 		{
-			SetAnimation(laraItem, rawAnimNumber);
+			SetAnimation(item, rawAnimNumber);
 			return;
 		}
 
@@ -472,7 +472,7 @@ namespace TEN::Animation
 
 		if (Objects[GAME_OBJECT_ID::ID_LARA_EXTRA_ANIMS].loaded && Objects[GAME_OBJECT_ID::ID_LARA_EXTRA_ANIMS].Animations.size() > relativeAnimNumber)
 		{
-			SetAnimation(laraItem, GAME_OBJECT_ID::ID_LARA_EXTRA_ANIMS, relativeAnimNumber);
+			SetAnimation(item, GAME_OBJECT_ID::ID_LARA_EXTRA_ANIMS, relativeAnimNumber);
 			return;
 		}
 
@@ -483,13 +483,13 @@ namespace TEN::Animation
 
 			if (objectNumber < GAME_OBJECT_ID::ID_NUMBER_OBJECTS && Objects[objectNumber].loaded && Objects[objectNumber].Animations.size() > animNumber)
 			{
-				SetAnimation(laraItem, (GAME_OBJECT_ID)objectNumber, animNumber);
+				SetAnimation(item, (GAME_OBJECT_ID)objectNumber, animNumber);
 				return;
 			}
 		}
 
-		TENLog(fmt::format("Can't set extended animation {} for {} from the external slot: animation data missing.", rawAnimNumber, laraItem.Name), LogLevel::Warning);
-		SetAnimation(laraItem, LaraAnim::LA_WALLSWITCH_DOWN);
+		TENLog(fmt::format("Can't set extended animation {} for {} from the external slot: animation data missing.", rawAnimNumber, item.Name), LogLevel::Warning);
+		SetAnimation(item, 0);
 		return;
 	}
 
