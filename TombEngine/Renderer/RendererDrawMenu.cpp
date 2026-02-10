@@ -1,7 +1,10 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/Graphics/VRAMTracker.h"
 
 #include "Game/Animation/Animation.h"
+#include "Game/collision/Point.h"
+#include "Game/control/box.h"
 #include "Game/control/control.h"
 #include "Game/control/volume.h"
 #include "Game/Gui.h"
@@ -19,6 +22,7 @@
 #include "Version.h"
 
 using namespace TEN::Animation;
+using namespace TEN::Collision::Point;
 using namespace TEN::Gui;
 using namespace TEN::Hud;
 using namespace TEN::Input;
@@ -52,11 +56,6 @@ namespace TEN::Renderer
 	constexpr auto MenuVerticalOptionsTitle = 350;
 	constexpr auto MenuVerticalPause = 220;
 	constexpr auto MenuVerticalOptionsPause = 275;
-
-	// Title logo positioning
-	constexpr auto LogoTop = 50;
-	constexpr auto LogoWidth = 300;
-	constexpr auto LogoHeight = 150;
 
 	// Used with distance travelled
 	constexpr auto UnitsToMeters = 419;
@@ -1293,22 +1292,37 @@ namespace TEN::Renderer
 
 			if (drawLogo && _logo.Texture != nullptr)
 			{
+				auto& settings = g_GameFlow->GetSettings()->UI;
+
 				float factorX = (float)_screenWidth / DISPLAY_SPACE_RES.x;
 				float factorY = (float)_screenHeight / DISPLAY_SPACE_RES.y;
 				float scale = _screenWidth > _screenHeight ? factorX : factorY;
 
-				int logoLeft   = (DISPLAY_SPACE_RES.x / 2) - (LogoWidth / 2);
-				int logoRight  = (DISPLAY_SPACE_RES.x / 2) + (LogoWidth / 2);
-				int logoBottom = LogoTop + LogoHeight;
+				float logoWidthScaled  = _logo.Width * settings.TitleLogoScale;
+				float logoHeightScaled = _logo.Height * settings.TitleLogoScale;
+
+				float centerX = (settings.TitleLogoPosition.x / 100.0f) * DISPLAY_SPACE_RES.x;
+				float centerY = (settings.TitleLogoPosition.y / 100.0f) * DISPLAY_SPACE_RES.y;
+
+				float logoLeft   = centerX - logoWidthScaled  * 0.5f;
+				float logoRight  = centerX + logoWidthScaled  * 0.5f;
+				float logoTop    = centerY - logoHeightScaled * 0.5f;
+				float logoBottom = centerY + logoHeightScaled * 0.5f;
 
 				RECT rect;
 				rect.left   = logoLeft   * scale;
 				rect.right  = logoRight  * scale;
-				rect.top    = LogoTop    * scale;
+				rect.top    = logoTop    * scale;
 				rect.bottom = logoBottom * scale;
 
+				// HACK: Color range slippage. Remove in fix color range PR.
+				auto color = Vector4(settings.TitleLogoColor.GetR() / (float)UCHAR_MAX,
+									 settings.TitleLogoColor.GetG() / (float)UCHAR_MAX,
+									 settings.TitleLogoColor.GetB() / (float)UCHAR_MAX,
+									 settings.TitleLogoColor.GetA() / (float)UCHAR_MAX);
+
 				_spriteBatch->Begin(SpriteSortMode_BackToFront, _renderStates->NonPremultiplied());
-				_spriteBatch->Draw(_logo.ShaderResourceView.Get(), rect, Vector4::One * ScreenFadeCurrent);
+				_spriteBatch->Draw(_logo.ShaderResourceView.Get(), rect, color * ScreenFadeCurrent);
 				_spriteBatch->End();
 			}
 
@@ -1591,6 +1605,36 @@ namespace TEN::Renderer
 			PrintDebugMessage("Material updates: %d requested, %d executed", _numRequestedMaterialsUpdates, _numExecutedMaterialsUpdates);
 			break;
 
+		case RendererDebugPage::MemoryStats:
+		{
+			const auto& vram = Graphics::VRAMTracker::Get();
+
+			PrintDebugMessage("MEMORY STATS");
+			PrintDebugMessage(" ");
+			PrintDebugMessage("Adapter: %s", _adapterInfo.Name.c_str());
+			PrintDebugMessage("Resolution: %d x %d", _screenWidth, _screenHeight);
+			PrintDebugMessage(" ");
+			PrintDebugMessage("--- DXGI Adapter ---");
+			PrintDebugMessage("Dedicated VRAM: %d MB", _adapterInfo.DedicatedVideoMemory / (1024 * 1024));
+			PrintDebugMessage("Dedicated system memory: %d MB", _adapterInfo.DedicatedSystemMemory / (1024 * 1024));
+			PrintDebugMessage("Shared system memory: %d MB", _adapterInfo.SharedSystemMemory / (1024 * 1024));
+			PrintDebugMessage(" ");
+			PrintDebugMessage("--- Allocated ---");
+			PrintDebugMessage("Total: %.2f MB", vram.ToMegabytes(vram.GetTotal()));
+			PrintDebugMessage("  Textures: %.2f MB", vram.ToMegabytes(vram.GetCategory(Graphics::VRAMCategory::Texture)));
+			PrintDebugMessage("  Render targets: %.2f MB", vram.ToMegabytes(vram.GetCategory(Graphics::VRAMCategory::RenderTarget)));
+			PrintDebugMessage("  Vertex buffers: %.2f MB", vram.ToMegabytes(vram.GetCategory(Graphics::VRAMCategory::VertexBuffer)));
+			PrintDebugMessage("  Index buffers: %.2f MB", vram.ToMegabytes(vram.GetCategory(Graphics::VRAMCategory::IndexBuffer)));
+
+			if (_adapterInfo.DedicatedVideoMemory > 0)
+			{
+				float usagePercent = (vram.ToMegabytes(vram.GetTotal()) / vram.ToMegabytes(_adapterInfo.DedicatedVideoMemory)) * 100.0f;
+				PrintDebugMessage(" ");
+				PrintDebugMessage("VRAM usage: %.1f%%", usagePercent);
+			}
+		}
+			break;
+
 		case RendererDebugPage::DimensionStats:
 			PrintDebugMessage("DIMENSION STATS");
 			PrintDebugMessage(" ");
@@ -1676,7 +1720,41 @@ namespace TEN::Renderer
 		case RendererDebugPage::PathfindingStats:
 			PrintDebugMessage("PATHFINDING STATS");
 			PrintDebugMessage(" ");
-			PrintDebugMessage("BoxNumber: %d", playerItem.BoxNumber);
+			{
+				int playerBoxID = playerItem.BoxNumber == NO_VALUE ? GetPointCollision(playerItem).GetBottomSector().PathfindingBoxID : playerItem.BoxNumber;
+				PrintDebugMessage("Player box number: %d", playerBoxID);
+
+				auto creatures = GetActiveCreatures();
+
+				if (PathfindingDisplayIndex >= 0)
+				{
+					if (creatures.empty() || creatures.size() <= PathfindingDisplayIndex)
+						break;
+
+					auto& enemy = g_Level.Items[creatures[PathfindingDisplayIndex]];
+					auto* creatureInfo = (CreatureInfo*)enemy.Data;
+					auto zoneType = creatureInfo->LOT.Zone;
+					auto& zones = g_Level.Zones[(int)zoneType][(int)FlipStatus];
+
+					PrintDebugMessage("Player zone number: %d", playerBoxID == NO_VALUE ? NO_VALUE : zones[playerBoxID]);
+					PrintDebugMessage("Enemy: %s", enemy.Name.c_str());
+					PrintDebugMessage("Enemy box number: %d", enemy.BoxNumber);
+					PrintDebugMessage("Enemy zone type: %d", zoneType);
+					PrintDebugMessage("Enemy zone number: %d", enemy.BoxNumber == NO_VALUE ? NO_VALUE : zones[enemy.BoxNumber]);
+
+					auto mood = "Unknown";
+					switch (creatureInfo->Mood)
+					{
+						case MoodType::Attack: mood = "Attack"; break;
+						case MoodType::Stalk:  mood = "Stalk";  break;
+						case MoodType::Escape: mood = "Escape"; break;
+						case MoodType::Bored:  mood = "Bored";  break;
+					}
+					PrintDebugMessage("Enemy mood: %s", mood);
+				}
+				else if (!creatures.empty())
+					PrintDebugMessage("Push TAB to scroll through enemies");
+			}
 			break;
 
 		case RendererDebugPage::CollisionMeshStats:
