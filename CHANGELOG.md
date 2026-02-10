@@ -61,6 +61,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Logic.CallbackPoint`, `Logic.EventType` and `Logic.EndReason` enums to the documentation.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 * Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
+* Fixed `View.SetCineBars` not working correctly.
 
 ## [Version 1.10.1]
 
