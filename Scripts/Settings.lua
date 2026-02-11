@@ -26,8 +26,9 @@ local settings = Flow.Settings.new()
 	settings.Flare.flicker = true
 	settings.Flare.pickupCount = 12
 	
-	settings.Gameplay.targetObjectOcclusion = true
 	settings.Gameplay.enableInventory = true
+	settings.Gameplay.killPoisonedEnemies = true
+	settings.Gameplay.targetObjectOcclusion = true
 
 	settings.Graphics.ambientOcclusion = true
 	settings.Graphics.skinning = true
