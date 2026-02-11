@@ -402,7 +402,7 @@ namespace TEN::Scripting
 		"fastReload", &SystemSettings::FastReload);
 	}
 
-	/// User interface
+	/// UI
 	// @section UI
 	// System-wide user interface settings.
 
