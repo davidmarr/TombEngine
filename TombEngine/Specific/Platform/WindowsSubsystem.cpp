@@ -198,15 +198,14 @@ namespace TEN::Platform
 		// Don't use SHCore library directly as it's not available on pre-Windows 8.1 systems.
 
 		auto lib = LoadLibrary("SHCore.dll");
-		if (lib == nullptr)
-			return;
+		if (lib != nullptr)
+		{
+			auto setDpiAwareness = (SetDpiAwarenessProc)GetProcAddress(lib, "SetProcessDpiAwareness");
+			if (setDpiAwareness != nullptr)
+				setDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 
-		auto setDpiAwareness = (SetDpiAwarenessProc)GetProcAddress(lib, "SetProcessDpiAwareness");
-		if (setDpiAwareness == nullptr)
-			return;
-
-		setDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-		FreeLibrary(lib);
+			FreeLibrary(lib);
+		}
 
 		CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 	}
