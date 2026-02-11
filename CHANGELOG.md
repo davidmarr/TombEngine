@@ -50,6 +50,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
 * Added `Inventory.Reset` function to reset inventory state to default.
 * Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
+* Added `killPoisonedEnemies` parameter to `Flow.Settings.Gameplay` to enable or disable killing enemies with poisoned ammo.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `Strings.DisplayStringOption.VERTICAL_BOTTOM` flag.

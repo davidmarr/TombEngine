@@ -56,6 +56,7 @@ namespace TEN::Scripting
 	struct GameplaySettings
 	{
 		bool TargetObjectOcclusion = true;
+		bool KillPoisonedEnemies = true;
 		bool EnableInventory = true;
 
 		static void Register(sol::table& parent);
