@@ -517,12 +517,7 @@ namespace TEN::Renderer
 		_viewportToolkit = Viewport(_viewport.TopLeftX, _viewport.TopLeftY, _viewport.Width, _viewport.Height,
 			_viewport.MinDepth, _viewport.MaxDepth);
 
-		// Low AA is done with FXAA, Medium - High AA are done with SMAA.
-		if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
-		{
-			InitializeSMAA();
-		}
-
+		InitializeSMAA();
 		SetFullScreen();
 	}
 
