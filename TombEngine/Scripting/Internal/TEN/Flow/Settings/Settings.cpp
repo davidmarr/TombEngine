@@ -81,7 +81,7 @@ namespace TEN::Scripting
 	// -- In Settings.lua
 	// settings.Animations.crouchRoll = true
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Animations.crouchRoll = false
 	// TEN.Flow.SetSettings(settings)
@@ -158,7 +158,7 @@ namespace TEN::Scripting
 	// settings.Flare.color = TEN.Color(255, 128, 0)
 	// settings.Flare.sparks = false
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Flare.color = TEN.Color(255, 128, 0)
 	// settings.Flare.sparks = false
@@ -220,7 +220,7 @@ namespace TEN::Scripting
 	// settings.Gameplay.enableInventory = false
 	// settings.Gameplay.targetObjectOcclusion = true
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Gameplay.enableInventory = false
 	// settings.Gameplay.targetObjectOcclusion = true
@@ -256,7 +256,7 @@ namespace TEN::Scripting
 	// settings.Graphics.ambientOcclusion = false
 	// settings.Graphics.skinning = false
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Graphics.ambientOcclusion = false
 	// settings.Graphics.skinning = false
@@ -289,7 +289,7 @@ namespace TEN::Scripting
 	// settings.Hair[2].offset = TEN.Vec3(-50, -50, -50)
 	// settings.Hair[3].offset = TEN.Vec3(50, -50, -50)
 	// 
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Hair[2].offset = TEN.Vec3(-50, -50, -50)
 	// settings.Hair[3].offset = TEN.Vec3(50, -50, -50)
@@ -323,7 +323,7 @@ namespace TEN::Scripting
 	// settings.Hud.statusBars = false
 	// settings.Hud.pickupNotifier = false
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Hud.statusBars = false
 	// settings.Hud.pickupNotifier = false
@@ -360,7 +360,7 @@ namespace TEN::Scripting
 	// settings.Pathfinding.mode = TEN.Flow.PathfindingMode.Dijkstra
 	// settings.Pathfinding.moveableAvoidance = false
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Pathfinding.mode = TEN.Flow.PathfindingMode.Dijkstra
 	// settings.Pathfinding.moveableAvoidance = false
@@ -442,7 +442,7 @@ namespace TEN::Scripting
 	// settings.Physics.gravity = 9.81
 	// settings.Physics.swimVelocity = 6.0
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Physics.gravity = 9.81
 	// settings.Physics.swimVelocity = 6.0
@@ -472,7 +472,7 @@ namespace TEN::Scripting
 	// settings.System.errorMode = TEN.Flow.ErrorMode.Throw
 	// settings.System.fastReload = false
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.System.errorMode = TEN.Flow.ErrorMode.Throw
 	// settings.System.fastReload = false
@@ -511,7 +511,7 @@ namespace TEN::Scripting
 	// settings.UI.titleMenuPosition = TEN.Vec2(400, 300)
 	// settings.UI.headerTextColor = TEN.Color(255, 128, 0)
 	//
-	// -- In level script
+	// -- In the title's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.UI.titleMenuPosition = TEN.Vec2(400, 300)
 	// settings.UI.headerTextColor = TEN.Color(255, 128, 0)
@@ -582,7 +582,7 @@ namespace TEN::Scripting
 	// settings.Weapons[TEN.Objects.WeaponType.PISTOLS].accuracy = 5.0
 	// settings.Weapons[TEN.Objects.WeaponType.PISTOLS].damage = 10
 	//
-	// -- In level script
+	// -- In the level's lua file
 	// local settings = TEN.Flow.GetSettings()
 	// settings.Weapons[TEN.Objects.WeaponType.PISTOLS].accuracy = 5.0
 	// settings.Weapons[TEN.Objects.WeaponType.PISTOLS].damage = 10
