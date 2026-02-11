@@ -19,7 +19,10 @@ namespace TEN::Renderer::Graphics
 	class VRAMTracker
 	{
 	public:
+		~VRAMTracker();
+
 		static VRAMTracker& Get();
+		static bool IsAlive();
 
 		void SetAdapterInfo(const AdapterInfo& info);
 		const AdapterInfo& GetAdapterInfo() const;

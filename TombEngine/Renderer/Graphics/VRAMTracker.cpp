@@ -10,10 +10,23 @@ using namespace TEN::Debug;
 
 namespace TEN::Renderer::Graphics
 {
+	static bool s_trackerAlive = false;
+
+	VRAMTracker::~VRAMTracker()
+	{
+		s_trackerAlive = false;
+	}
+
 	VRAMTracker& VRAMTracker::Get()
 	{
 		static VRAMTracker instance;
+		s_trackerAlive = true;
 		return instance;
+	}
+
+	bool VRAMTracker::IsAlive()
+	{
+		return s_trackerAlive;
 	}
 
 	void VRAMTracker::SetAdapterInfo(const AdapterInfo& info)

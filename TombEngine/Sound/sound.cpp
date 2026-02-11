@@ -136,7 +136,7 @@ bool LoadSample(char* pointer, int compSize, int uncompSize, int index)
 
 	// Cut off trailing silence from samples to prevent gaps in looped playback
 	int cleanLength = info.length;
-	for (DWORD i = 4; i < info.length; i += 4)
+	for (unsigned int i = 4; i < info.length; i += 4)
 	{
 		float *currentSample = reinterpret_cast<float*>(uncompBuffer + finalLength - i);
 		if (*currentSample > SOUND_32BIT_SILENCE_LEVEL || *currentSample < -SOUND_32BIT_SILENCE_LEVEL)
@@ -148,8 +148,8 @@ bool LoadSample(char* pointer, int compSize, int uncompSize, int index)
 	}
 
 	// Put data size to header
-	*(DWORD*)(uncompBuffer + 4) = cleanLength + 44 - 8;
-	*(DWORD*)(uncompBuffer + 40) = cleanLength;
+	*(unsigned int*)(uncompBuffer + 4) = cleanLength + 44 - 8;
+	*(unsigned int*)(uncompBuffer + 40) = cleanLength;
 
 	// Create actual sample
 	BASS_SamplePointer[index] = BASS_SampleLoad(true, uncompBuffer, 0, cleanLength + 44, 65535, SOUND_SAMPLE_FLAGS | BASS_SAMPLE_3D);
@@ -204,7 +204,7 @@ bool SoundEffect(int soundID, Pose* pose, SoundEnvironment soundEnv, float pitch
 	}
 
 	// Assign common sample flags.
-	DWORD sampleFlags = SOUND_SAMPLE_FLAGS;
+	unsigned int sampleFlags = SOUND_SAMPLE_FLAGS;
 
 	// Test play chance.
 	if (sample.Randomness && ((GetRandomControl() & UCHAR_MAX) > sample.Randomness))
@@ -496,8 +496,8 @@ void PlaySoundTrack(const std::string& track, SoundTrackType type, std::optional
 		return;
 
 	bool crossfade = false;
-	DWORD crossfadeTime = 0;
-	DWORD flags = BASS_STREAM_AUTOFREE | BASS_SAMPLE_FLOAT | BASS_ASYNCFILE;
+	unsigned int crossfadeTime = 0;
+	unsigned int flags = BASS_STREAM_AUTOFREE | BASS_SAMPLE_FLOAT | BASS_ASYNCFILE;
 
 	bool channelActive = BASS_ChannelIsActive(SoundtrackSlot[(int)type].Channel);
 	if (channelActive && SoundtrackSlot[(int)type].Track.compare(track) == 0)
@@ -701,6 +701,7 @@ std::pair<std::string, QWORD> GetSoundTrackNameAndPosition(SoundTrackType type)
 	return std::pair<std::string, QWORD>(path.string(), BASS_ChannelGetPosition(track.Channel, BASS_POS_BYTE));
 }
 
+// NOTE: DWORD here is BASS's own cross-platform type (uint32_t on Linux/macOS, unsigned long on Windows).
 static void CALLBACK Sound_FinishOneshotTrack(HSYNC handle, DWORD channel, DWORD data, void* userData)
 {
 	if (BASS_ChannelIsActive(SoundtrackSlot[(int)SoundTrackType::BGM].Channel))

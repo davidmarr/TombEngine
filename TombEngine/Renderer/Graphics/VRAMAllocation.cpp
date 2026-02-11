@@ -12,7 +12,7 @@ namespace TEN::Renderer::Graphics
 
 	VRAMAllocation::~VRAMAllocation()
 	{
-		if (_size > 0)
+		if (_size > 0 && VRAMTracker::IsAlive())
 			VRAMTracker::Get().Remove(_category, _size);
 	}
 
@@ -27,7 +27,7 @@ namespace TEN::Renderer::Graphics
 		if (this != &other)
 		{
 			// Release current allocation.
-			if (_size > 0)
+			if (_size > 0 && VRAMTracker::IsAlive())
 				VRAMTracker::Get().Remove(_category, _size);
 
 			_category = other._category;
