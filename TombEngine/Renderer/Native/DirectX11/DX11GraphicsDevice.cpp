@@ -62,11 +62,14 @@ namespace TEN::Renderer::Native::DirectX11
 	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::CreateRenderSurface2D(int width, int height, SurfaceFormat colorFormat, bool isTypeless, DepthFormat depthFormat)
 	{
 		auto nativeRenderTarget = std::make_unique<DX11RenderTarget2D>(_device.Get(), width, height, GetDXGIFormat(colorFormat), isTypeless);
-		
+
 		std::unique_ptr<IDepthTarget> nativeDepthTarget = nullptr;
 		if (depthFormat != DepthFormat::None)
 			nativeDepthTarget = std::make_unique<DX11DepthTarget>(_device.Get(), width, height, GetDXGIFormat(depthFormat));
-	
+
+		// Flush GPU command buffer to prevent TDR on Intel integrated GPUs.
+		_context->Flush();
+
 		return std::make_unique<IRenderSurface2D>(
 			std::move(nativeRenderTarget),
 			std::move(nativeDepthTarget));
@@ -80,6 +83,8 @@ namespace TEN::Renderer::Native::DirectX11
 		if (depthFormat != DepthFormat::None)
 			nativeDepthTarget = std::make_unique<DX11DepthTarget>(_device.Get(), width, height, arraySize, GetDXGIFormat(depthFormat));
 
+		_context->Flush();
+
 		return std::make_unique<IRenderSurface2D>(
 			std::move(nativeRenderTarget),
 			std::move(nativeDepthTarget));
@@ -89,10 +94,14 @@ namespace TEN::Renderer::Native::DirectX11
 	{
 		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(parentRenderTarget->GetRenderTarget());
 
-		return std::make_unique<IRenderSurface2D>(
+		auto result = std::make_unique<IRenderSurface2D>(
 			std::move(std::make_unique<DX11RenderTarget2D>(_device.Get(), nativeRenderTarget->GetD3D11Texture(), GetDXGIFormat(colorFormat))),
 			nullptr
 		);
+
+		_context->Flush();
+
+		return result;
 	}
 
 	IRenderTargetCube* DX11GraphicsDevice::CreateRenderTargetCube(int size, SurfaceFormat colorFormat)
@@ -102,27 +111,37 @@ namespace TEN::Renderer::Native::DirectX11
 
 	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, byte* data)
 	{
-		return std::make_unique<DX11Texture2D>(_device.Get(), width, height, data);
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, data);
+		_context->Flush();
+		return texture;
 	}
 
 	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data)
 	{
-		return std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format), pitch, data);
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format), pitch, data);
+		_context->Flush();
+		return texture;
 	}
 
 	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(const std::string fileName)
 	{
-		return std::make_unique<DX11Texture2D>(_device.Get(), TEN::Utils::ToWString(fileName));
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), TEN::Utils::ToWString(fileName));
+		_context->Flush();
+		return texture;
 	}
 
 	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int dataSize, byte* data)
 	{
-		return std::make_unique<DX11Texture2D>(_device.Get(), data, dataSize);
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), data, dataSize);
+		_context->Flush();
+		return texture;
 	}
 
 	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, SurfaceFormat format)
 	{
-		return std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format));
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format));
+		_context->Flush();
+		return texture;
 	}
 
 	void DX11GraphicsDevice::SetBlendMode(BlendMode blendMode)
@@ -663,9 +682,13 @@ namespace TEN::Renderer::Native::DirectX11
 		_screenWidth = width;
 		_screenHeight = height;
 
-		return std::make_unique<IRenderSurface2D>(
+		auto result = std::make_unique<IRenderSurface2D>(
 			std::move(std::make_unique<DX11RenderTarget2D>(_device.Get(), backBufferTexture)),
 			std::move(std::make_unique<DX11DepthTarget>(_device.Get(), width, height, DXGI_FORMAT_D32_FLOAT)));
+
+		_context->Flush();
+
+		return result;
 	}
 
 	void DX11GraphicsDevice::CreateDevice()
