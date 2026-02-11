@@ -15,9 +15,7 @@ namespace TEN::Scripting
 	/// Global engine settings which don't fall into particular category or can't be assigned to a specific object.
 	// Flow.Settings is composed of several sub-tables, and each section of the Flow.Settings documentation corresponds to one of these sub-tables.
 	// 
-	// These configuration groups are used in *Settings.lua*.
-	// 
-	// You can also change their values in a level using @{Flow.GetSettings} and @{Flow.SetSettings} functions, but remember that __Settings.lua is reread every time the level is reloaded__.
+	// These configuration groups are used in *Settings.lua*. You can also change their values in a level using @{Flow.GetSettings} and @{Flow.SetSettings} functions, but remember that __Settings.lua is reread every time the level is reloaded__.
 	// 
 	// So if you have customized some parameters in the level, they will be lost when the level is loaded, and all the values in *Settings.lua* will be loaded.
 	// @tenclass Flow.Settings
