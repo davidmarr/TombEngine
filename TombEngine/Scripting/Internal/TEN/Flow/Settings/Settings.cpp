@@ -85,15 +85,15 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(AnimSettings, ScriptReserved_AnimSettings),
 
 		/// Extended crawl moveset.
-		// @tfield bool crawlExtended When enabled, player will be able to traverse across one-click steps in crawlspaces.
+		// @tfield[opt=true] bool crawlExtended When enabled, player will be able to traverse across one-click steps in crawlspaces.
 		"crawlExtended", &AnimSettings::CrawlExtended,
 
 		/// Crouch roll.
-		// @tfield bool crouchRoll When enabled, player can perform crawlspace roll by pressing sprint key.
+		// @tfield[opt=true] bool crouchRoll When enabled, player can perform crawlspace roll by pressing sprint key.
 		"crouchRoll", &AnimSettings::CrouchRoll,
 
 		/// Crawlspace dive.
-		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
+		// @tfield[opt=true] bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
 		/// Overhang climbing.
@@ -105,15 +105,15 @@ namespace TEN::Scripting
 		"slideExtended", &AnimSettings::SlideExtended,
 
 		/// Sprint jump.
-		// @tfield bool sprintJump If enabled, player will be able to perform extremely long jump when sprinting.
+		// @tfield[opt=false] bool sprintJump If enabled, player will be able to perform extremely long jump when sprinting.
 		"sprintJump", &AnimSettings::SprintJump,
 
 		/// Ledge jumps.
-		// @tfield bool ledgeJumps If this setting is enabled, player will be able to jump upwards while hanging on the ledge.
+		// @tfield[opt=false] bool ledgeJumps If this setting is enabled, player will be able to jump upwards while hanging on the ledge.
 		"ledgeJumps", &AnimSettings::LedgeJumps,
 
 		/// Pose timeout.
-		// @tfield int poseTimeout If this setting is larger than 0, idle standing pose animation will be performed after given timeout (in seconds).
+		// @tfield[opt=20] int poseTimeout If this setting is larger than 0, idle standing pose animation will be performed after given timeout (in seconds).
 		"poseTimeout", &AnimSettings::PoseTimeout);
 	}
 
