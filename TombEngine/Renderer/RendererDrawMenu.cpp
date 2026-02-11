@@ -606,6 +606,7 @@ namespace TEN::Renderer
 			break;
 		}
 
+		DrawDebugInfo(_gameCamera);
 		DrawAllStrings();
 	}
 
