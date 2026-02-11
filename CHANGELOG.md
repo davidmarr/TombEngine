@@ -26,6 +26,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect HYDRA rotation on activation and keeping its shadow after destroying it.
 * Fixed potential issues with PUNA_BOSS, TONY_BOSS, FISH_SWARM and WRAITH objects on savegame reloading.
 * Fixed WRAITH not using effects near walls and occasional issues with room transitions.
+* Fixed occasional wrong LASER_BEAM collision.
 * Fixed several BADDY1/2 issues.
 * Fixed original issue with BADDY1/2 with rolling out animation ignoring player on a distance larger than 1 block.
 * Fixed submerging into the floor when picking up items under low-placed static meshes.
@@ -49,6 +50,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
 * Added `Inventory.Reset` function to reset inventory state to default.
 * Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
+* Added `killPoisonedEnemies` parameter to `Flow.Settings.Gameplay` to enable or disable killing enemies with poisoned ammo.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
 * Added `Strings.DisplayStringOption.VERTICAL_BOTTOM` flag.
@@ -61,6 +63,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Logic.CallbackPoint`, `Logic.EventType` and `Logic.EndReason` enums to the documentation.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 * Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
+* Fixed `View.SetCineBars` not working correctly.
 
 ## [Version 1.10.1]
 

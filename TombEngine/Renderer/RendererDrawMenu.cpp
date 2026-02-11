@@ -57,11 +57,6 @@ namespace TEN::Renderer
 	constexpr auto MenuVerticalPause = 220;
 	constexpr auto MenuVerticalOptionsPause = 275;
 
-	// Title logo positioning
-	constexpr auto LogoTop = 50;
-	constexpr auto LogoWidth = 300;
-	constexpr auto LogoHeight = 150;
-
 	// Used with distance travelled
 	constexpr auto UnitsToMeters = 419;
 
@@ -623,6 +618,7 @@ namespace TEN::Renderer
 			break;
 		}
 
+		DrawDebugInfo(_gameCamera);
 		DrawAllStrings();
 	}
 
@@ -1308,18 +1304,34 @@ namespace TEN::Renderer
 				float factorY = (float)_graphicsDevice->GetScreenHeight() / DISPLAY_SPACE_RES.y;
 				float scale = _graphicsDevice->GetScreenWidth() > _graphicsDevice->GetScreenHeight() ? factorX : factorY;
 
-				int logoLeft   = (DISPLAY_SPACE_RES.x / 2) - (LogoWidth / 2);
-				int logoRight  = (DISPLAY_SPACE_RES.x / 2) + (LogoWidth / 2);
-				int logoBottom = LogoTop + LogoHeight;
+				auto& settings = g_GameFlow->GetSettings()->UI;
+
+				float logoWidthScaled  = _logo->GetWidth() * settings.TitleLogoScale;
+				float logoHeightScaled = _logo->GetHeight() * settings.TitleLogoScale;
+
+				float centerX = (settings.TitleLogoPosition.x / 100.0f) * DISPLAY_SPACE_RES.x;
+				float centerY = (settings.TitleLogoPosition.y / 100.0f) * DISPLAY_SPACE_RES.y;
+
+				float logoLeft   = centerX - logoWidthScaled  * 0.5f;
+				float logoRight  = centerX + logoWidthScaled  * 0.5f;
+				float logoTop    = centerY - logoHeightScaled * 0.5f;
+				float logoBottom = centerY + logoHeightScaled * 0.5f;
 
 				RendererRectangle rect;
 				rect.Left   = logoLeft   * scale;
 				rect.Right  = logoRight  * scale;
-				rect.Top    = LogoTop    * scale;
+				rect.Top    = logoTop    * scale;
 				rect.Bottom = logoBottom * scale;
 
+				// HACK: Color range slippage. Remove in fix color range PR.
+				auto color = Vector4(settings.TitleLogoColor.GetR() / (float)UCHAR_MAX,
+					settings.TitleLogoColor.GetG() / (float)UCHAR_MAX,
+					settings.TitleLogoColor.GetB() / (float)UCHAR_MAX,
+					settings.TitleLogoColor.GetA() / (float)UCHAR_MAX);
+
 				_spriteBatch->Begin(SpriteSortingMode::BackToFront, BlendMode::AlphaBlend);
-				_spriteBatch->Draw(_logo.get(), rect, Vector4::One * ScreenFadeCurrent);
+				_spriteBatch->Draw(_logo.get(), rect, color * ScreenFadeCurrent);
+
 				_spriteBatch->End();
 			}
 

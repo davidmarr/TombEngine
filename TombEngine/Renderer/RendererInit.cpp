@@ -338,12 +338,7 @@ namespace TEN::Renderer
 		_viewport = { 0, 0, w, h, 0.0f, 1.0f };
 		_shadowMapViewport = { 0, 0, g_Configuration.ShadowMapSize, g_Configuration.ShadowMapSize, 0.0f, 1.0f };
 
-		// Low AA is done with FXAA, Medium - High AA are done with SMAA.
-		if (g_Configuration.AntialiasingMode > AntialiasingMode::Low)
-		{
-			InitializeSMAA();
-		}
-
+		InitializeSMAA();
 		SetFullScreen();
 	}
 
