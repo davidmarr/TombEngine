@@ -13,7 +13,12 @@ namespace TEN::Scripting
 {
 
 	/// Global engine settings which don't fall into particular category or can't be assigned to a specific object.
-	// Can be accessed using @{Flow.SetSettings} and @{Flow.GetSettings} functions.
+	// Flow.Settings is composed of several sub-tables, and each section of the Flow.Settings documentation corresponds to one of these sub-tables.
+	// 
+	// These configuration groups are used in *Settings.lua*.
+	// 
+	// You can also change their values in a level using `Flow.GetSettings` and `Flow.SetSettings` functions, but remember that __Settings.lua is reread every time the level is reloaded__.<br>
+	// So if you have customized some parameters in the level, they will be lost when the level is loaded, and all the values in *Settings.lua* will be loaded.
 	// @tenclass Flow.Settings
 	// @pragma nostrip
 
@@ -69,9 +74,24 @@ namespace TEN::Scripting
 			ScriptReserved_WeaponSettings, &Settings::Weapons);
 	}
 
-	/// Animations
+	/// Animations (Animations table)
 	// @section Animations
 	// These settings determine whether a specific moveset is available in-game.
+	// <h4>Examples:</h4>
+	// Sprint jump
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Animations.sprintJump = <span class = "keyword">false</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Animations.sprintJump = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
+	// Pose timeout
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Animations.poseTimeout = 10<br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Animations.poseTimeout = 30
+	//TEN.Flow.SetSettings(settings) </pre>
 
 	void AnimSettings::Register(sol::table& parent)
 	{
@@ -81,15 +101,18 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(AnimSettings, ScriptReserved_AnimSettings),
 
 		/// Extended crawl moveset.
-		// @tfield bool crawlExtended When enabled, player will be able to traverse across one-click steps in crawlspaces.
+		// @tfield bool crawlExtended When enabled, player will be able to traverse across one-click steps in crawlspaces.<br>
+		// _Default: true_
 		"crawlExtended", &AnimSettings::CrawlExtended,
 
 		/// Crouch roll.
-		// @tfield bool crouchRoll When enabled, player can perform crawlspace roll by pressing sprint key.
+		// @tfield bool crouchRoll When enabled, player can perform crawlspace roll by pressing sprint key.<br>
+		// _Default: true_
 		"crouchRoll", &AnimSettings::CrouchRoll,
 
 		/// Crawlspace dive.
-		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
+		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.<br>
+		// _Default: true_
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
 		/// Overhang climbing.
@@ -101,21 +124,39 @@ namespace TEN::Scripting
 		"slideExtended", &AnimSettings::SlideExtended,
 
 		/// Sprint jump.
-		// @tfield bool sprintJump If enabled, player will be able to perform extremely long jump when sprinting.
+		// @tfield bool sprintJump If enabled, player will be able to perform extremely long jump when sprinting.<br>
+		// _Default: false_
 		"sprintJump", &AnimSettings::SprintJump,
 
 		/// Ledge jumps.
-		// @tfield bool ledgeJumps If this setting is enabled, player will be able to jump upwards while hanging on the ledge.
+		// @tfield bool ledgeJumps If this setting is enabled, player will be able to jump upwards while hanging on the ledge.<br>
+		// _Default: false_
 		"ledgeJumps", &AnimSettings::LedgeJumps,
 
 		/// Pose timeout.
-		// @tfield int poseTimeout If this setting is larger than 0, idle standing pose animation will be performed after given timeout (in seconds).
+		// @tfield int poseTimeout If this setting is larger than 0, idle standing pose animation will be performed after given timeout (in seconds).<br>
+		// _Default: 0_
 		"poseTimeout", &AnimSettings::PoseTimeout);
 	}
 
-	/// Camera
+	/// Camera (Camera table)
 	// @section Camera
 	// Parameters to customize camera and everything related to it.
+	// <h4>Examples:</h4>
+	// Binocular light color
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Camera.binocularLightColor = TEN.Color(255, 0, 0)<br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Camera.binocularLightColor = TEN.Color(0, 255, 0)
+	//TEN.Flow.SetSettings(settings) </pre>
+	// Object collision
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Camera.objectCollision = <span class = "keyword">false</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Camera.objectCollision = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
 
 	void CameraSettings::Register(sol::table& parent)
 	{
@@ -124,21 +165,39 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(CameraSettings, ScriptReserved_CameraSettings),
 
 		/// Determines highlight color in binocular mode.
-		// @tfield Color binocularLightColor Color of highlight, when player presses action. Zero color means there will be no highlight.
+		// @tfield Color binocularLightColor Color of highlight, when player presses action. Zero color means there will be no highlight.<br>
+		// _Default: TEN.Color(192, 192, 96)_
 		"binocularLightColor", &CameraSettings::BinocularLightColor,
 	
 		/// Determines highlight color in lasersight mode.
-		// @tfield Color lasersightLightColor Lasersight highlight color. Zero color means there will be no highlight.
+		// @tfield Color lasersightLightColor Lasersight highlight color. Zero color means there will be no highlight.<br>
+		// _Default: TEN.Color(255, 0, 0)_
 		"lasersightLightColor", &CameraSettings::LasersightLightColor,
 	
 		/// Specify whether camera can collide with objects.
-		// @tfield bool objectCollision When enabled, camera will collide with moveables and statics. Disable for TR4-like camera behaviour.
+		// @tfield bool objectCollision When enabled, camera will collide with moveables and statics. Disable for TR4-like camera behaviour.<br>
+		// _Default: true_
 		"objectCollision", &CameraSettings::ObjectCollision);
 	}
 
-	/// Flare
+	/// Flare (Flare table)
 	// @section Flare
 	// These settings change appearance and behaviour of a flare.
+	// <h4>Examples:</h4>
+	// Flare color
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Flare.color = TEN.Color(255, 0, 0)<br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Flare.color = TEN.Color(0, 255, 0)
+	//TEN.Flow.SetSettings(settings) </pre>
+	// Muzzle offset
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Flare.offset = TEN.Vec3(0, 0, 50)<br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Flare.offset = TEN.Vec3(0, 0, 30)
+	//TEN.Flow.SetSettings(settings) </pre>
 
 	void FlareSettings::Register(sol::table& parent)
 	{
@@ -147,49 +206,74 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(FlareSettings, ScriptReserved_FlareSettings),
 
 		/// Flare color.
-		// @tfield Color color Flare color. Used for sparks and lensflare coloring as well.
+		// @tfield Color color Flare color. Used for sparks and lensflare coloring as well.<br>
+		// _Default: TEN.Color(28, 64, 0)_
 		"color", &FlareSettings::Color,
 
 		/// Muzzle offset.
-		// @tfield Vec3 offset A relative muzzle offset where light and particle effects originate from.
+		// @tfield Vec3 offset A relative muzzle offset where light and particle effects originate from.<br>
+		// _Default: TEN.Vec3(0, 0, 41)_
 		"offset", &FlareSettings::Offset,
 
 		/// Light range.
-		// @tfield int range Flare light radius or range. Represented in "clicks" equal to 256 world units.
+		// @tfield int range Flare light radius or range. Represented in "clicks" equal to 256 world units.<br>
+		// _Default: 9 (equal to 9 clicks, or 2304 world units)_
 		"range", &FlareSettings::Range,
 
 		/// Burn timeout.
-		// @tfield int timeout Flare burn timeout. Flare will stop working after given timeout (specified in seconds).
+		// @tfield int timeout Flare burn timeout. Flare will stop working after given timeout (specified in seconds).<br>
+		// _Default: 60_
 		"timeout", &FlareSettings::Timeout,
 
 		/// Default flare pickup count.
-		// @tfield int pickupCount Specifies amount of flares that you get when you pick up a box of flares.
+		// @tfield int pickupCount Specifies amount of flares that you get when you pick up a box of flares.<br>
+		// _Default: 12_
 		"pickupCount", &FlareSettings::PickupCount,
 
 		/// Lens flare brightness.
-		// @tfield float lensflareBrightness Brightness multiplier. Specifies how bright lens flare is in relation to light (on a range from 0 to 1).
+		// @tfield float lensflareBrightness Brightness multiplier. Specifies how bright lens flare is in relation to light (on a range from 0 to 1).<br>
+		// _Default: 0.5_
 		"lensflareBrightness", &FlareSettings::LensflareBrightness,
 
 		/// Toggle spark effect.
-		// @tfield bool sparks Spark effect. Determines whether flare generates sparks when burning.
+		// @tfield bool sparks Spark effect. Determines whether flare generates sparks when burning.<br>
+		// _Default: true_
 		"sparks", &FlareSettings::Sparks,
 
 		/// Toggle smoke effect.
-		// @tfield bool smoke Smoke effect. Determines whether flare generates smoke when burning.
+		// @tfield bool smoke Smoke effect. Determines whether flare generates smoke when burning.<br>
+		// _Default: true_
 		"smoke", &FlareSettings::Smoke,
 
 		/// Toggle muzzle glow effect.
-		// @tfield bool muzzleGlow Glow effect. Determines whether flare generates glow when burning.
+		// @tfield bool muzzleGlow Glow effect. Determines whether flare generates glow when burning.<br>
+		// _Default: true_
 		"muzzleGlow", &FlareSettings::MuzzleGlow,
 
 		/// Toggle flicker effect.
-		// @tfield bool flicker Light and lensflare flickering. When turned off, flare light will be constant.
+		// @tfield bool flicker Light and lensflare flickering. When turned off, flare light will be constant.<br>
+		// _Default: true_
 		"flicker", &FlareSettings::Flicker);
 	}
 
-	/// Gameplay
+	/// Gameplay (Gameplay table)
 	// @section Gameplay
 	// These settings are used to enable or disable certain gameplay features.
+	// <h4>Examples:</h4>
+	// Inventory
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Gameplay.enableInventory = <span class = "keyword">false</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Gameplay.enableInventory = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
+	// Poisoned enemies
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Gameplay.killPoisonedEnemies = <span class = "keyword">false</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Gameplay.killPoisonedEnemies = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
 
 	void GameplaySettings::Register(sol::table& parent)
 	{
@@ -199,22 +283,40 @@ namespace TEN::Scripting
 
 			/// Enable or disable original linear inventory functionality. Can be used to completely disable inventory handling
 			// or to replace it with custom module, such as ring inventory.
-			// @tfield bool enableInventory If false, inventory will not open.
+			// @tfield bool enableInventory If false, inventory will not open.<br>
+			// _Default: true_
 			"enableInventory", &GameplaySettings::EnableInventory,
 
 			/// Kill enemies which were poisoned by a crossbow poisoned ammo or by any other means. If disabled, enemy hit points will
 			// reach minimum but will never go to zero. This behaviour replicates original TR4 behaviour.
-			// @tfield bool killPoisonedEnemies If false, enemies won't be killed by poison.
+			// @tfield bool killPoisonedEnemies If false, enemies won't be killed by poison.<br>
+			// _Default: true_
 			"killPoisonedEnemies", &GameplaySettings::KillPoisonedEnemies,
 
 			/// Enable target occlusion by moveables and static meshes.
-			// @tfield bool targetObjectOcclusion If enabled, player won't be able to target enemies through moveables and static meshes.
+			// @tfield bool targetObjectOcclusion If enabled, player won't be able to target enemies through moveables and static meshes.<br>
+			// _Default: true_
 			"targetObjectOcclusion", &GameplaySettings::TargetObjectOcclusion);
 	}
 
-	/// Graphics
+	/// Graphics (Graphics table)
 	// @section Graphics
 	// These settings are used to enable or disable certain graphics features.
+	// <h4>Examples:</h4>
+	// Enable ambient occlusion
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Graphics.ambientOcclusion = <span class = "keyword">true</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Graphics.ambientOcclusion = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
+	// Enable skinning
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Graphics.skinning = <span class = "keyword">true</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Graphics.skinning = <span class = "keyword">false</span>
+	//TEN.Flow.SetSettings(settings) </pre>
 
 	void GraphicsSettings::Register(sol::table& parent)
 	{
@@ -223,20 +325,34 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(GraphicsSettings, ScriptReserved_GraphicsSettings),
 
 			/// Enable ambient occlusion.
-			// @tfield bool ambientOcclusion If disabled, ambient occlusion setting will be forced to off, and corresponding menu entry in the Display Settings dialog will be grayed out.
+			// @tfield bool ambientOcclusion If disabled, ambient occlusion setting will be forced to off, and corresponding menu entry in the Display Settings dialog will be grayed out.<br>
+			// _Default: true_
 			"ambientOcclusion", &GraphicsSettings::AmbientOcclusion,
 
 			/// Enable skinning.
-			// @tfield bool skinning If enabled, skinning will be used for animated objects with skinned mesh. Disable to force classic TR workflow.
+			// @tfield bool skinning If enabled, skinning will be used for animated objects with skinned mesh. Disable to force classic TR workflow.<br>
+			// _Default: false_
 			"skinning", &GraphicsSettings::Skinning);
 	}
 
 	/* @fieldtype HairSettings[] */
-	/// Hair
+	/// Hair (Hair table)
 	// @section Hair
 	// This is a table of braid object settings. <br>
 	// Table consists of three entries, with first one representing classic Lara braid, and 2 and 3 representing left and right young Lara braids respectively.
 	// Therefore, if you want to access classic Lara braid settings, use `settings.Hair[1]`, and so on.
+	// <h4>Examples:</h4>
+	// Classic Lara braid
+	//<pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Hair[<span class="number">1</span>].rootMesh = <span class="number">14</span>
+	//settings.Hair[<span class="number">1</span>].offset = Vec3(-<span class="number">4</span>, -<span class="number">4</span>, -<span class="number">18</span>)
+	//settings.Hair[<span class="number">1</span>].indices = { <span class="number">37</span>, <span class="number">39</span>, <span class="number">40</span>, <span class="number">38</span> }<br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Hair[<span class="number">1</span>].rootMesh = <span class="number">14</span>
+	//settings.Hair[<span class="number">1</span>].offset = Vec3(-<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">18</span>)
+	//settings.Hair[<span class="number">1</span>].indices = { <span class="number">27</span>, <span class="number">29</span>, <span class="number">30</span>, <span class="number">28</span> }
+	//TEN.Flow.SetSettings(settings)</pre>
 
 	void HairSettings::Register(sol::table& parent)
 	{
@@ -245,21 +361,45 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(HairSettings, ScriptReserved_HairSettings),
 
 		/// Root mesh to which hair object will attach to.
-		// @tfield int rootMesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
+		// @tfield int rootMesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.<br>
+		// _Default: 14_
 		"rootMesh", &HairSettings::RootMesh,
 
 		/// Relative braid offset to a headmesh. Not used with skinned hair mesh.
-		// @tfield Vec3 offset Specifies how braid is positioned in relation to a headmesh.
+		// @tfield Vec3 offset Specifies how braid is positioned in relation to a headmesh.<br>
+		// _Default:_<br>
+		// _Hair[1] Vec3(-4, -4, -48)_<br>
+		// _Hair[2] Vec3(-48, -48, -50)_<br>
+		// _Hair[3] Vec3(48, -48, -50)_
 		"offset", &HairSettings::Offset,
 	
 		/// Braid connection indices. Not used with skinned hair mesh.
-		// @tfield table indices A list of headmesh's vertex connection indices. Each index corresponds to nearest braid rootmesh vertex. Amount of indices is unlimited.
+		// @tfield table indices A list of headmesh's vertex connection indices. Each index corresponds to nearest braid rootmesh vertex. Amount of indices is unlimited.<br>
+		// _Default:_<br>
+		// _Hair[1] { 37, 39, 40, 38 }_<br>
+		// _Hair[2] { 79, 78, 76, 77 }_<br>
+		// _Hair[3] { 68, 69, 70, 71 }_
 		"indices", &HairSettings::Indices);
 	}
 
-	/// Hud
+	/// Hud (Hud table)
 	// @section Hud
 	// These settings determine visibility of particular in-game HUD elements.
+	// <h4>Examples:</h4>
+	// Status bars
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Hud.statusBars = <span class = "keyword">false</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Hud.statusBars = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
+	// Speedometer
+	// <pre class = "example"><span class = "comment">--in Settings.lua</span>
+	//settings.Hud.speedometer = <span class = "keyword">false</span><br>
+	//<span class = "comment">--in the level</span>
+	//<span class = "keyword">local</span> settings = TEN.Flow.GetSettings()
+	//settings.Hud.speedometer = <span class = "keyword">true</span>
+	//TEN.Flow.SetSettings(settings) </pre>
 
 	void HudSettings::Register(sol::table& parent)
 	{
@@ -268,23 +408,27 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(HudSettings, ScriptReserved_HudSettings),
 
 		/// Toggle in-game status bars visibility.
-		// @tfield bool statusBars If disabled, all status bars (health, air, stamina) will be hidden.
+		// @tfield bool statusBars If disabled, all status bars (health, air, stamina) will be hidden.<br>
+		// _Default: true_
 		"statusBars", &HudSettings::StatusBars,
 
 		/// Toggle loading bar visibility.
-		// @tfield bool loadingBar If disabled, loading bar will be invisible in game.
+		// @tfield bool loadingBar If disabled, loading bar will be invisible in game.<br>
+		// _Default: true_
 		"loadingBar", &HudSettings::LoadingBar,
 
 		/// Toggle speedometer visibility.
-		// @tfield bool speedometer If disabled, speedometer will be invisible in game.
+		// @tfield bool speedometer If disabled, speedometer will be invisible in game.<br>
+		// _Default: true_
 		"speedometer", &HudSettings::Speedometer,
 
 		/// Toggle pickup notifier visibility.
-		// @tfield bool pickupNotifier If disabled, pickup notifier will be invisible in game.
+		// @tfield bool pickupNotifier If disabled, pickup notifier will be invisible in game.<br>
+		// _Default: true_
 		"pickupNotifier", &HudSettings::PickupNotifier);
 	}
 
-	/// Pathfinding
+	/// Pathfinding (Flow.Pathfinding table)
 	// @section Pathfinding
 	// Features and enhancements that modify enemy behaviour during pathfinding and while tracking player and other enemies.
 
@@ -355,7 +499,7 @@ namespace TEN::Scripting
 		"verticalMovementSmoothing", &PathfindingSettings::VerticalMovementSmoothing);
 	}
 
-	/// Physics
+	/// Physics (Physics table)
 	// @section Physics
 	// Here you will find various settings for game world physics.
 
@@ -374,7 +518,7 @@ namespace TEN::Scripting
 		"swimVelocity", &PhysicsSettings::SwimVelocity);
 	}
 
-	/// System
+	/// System (System table)
 	// @section System
 	// Global system settings that is not directly related to gameplay.
 
@@ -402,7 +546,7 @@ namespace TEN::Scripting
 		"fastReload", &SystemSettings::FastReload);
 	}
 
-	/// User interface
+	/// User interface (UI table)
 	// @section UI
 	// System-wide user interface settings.
 
@@ -461,7 +605,7 @@ namespace TEN::Scripting
 	}
 
 	/* @fieldtype { [WeaponType]: WeaponSettings } */
-	/// Weapons
+	/// Weapons (Weapons table)
 	// @section Weapons
 	// This is a table of weapon settings, with several parameters available for every weapon.
 	// Access particular weapon's settings by using @{Objects.WeaponType} as an index for this table, e.g. `settings.Weapons[Flow.WeaponType.PISTOLS]`.
