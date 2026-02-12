@@ -129,6 +129,17 @@ namespace TEN::Scripting
 	/// Camera
 	// @section Camera
 	// Parameters to customize camera and everything related to it.
+	// @usage
+	// -- Example of changing binocular and lasersight highlight colors
+	// -- In Settings.lua
+	// settings.Camera.binocularLightColor = TEN.Color(255, 0, 255)
+	// settings.Camera.lasersightLightColor = TEN.Color(0, 255, 255)
+	//
+	// -- In the level's lua file
+	// local settings = TEN.Flow.GetSettings()
+	// settings.Camera.binocularLightColor = TEN.Color(255, 0, 255)
+	// settings.Camera.lasersightLightColor = TEN.Color(0, 255, 255)
+	// TEN.Flow.SetSettings(settings)
 
 	void CameraSettings::Register(sol::table& parent)
 	{
