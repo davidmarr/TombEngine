@@ -419,6 +419,16 @@ enum class ShaderType
 	Geometry
 };
 
+enum class ShaderStage
+{
+	VertexShader,
+	GeometryShader,
+	PixelShader,
+	ComputeShader,
+	HullShader,
+	DomainShader
+};
+
 enum class Shader
 {
 	// General

@@ -174,9 +174,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 		std::unique_ptr<IConstantBuffer> CreateConstantBuffer(int size, std::wstring name) override;
 		void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) override;
-		void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
-		void BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
-		void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
+		void BindConstantBuffer(ShaderStage shaderStage, ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) override;
 
 		void DrawIndexedTriangles(int count, int baseIndex, int baseVertex) override;
 		void DrawIndexedInstancedTriangles(int count, int instances, int baseIndex, int baseVertex) override;

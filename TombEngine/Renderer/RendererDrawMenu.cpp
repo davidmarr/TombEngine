@@ -877,7 +877,7 @@ namespace TEN::Renderer
 		hudCamera.Frame = GlobalCounter;
 		hudCamera.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
 		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices.get());
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 		_shaders.Bind(Shader::Inventory);
 
@@ -904,8 +904,8 @@ namespace TEN::Renderer
 			_stItem.BoneLightModes[0] = (int)LightMode::Dynamic;
 
 			UpdateConstantBuffer(&_stItem, _cbItem.get());
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Item, _cbItem.get());
 
 			// Draw the skin mesh.
 			const auto skinMesh = GetMesh(object.skinIndex);
@@ -960,8 +960,8 @@ namespace TEN::Renderer
 
 			UpdateConstantBuffer(&_stItem, _cbItem.get());
 
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Item, _cbItem.get());
 
 			const auto& mesh = *moveableObject->ObjectMeshes[i];
 
@@ -1047,7 +1047,7 @@ namespace TEN::Renderer
 		hudCamera.CamDirectionWS = -Vector4::UnitZ;
 		hudCamera.ViewProjection = viewMatrix * projMatrix;
 		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices.get());
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 		_shaders.Bind(Shader::Inventory);
 
@@ -1074,8 +1074,8 @@ namespace TEN::Renderer
 			_stItem.BoneLightModes[0] = (int)LightMode::Dynamic;
 
 			UpdateConstantBuffer(&_stItem, _cbItem.get());
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Item, _cbItem.get());
 
 			// Get skin mesh.
 			const auto* skinMesh = GetMesh(object.skinIndex);
@@ -1129,8 +1129,8 @@ namespace TEN::Renderer
 			_stItem.BoneLightModes[i] = (int)LightMode::Dynamic;
 
 			UpdateConstantBuffer(&_stItem, _cbItem.get());
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Item, _cbItem.get());
 
 			const auto& mesh = *moveableObject->ObjectMeshes[i];
 

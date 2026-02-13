@@ -261,28 +261,40 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->PSSetSamplers((unsigned int)registerType, 1, &d3dSamplerState);
 	}
 
-	void DX11GraphicsDevice::BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* constantBuffer)
+	void DX11GraphicsDevice::BindConstantBuffer(ShaderStage shaderStage, ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
 	{
-		auto nativeConstantBuffer = static_cast<DX11ConstantBuffer*>(constantBuffer);
+		auto nativeConstantBuffer = static_cast<DX11ConstantBuffer*>(buffer);
 		auto d3dBuffer = nativeConstantBuffer->GetD3D11Buffer();
 
-		_context->VSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
-	}
+		switch (shaderStage)
+		{
+		case ShaderStage::VertexShader:
+			_context->VSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			break;
 
-	void DX11GraphicsDevice::BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* constantBuffer)
-	{
-		auto nativeConstantBuffer = static_cast<DX11ConstantBuffer*>(constantBuffer);
-		auto d3dBuffer = nativeConstantBuffer->GetD3D11Buffer();
+		case ShaderStage::GeometryShader:
+			_context->GSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			break;
 
-		_context->GSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
-	}
+		case ShaderStage::PixelShader:
+			_context->PSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			break;
 
-	void DX11GraphicsDevice::BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* constantBuffer)
-	{
-		auto nativeConstantBuffer = static_cast<DX11ConstantBuffer*>(constantBuffer);
-		auto d3dBuffer = nativeConstantBuffer->GetD3D11Buffer();
+		case ShaderStage::ComputeShader:
+			_context->CSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			break;
 
-		_context->PSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+		case ShaderStage::HullShader:
+			_context->HSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			break;
+
+		case ShaderStage::DomainShader:
+			_context->DSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	std::unique_ptr<IConstantBuffer> DX11GraphicsDevice::CreateConstantBuffer(int size, std::wstring name)

@@ -265,14 +265,9 @@ namespace TEN::Renderer
 		_stRoom.NumRoomDecals = (int)decals.size();
 	}
 
-	void Renderer::BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
+	void Renderer::BindConstantBuffer(ShaderStage shaderStage, ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
 	{
-		_graphicsDevice->BindConstantBufferVS(constantBufferType, buffer);
-	}
-
-	void Renderer::BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
-	{
-		_graphicsDevice->BindConstantBufferPS(constantBufferType, buffer);
+		_graphicsDevice->BindConstantBuffer(shaderStage, constantBufferType, buffer);
 	}
 
 	void Renderer::BindMaterial(int materialIndex, bool force)

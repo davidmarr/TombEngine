@@ -211,7 +211,7 @@ namespace TEN::Renderer
 			auto shadowProjection = CCameraMatrixBuffer{};
 			shadowProjection.ViewProjection = view * projection;
 			UpdateConstantBuffer(&shadowProjection, _cbCameraMatrices.get());
-			BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 			_stShadowMap.LightViewProjections[step] = (view * projection);
 
@@ -220,8 +220,8 @@ namespace TEN::Renderer
 			auto& obj = GetRendererObject((GAME_OBJECT_ID)item->ObjectID);
 			auto skinMode = GetSkinningMode(obj, item->SkinIndex);
 
-			BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-			BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Item, _cbItem.get());
+			BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Item, _cbItem.get());
 
 			_stItem.World = item->InterpolatedWorld;
 			_stItem.Color = item->Color;
@@ -1854,29 +1854,29 @@ namespace TEN::Renderer
 		time1 = time2;
 
 		// Bind constant buffers.
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
-		BindConstantBufferVS(ConstantBufferRegister::Material, _cbMaterial.get());
-		BindConstantBufferVS(ConstantBufferRegister::Item, _cbItem.get());
-		BindConstantBufferVS(ConstantBufferRegister::InstancedStatics, _cbInstancedStaticMeshBuffer.get());
-		BindConstantBufferVS(ConstantBufferRegister::ShadowLight, _cbShadowMap.get());
-		BindConstantBufferVS(ConstantBufferRegister::Room, _cbRoom.get());
-		BindConstantBufferVS(ConstantBufferRegister::AnimatedTextures, _cbAnimated.get());
-		BindConstantBufferVS(ConstantBufferRegister::Blending, _cbBlending.get());
-		BindConstantBufferVS(ConstantBufferRegister::InstancedSprites, _cbInstancedSpriteBuffer.get());
-		BindConstantBufferVS(ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
-		BindConstantBufferVS(ConstantBufferRegister::Sky, _cbSky.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Material, _cbMaterial.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Item, _cbItem.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::InstancedStatics, _cbInstancedStaticMeshBuffer.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::ShadowLight, _cbShadowMap.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Room, _cbRoom.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::AnimatedTextures, _cbAnimated.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Blending, _cbBlending.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::InstancedSprites, _cbInstancedSpriteBuffer.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Sky, _cbSky.get());
 
-		BindConstantBufferPS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
-		BindConstantBufferPS(ConstantBufferRegister::Material, _cbMaterial.get());
-		BindConstantBufferPS(ConstantBufferRegister::Item, _cbItem.get());
-		BindConstantBufferPS(ConstantBufferRegister::InstancedStatics, _cbInstancedStaticMeshBuffer.get());
-		BindConstantBufferPS(ConstantBufferRegister::ShadowLight, _cbShadowMap.get());
-		BindConstantBufferPS(ConstantBufferRegister::Room, _cbRoom.get());
-		BindConstantBufferPS(ConstantBufferRegister::AnimatedTextures, _cbAnimated.get());
-		BindConstantBufferPS(ConstantBufferRegister::Blending, _cbBlending.get());
-		BindConstantBufferPS(ConstantBufferRegister::InstancedSprites, _cbInstancedSpriteBuffer.get());
-		BindConstantBufferPS(ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
-		BindConstantBufferPS(ConstantBufferRegister::Sky, _cbSky.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Material, _cbMaterial.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Item, _cbItem.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::InstancedStatics, _cbInstancedStaticMeshBuffer.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::ShadowLight, _cbShadowMap.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Room, _cbRoom.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::AnimatedTextures, _cbAnimated.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Blending, _cbBlending.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::InstancedSprites, _cbInstancedSpriteBuffer.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Sky, _cbSky.get());
 
 		// Reset GPU state.
 		SetBlendMode(BlendMode::Opaque, true);

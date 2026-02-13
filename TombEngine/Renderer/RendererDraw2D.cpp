@@ -135,14 +135,14 @@ namespace TEN::Renderer
 		SetDepthState(DepthState::None);
 		SetCullMode(CullMode::None);
 
-		BindConstantBufferVS(ConstantBufferRegister::Hud, _cbHUD.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Hud, _cbHUD.get());
 
 		RendererSprite* borderSprite = &_sprites[Objects[ID_BAR_BORDER_GRAPHICS].meshIndex];
 		_stHUDBar.BarStartUV = borderSprite->UV[0];
 		_stHUDBar.BarScale = Vector2(borderSprite->Width / (float)borderSprite->Texture->GetWidth(), borderSprite->Height / (float)borderSprite->Texture->GetHeight());
 		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar.get());
-		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
-		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		 
 		BindTexture(TextureRegister::Hud, borderSprite->Texture, SamplerStateRegister::LinearClamp);
 
@@ -169,8 +169,8 @@ namespace TEN::Renderer
 		_stHUDBar.BarScale = Vector2(innerSprite->Width / (float)innerSprite->Texture->GetWidth(), innerSprite->Height / (float)innerSprite->Texture->GetHeight());
 		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar.get());
 
-		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
-		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
 		 
 		BindTexture(TextureRegister::Hud, innerSprite->Texture, SamplerStateRegister::LinearClamp);
 
@@ -196,14 +196,14 @@ namespace TEN::Renderer
 		SetDepthState(DepthState::None);
 		SetCullMode(CullMode::None);
 
-		BindConstantBufferVS(ConstantBufferRegister::Hud, _cbHUD.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Hud, _cbHUD.get());
 		BindTexture(TextureRegister::Hud, _loadingBarBorder.get(), SamplerStateRegister::LinearClamp);
 
 		_stHUDBar.BarStartUV = Vector2::Zero;
 		_stHUDBar.BarScale = Vector2::One;
 		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar.get());
-		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
-		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
 
 		DrawIndexedTriangles(56, 0, 0);
 
@@ -221,8 +221,8 @@ namespace TEN::Renderer
 		_stHUDBar.Poisoned = false;
 		_stHUDBar.Frame = 0; 
 		UpdateConstantBuffer(&_stHUDBar, _cbHUDBar.get());
-		BindConstantBufferVS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
-		BindConstantBufferPS(ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
+		BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::HudBar, _cbHUDBar.get());
 
 		BindTexture(TextureRegister::Hud, _loadingBarInner.get(), SamplerStateRegister::LinearClamp);
 

@@ -351,8 +351,7 @@ namespace TEN::Renderer
 		void BindMoveableLights(std::vector<RendererLight*>& lights, int roomNumber, int prevRoomNumber, float fade, bool shadow);
 		void BindRoomDecals(const std::vector<RendererDecal>& decals);
 		void BindRenderTargetAsTexture(TextureRegister registerType, IRenderTarget2D* target, SamplerStateRegister samplerType);
-		void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer);
-		void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer);
+		void BindConstantBuffer(ShaderStage shaderStage, ConstantBufferRegister constantBufferType, IConstantBuffer* buffer);
 		void BindMaterial(int materialIndex, bool force);
 		void BuildHierarchy(RendererObject* obj);
 		void BuildHierarchyRecursive(RendererObject* obj, RendererBone* node, RendererBone* parentNode);

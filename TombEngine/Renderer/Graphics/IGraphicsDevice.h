@@ -60,10 +60,8 @@ namespace TEN::Renderer::Graphics
 		
 		virtual std::unique_ptr<IConstantBuffer> CreateConstantBuffer(int size, std::wstring name) = 0;
 		virtual void UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data) = 0;
-		virtual void BindConstantBufferVS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
-		virtual void BindConstantBufferGS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
-		virtual void BindConstantBufferPS(ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
-
+		virtual void BindConstantBuffer(ShaderStage shaderStage, ConstantBufferRegister constantBufferType, IConstantBuffer* buffer) = 0;
+		
 		virtual void DrawIndexedTriangles(int count, int baseIndex, int baseVertex) = 0;
 		virtual void DrawIndexedInstancedTriangles(int count, int instances, int baseIndex, int baseVertex) = 0;
 		virtual void DrawInstancedTriangles(int count, int instances, int baseVertex) = 0;
