@@ -109,37 +109,23 @@ namespace TEN::Renderer::Native::DirectX11
 		return nullptr; // new DX11RenderTargetCube(_device.Get(), size, GetDXGIFormat(colorFormat), GetDXGIFormat(depthFormat));
 	}
 
-	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, byte* data)
+	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, SurfaceFormat format, void* data)
 	{
-		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, data);
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format), data);
 		_context->Flush();
 		return texture;
 	}
 
-	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data)
-	{
-		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format), pitch, data);
-		_context->Flush();
-		return texture;
-	}
-
-	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(const std::string fileName)
+	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2DFromFile(const std::string fileName)
 	{
 		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), TEN::Utils::ToWString(fileName));
 		_context->Flush();
 		return texture;
 	}
 
-	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int dataSize, byte* data)
+	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2DFromFileInMemory(int dataSize, unsigned char* data)
 	{
-		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), data, dataSize);
-		_context->Flush();
-		return texture;
-	}
-
-	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D(int width, int height, SurfaceFormat format)
-	{
-		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), width, height, GetDXGIFormat(format));
+		auto texture = std::make_unique<DX11Texture2D>(_device.Get(), dataSize, data);
 		_context->Flush();
 		return texture;
 	}
@@ -1019,11 +1005,6 @@ namespace TEN::Renderer::Native::DirectX11
 	{
 		ID3D11RenderTargetView* nullViews[] = { nullptr };
 		_context->OMSetRenderTargets(0, nullViews, NULL);
-	}
-
-	std::unique_ptr<ITexture2D> DX11GraphicsDevice::CreateTexture2D()
-	{
-		return std::make_unique<DX11Texture2D>();
 	}
 
 	void DX11GraphicsDevice::UpdateTexture2D(ITexture2D* texture, std::vector<char> data)

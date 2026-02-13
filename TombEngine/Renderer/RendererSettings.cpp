@@ -37,17 +37,17 @@ namespace TEN::Renderer
 
 		if (std::filesystem::is_regular_file(path))
 		{
-			texture = _graphicsDevice->CreateTexture2D(TEN::Utils::ToString(path));
+			texture = _graphicsDevice->CreateTexture2DFromFile(TEN::Utils::ToString(path));
 		}
 		else if (!path.empty()) // Loading default texture without path may be intentional.
 		{
-			texture = _graphicsDevice->CreateTexture2D();
+			texture = _graphicsDevice->CreateTexture2D(1, 1, SurfaceFormat::SF_RGBA8_Unorm, nullptr);
 			std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 			TENLog("Texture file not found: " + converter.to_bytes(path), LogLevel::Warning);
 		}
 		else
 		{
-			texture = _graphicsDevice->CreateTexture2D();
+			texture = _graphicsDevice->CreateTexture2D(1, 1, SurfaceFormat::SF_RGBA8_Unorm, nullptr);
 		}
 
 		return texture;

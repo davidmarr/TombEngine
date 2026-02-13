@@ -1796,6 +1796,6 @@ namespace TEN::Renderer
 
 	std::unique_ptr<ITexture2D> Renderer::CreateDefaultTexture(std::vector<unsigned char> color)
 	{
-		return _graphicsDevice->CreateTexture2D(1, 1, color.data());
+		return _graphicsDevice->CreateTexture2D(1, 1, SurfaceFormat::SF_RGBA8_Unorm, color.data());
 	}
 }

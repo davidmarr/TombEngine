@@ -160,12 +160,10 @@ namespace TEN::Renderer::Native::DirectX11
 
 		IRenderTargetCube* CreateRenderTargetCube(int size, SurfaceFormat colorFormat) override;
 
-		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, byte* data) override;
-		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format, int pitch, const void* data) override;
-		std::unique_ptr<ITexture2D> CreateTexture2D(const std::string fileName) override;
-		std::unique_ptr<ITexture2D> CreateTexture2D(int dataSize, byte* data) override;
-		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format) override;
-
+		std::unique_ptr<ITexture2D> CreateTexture2D(int width, int height, SurfaceFormat format, void* data) override;
+		std::unique_ptr<ITexture2D> CreateTexture2DFromFile(const std::string fileName) override;
+		std::unique_ptr<ITexture2D> CreateTexture2DFromFileInMemory(int dataSize, unsigned char* data) override;
+		
 		void SetBlendMode(BlendMode blendMode) override;
 		void SetDepthState(DepthState depthState) override;
 		void SetCullMode(CullMode cullMode) override;
@@ -229,7 +227,6 @@ namespace TEN::Renderer::Native::DirectX11
 		void Flush() override;
 		void UnbindAllRenderTargets() override;
 
-		std::unique_ptr<ITexture2D> CreateTexture2D() override;
 		void UpdateTexture2D(ITexture2D* texture, std::vector<char> data) override;
 
 		int GetRefreshRate() override;
