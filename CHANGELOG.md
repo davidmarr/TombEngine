@@ -53,9 +53,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `killPoisonedEnemies` parameter to `Flow.Settings.Gameplay` to enable or disable killing enemies with poisoned ammo.
 * Added a safeguard against adding or removing callback functions within the same callback type.
 * Added a safeguard for `Moveable:Enable` method called for already destroyed moveables.
+* Added `Moveable:HideInteractionHighlight` method.
 * Added `Strings.DisplayStringOption.VERTICAL_BOTTOM` flag.
-* Added optional type argument for inventory item and interaction type for `LaraObject.Interact` function.
-* Added optional type argument for interaction type for `Object.ShowInteractionHighlight` function.
+* Added optional type argument for inventory item and interaction type for `LaraObject:Interact` function.
+* Added optional type argument for interaction type for `Object:ShowInteractionHighlight` function.
 * Added `Vec3:Direction` function and `Vec3:Translate` overload.
 * Added direction vector constructor to `Rotation`.
 * Added overloads for `TEN.Util.PercentToScreen(Vec2(x, y))` and `TEN.Util.ScreenToPercent(Vec2(x, y))`.

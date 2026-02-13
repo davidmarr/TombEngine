@@ -234,6 +234,7 @@ static constexpr char ScriptReserved_SetOnCollidedWithObject[]	= "SetOnCollidedW
 static constexpr char ScriptReserved_GetOnCollidedWithRoom[]	= "GetOnCollidedWithRoom";
 static constexpr char ScriptReserved_SetOnCollidedWithRoom[]	= "SetOnCollidedWithRoom";
 static constexpr char ScriptReserved_ShowInteractionHighlight[] = "ShowInteractionHighlight";
+static constexpr char ScriptReserved_HideInteractionHighlight[] = "HideInteractionHighlight";
 
 // Flow Functions
 static constexpr char ScriptReserved_AddLevel[]					= "AddLevel";
@@ -359,8 +360,8 @@ static constexpr char ScriptReserved_EmitFlow[]						= "EmitFlow";
 static constexpr char ScriptReserved_EmitStreamer[]					= "EmitStreamer";
 static constexpr char ScriptReserved_MakeExplosion[]				= "MakeExplosion";
 static constexpr char ScriptReserved_MakeEarthquake[]				= "MakeEarthquake";
-
 static constexpr char ScriptReserved_GetWind[]						= "GetWind";
+
 static constexpr char ScriptReserved_FlashScreen[]					= "FlashScreen";
 static constexpr char ScriptReserved_FadeIn[]						= "FadeIn";
 static constexpr char ScriptReserved_FadeOut[]						= "FadeOut";
