@@ -202,6 +202,11 @@ namespace TEN::Scripting
 			// @tfield bool enableInventory If false, inventory will not open.
 			"enableInventory", &GameplaySettings::EnableInventory,
 
+			/// Kill enemies which were poisoned by a crossbow poisoned ammo or by any other means. If disabled, enemy hit points will
+			// reach minimum but will never go to zero. This behaviour replicates original TR4 behaviour.
+			// @tfield bool killPoisonedEnemies If false, enemies won't be killed by poison.
+			"killPoisonedEnemies", &GameplaySettings::KillPoisonedEnemies,
+
 			/// Enable target occlusion by moveables and static meshes.
 			// @tfield bool targetObjectOcclusion If enabled, player won't be able to target enemies through moveables and static meshes.
 			"targetObjectOcclusion", &GameplaySettings::TargetObjectOcclusion);
@@ -427,7 +432,7 @@ namespace TEN::Scripting
 		// @tfield Color shadowTextColor A color used for drawing a shadow under any rendered text.
 		"shadowTextColor", &UISettings::ShadowTextColor,
 
-		/// Title logo position.
+		/// Title logo center point position.
 		// @tfield Vec2 titleLogoPosition Center point of a title level logo position.
 		"titleLogoPosition", &UISettings::TitleLogoPosition,
 
