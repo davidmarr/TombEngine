@@ -151,9 +151,9 @@ namespace TEN::Renderer::Utils
 
 		const auto& shaderObj = _shaders[shaderIndex];
 
-		_graphicsDevice->BindVertexShader(shaderObj.get(), forceNull);
-		_graphicsDevice->BindGeometryShader(shaderObj.get(), forceNull);
-		_graphicsDevice->BindPixelShader(shaderObj.get(), forceNull);
+		_graphicsDevice->BindShader(ShaderStage::VertexShader, shaderObj.get(), forceNull);
+		_graphicsDevice->BindShader(ShaderStage::GeometryShader, shaderObj.get(), forceNull);
+		_graphicsDevice->BindShader(ShaderStage::PixelShader, shaderObj.get(), forceNull);
 	}
 
 	std::unique_ptr<IShader> ShaderManager::LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)

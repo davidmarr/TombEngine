@@ -4,6 +4,7 @@
 
 #include "Renderer/Native/DirectX11/DX11GraphicsDevice.h"
 #include "Renderer/Native/DirectX11/DX11ErrorHelper.h"
+#include "Renderer/Native/DirectX11/DX11Utils.h"
 #include "Specific/EngineMain.h"
 #include "Specific/configuration.h"
 #include "Specific/trutils.h"
@@ -435,14 +436,6 @@ namespace TEN::Renderer::Native::DirectX11
 		d3dViewport.MaxDepth = viewport.MaxDepth;
 
 		_context->RSSetViewports(1, &d3dViewport);
-
-		D3D11_RECT rects[1];
-		rects[0].left = d3dViewport.TopLeftX;
-		rects[0].right = d3dViewport.Width;
-		rects[0].top = d3dViewport.TopLeftY;
-		rects[0].bottom = d3dViewport.Height;
-
-		_context->RSSetScissorRects(1, rects);
 	}
 
 	void DX11GraphicsDevice::SetScissor(RendererViewport viewport)
@@ -920,7 +913,7 @@ namespace TEN::Renderer::Native::DirectX11
 	}
 
 
-	void DX11GraphicsDevice::BindVertexShader(IShader* shader, bool forceNull)
+	void DX11GraphicsDevice::BindShader(ShaderStage shaderStage, IShader* shader, bool forceNull)
 	{
 		auto* nativeShader = static_cast<DX11Shader*>(shader);
 
@@ -929,46 +922,38 @@ namespace TEN::Renderer::Native::DirectX11
 			if (forceNull)
 			{
 				_context->VSSetShader(nullptr, nullptr, 0);
+
+				switch (shaderStage)
+				{
+				case ShaderStage::VertexShader:
+					_context->VSSetShader(nullptr, nullptr, 0);
+					break;
+				case ShaderStage::GeometryShader:
+					_context->GSSetShader(nullptr, nullptr, 0);
+					break;
+				case ShaderStage::PixelShader:
+					_context->PSSetShader(nullptr, nullptr, 0);
+					break;
+				}
 			}
 			return;
 		}
 
-		if (nativeShader->GetD3D11VertexShader() || forceNull)
-			_context->VSSetShader(nativeShader->GetD3D11VertexShader(), nullptr, 0);
-	}
-
-	void DX11GraphicsDevice::BindGeometryShader(IShader* shader, bool forceNull)
-	{
-		auto* nativeShader = static_cast<DX11Shader*>(shader);
-
-		if (!nativeShader)
+		switch (shaderStage)
 		{
-			if (forceNull)
-			{
-				_context->GSSetShader(nullptr, nullptr, 0);
-			}
-			return;
+		case ShaderStage::VertexShader:
+			if (nativeShader->GetD3D11VertexShader() || forceNull)
+				_context->VSSetShader(nativeShader->GetD3D11VertexShader(), nullptr, 0);
+			break;
+		case ShaderStage::GeometryShader:
+			if (nativeShader->GetD3D11GeometryShader() || forceNull)
+				_context->GSSetShader(nativeShader->GetD3D11GeometryShader(), nullptr, 0);
+			break;
+		case ShaderStage::PixelShader:
+			if (nativeShader->GetD3D11PixelShader() || forceNull)
+				_context->PSSetShader(nativeShader->GetD3D11PixelShader(), nullptr, 0);
+			break;
 		}
-
-		if (nativeShader->GetD3D11GeometryShader() || forceNull)
-			_context->GSSetShader(nativeShader->GetD3D11GeometryShader(), nullptr, 0);
-	}
-
-	void DX11GraphicsDevice::BindPixelShader(IShader* shader, bool forceNull)
-	{
-		auto* nativeShader = static_cast<DX11Shader*>(shader);
-
-		if (!nativeShader)
-		{
-			if (forceNull)
-			{
-				_context->PSSetShader(nullptr, nullptr, 0);
-			}
-			return;
-		}
-
-		if (nativeShader->GetD3D11PixelShader() || forceNull)
-			_context->PSSetShader(nativeShader->GetD3D11PixelShader(), nullptr, 0);
 	}
 
 	void DX11GraphicsDevice::Present()

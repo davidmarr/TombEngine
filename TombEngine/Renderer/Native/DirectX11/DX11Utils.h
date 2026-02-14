@@ -197,6 +197,57 @@ namespace TEN::Renderer::Native::DirectX11
 		snprintf(buf, sizeof(buf), "%.2f", bytes / (1024.0f * 1024.0f));
 		return buf;
 	}
+
+	inline DXGI_FORMAT GetDXGIFormat(SurfaceFormat format)
+	{
+		switch (format)
+		{
+		case SurfaceFormat::SF_RGBA8_Unorm:
+			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case SurfaceFormat::SF_RGBA8_Unorm_Srgb:
+			return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		case SurfaceFormat::SF_R32_Float:
+			return DXGI_FORMAT_R32_FLOAT;
+		case SurfaceFormat::SF_RG8_Unorm:
+			return DXGI_FORMAT_R8G8_UNORM;
+		case SurfaceFormat::SF_R8_Unorm:
+			return DXGI_FORMAT_R8_UNORM;
+		case SurfaceFormat::SF_RGBA32_Float:
+			return DXGI_FORMAT_R32G32B32A32_FLOAT;
+		case SurfaceFormat::SF_BGRA8_Unorm:
+			return DXGI_FORMAT_B8G8R8A8_UNORM;
+		case SurfaceFormat::Unknown:
+		default:
+			return DXGI_FORMAT_UNKNOWN;
+		}
+	}
+
+	inline DXGI_FORMAT GetDXGIFormat(DepthFormat format)
+	{
+		switch (format)
+		{
+		case DepthFormat::Depth24Stencil8:
+			return DXGI_FORMAT_D24_UNORM_S8_UINT;
+		case DepthFormat::Depth32:
+			return DXGI_FORMAT_D32_FLOAT;
+		default:
+			return DXGI_FORMAT_D32_FLOAT;
+		}
+	}
+
+	inline unsigned int GetClearFlags(DepthStencilClearFlags flags)
+	{
+		switch (flags)
+		{
+		case DepthStencilClearFlags::Depth:
+			return D3D11_CLEAR_DEPTH;
+		case DepthStencilClearFlags::Stencil:
+			return D3D11_CLEAR_STENCIL;
+		case DepthStencilClearFlags::DepthAndStencil:
+		default:
+			return (D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
+		}
+	}
 }
 
 #endif

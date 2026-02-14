@@ -63,57 +63,6 @@ namespace TEN::Renderer::Native::DirectX11
 
 		inline ID3D11DeviceContext* GetDeviceContext() { return _context.Get(); }
 
-		inline DXGI_FORMAT GetDXGIFormat(SurfaceFormat format)
-		{
-			switch (format)
-			{
-			case SurfaceFormat::SF_RGBA8_Unorm:
-				return DXGI_FORMAT_R8G8B8A8_UNORM;
-			case SurfaceFormat::SF_RGBA8_Unorm_Srgb:
-				return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-			case SurfaceFormat::SF_R32_Float:
-				return DXGI_FORMAT_R32_FLOAT;
-			case SurfaceFormat::SF_RG8_Unorm:
-				return DXGI_FORMAT_R8G8_UNORM;
-			case SurfaceFormat::SF_R8_Unorm:
-				return DXGI_FORMAT_R8_UNORM;
-			case SurfaceFormat::SF_RGBA32_Float:
-				return DXGI_FORMAT_R32G32B32A32_FLOAT;
-			case SurfaceFormat::SF_BGRA8_Unorm:
-				return DXGI_FORMAT_B8G8R8A8_UNORM;
-			case SurfaceFormat::Unknown:
-			default:
-				return DXGI_FORMAT_UNKNOWN;
-			}
-		}
-
-		inline DXGI_FORMAT GetDXGIFormat(DepthFormat format)
-		{
-			switch (format)
-			{
-			case DepthFormat::Depth24Stencil8:
-				return DXGI_FORMAT_D24_UNORM_S8_UINT;
-			case DepthFormat::Depth32:
-				return DXGI_FORMAT_D32_FLOAT;
-			default:
-				return DXGI_FORMAT_D32_FLOAT;
-			}
-		}
-
-		inline unsigned int GetClearFlags(DepthStencilClearFlags flags)
-		{
-			switch (flags)
-			{
-			case DepthStencilClearFlags::Depth:
-				return D3D11_CLEAR_DEPTH;
-			case DepthStencilClearFlags::Stencil:
-				return D3D11_CLEAR_STENCIL;
-			case DepthStencilClearFlags::DepthAndStencil:
-			default:
-				return (D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
-			}
-		}
-
 		std::vector<D3D_SHADER_MACRO> ToD3DMacros(const std::map<std::string, std::string>& m)
 		{
 			std::vector<D3D_SHADER_MACRO> out;
@@ -207,9 +156,7 @@ namespace TEN::Renderer::Native::DirectX11
 		void ResizeSwapChain(int width, int height) override;
 
 		std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) override;
-		void BindVertexShader(IShader* shader, bool forceNull) override;
-		void BindGeometryShader(IShader* shader, bool forceNull) override;
-		void BindPixelShader(IShader* shader, bool forceNull) override;
+		void BindShader(ShaderStage shaderStage, IShader* shader, bool forceNull) override;
 
 		void Present() override;
 		void ClearState() override;

@@ -92,9 +92,7 @@ namespace TEN::Renderer::Graphics
 		virtual void ResizeSwapChain(int width, int height) = 0;
 
 		virtual std::unique_ptr<IShader> CreateShader(ShaderCompileRequest& request) = 0;
-		virtual void BindVertexShader(IShader* shader, bool forceNull) = 0;
-		virtual void BindGeometryShader(IShader* shader, bool forceNull) = 0;
-		virtual void BindPixelShader(IShader* shader, bool forceNull) = 0;
+		virtual void BindShader(ShaderStage shaderStage, IShader* shader, bool forceNull) = 0;
 
 		virtual void Present() = 0;
 		virtual void ClearState() = 0;
