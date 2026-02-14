@@ -29,10 +29,6 @@
 
 local Type = require("Engine.Type")
 local Utility = require("Engine.Util")
-local LuaUtil = require("Engine.LuaUtil")
-local CompareValues = LuaUtil.CompareValues
-local TableHasValue = LuaUtil.TableHasValue
-local RemoveValue = LuaUtil.RemoveValue
 
 local Timer = {}
 Timer.__index = Timer
@@ -383,7 +379,7 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 	local remainingTime = timer.remainingTime
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
-	local test = CompareValues(remainingTime, time, operator)
+	local test = Utility.CompareValue(remainingTime, time, operator)
 
 	-- Only for equality/difference operators (==, !=) we check hasTicked.
 	-- This avoids false results due to the internal tick (0.1s) and ensures relational comparisons (> < >= <=) are always valid every 0.03s.
@@ -497,7 +493,7 @@ function Timer:IfTotalTimeIs(operator, seconds)
 	local totalTime = LevelVars.Engine.Timer.timers[self.name].totalTime
 	local seconds_ = math.floor(seconds * 10) / 10
 	local time = TEN.Time(seconds_ * 30)
-	return CompareValues(totalTime, time, operator)
+	return Utility.CompareValue(totalTime, time, operator)
 end
 
 --- Set whether or not the timer loops.
@@ -710,13 +706,18 @@ function Timer:SetTextOption(optionsTable)
 		end
 
 		-- Ensure VERTICAL_CENTER is always present
-		if not TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+		if not Utility.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
 			table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
 		end
 
 		-- Remove VERTICAL_BOTTOM if present
-		if TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM) then
-			RemoveValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM)
+		if Utility.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM) then
+			for i, option in pairs(optionsTable) do
+				if option == TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM then
+					table.remove(optionsTable, i)
+					break
+				end
+			end
 		end
 
 		-- Set the options

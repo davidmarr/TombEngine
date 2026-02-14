@@ -65,4 +65,32 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 	return formattedString
 end
 
+-- Check if table has particular value.
+Util.TableHasValue = function(tbl, val)
+	if not Type.IsTable(tbl) then
+		return false
+	end
+	for _, value in pairs(tbl) do
+		if value == val then
+			return true
+		end
+	end
+	return false
+end
+
+-- Compare two values.
+local operators = {
+	function(a, b) return a == b end,
+	function(a, b) return a ~= b end,
+	function(a, b) return a < b end,
+	function(a, b) return a <= b end,
+	function(a, b) return a > b end,
+	function(a, b) return a >= b end,
+}
+Util.CompareValue = function(operand, reference, operator)
+	operand = operand == true and 1 or operand == false and 0 or operand
+	reference = reference == true and 1 or reference == false and 0 or reference
+	return operators[operator + 1] and operators[operator + 1](operand, reference) or false
+end
+
 return Util
