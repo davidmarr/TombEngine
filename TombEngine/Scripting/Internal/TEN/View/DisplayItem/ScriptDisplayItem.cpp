@@ -74,7 +74,7 @@ namespace TEN::Scripting::DisplayItem
 			ScriptReserved_DisplayItemGetCamera, &ScriptDisplayItem::GetCameraPosition,
 			ScriptReserved_DisplayItemGetTarget, &ScriptDisplayItem::GetCameraTargetPosition,
 			ScriptReserved_GetFOV, &ScriptDisplayItem::GetFOV,
-			ScriptReserved_DisplaySpriteDraw, &ScriptDisplayItem::Draw);
+			ScriptReserved_DisplayItemDraw, &ScriptDisplayItem::Draw);
 	}
 
 	const TEN::Hud::DisplayItem* ScriptDisplayItem::TryGetItem() const
