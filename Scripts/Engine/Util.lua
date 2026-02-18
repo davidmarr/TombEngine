@@ -53,14 +53,13 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 		index = index + 1
 	end
 	if timerFormat.seconds then
-		result[index] = format("%02d", timerFormat.minutes and time.s or (time.s + (60 * time.m)))
+		result[index] = format("%02d", timerFormat.minutes and time.s or (time.s + (60 * time.m) + (3600 * time.h)))
 		index = index + 1
 	end
 	local formattedString = concat(result, ":")
 
 	if timerFormat.deciseconds then
-		local deciseconds = floor(time.c / 10)
-		return (index == 1) and tostring(deciseconds) or formattedString .. "." .. deciseconds
+		return (index == 1) and tostring(time.c) or formattedString .. "." .. time.c
 	end
 	return formattedString
 end
@@ -76,21 +75,6 @@ Util.TableHasValue = function(tbl, val)
 		end
 	end
 	return false
-end
-
--- Compare two values.
-local operators = {
-	function(a, b) return a == b end,
-	function(a, b) return a ~= b end,
-	function(a, b) return a < b end,
-	function(a, b) return a <= b end,
-	function(a, b) return a > b end,
-	function(a, b) return a >= b end,
-}
-Util.CompareValue = function(operand, reference, operator)
-	operand = operand == true and 1 or operand == false and 0 or operand
-	reference = reference == true and 1 or reference == false and 0 or reference
-	return operators[operator + 1] and operators[operator + 1](operand, reference) or false
 end
 
 return Util
