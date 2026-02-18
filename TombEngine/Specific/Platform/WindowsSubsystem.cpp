@@ -214,7 +214,7 @@ namespace TEN::Platform
 	{
 		// Registry path where the VC++ 2015�2022 runtime stores its version info.
 		const char* redistKey =
-#ifdef _WIN64
+#if PLATFORM_64BIT
 			R"(SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64)";
 #else
 			R"(SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86)";
@@ -246,7 +246,7 @@ namespace TEN::Platform
 
 		// If reached this point, either key was not found or version/dll is not acceptable. Prompt user to install it.
 		const char* redistUrl =
-#ifdef _WIN64
+#if PLATFORM_64BIT
 			R"(https://aka.ms/vs/17/release/vc_redist.x64.exe)";
 #else
 			R"(https://aka.ms/vs/17/release/vc_redist.x86.exe)";
@@ -410,15 +410,6 @@ namespace TEN::Platform
 				LOWORD(info->dwFileVersionLS)
 			};
 		}
-	}
-
-	bool WindowsSubsystem::Is64Bit()
-	{
-#ifdef _WIN64
-		return true;
-#else
-		return false;
-#endif
 	}
 
 	std::unique_ptr<ISubsystem> CreatePlatformSubsystem()

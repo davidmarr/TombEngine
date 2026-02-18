@@ -316,14 +316,11 @@ int main(int argc, char* argv[])
 					 std::to_string(ver[3]);
 	}
 
-	if (g_Platform->Is64Bit())
-	{
+#ifdef PLATFORM_64BIT
 		windowName = windowName + " (64-bit)";
-	}
-	else
-	{
+#else
 		windowName = windowName + " (32-bit)";
-	}
+#endif
 
 	TENLog(windowName, LogLevel::Info);
 

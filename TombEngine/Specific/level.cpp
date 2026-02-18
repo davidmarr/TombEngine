@@ -1407,7 +1407,7 @@ bool Decompress(byte* dest, byte* src, unsigned long compressedSize, unsigned lo
 	return decompressedSize == static_cast<int>(uncompressedSize);
 }
 
-#ifdef _WIN64
+#if PLATFORM_64BIT
 long long GetRemainingSize(FILE* filePtr)
 {
 	auto current_position = _ftelli64(filePtr);

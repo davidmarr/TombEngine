@@ -72,15 +72,6 @@ namespace TEN::Platform
 		return {};
 	}
 
-	bool MacOSSubsystem::Is64Bit()
-	{
-#if defined(__x86_64__) || defined(__aarch64__)
-		return true;
-#else
-		return false;
-#endif
-	}
-
 	void MacOSSubsystem::InstallCrashHandler()
 	{
 		static const auto handler = [](int sig)

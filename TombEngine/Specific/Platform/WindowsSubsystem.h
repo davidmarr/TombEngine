@@ -48,10 +48,6 @@ namespace TEN::Platform
 
 		void SetSDL3Window(SDL_Window* window);
 
-		// Enquirers
-
-		bool Is64Bit() override;
-
 		// Utilities
 
 		void Initialize() override;

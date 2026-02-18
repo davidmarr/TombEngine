@@ -66,15 +66,6 @@ namespace TEN::Platform
 		return {};
 	}
 
-	bool LinuxSubsystem::Is64Bit()
-	{
-#ifdef __x86_64__
-		return true;
-#else
-		return false;
-#endif
-	}
-
 	void LinuxSubsystem::InstallCrashHandler()
 	{
 		static const auto handler = [](int sig)

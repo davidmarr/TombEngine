@@ -26,10 +26,6 @@ namespace TEN::Platform
 
 		virtual void SetSDL3Window(SDL_Window* window) = 0;
 
-		// Inquirers
-
-		virtual bool Is64Bit() = 0;
-
 		// Utilities
 
 		virtual void Initialize() = 0;

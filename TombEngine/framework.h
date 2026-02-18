@@ -1,5 +1,17 @@
 #pragma once
 
+// ================
+// PLATFORM DEFINES
+// ================
+
+#include <cstdint>
+
+#if defined(_WIN64) || defined(__x86_64__) || defined(__aarch64__) || defined(__ppc64__)
+	#define PLATFORM_64BIT 1
+#else
+	#define PLATFORM_64BIT 0
+#endif
+
 // =========
 // LIBRARIES
 // =========
