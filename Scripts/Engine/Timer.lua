@@ -40,7 +40,6 @@ local DEFAULT_TEXT_OPTIONS = {TEN.Strings.DisplayStringOption.CENTER, TEN.String
 local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, deciseconds = true}
 local FPS = 30
 local FRAME_TIME = 1 / FPS
-local FRAME_EPSILON = 1e-6
 local COMPARISON_OPS = {
     function(a, b) return a == b end,   -- 0: equal
     function(a, b) return a ~= b end,   -- 1: not equal
@@ -52,21 +51,6 @@ local COMPARISON_OPS = {
 local pairs = pairs
 local unpack = table.unpack
 local format = string.format
-
-local function SecondsToFrameCount(seconds, context, timerName, warnOnAdjust)
-	local rawFrames = seconds * FPS
-	local time = TEN.Time(rawFrames)
-	local roundedFrames = time:GetFrameCount()
-
-	if warnOnAdjust and math.abs(rawFrames - roundedFrames) > FRAME_EPSILON then
-		local roundedSeconds = roundedFrames / FPS
-		TEN.Util.PrintLog(
-			"Warning in " .. context .. ": value (" .. tostring(seconds) .. "s) for '" .. timerName .. "' timer is not aligned to 1/30s; rounded to " .. format("%.2f", roundedSeconds) .. "s (" .. tostring(roundedFrames) .. " frames)",
-			TEN.Util.LogLevel.WARNING)
-	end
-
-	return time
-end
 
 --- Create (but do not start) a new timer.
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
@@ -105,7 +89,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	local thisTimer = LevelVars.Engine.Timer.timers[name]
 	thisTimer.name = name
 	thisTimer.isInternal = string.match(name, "__TEN") and true or false
-	thisTimer.totalTime = SecondsToFrameCount(totalTime, "Timer.Create()", name, true)
+	thisTimer.totalTime = TEN.Time(totalTime * FPS)
 	thisTimer.remainingTime = thisTimer.totalTime
 
 	loop = loop or false
@@ -348,7 +332,7 @@ function Timer:SetRemainingTime(remainingTime)
 		TEN.Util.PrintLog("Error in Timer:SetRemainingTime(): wrong value  (" .. tostring(remainingTime) .. ")  for remainingTime in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
 		local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-		thisTimer.remainingTime = SecondsToFrameCount(remainingTime, "Timer:SetRemainingTime()", self.name, true)
+		thisTimer.remainingTime = TEN.Time(remainingTime * FPS)
 		thisTimer.skipFirstTick = true
     end
 end
@@ -399,7 +383,7 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 	end
 	local timer = LevelVars.Engine.Timer.timers[self.name]
 	local remainingTime = timer.remainingTime
-	local time = SecondsToFrameCount(seconds, "Timer:IfRemainingTimeIs()", self.name, false)
+	local time = TEN.Time(seconds * FPS)
 	local test = COMPARISON_OPS[operator + 1](remainingTime, time)
 	return test
 end
@@ -472,7 +456,7 @@ function Timer:SetTotalTime(totalTime)
 	if not Type.IsNumber(totalTime) or totalTime < 0 then
 		TEN.Util.PrintLog("Error in Timer:SetTotalTime(): wrong value (" .. tostring(totalTime) .. ") for totalTime in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
-		LevelVars.Engine.Timer.timers[self.name].totalTime = SecondsToFrameCount(totalTime, "Timer:SetTotalTime()", self.name, true)
+		LevelVars.Engine.Timer.timers[self.name].totalTime = TEN.Time(totalTime * FPS)
 	end
 end
 
@@ -504,7 +488,7 @@ function Timer:IfTotalTimeIs(operator, seconds)
 		return false
 	end
 	local totalTime = LevelVars.Engine.Timer.timers[self.name].totalTime
-	local time = SecondsToFrameCount(seconds, "Timer:IfTotalTimeIs()", self.name, false)
+	local time = TEN.Time(seconds * FPS)
 	return COMPARISON_OPS[operator + 1](totalTime, time)
 end
 
