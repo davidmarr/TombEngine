@@ -50,7 +50,6 @@ local COMPARISON_OPS = {
 }
 local pairs = pairs
 local unpack = table.unpack
-local format = string.format
 
 --- Create (but do not start) a new timer.
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
