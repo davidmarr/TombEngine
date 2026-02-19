@@ -321,7 +321,7 @@ end
 
 --- Set the remaining time of a timer.
 -- @tparam float remainingTime The new time remaining for the timer in seconds.<br>
--- No negative values allowed! Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- -- Example:
 -- if Timer.IfExists("my_timer") then
