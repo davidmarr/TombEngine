@@ -63,7 +63,7 @@ local unpack = table.unpack
 -- @treturn[2] nil If an error occurred
 -- @usage
 -- -- Example 1 simple timer:
--- Timer.Create("my_timer", 6.10)
+-- Timer.Create("my_timer", 6.13)
 --
 -- -- Example 2 Timer that executes a function when it expires:
 -- local TimerFormat = {minutes = true, seconds = true, deciseconds = true}
@@ -71,6 +71,10 @@ local unpack = table.unpack
 --    TEN.Util.PrintLog("Timer expired", TEN.Util.LogLevel.INFO)
 -- end
 -- Timer.Create("my_timer", 6.1, false, TimerFormat, LevelFuncs.FinishTimer)
+--
+-- -- Example 3 Timer with totalTime rounded to the nearest frame
+-- local time = 7.01 -- this value will be rounded to 7.00 seconds, which is 210 frames at 30 FPS
+-- Timer.Create("my_timer", time)
 Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	if not Type.IsString(name) then
 		TEN.Util.PrintLog("Error in Timer.Create(): invalid name, '" .. tostring(name) .."' timer was not created", TEN.Util.LogLevel.ERROR)
