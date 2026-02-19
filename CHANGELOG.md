@@ -51,8 +51,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `View.DisplayItem` class that can be used to render 3D items in 2D space.
 * Added `View.DisplayAnchors` primitive class and `View.DisplaySprite:GetAnchors` function.
 * Added `UI` section to `Flow.Settings` class with several options to customize main menu and system text.
-* Added `Flow.GetGlobalGameTime` function.
 * Added several `Inventory` functions, including `Inventory.UseItem` and `Inventory.ResetToDefault`.
+* Added `Flow.GetGlobalGameTime` function.
 * Added `ambientOcclusion` parameter to `Flow.Settings.Graphics` to force-disable ambient occlusion option.
 * Added `killPoisonedEnemies` parameter to `Flow.Settings.Gameplay` to enable or disable killing enemies with poisoned ammo.
 * Added a safeguard against adding or removing callback functions within the same callback type.
