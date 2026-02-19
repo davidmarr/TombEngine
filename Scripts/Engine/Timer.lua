@@ -446,7 +446,7 @@ end
 
 --- Set the total time for a timer.
 -- @tparam float totalTime Timer's new total time in seconds.<br>
--- No negative values allowed! Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- -- Example:
 -- if Timer.IfExists("my_timer") then
