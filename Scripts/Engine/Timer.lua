@@ -348,7 +348,7 @@ end
 -- 4 : If the remaining time is greater the value<br>
 -- 5 : If the remaining time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
--- No negative values allowed! Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
+-- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
 -- Please note: to have continuous control, the remaining time must be controlled within the *OnLoop* event and only when the Timer is active @{Timer.IsActive}.
 -- @treturn bool true if comparison is true, false if comparison is false or timer does not exist
 -- @usage
