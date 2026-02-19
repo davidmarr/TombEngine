@@ -78,7 +78,7 @@ end
 -- @tparam bool loop If `true`, the sequence will start again from its first timer once its final function has been called.
 -- @tparam ?table|bool timerFormat Same as in <a href="Timer.html#timerFormat">Timer format</a> for Timer. This is mainly for debugging. __This will not work properly if another sequence or timer is showing a countdown.__
 -- @tparam float|LevelFuncs|table ... A variable number of pairs of arguments, each pair consisting of:<br>
--- - a time in seconds (any positive float; it is rounded to the nearest 1/30s frame),<br>
+-- - a time in seconds that can be rounded internally to the nearest game frame (1/30 of a second),<br>
 -- - followed by the function defined in the *LevelFuncs* table to call once the time has elapsed,<br>
 -- - followed by another duration in seconds, another function name, etc.
 --
