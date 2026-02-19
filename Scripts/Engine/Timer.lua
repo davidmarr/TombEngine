@@ -40,7 +40,8 @@ local DEFAULT_TEXT_OPTIONS = {TEN.Strings.DisplayStringOption.CENTER, TEN.String
 local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, deciseconds = true}
 local FPS = 30
 local FRAME_TIME = 1 / FPS
-local COMPARISON_OPS = {
+local COMPARISON_OPS =
+{
     function(a, b) return a == b end,   -- 0: equal
     function(a, b) return a ~= b end,   -- 1: not equal
     function(a, b) return a < b end,    -- 2: less than
