@@ -471,7 +471,7 @@ end
 -- 4 : If the total time is greater the value<br>
 -- 5 : If the total time is greater or equal to the value
 -- @tparam float seconds the value in seconds to compare.<br>
--- No negative values allowed! Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @treturn bool true if comparison is true, false if comparison is false or timer does not exist
 -- @usage
 -- -- Example: this function checks if totalTime is equal to 5.1 seconds
