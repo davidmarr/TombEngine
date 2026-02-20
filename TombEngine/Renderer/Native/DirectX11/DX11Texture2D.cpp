@@ -103,10 +103,9 @@ namespace TEN::Renderer::Native::DirectX11
 
 		if (data[0] == 0x44 && data[1] == 0x44 && data[2] == 0x53)
 		{
-			// DDS texture
+			// DDS texture (mipmaps are pre-authored by the level editor).
 			res = CreateDDSTextureFromMemory(
 				device,
-				context,
 				data,
 				dataSize,
 				resource.GetAddressOf(),
@@ -115,7 +114,7 @@ namespace TEN::Renderer::Native::DirectX11
 		}
 		else
 		{
-			// PNG legacy texture
+			// PNG legacy texture (mipmaps generated on GPU).
 			res = CreateWICTextureFromMemory(
 				device,
 				context,
@@ -124,9 +123,9 @@ namespace TEN::Renderer::Native::DirectX11
 				resource.GetAddressOf(),
 				_shaderResourceView.GetAddressOf());
 			throwIfFailed(res, device, "CreateWICTextureFromMemory (" + std::to_string(dataSize) + " bytes):");
-		}
 
-		context->GenerateMips(_shaderResourceView.Get());
+			context->GenerateMips(_shaderResourceView.Get());
+		}
 
 		res = resource->QueryInterface(_texture.GetAddressOf());
 		throwIfFailed(res, device, "QueryInterface for Texture2D from memory:");
