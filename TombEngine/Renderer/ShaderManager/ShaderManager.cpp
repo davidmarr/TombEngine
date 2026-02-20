@@ -159,8 +159,8 @@ namespace TEN::Renderer::Utils
 	std::unique_ptr<IShader> ShaderManager::LoadOrCompile(const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)
 	{
 		// Define paths for native (uncompiled) shaders and compiled shaders.
-		auto shaderPath = GetAssetPath(L"Shaders\\");
-		auto compiledShaderPath = shaderPath + L"Bin\\" + ToWString(TEN_VERSION_STRING) + L"\\";
+		auto shaderPath = GetAssetPath(L"Shaders/");
+		auto compiledShaderPath = shaderPath + L"Bin/" + ToWString(TEN_VERSION_STRING) + L"/";
 		auto wideFileName = ToWString(fileName);
 
 		// Ensure the /Bin subdirectory exists.

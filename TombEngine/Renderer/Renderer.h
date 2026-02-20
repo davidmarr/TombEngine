@@ -1,5 +1,4 @@
 #pragma once
-#include <wrl/client.h>
 #include <SimpleMath.h>
 #include "Math/Math.h"
 #include "Game/control/box.h"
@@ -717,8 +716,8 @@ namespace TEN::Renderer
 		void AddDebugSphere(const Vector3& center, float radius, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
 		void AddDebugSphere(const BoundingSphere& sphere, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
 
-		void PrintDebugMessage(LPCSTR msg, va_list args);
-		void PrintDebugMessage(LPCSTR msg, ...);
+		void PrintDebugMessage(const char* msg, va_list args);
+		void PrintDebugMessage(const char* msg, ...);
 		void DrawDebugInfo(RenderView& view);
 		void DrawDebugRenderTargets(RenderView& view);
 		void SwitchDebugPage(bool goBack);
