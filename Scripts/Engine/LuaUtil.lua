@@ -4268,7 +4268,7 @@ LuaUtil.TableHasValue = function (tbl, val)
         LogMessage("Error in LuaUtil.TableHasValue: input is not a table.", logLevelError)
         return false
     end
-    for _, value in next, tbl do
+    for _, value in pairs(tbl) do
         if value == val then
             return true
         end
