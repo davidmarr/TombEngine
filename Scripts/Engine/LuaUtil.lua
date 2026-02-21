@@ -886,6 +886,77 @@ LuaUtil.SplitString = function(inputStr, delimiter)
     return t
 end
 
+--- Format a string by replacing `{key}` placeholders with values from a table.
+-- Each `{key}` in the template is replaced with `tostring(vars[key])`.
+-- If a key is not found in the table, the placeholder is left unchanged (e.g. `"{key}"`).
+-- Variables explicitly set to `nil` in Lua are not stored in tables, so they also remain as `"{key}"`.
+-- @tparam string str The template string containing `{key}` placeholders.
+-- @tparam[opt={} (empty table)] table vars A table mapping keys to values.
+-- @treturn[1] string The formatted string.
+-- @treturn[2] string The original string unchanged if an error occurs.
+-- @usage
+-- -- Basic usage:
+-- local msg = LuaUtil.Format("Hello {name}!", { name = "Lara" })
+-- -- Result: "Hello Lara!"
+--
+-- -- Multiple variables:
+-- local msg = LuaUtil.Format("{enemy} HP: {hp}/{maxHp}", { enemy = "Skeleton", hp = 45, maxHp = 100 })
+-- -- Result: "Skeleton HP: 45/100"
+--
+-- -- With TEN types (uses tostring):
+-- local pos = TEN.Vec3(100, 200, 300)
+-- local msg = LuaUtil.Format("Player at {pos}", { pos = pos })
+-- -- Result: "Player at {100, 200, 300}" (depends on Vec3's tostring)
+--
+-- -- Missing variable (placeholder preserved):
+-- local msg = LuaUtil.Format("Value: {x}", {})
+-- -- Result: "Value: {x}"
+--
+-- -- Booleans and numbers:
+-- local msg = LuaUtil.Format("Enabled: {flag}, Count: {n}", { flag = true, n = 42 })
+-- -- Result: "Enabled: true, Count: 42"
+--
+-- -- No variables table (all placeholders preserved):
+-- local msg = LuaUtil.Format("Test {a} and {b}")
+-- -- Result: "Test {a} and {b}"
+--
+-- -- False and 0 are valid values (not stripped):
+-- local msg = LuaUtil.Format("Active: {flag}, HP: {hp}", { flag = false, hp = 0 })
+-- -- Result: "Active: false, HP: 0"
+--
+-- -- Practical: debug log
+-- local msg = LuaUtil.Format("Frame {frame}: {obj} moved to {pos}", {
+--     frame = frameCount,
+--     obj = "door_01",
+--     pos = entity:GetPosition()
+-- })
+-- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO) -- Result: "Frame 120: door_01 moved to {100, 200, 300}"
+--
+-- -- Practical: UI display
+-- local msg = LuaUtil.Format("Timer: {seconds}s | Score: {score}", {
+--     seconds = LuaUtil.Round(timer, 1),
+--     score = playerScore
+-- })
+-- -- Result: "Timer: 12.3s | Score: 1500"
+LuaUtil.Format = function(str, vars)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.Format: str is not a string.", logLevelError)
+        return str
+    end
+
+    vars = vars or {}
+    if not IsTable(vars) then
+        LogMessage("Error in LuaUtil.Format: vars is not a table.", logLevelError)
+        return str
+    end
+
+    return str:gsub("{(.-)}", function(key)
+        local val = vars[key]
+        if val == nil then return "{" .. key .. "}" end
+        return tostring(val)
+    end)
+end
+
 --- Mathematical functions.
 -- Utilities for mathematical operations and rounding.
 -- @section math
@@ -3920,7 +3991,7 @@ end
 -- - `preserveLightness` (boolean): If true, preserves starting lightness in HSL/OKLch.<br>*Default: false*.
 --
 -- @treturn[1] Color The interpolated color.
--- @treturn[2] Color colorA if an error occurs.
+-- @treturn[2] Color `colorA` if an error occurs.
 -- @usage
 -- -- Example with RGB interpolation (red to blue):
 -- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
