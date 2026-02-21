@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;}</style>
---- Basic timer that performs countdown. When it expires, you can set a specific *LevelFuncs* function to be activated. Timers are updated automatically at every frame before OnLoop event. To use Timer inside scripts you need to call the module:
+--- Basic frame-based timer that performs countdown. It updates at 30 FPS (one tick per frame), so time is quantized to 1/30s (0.03s) precision. When it expires, you can set a specific *LevelFuncs* function to be activated. Timers are updated automatically at every frame before OnLoop event. To use Timer inside scripts you need to call the module:
 --	local Timer = require("Engine.Timer")
 --
 -- Example usage:
