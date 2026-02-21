@@ -336,7 +336,7 @@ function Timer:SetRemainingTime(remainingTime)
 		local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 		thisTimer.remainingTime = TEN.Time(remainingTime * FPS)
 		thisTimer.skipFirstTick = true
-    end
+	end
 end
 
 --- Compares the remaining time with a value (in seconds).
