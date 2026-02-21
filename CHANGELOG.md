@@ -11,6 +11,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added faster Xorshift32 random number generation method.
 * Added explosion decal effects to Atlantean enemy projectiles.
 * Added new debug page with memory usage statistics and more verbose logging for memory-related crashes.
+* Increased maximum amount of flyby cameras to 1024.
 
 ### Bug fixes
 * Fixed incorrect handling of negative timer values in classic triggers.
