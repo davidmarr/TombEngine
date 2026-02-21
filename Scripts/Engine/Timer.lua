@@ -275,8 +275,7 @@ end
 --    time = Timer.Get("my_timer"):GetRemainingTime()
 -- end
 function Timer:GetRemainingTime()
-	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	return thisTimer.remainingTime
+	return LevelVars.Engine.Timer.timers[self.name].remainingTime
 end
 
 --- Get the remaining time of a timer in seconds.
@@ -288,8 +287,7 @@ end
 --    time = Timer.Get("my_timer"):GetRemainingTimeInSeconds()
 -- end
 function Timer:GetRemainingTimeInSeconds()
-	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	local remainingFrames = thisTimer.remainingTime:GetFrameCount()
+	local remainingFrames = LevelVars.Engine.Timer.timers[self.name].remainingTime:GetFrameCount()
 	return math.floor(remainingFrames / FPS * 100) / 100 -- Rounded to 2 decimals, accuracy is 1 frame (1/30 second)
 end
 
@@ -401,8 +399,7 @@ end
 --    total = Timer.Get("my_timer"):GetTotalTime()
 -- end
 function Timer:GetTotalTime()
-	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	return thisTimer.totalTime
+	return LevelVars.Engine.Timer.timers[self.name].totalTime
 end
 
 --- Get the total time of a timer in seconds. This is the amount of time the timer will start with, as well as when starting a new loop
@@ -415,8 +412,7 @@ end
 --    total = Timer.Get("my_timer"):GetTotalTimeInSeconds()
 -- end
 function Timer:GetTotalTimeInSeconds()
-	local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-	local totalFrames = thisTimer.totalTime:GetFrameCount()
+	local totalFrames = LevelVars.Engine.Timer.timers[self.name].totalTime:GetFrameCount()
 	return math.floor(totalFrames / FPS * 100) / 100 -- Rounded to 2 decimals, accuracy is 1 frame (1/30 second)
 end
 
