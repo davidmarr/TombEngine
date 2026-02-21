@@ -82,6 +82,8 @@ local pi = math.pi
 -- -------------------------------------------------------------------------------
 local pairs = pairs
 local ipairs = ipairs
+local next = next
+local tableRemove = table.remove
 
 -- ----------------------------------------------------------------------------
 -- IMMUTABLE CONSTANTS
@@ -383,7 +385,7 @@ local function DeepCopyRecursive(original, copyId)
     context.visited[original] = copy
     context.depth = context.depth + 1
 
-    for key, value in pairs(original) do
+    for key, value in next, original do
         context.elementCount = context.elementCount + 1
 
         -- Check maximum elements
@@ -427,7 +429,7 @@ local function CompareRecursive(t1, t2, compareId)
     -- Single loop: compare all keys from both tables
     local currentKeysChecked = {}
 
-    for key, value1 in pairs(t1) do
+    for key, value1 in next, t1 do
         context.elementCount = context.elementCount + 1
 
         -- Check maximum elements
@@ -458,7 +460,7 @@ local function CompareRecursive(t1, t2, compareId)
     end
 
     -- Check if t2 has keys that t1 doesn't have
-    for key, _ in pairs(t2) do
+    for key, _ in next, t2 do
         if not currentKeysChecked[key] then
             context.depth = context.depth - 1
             return false
@@ -478,6 +480,18 @@ end
 -- Support function for rounding numbers to a specified number of decimal places
 local function Round(num, mult)
     return floor(num * mult + 0.5) / mult
+end
+
+-- Support function to get the maximum positive integer index in a table.
+-- Used by array-like operations that must work with sparse tables.
+local function getMaxNumericIndex(tbl)
+    local maxIndex = 0
+    for key, _ in next, tbl do
+        if type(key) == "number" and key > 0 and floor(key) == key and key > maxIndex then
+            maxIndex = key
+        end
+    end
+    return maxIndex
 end
 
 -- Support function for local-to-world transform (no type checking, used internally)
@@ -745,7 +759,7 @@ LuaUtil.IsEmpty = function(value)
 
     -- Check for empty table
     if IsTable(value) then
-        for _ in pairs(value) do
+        for _ in next, value do
             return false  -- Has at least one element
         end
         return true  -- No elements
@@ -4078,7 +4092,7 @@ LuaUtil.TableSize = function(tbl)
         return 0
     end
     local count = 0
-    for _ in pairs(tbl) do
+    for _ in next, tbl do
         count = count + 1
     end
     return count
@@ -4106,7 +4120,7 @@ LuaUtil.CompareTables = function (tbl1, tbl2)
     local keysChecked = {}
 
     -- Check all keys from tbl1
-    for key, value in pairs(tbl1) do
+    for key, value in next, tbl1 do
         if tbl2[key] ~= value then
             return false
         end
@@ -4114,7 +4128,7 @@ LuaUtil.CompareTables = function (tbl1, tbl2)
     end
 
     -- Check if tbl2 has any extra keys not in tbl1
-    for key, _ in pairs(tbl2) do
+    for key, _ in next, tbl2 do
         if not keysChecked[key] then
             return false  -- tbl2 has a key that tbl1 doesn't have
         end
@@ -4183,7 +4197,7 @@ LuaUtil.TableHasValue = function (tbl, val)
         LogMessage("Error in LuaUtil.TableHasValue: input is not a table.", logLevelError)
         return false
     end
-    for _, value in pairs(tbl) do
+    for _, value in next, tbl do
         if value == val then
             return true
         end
@@ -4253,7 +4267,7 @@ LuaUtil.CopyTable = function(tbl)
     end
 
     local copy = {}
-    for key, value in pairs(tbl) do
+    for key, value in next, tbl do
         copy[key] = value
     end
     return copy
@@ -4302,25 +4316,27 @@ LuaUtil.MergeTables = function(tbl1, tbl2)
     end
 
     local merged = {}
-    
+
     -- Copy all keys from tbl1
-    for key, value in pairs(tbl1) do
+    for key, value in next, tbl1 do
         merged[key] = value
     end
-    
+
     -- Copy all keys from tbl2 (overriding tbl1 if keys match)
-    for key, value in pairs(tbl2) do
+    for key, value in next, tbl2 do
         merged[key] = value
     end
-    
+
     return merged
 end
 
 --- Remove the first occurrence of a value from an array table.
--- This function searches for the value using pairs() and removes the first match found.
+-- This function searches for the first matching value and removes it.
 -- The array is compacted after removal (subsequent elements are shifted down).
+-- If `value` is `nil`, the function removes the first missing numeric slot (hole)
+-- in the range `1..maxNumericIndex` and compacts the array.
 --
--- **Note:** This function is designed for array tables (numeric indices).
+-- Note: This function is designed **for array tables (numeric indices)**.
 -- @tparam table tbl The array table from which to remove the value.
 -- @tparam any value The value to search for and remove.
 -- @treturn[1] bool True if the value was found and removed, false otherwise.
@@ -4345,15 +4361,64 @@ end
 -- local mixed = { 1, "two", 3, "four" }
 -- local removed = LuaUtil.RemoveValue(mixed, "two") -- Result: true
 -- -- mixed is now: { 1, 3, "four" }
+--
+-- -- Example with sparse array and nil removal:
+-- local tableA = { "b", false, nil, 45 }
+-- local removed = LuaUtil.RemoveValue(tableA, nil) -- Result: true
+-- -- tableA is now: { "b", false, 45 }
 LuaUtil.RemoveValue = function(tbl, value)
     if not IsTable(tbl) then
         LogMessage("Error in LuaUtil.RemoveValue: input is not a table.", logLevelError)
         return false
     end
 
-    for i, v in ipairs(tbl) do
-        if v == value then
-            table.remove(tbl, i)
+    if value ~= nil then
+        local n = #tbl
+
+        -- Fast path: search in 1..#tbl (covers dense arrays entirely)
+        for i = 1, n do
+            if tbl[i] == value then
+                -- Use C-level table.remove when safe (maxIndex == #tbl)
+                local maxIndex = getMaxNumericIndex(tbl)
+                if maxIndex == n then
+                    tableRemove(tbl, i)
+                else
+                    for j = i, maxIndex - 1 do
+                        tbl[j] = tbl[j + 1]
+                    end
+                    tbl[maxIndex] = nil
+                end
+                return true
+            end
+        end
+
+        -- Sparse fallback: search elements beyond #tbl
+        local maxIndex = getMaxNumericIndex(tbl)
+        for i = n + 1, maxIndex do
+            if tbl[i] == value then
+                for j = i, maxIndex - 1 do
+                    tbl[j] = tbl[j + 1]
+                end
+                tbl[maxIndex] = nil
+                return true
+            end
+        end
+
+        return false
+    end
+
+    -- value == nil: remove first nil hole and shift
+    local maxIndex = getMaxNumericIndex(tbl)
+    if maxIndex == 0 then
+        return false
+    end
+
+    for i = 1, maxIndex do
+        if tbl[i] == nil then
+            for j = i, maxIndex - 1 do
+                tbl[j] = tbl[j + 1]
+            end
+            tbl[maxIndex] = nil
             return true
         end
     end
@@ -4363,8 +4428,11 @@ end
 
 --- Remove all occurrences of a value from an array table.
 -- This function searches for all instances of the value and removes them.
--- The array is compacted after each removal (subsequent elements are shifted down).
--- Iterates backwards to handle index shifts correctly.
+-- The array is compacted after removal.
+-- If `value` is `nil`, all missing numeric slots (holes) in the range
+-- `1..maxNumericIndex` are removed by compaction.
+--
+-- Note: This function is designed **for array tables (numeric indices)**.
 -- @tparam table tbl The array table from which to remove all occurrences of the value.
 -- @tparam any value The value to search for and remove.
 -- @treturn[1] int The number of occurrences removed.
@@ -4394,22 +4462,58 @@ end
 -- local inventory = { "potion", "sword", "potion", "shield", "potion" }
 -- local removed = LuaUtil.RemoveAllValues(inventory, "potion")
 -- -- Removed 3 potions, inventory: { "sword", "shield" }
+--
+-- -- Example with sparse array and nil removal:
+-- local tableA = { "b", false, nil, 45 }
+-- local count = LuaUtil.RemoveAllValues(tableA, nil) -- Result: 1
+-- -- tableA is now: { "b", false, 45 }
 LuaUtil.RemoveAllValues = function(tbl, value)
     if not IsTable(tbl) then
         LogMessage("Error in LuaUtil.RemoveAllValues: input is not a table.", logLevelError)
         return 0
     end
 
-    local count = 0
-    -- Iterate backwards to handle index shifts correctly during removal
-    for i = #tbl, 1, -1 do
-        if tbl[i] == value then
-            table.remove(tbl, i)
-            count = count + 1
+    local maxIndex = getMaxNumericIndex(tbl)
+    if maxIndex == 0 then
+        return 0
+    end
+
+    local writeIdx = 1
+    local removedCount = 0
+
+    if value ~= nil then
+        -- Single-pass write-pointer compaction
+        -- Also compacts nil holes as side effect
+        for i = 1, maxIndex do
+            local v = tbl[i]
+            if v == value then
+                removedCount = removedCount + 1
+            elseif v ~= nil then
+                if writeIdx ~= i then
+                    tbl[writeIdx] = v
+                end
+                writeIdx = writeIdx + 1
+            end
+        end
+    else
+        -- value == nil: compact all nil holes
+        for i = 1, maxIndex do
+            if tbl[i] ~= nil then
+                if writeIdx ~= i then
+                    tbl[writeIdx] = tbl[i]
+                end
+                writeIdx = writeIdx + 1
+            else
+                removedCount = removedCount + 1
+            end
         end
     end
 
-    return count
+    for i = writeIdx, maxIndex do
+        tbl[i] = nil
+    end
+
+    return removedCount
 end
 
 --- Remove a key-value pair from an associative table.
