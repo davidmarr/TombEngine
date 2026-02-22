@@ -604,6 +604,10 @@ void LoadCameras()
 	}
 
 	NumberSpotcams = ReadCount();
+	TENLog("Flyby camera count: " + std::to_string(NumberSpotcams), LogLevel::Info);
+
+	if (NumberSpotcams > MAX_SPOTCAMS)
+		throw std::exception(fmt::format("Maximum number of flyby cameras is currently {}. Reduce amount of flyby cameras in your level.", MAX_SPOTCAMS).c_str());
 
 	// TODO: Read properly!
 	if (NumberSpotcams != 0)
@@ -1396,16 +1400,34 @@ void FileClose(FILE* ptr)
 	fclose(ptr);
 }
 
-bool Decompress(byte* dest, byte* src, unsigned long compressedSize, unsigned long uncompressedSize)
+bool Decompress(char* dest, char* compressedRegion, unsigned int totalUncompressedSize)
 {
-	int decompressedSize = LZ4_decompress_safe(
-		reinterpret_cast<const char*>(src),
-		reinterpret_cast<char*>(dest),
-		static_cast<int>(compressedSize),
-		static_cast<int>(uncompressedSize)
-	);
+	char* regionPtr = compressedRegion;
 
-	return decompressedSize == static_cast<int>(uncompressedSize);
+	unsigned int numChunks = *(unsigned int*)regionPtr;
+	regionPtr += sizeof(unsigned int);
+
+	char* destPtr = dest;
+	unsigned int totalDecompressed = 0;
+
+	for (unsigned int i = 0; i < numChunks; i++)
+	{
+		unsigned int chunkUncompressed = *(unsigned int*)regionPtr;
+		regionPtr += sizeof(unsigned int);
+		unsigned int chunkCompressed = *(unsigned int*)regionPtr;
+		regionPtr += sizeof(unsigned int);
+
+		int result = LZ4_decompress_safe(regionPtr, destPtr, chunkCompressed, chunkUncompressed);
+
+		if (result != (int)chunkUncompressed)
+			return false;
+
+		regionPtr += chunkCompressed;
+		destPtr += chunkUncompressed;
+		totalDecompressed += chunkUncompressed;
+	}
+
+	return totalDecompressed == totalUncompressedSize;
 }
 
 #ifdef _WIN64
@@ -1442,11 +1464,17 @@ long GetRemainingSize(FILE* filePtr)
 
 bool ReadCompressedBlock(FILE* filePtr, bool skip)
 {
-	unsigned int compressedSize = 0;
-	unsigned int uncompressedSize = 0;
+	long long compressedSize = 0;
+	long long uncompressedSize = 0;
 
-	ReadFileEx(&uncompressedSize, 1, 4, filePtr);
-	ReadFileEx(&compressedSize, 1, 4, filePtr);
+	ReadFileEx(&uncompressedSize, 1, sizeof(long long), filePtr);
+	ReadFileEx(&compressedSize, 1, sizeof(long long), filePtr);
+
+#ifndef _WIN64
+	// Safeguard against incompatible block size.
+	if (uncompressedSize > INT_MAX || compressedSize > INT_MAX)
+		throw std::exception{ "Level data block exceeds 2 GB and can't be loaded by a 32-bit version of the engine." };
+#endif
 
 	// Safeguard against changed file format.
 	auto remainingSize = GetRemainingSize(filePtr);
@@ -1455,14 +1483,26 @@ bool ReadCompressedBlock(FILE* filePtr, bool skip)
 
 	if (skip) 
 	{
+#ifdef _WIN64
+		_fseeki64(filePtr, compressedSize, SEEK_CUR);
+#else
 		fseek(filePtr, compressedSize, SEEK_CUR);
+#endif
 		return false;
 	}
 
 	auto compressedBuffer = (char*)malloc(compressedSize);
 	ReadFileEx(compressedBuffer, compressedSize, 1, filePtr);
 	DataPtr = (char*)malloc(uncompressedSize);
-	Decompress((byte*)DataPtr, (byte*)compressedBuffer, compressedSize, uncompressedSize);
+
+	if (!Decompress(DataPtr, compressedBuffer, uncompressedSize))
+	{
+		free(compressedBuffer);
+		free(DataPtr);
+		DataPtr = nullptr;
+		throw std::exception{ "LZ4 decompression failed." };
+	}
+
 	free(compressedBuffer);
 
 	CurrentDataPtr = DataPtr;
