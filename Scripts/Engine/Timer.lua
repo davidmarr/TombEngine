@@ -54,7 +54,7 @@ local unpack = table.unpack
 
 --- Create (but do not start) a new timer.
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
--- @tparam float totalTime Duration of the timer, in seconds.<br>No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- @tparam float totalTime Duration of the timer, in seconds with 2 decimal places.<br>No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @tparam[opt=false] bool loop If true, the timer will start again immediately after the time has elapsed.
 -- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See `timerFormat`.
 -- @tparam[opt=nil] LevelFunc func The function defined in the *LevelFuncs* table to call when the time is up
@@ -804,7 +804,7 @@ end
 -- <br><span class="comment">-- no remaining time display</span>
 -- <span class="keyword">local</span> myTimeFormat6 = <span class="keyword">false</span></pre>
 
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Timer.Decrease)
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.Engine.Timer.UpdateAll)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Timer.Decrease)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Timer.UpdateAll)
 
 return Timer
