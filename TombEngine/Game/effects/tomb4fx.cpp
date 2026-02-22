@@ -17,6 +17,7 @@
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
+#include "Game/savegame.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
 #include "Renderer/Renderer.h"
@@ -401,8 +402,18 @@ void ClearFires()
 	Fires.clear();
 }
 
-void UpdateFireSparks()
+void UpdateFireSparks(bool recursive)
 {
+	// Fast-forward fire progress on level start.
+	if (!recursive && (JustLoaded || SaveGame::Statistics.Level.TimeTaken.GetFrameCount() == 0))
+	{
+		for (int i = 0; i < FPS; i++)
+		{
+			UpdateWibble();
+			UpdateFireSparks(true);
+		}
+	}
+
 	UpdateFireProgress();
 
 	for (int i = 0; i < MAX_SPARKS_FIRE; i++)
