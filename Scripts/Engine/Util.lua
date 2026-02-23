@@ -60,7 +60,7 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 
 	if timerFormat.deciseconds then
 		local d = format("%02d", time.c)
-		return (index == 1) and tostring(d) or formattedString .. "." .. d
+		return (index == 1) and d or formattedString .. "." .. d
 	end
 	return formattedString
 end
