@@ -98,7 +98,7 @@ int GetFreeFireSpark()
 
 void TriggerGlobalStaticFlame()
 {
-	FIRE_SPARKS* spark = &FireSparks[0];
+	auto* spark = &FireSparks[0];
 
 	spark->on = true;
 	spark->dR = spark->sR = (GetRandomControl() & 0x3F) - 64;
@@ -110,6 +110,7 @@ void TriggerGlobalStaticFlame()
 	spark->fadeToBlack = 0;
 	spark->life = 8;
 	spark->sLife = 8;
+	spark->rotAng = 2048;
 	spark->position = Vector3i(
 		(GetRandomControl() & 7) - 4,
 		0,
@@ -125,7 +126,7 @@ void TriggerGlobalStaticFlame()
 
 void TriggerGlobalFireSmoke()
 {
-	FIRE_SPARKS* spark = &FireSparks[GetFreeFireSpark()];
+	auto* spark = &FireSparks[GetFreeFireSpark()];
 
 	spark->on = 1;
 	spark->sR = 0;
@@ -170,7 +171,7 @@ void TriggerGlobalFireSmoke()
 
 void TriggerGlobalFireFlame()
 {
-	FIRE_SPARKS* spark = &FireSparks[GetFreeFireSpark()];
+	auto* spark = &FireSparks[GetFreeFireSpark()];
 
 	spark->on = true;
 	spark->sR = 255;
