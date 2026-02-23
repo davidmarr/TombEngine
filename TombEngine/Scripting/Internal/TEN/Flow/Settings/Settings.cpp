@@ -14,10 +14,11 @@ namespace TEN::Scripting
 
 	/// Global engine settings which don't fall into particular category or can't be assigned to a specific object.
 	// Flow.Settings is composed of several sub-tables, and each section of the Flow.Settings documentation corresponds to one of these sub-tables.
-	// 
-	// These configuration groups are used in *Settings.lua*. You can also change their values in a level using @{Flow.GetSettings} and @{Flow.SetSettings} functions, but remember that __Settings.lua is reread every time the level is reloaded__.
-	// 
-	// So if you have customized some parameters in the level, they will be lost when the level is loaded, and all the values in *Settings.lua* will be loaded.
+	// These configuration groups are located in *settings.lua* script file.
+	//
+	// It is possible to change settings on a per-level basis via @{Flow.GetSettings} and @{Flow.SetSettings} functions, but keep in mind that
+	// _settings.lua is reread every time the level is reloaded_. Therefore, you need to implement custom settings management in your level script
+	// if you want to override global settings.
 	// @tenclass Flow.Settings
 	// @pragma nostrip
 
@@ -105,11 +106,11 @@ namespace TEN::Scripting
 		// @tfield[opt=true] bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
-		/// Overhang climbing.
+		// Overhang climbing.
 		// @tfield bool overhangClimb Enables overhang climbing feature. Currently does not work.
 		"overhangClimb", &AnimSettings::OverhangClimb,
 
-		/// Extended slide mechanics.
+		// Extended slide mechanics.
 		// @tfield bool slideExtended If enabled, player will be able to change slide direction with controls. Currently does not work.
 		"slideExtended", &AnimSettings::SlideExtended,
 
@@ -186,7 +187,7 @@ namespace TEN::Scripting
 		"color", &FlareSettings::Color,
 
 		/// Muzzle offset.
-		// @tfield[opt=Vec3(0, 0, 41)] Vec3 offset A relative muzzle offset where light and particle effects originate from.
+		// @tfield[opt=Vec3(0&#44; 0&#44; 41)] Vec3 offset A relative muzzle offset where light and particle effects originate from.
 		"offset", &FlareSettings::Offset,
 
 		/// Light range.
@@ -397,8 +398,7 @@ namespace TEN::Scripting
 		"escapeDistance", &PathfindingSettings::EscapeDistance,
 
 		/// Stalk distance.
-		// @tfield[opt=3] int stalkDistance Distance at which an enemy may follow a target without attempting another attack after having
-		// previously escaped.
+		// @tfield[opt=3] int stalkDistance Distance at which an enemy may start to track a target without attempting to attack.
 		"stalkDistance", &PathfindingSettings::StalkDistance,
 
 		/// Path prediction scale factor.
@@ -587,6 +587,8 @@ namespace TEN::Scripting
 	// @section Weapons
 	// This is a table of weapon settings, with several parameters available for every weapon.
 	// Access particular weapon's settings by using @{Objects.WeaponType} as an index for this table, e.g. `settings.Weapons[Flow.WeaponType.PISTOLS]`.
+	// 
+	// Default values for these settings are different for different weapons. Refer to *settings.lua* file to see them.
 	// @usage
 	// -- Example of changing pistols accuracy and damage
 	// -- In Settings.lua
@@ -606,63 +608,63 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(WeaponSettings, ScriptReserved_WeaponSettings),
 
 		/// Shooting accuracy.
-		// @tfield[opt=0.0] float accuracy Determines accuracy range in angles (smaller angles mean higher accuracy). Applicable only for firearms.
+		// @tfield float accuracy Determines accuracy range in angles (smaller angles mean higher accuracy). Applicable only for firearms.
 		"accuracy", &WeaponSettings::Accuracy,
 
 		/// Targeting distance.
-		// @tfield[opt=8] float targetingDistance Specifies maximum targeting distance in world units (1 block = 1024 world units) for a given weapon.
+		// @tfield float targetingDistance Specifies maximum targeting distance in world units (1 block = 1024 world units) for a given weapon.
 		"targetingDistance", &WeaponSettings::Distance,
 
 		/// Shooting interval.
-		// @tfield[opt=0.0] float interval Specifies an interval (in frames), after which Lara is able to shoot again. Not applicable for backholster weapons.
+		// @tfield float interval Specifies an interval (in frames), after which Lara is able to shoot again. Not applicable for backholster weapons.
 		"interval", &WeaponSettings::Interval,
 
 		/// Damage.
-		// @tfield[opt=0] int damage Amount of hit points taken for every hit.
+		// @tfield int damage Amount of hit points taken for every hit.
 		"damage", &WeaponSettings::Damage,
 
 		/// Alternate damage.
-		// @tfield[opt=0] int alternateDamage For crossbow, specifies damage for explosive ammo.
+		// @tfield int alternateDamage For crossbow, specifies damage for explosive ammo.
 		"alternateDamage", &WeaponSettings::AlternateDamage,
 
 		/// Water level.
-		// @tfield[opt=0] int waterLevel Specifies water depth, at which Lara will put weapons back into holsters, indicating it's not possible to use it in water.
+		// @tfield int waterLevel Specifies water depth, at which Lara will put weapons back into holsters, indicating it's not possible to use it in water.
 		"waterLevel", &WeaponSettings::WaterLevel,
 
 		/// Default ammo pickup count.
-		// @tfield[opt=0] int pickupCount Amount of ammo which is given with every ammo pickup for this weapon.
+		// @tfield int pickupCount Amount of ammo which is given with every ammo pickup for this weapon.
 		"pickupCount", &WeaponSettings::PickupCount,
 
 		/// Gunflash color.
-		// @tfield[opt=Color(192&#44; 128&#44; 0)] Color flashColor specifies the color of the gunflash.
+		// @tfield Color flashColor specifies the color of the gunflash.
 		"flashColor", &WeaponSettings::FlashColor,
 
 		/// Gunflash range.
-		// @tfield[opt=12] int flashRange specifies the range of the gunflash.
+		// @tfield int flashRange specifies the range of the gunflash.
 		"flashRange", &WeaponSettings::FlashRange,
 
 		/// Gunflash duration.
-		// @tfield[opt=0] int flashDuration specifies the duration of a gunflash effect.
+		// @tfield int flashDuration specifies the duration of a gunflash effect.
 		"flashDuration", &WeaponSettings::FlashDuration,
 
 		/// Gun smoke.
-		// @tfield[opt=false] bool smoke if set to true, indicates that weapon emits gun smoke.
+		// @tfield bool smoke if set to true, indicates that weapon emits gun smoke.
 		"smoke", &WeaponSettings::Smoke,
 
 		/// Gun shell.
-		// @tfield[opt=false] bool shell If set to true, indicates that weapon emits gun shell. Applicable only for firearms.
+		// @tfield bool shell If set to true, indicates that weapon emits gun shell. Applicable only for firearms.
 		"shell", &WeaponSettings::Shell,
 
 		/// Display muzzle flash.
-		// @tfield[opt=true] bool muzzleFlash specifies whether muzzle flash should be displayed or not.
+		// @tfield bool muzzleFlash specifies whether muzzle flash should be displayed or not.
 		"muzzleFlash", &WeaponSettings::MuzzleFlash,
 
 		/// Display muzzle glow.
-		// @tfield[opt=true] bool muzzleGlow specifies whether muzzle glow should be displayed or not.
+		// @tfield bool muzzleGlow specifies whether muzzle glow should be displayed or not.
 		"muzzleGlow", &WeaponSettings::MuzzleGlow,
 
 		/// Colorize muzzle flash.
-		// @tfield[opt=false] bool colorizeMuzzleFlash specifies whether muzzle flash should be tinted with the same color as gunflash color.
+		// @tfield bool colorizeMuzzleFlash specifies whether muzzle flash should be tinted with the same color as gunflash color.
 		"colorizeMuzzleFlash", &WeaponSettings::ColorizeMuzzleFlash,
 
 		/// Muzzle offset.
