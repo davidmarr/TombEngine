@@ -691,7 +691,7 @@ end
 -- end
 function Timer:SetTextOption(optionsTable)
 	optionsTable = optionsTable or DEFAULT_TEXT_OPTIONS
-	if type(optionsTable) ~= "table" then
+	if not Type.IsTable(optionsTable) then
 		TEN.Util.PrintLog("Error in Timer:SetTextOption(): options is not a table for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
 		for _, option in pairs(optionsTable) do
