@@ -54,7 +54,7 @@ local unpack = table.unpack
 
 --- Create (but do not start) a new timer.
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
--- @tparam float totalTime Duration of the timer, in seconds with 2 decimal places.<br>No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- @tparam float totalTime Duration of the timer in seconds with 2 decimal places.<br>No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @tparam[opt=false] bool loop If true, the timer will start again immediately after the time has elapsed.
 -- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See `timerFormat`.
 -- @tparam[opt=nil] LevelFunc func The function defined in the *LevelFuncs* table to call when the time is up
@@ -322,7 +322,7 @@ function Timer:GetRemainingTimeFormatted(timerFormat)
 end
 
 --- Set the remaining time of a timer.
--- @tparam float remainingTime The new time remaining for the timer in seconds.<br>
+-- @tparam float remainingTime The new time remaining for the timer in seconds with 2 decimal places<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- -- Example:
@@ -445,7 +445,7 @@ function Timer:GetTotalTimeFormatted(timerFormat)
 end
 
 --- Set the total time for a timer.
--- @tparam float totalTime Timer's new total time in seconds.<br>
+-- @tparam float totalTime Timer's new total time in seconds with 2 decimal places.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- -- Example:
