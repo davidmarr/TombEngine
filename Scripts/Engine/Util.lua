@@ -59,8 +59,8 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 	local formattedString = concat(result, ":")
 
 	if timerFormat.deciseconds then
-		local d = format("%02d", time.c)
-		return (index == 1) and d or formattedString .. "." .. d
+		local c = format("%02d", time.c)
+		return (index == 1) and c or formattedString .. "." .. c
 	end
 	return formattedString
 end
