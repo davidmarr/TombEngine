@@ -924,6 +924,23 @@ end
 -- local msg = LuaUtil.Format("Active: {flag}, HP: {hp}", { flag = false, hp = 0 })
 -- -- Result: "Active: false, HP: 0"
 --
+-- -- Nil values (placeholders preserved):
+-- local msg = LuaUtil.Format("Value: {x}", { x = nil })
+-- -- Result: "Value: {x}" (because nil values are not stored in tables)
+--
+-- -- Monitoring nil variables:
+-- -- When working with external variables (e.g. LevelVars) that may become nil,
+-- -- wrap them with tostring() to display "nil" instead of preserving the placeholder.
+-- -- Without tostring: { target = LevelVars.target } → "Target: {target}" (if target is nil)
+-- -- With tostring:    { target = tostring(LevelVars.target) } → "Target: nil"
+-- LevelVars.target = nil
+-- local msg = LuaUtil.Format("Target: {target}", { target = tostring(LevelVars.target) })
+-- -- Result: "Target: nil"
+--
+-- LevelVars.target = 5
+-- local msg = LuaUtil.Format("Target: {target}", { target = tostring(LevelVars.target) })
+-- -- Result: "Target: 5"
+--
 -- -- Practical: debug log
 -- local msg = LuaUtil.Format("Frame {frame}: {obj} moved to {pos}", {
 --     frame = frameCount,
@@ -938,6 +955,10 @@ end
 --     score = playerScore
 -- })
 -- -- Result: "Timer: 12.3s | Score: 1500"
+--
+-- -- Practical: error messages
+-- local msg = LuaUtil.Format("Error: {errorMsg}", { errorMsg = "Failed to load resource" })
+-- -- Result: "Error: Failed to load resource"
 LuaUtil.Format = function(str, vars)
     if not IsString(str) then
         LogMessage("Error in LuaUtil.Format: str is not a string.", logLevelError)
