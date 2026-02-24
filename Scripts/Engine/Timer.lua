@@ -58,14 +58,11 @@ local function Round2Decimal(second)
 end
 
 local CheckOperator = function(operator)
-	if not Type.IsNumber(operator) or operator < 0 or operator > 5 then
+	if not Type.IsNumber(operator) then
 		return nil
 	end
-	local op = COMPARISON_OPS[operator + 1]
-	if not Type.IsFunction(op) then
-		return nil
-	end
-	return COMPARISON_OPS[operator + 1]
+    local op = COMPARISON_OPS[operator + 1]
+    return Type.IsFunction(op) and op or nil
 end
 
 --- Create (but do not start) a new timer.
