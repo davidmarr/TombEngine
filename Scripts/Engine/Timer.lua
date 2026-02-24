@@ -18,7 +18,7 @@
 --		Timer.Create("my_timer",
 --			5.03,
 --			false,
---			{minutes = false, seconds = true, deciseconds = true},
+--			{minutes = false, seconds = true, centiseconds = true},
 --			LevelFuncs.FinishTimer,
 --			"Well done!")
 --		Timer.Get("my_timer"):Start()
@@ -37,7 +37,7 @@ LevelVars.Engine.Timer = {timers = {}}
 
 local ZERO = TEN.Time()
 local DEFAULT_TEXT_OPTIONS = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
-local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, deciseconds = true}
+local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, centiseconds = true}
 local FPS = 30
 local FRAME_TIME = 1 / FPS
 local COMPARISON_OPS =
@@ -82,7 +82,7 @@ end
 -- Timer.Create("my_timer", 6.13)
 --
 -- -- Example 2 Timer that executes a function when it expires:
--- local TimerFormat = {minutes = true, seconds = true, deciseconds = true}
+-- local TimerFormat = {minutes = true, seconds = true, centiseconds = true}
 -- LevelFuncs.FinishTimer = function()
 --    TEN.Util.PrintLog("Timer expired", TEN.Util.LogLevel.INFO)
 -- end
@@ -215,8 +215,8 @@ end
 --- Begin or unpause a timer. If showing the remaining time on-screen, its default color will be set to white.
 -- @tparam[opt=false] bool reset If true, the timer will restart from the beginning (total time)
 -- @usage
--- local TimeFormat = {minutes = true, seconds = true, deciseconds = true}
--- Timer.Create("my_timer", 6.1, false, TimerFormat)
+-- local timeFormat = {minutes = true, seconds = true, centiseconds = true}
+-- Timer.Create("my_timer", 6.1, false, timeFormat)
 --
 -- -- Example 1: Start the timer
 -- -- This function starts the timer named my_timer
@@ -243,8 +243,8 @@ end
 --- Stop the timer.
 -- @usage
 -- -- example
--- local TimeFormat = {minutes = true, seconds = true, deciseconds = true}
--- Timer.Create("my_timer", 6.1, false, TimerFormat)
+-- local timeFormat = {minutes = true, seconds = true, centiseconds = true}
+-- Timer.Create("my_timer", 6.1, false, timeFormat)
 --	
 -- -- This function stops the timer named my_timer
 -- LevelFuncs.StopTimer = function()
@@ -259,8 +259,8 @@ end
 --- Pause or unpause the timer. If showing the remaining time on-screen, its default color will be set to yellow (paused) or white (unpaused).
 -- @tparam bool p If true, the timer will be paused; if false, it would be unpaused
 -- @usage
--- local TimeFormat = {minutes = true, seconds = true, deciseconds = true}
--- Timer.Create("my_timer", 6.1, false, TimerFormat)
+-- local timeFormat = {minutes = true, seconds = true, centiseconds = true}
+-- Timer.Create("my_timer", 6.1, false, timeFormat)
 --
 -- -- Example 1 paused timer:
 -- if Timer.IfExists("my_timer") then
@@ -283,8 +283,8 @@ end
 -- @treturn Time The remaining time in game frames of timer.
 -- @usage
 -- -- Example:
--- local TimeFormat = {minutes = true, seconds = true, deciseconds = true}
--- Timer.Create("my_timer", 6.1, false, TimerFormat)
+-- local timeFormat = {minutes = true, seconds = true, centiseconds = true}
+-- Timer.Create("my_timer", 6.1, false, timeFormat)
 --
 -- local timer = TEN.Time()
 -- if Timer.IfExists("my_timer") then
@@ -310,11 +310,11 @@ function Timer:GetRemainingTimeInSeconds()
 end
 
 --- Get the formatted remaining time of a timer.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See `timerFormat`.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timerFormat Sets the remaining time display. See `timerFormat`.<br>
 -- @treturn string The formatted remaining time.
 -- @usage
--- -- Example 1: Display remaining time in secs.decisecs
--- local TimerFormat = {seconds = true, deciseconds = true}
+-- -- Example 1: Display remaining time in secs.centisecs
+-- local TimerFormat = {seconds = true, centiseconds = true}
 -- if Timer.IfExists("my_timer") then
 --    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
 --    local timer = Timer.Get("my_timer"):GetRemainingTimeFormatted(TimerFormat)
@@ -322,7 +322,7 @@ end
 --    TEN.Strings.ShowString(str, 1)
 -- end
 --
--- -- Example 2: Display remaining with default format (mins:secs.decisecs)
+-- -- Example 2: Display remaining with default format (mins:secs.centisecs)
 -- if Timer.IfExists("my_timer") then
 --    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
 --    local timer = Timer.Get("my_timer"):GetRemainingTimeFormatted()
@@ -438,18 +438,18 @@ function Timer:GetTotalTimeInSeconds()
 end
 
 --- Get the formatted total time of a timer. This is the amount of time the timer will start with, as well as when starting a new loop
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat Sets the remaining time display. See `timerFormat`.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timerFormat Sets the remaining time display. See `timerFormat`.<br>
 -- @treturn string The formatted total time.
 -- @usage
--- -- Example 1: Display total time in secs.decisecs
--- local TimerFormat = {minutes = false, seconds = true, deciseconds = true}
+-- -- Example 1: Display total time in secs.centisecs
+-- local TimerFormat = {minutes = false, seconds = true, centiseconds = true}
 -- if Timer.IfExists("my_timer") then
 --    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
 --    local totalTime = Timer.Get("my_timer"):GetTotalTimeFormatted(TimerFormat)
 --    local str = TEN.Strings.DisplayString("Total time is: " .. totalTime, pos)
 -- end
 --
--- -- Example 2: Display total time with default format (mins:secs.decisecs)
+-- -- Example 2: Display total time with default format (mins:secs.centisecs)
 -- if Timer.IfExists("my_timer") then
 --    local pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 10))
 --    local totalTime = Timer.Get("my_timer"):GetTotalTimeFormatted()
@@ -811,16 +811,16 @@ end
 ---
 -- Details about the timer format used in various timer methods.<br>
 -- @table timerFormat
--- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and deciseconds (deciseconds are 1/10th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.
+-- You have the option of displaying the remaining time or the total time of the timer.<br>You can display hours, minutes, seconds and centiseconds (centiseconds are 1/100th of a second).<br>To set which unit to display, you can use a *table* or a *boolean value*.
 -- <h3>Timer format examples:</h3>
--- <pre><span class="comment">-- hours:mins:secs.decisecs</span>
--- <span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">true</span>}
+-- <pre><span class="comment">-- hours:mins:secs.centisecond</span>
+-- <span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, centiseconds = <span class="keyword">true</span>}
 -- <br><span class="comment">-- mins:secs</span>
--- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">false</span>}
+-- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, centiseconds = <span class="keyword">false</span>}
 -- <br><span class="comment">-- also mins:secs</span>
 -- <span class="keyword">local</span> myTimeFormat2 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>}
--- <br><span class="comment">-- secs.decisecs</span>
--- <span class="keyword">local</span> myTimeFormat3 = {seconds = <span class="keyword">true</span>, deciseconds = <span class="keyword">true</span>}
+-- <br><span class="comment">-- secs.centisecs</span>
+-- <span class="keyword">local</span> myTimeFormat3 = {seconds = <span class="keyword">true</span>, centiseconds = <span class="keyword">true</span>}
 -- <br><span class="comment">-- secs; to display only seconds you can pass a table or true</span>
 -- <span class="keyword">local</span> myTimeFormat4 = {seconds = <span class="keyword">true</span>}
 -- <span class="keyword">local</span> myTimeFormat5 = <span class="keyword">true</span>

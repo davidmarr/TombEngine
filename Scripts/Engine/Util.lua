@@ -4,8 +4,7 @@
 
 local Util = {}
 local Type = require("Engine.Type")
-local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true }
-local floor = math.floor
+local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
 local concat = table.concat
 local format = string.format
 
@@ -53,12 +52,20 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 		index = index + 1
 	end
 	if timerFormat.seconds then
-		result[index] = format("%02d", timerFormat.minutes and time.s or (time.s + (60 * time.m) + (3600 * time.h)))
+		result[index] = format("%02d",
+			timerFormat.minutes
+			and time.s
+			or (time.s + (60 * time.m) + (timerFormat.hours and 0 or (3600 * time.h)))
+		)
 		index = index + 1
 	end
 	local formattedString = concat(result, ":")
 
-	if timerFormat.deciseconds then
+	-- Check if timerFormat.deciseconds exists for backward compatibility, but prefer timerFormat.centiseconds if it exists
+	-- The visual difference with the previous version is 2 decimal places instead of 1.
+	-- Before: 5.0
+	-- After: 5.00
+	if timerFormat.centiseconds or timerFormat.deciseconds then
 		local c = format("%02d", time.c)
 		return (index == 1) and c or formattedString .. "." .. c
 	end
