@@ -52,9 +52,13 @@ local COMPARISON_OPS =
 local pairs = pairs
 local unpack = table.unpack
 
+local function Round2Decimal(second)
+	return math.floor(second * 100 + 0.5) / 100
+end
+
 --- Create (but do not start) a new timer.
 -- @tparam string name A label to give this timer; used to retrieve the timer later.<br>__Do not give your timers a name beginning with \_\_TEN, as this is reserved for timers used by other internal libaries__.
--- @tparam float totalTime Duration of the timer in seconds with 2 decimal places.<br>No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- @tparam float totalTime Duration of the timer in seconds with 2 decimal places.<br>No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @tparam[opt=false] bool loop If true, the timer will start again immediately after the time has elapsed.
 -- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See `timerFormat`.
 -- @tparam[opt=nil] LevelFunc func The function defined in the *LevelFuncs* table to call when the time is up
@@ -93,7 +97,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	local thisTimer = LevelVars.Engine.Timer.timers[name]
 	thisTimer.name = name
 	thisTimer.isInternal = string.match(name, "__TEN") and true or false
-	thisTimer.totalTime = TEN.Time(totalTime * FPS)
+	thisTimer.totalTime = TEN.Time(Round2Decimal(totalTime) * FPS)
 	thisTimer.remainingTime = thisTimer.totalTime
 
 	loop = loop or false
@@ -323,7 +327,7 @@ end
 
 --- Set the remaining time of a timer.
 -- @tparam float remainingTime The new time remaining for the timer in seconds with 2 decimal places<br>
--- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- -- Example:
 -- if Timer.IfExists("my_timer") then
@@ -334,7 +338,7 @@ function Timer:SetRemainingTime(remainingTime)
 		TEN.Util.PrintLog("Error in Timer:SetRemainingTime(): wrong value  (" .. tostring(remainingTime) .. ")  for remainingTime in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
 		local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-		thisTimer.remainingTime = TEN.Time(remainingTime * FPS)
+		thisTimer.remainingTime = TEN.Time(Round2Decimal(remainingTime) * FPS)
 		thisTimer.skipFirstTick = true
 	end
 end
@@ -446,7 +450,7 @@ end
 
 --- Set the total time for a timer.
 -- @tparam float totalTime Timer's new total time in seconds with 2 decimal places.<br>
--- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.
+-- No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- -- Example:
 -- if Timer.IfExists("my_timer") then
@@ -456,7 +460,7 @@ function Timer:SetTotalTime(totalTime)
 	if not Type.IsNumber(totalTime) or totalTime < 0 then
 		TEN.Util.PrintLog("Error in Timer:SetTotalTime(): wrong value (" .. tostring(totalTime) .. ") for totalTime in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
-		LevelVars.Engine.Timer.timers[self.name].totalTime = TEN.Time(totalTime * FPS)
+		LevelVars.Engine.Timer.timers[self.name].totalTime = TEN.Time(Round2Decimal(totalTime) * FPS)
 	end
 end
 
