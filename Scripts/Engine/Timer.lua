@@ -394,21 +394,18 @@ end
 --    end
 -- end
 function Timer:IfRemainingTimeIs(operator, seconds)
-	if not Type.IsNumber(operator) or operator < 0 or operator > 5 then
-		TEN.Util.PrintLog("Error in Timer:IfRemainingTimeIs(): invalid operator for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
-		return false
-	elseif not Type.IsNumber(seconds) or seconds < 0 then
-		TEN.Util.PrintLog("Error in Timer:IfRemainingTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
-		return false
-	end
 	local op = CheckOperator(operator)
 	if not op then
 		TEN.Util.PrintLog("Error in Timer:IfRemainingTimeIs(): invalid operator for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 		return false
 	end
+	if not Type.IsNumber(seconds) or seconds < 0 then
+		TEN.Util.PrintLog("Error in Timer:IfRemainingTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
+		return false
+	end
 	local timer = LevelVars.Engine.Timer.timers[self.name]
 	local remainingTime = timer.remainingTime
-	local time = TEN.Time(seconds * FPS)
+	local time = TEN.Time(Round2Decimal(seconds) * FPS)
 	return op(remainingTime, time)
 end
 
@@ -504,20 +501,17 @@ end
 --    Timer.Get("my_timer"):SetTotalTime(currentToltalTime + 1.0)
 -- end
 function Timer:IfTotalTimeIs(operator, seconds)
-	if not Type.IsNumber(operator) or operator < 0 or operator > 5 then
-		TEN.Util.PrintLog("Error in Timer:IfTotalTimeIs(): invalid operator for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
-		return false
-	elseif not Type.IsNumber(seconds) or seconds < 0 then
-		TEN.Util.PrintLog("Error in Timer:IfTotalTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
-		return false
-	end
 	local op = CheckOperator(operator)
 	if not op then
 		TEN.Util.PrintLog("Error in Timer:IfTotalTimeIs(): invalid operator for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 		return false
 	end
+	if not Type.IsNumber(seconds) or seconds < 0 then
+		TEN.Util.PrintLog("Error in Timer:IfTotalTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
+		return false
+	end
 	local totalTime = LevelVars.Engine.Timer.timers[self.name].totalTime
-	local time = TEN.Time(seconds * FPS)
+	local time = TEN.Time(Round2Decimal(seconds) * FPS)
 	return op(totalTime, time)
 end
 
