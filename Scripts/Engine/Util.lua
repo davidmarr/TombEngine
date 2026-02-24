@@ -53,11 +53,14 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 		index = index + 1
 	end
 	if timerFormat.seconds then
-		result[index] = format("%02d",
-			timerFormat.minutes
-			and time.s
-			or (time.s + (60 * time.m) + (timerFormat.hours and 0 or (3600 * time.h)))
-		)
+		local aggregatedSeconds = time.s
+		if not timerFormat.minutes then
+			aggregatedSeconds = aggregatedSeconds + (60 * time.m)
+			if not timerFormat.hours then
+				aggregatedSeconds = aggregatedSeconds + (3600 * time.h)
+			end
+		end
+		result[index] = format("%02d", aggregatedSeconds)
 		index = index + 1
 	end
 	local formattedString = concat(result, ":")
