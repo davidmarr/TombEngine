@@ -28,7 +28,7 @@
 --		if not EventSequence.IfExists("my_seq") then
 --			EventSequence.Create("my_seq",
 --				false, -- does not loop
---				{seconds = true, deciseconds = true}, -- timer format, see Timer for details
+--				{seconds = true, centiseconds = true}, -- timer format, see Timer for details
 --				6, -- seconds until call the function specified in next arg 
 --				LevelFuncs.HealLara, -- first function to call. If we don't need to pass any arguments, we can just pass the function
 --				2.1, -- seconds until the next function, after the previous one has been called
@@ -87,7 +87,7 @@ end
 -- @treturn[2] nil If there was an error creating the sequence.
 -- @usage
 -- local EventSequence = require("Engine.EventSequence")
--- local TimerFormat = {seconds = true, deciseconds = true}
+-- local TimerFormat = {seconds = true, centiseconds = true}
 --
 -- -- Example 1 function without arguments:
 -- -- This creates a sequence that calls LevelFuncs.Func after 2 seconds
