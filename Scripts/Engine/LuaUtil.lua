@@ -971,11 +971,218 @@ LuaUtil.Format = function(str, vars)
         return str
     end
 
-    return str:gsub("{(.-)}", function(key)
+    return (str:gsub("{(.-)}", function(key)
         local val = vars[key]
         if val == nil then return "{" .. key .. "}" end
         return tostring(val)
-    end)
+    end))
+end
+
+--- Join array elements into a single string with a separator.
+-- Iterates over sequential integer keys (1 to the highest numeric index).
+-- Each element is converted to a string via `tostring()`.   Elements with a `nil` value are skipped (not included in the result).
+-- Non-array keys (string keys) are ignored — only integer indices are processed.
+-- The separator is treated as literal text (special characters like `.`, `%`, `{` are safe).
+-- @tparam table tbl The array-like table to join.
+-- @tparam[opt=", " (comma space)] string separator The separator inserted between elements.
+-- @treturn[1] string The joined string.
+-- @treturn[2] string "" An empty string if the table is empty or an error occurs.
+-- @usage
+-- -- Basic usage:
+-- local result = LuaUtil.Join({"apple", "banana", "cherry"})
+-- -- Result: "apple, banana, cherry"
+--
+-- -- Custom separator:
+-- local result = LuaUtil.Join({"apple", "banana", "cherry"}, " | ")
+-- -- Result: "apple | banana | cherry"
+--
+-- -- Empty separator (concatenation):
+-- local result = LuaUtil.Join({"a", "b", "c"}, "")
+-- -- Result: "abc"
+--
+-- -- Mixed types (auto tostring):
+-- local result = LuaUtil.Join({42, true, "hello", TEN.Vec3(1, 2, 3)})
+-- -- Result: "42, true, hello, {1, 2, 3}" (Vec3 depends on its tostring)
+--
+-- -- Nil values are skipped:
+-- local result = LuaUtil.Join({"a", nil, "c"})
+-- -- Result: "a, c"
+--
+-- -- Sparse array:
+-- local t = {}
+-- t[1] = "first"
+-- t[5] = "fifth"
+-- local result = LuaUtil.Join(t)
+-- -- Result: "first, fifth" (indices 2-4 are nil, skipped)
+--
+-- -- Empty table:
+-- local result = LuaUtil.Join({})
+-- -- Result: ""
+--
+-- -- Single element (no separator):
+-- local result = LuaUtil.Join({"only"})
+-- -- Result: "only"
+--
+-- -- Non-array keys are ignored:
+-- local result = LuaUtil.Join({[1] = "a", [2] = "b", name = "Lara"})
+-- -- Result: "a, b" (string key "name" is ignored)
+--
+-- -- Special characters in separator (safe, no escaping needed):
+-- local result = LuaUtil.Join({"a", "b", "c"}, "%%")
+-- -- Result: "a%%b%%c"
+--
+-- -- Inverse of SplitString:
+-- local parts = LuaUtil.SplitString("apple,banana,cherry", ",")
+-- local rejoined = LuaUtil.Join(parts, ",")
+-- -- Result: "apple,banana,cherry"
+--
+-- -- Practical: build a path
+-- local path = LuaUtil.Join({"rooms", "level1", "secret_area"}, "/")
+-- -- Result: "rooms/level1/secret_area"
+--
+-- -- Practical: debug log of collected items
+-- local items = {"Shotgun", "Medipack", "Key of Anubis"}
+-- local msg = LuaUtil.Format("Inventory: {items}", { items = LuaUtil.Join(items) })
+-- -- Result: "Inventory: Shotgun, Medipack, Key of Anubis"
+LuaUtil.Join = function(tbl, separator)
+    if not IsTable(tbl) then
+        LogMessage("Error in LuaUtil.Join: tbl is not a table.", logLevelError)
+        return ""
+    end
+
+    separator = separator or ", "
+    if not IsString(separator) then
+        LogMessage("Error in LuaUtil.Join: separator is not a string.", logLevelError)
+        return ""
+    end
+
+    local maxIndex = getMaxNumericIndex(tbl)
+    if maxIndex == 0 then
+        return ""
+    end
+
+    local parts = {}
+    local count = 0
+    for i = 1, maxIndex do
+        local val = tbl[i]
+        if val ~= nil then
+            count = count + 1
+            parts[count] = tostring(val)
+        end
+    end
+
+    return table.concat(parts, separator)
+end
+
+--- Remove leading and trailing whitespace (or custom characters) from a string.
+-- Uses an efficient `find` + `sub` approach: locates the first and last non-stripped
+-- characters by index, then extracts the substring in a single allocation.
+-- When custom characters are provided, they are plain characters — no Lua pattern knowledge is needed.
+-- Special characters like `.`, `-`, `%`, `^`, `]` are handled automatically.
+-- Multiple characters can be combined: `"._-"` removes dots, underscores and dashes.
+-- @tparam string str The string to trim.
+-- @tparam[opt] string chars One or more literal characters to strip instead of whitespace.
+-- If omitted, strips whitespace (spaces, tabs, newlines, carriage returns, form feeds, vertical tabs).
+-- @treturn[1] string The trimmed string.
+-- @treturn[2] string "" An empty string if the input is all stripped characters or an error occurs.
+-- @usage
+-- -- Basic whitespace trim:
+-- local result = LuaUtil.Trim("  hello  ")
+-- -- Result: "hello"
+--
+-- -- Tabs and newlines:
+-- local result = LuaUtil.Trim("\t  hello world \n")
+-- -- Result: "hello world"
+--
+-- -- Internal spaces preserved:
+-- local result = LuaUtil.Trim("  hello   world  ")
+-- -- Result: "hello   world"
+--
+-- -- Only whitespace (returns empty string):
+-- local result = LuaUtil.Trim("   ")
+-- -- Result: ""
+--
+-- -- Empty string:
+-- local result = LuaUtil.Trim("")
+-- -- Result: ""
+--
+-- -- No whitespace (unchanged):
+-- local result = LuaUtil.Trim("hello")
+-- -- Result: "hello"
+--
+-- -- Custom characters (remove dots):
+-- local result = LuaUtil.Trim("...path.to.file...", ".")
+-- -- Result: "path.to.file"
+--
+-- -- Custom characters (remove dashes):
+-- local result = LuaUtil.Trim("---hello---", "-")
+-- -- Result: "hello"
+--
+-- -- Multiple custom characters (remove underscores and dots):
+-- local result = LuaUtil.Trim("__.hello.__", "_.")
+-- -- Result: "hello"
+--
+-- -- Custom characters (remove hash marks):
+-- local result = LuaUtil.Trim("###title###", "#")
+-- -- Result: "title"
+--
+-- -- Empty chars string (returns str unchanged):
+-- local result = LuaUtil.Trim("  hello  ", "")
+-- -- Result: "  hello  "
+--
+-- -- Practical: clean user input
+-- local input = "  Lara Croft  "
+-- local name = LuaUtil.Trim(input)
+-- -- Result: "Lara Croft"
+--
+-- -- Practical: clean parsed data
+-- local parts = LuaUtil.SplitString("apple , banana , cherry", ",")
+-- for i, v in ipairs(parts) do
+--     parts[i] = LuaUtil.Trim(v)
+-- end
+-- -- Result: {"apple", "banana", "cherry"}
+LuaUtil.Trim = function(str, chars)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.Trim: str is not a string.", logLevelError)
+        return ""
+    end
+
+    if #str == 0 then
+        return ""
+    end
+
+    -- Default: whitespace trimming (optimized path, no escaping needed)
+    if chars == nil then
+        local i = str:find("%S")
+        if not i then return "" end
+        local j = str:find("%S%s*$", i)
+        return str:sub(i, j)
+    end
+
+    if not IsString(chars) then
+        LogMessage("Error in LuaUtil.Trim: chars is not a string.", logLevelError)
+        return ""
+    end
+
+    if #chars == 0 then
+        return str  -- Nothing to trim
+    end
+
+    -- Escape special Lua pattern characters for safe use inside []
+    -- Only these are special inside []: ] ^ - %
+    local escaped = chars:gsub("([%]%^%-%%])", "%%%1")
+
+    -- Build patterns using [] for both positions (safe for any character)
+    local frontPattern = "[^" .. escaped .. "]"
+    local backPattern  = "[^" .. escaped .. "][" .. escaped .. "]*$"
+
+    local i = str:find(frontPattern)
+    if not i then
+        return ""  -- Entire string is stripped characters
+    end
+
+    local j = str:find(backPattern, i)
+    return str:sub(i, j)
 end
 
 --- Mathematical functions.
