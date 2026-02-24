@@ -4,6 +4,7 @@
 
 local Util = {}
 local Type = require("Engine.Type")
+-- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
 local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
 local concat = table.concat
 local format = string.format
