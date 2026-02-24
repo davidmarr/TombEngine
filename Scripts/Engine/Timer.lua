@@ -88,6 +88,10 @@ end
 -- -- Example 3 Timer with totalTime rounded to the nearest frame
 -- local time = 7.01 -- this value will be rounded to 7.00 seconds, which is 210 frames at 30 FPS
 -- Timer.Create("my_timer", time)
+--
+-- -- Example 4 Round totalTime to 2 decimal places and convert to frames
+-- local time = 5.6789 -- this value will be rounded to 5.68 seconds and converted to 170 frames at 30 FPS that is 5.66
+-- Timer.Create("my_timer", time)
 Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	if not Type.IsString(name) then
 		TEN.Util.PrintLog("Error in Timer.Create(): invalid name, '" .. tostring(name) .."' timer was not created", TEN.Util.LogLevel.ERROR)
