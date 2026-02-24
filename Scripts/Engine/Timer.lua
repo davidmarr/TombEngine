@@ -49,11 +49,23 @@ local COMPARISON_OPS =
     function(a, b) return a > b end,    -- 4: greater than
     function(a, b) return a >= b end,   -- 5: greater than or equal
 }
+local floor = math.floor
 local pairs = pairs
 local unpack = table.unpack
 
 local function Round2Decimal(second)
-	return math.floor(second * 100 + 0.5) / 100
+	return floor(second * 100 + 0.5) / 100
+end
+
+local CheckOperator = function(operator)
+	if not Type.IsNumber(operator) or operator < 0 or operator > 5 then
+		return nil
+	end
+	local op = COMPARISON_OPS[operator + 1]
+	if not Type.IsFunction(op) then
+		return nil
+	end
+	return COMPARISON_OPS[operator + 1]
 end
 
 --- Create (but do not start) a new timer.
@@ -292,7 +304,9 @@ end
 -- end
 function Timer:GetRemainingTimeInSeconds()
 	local remainingFrames = LevelVars.Engine.Timer.timers[self.name].remainingTime:GetFrameCount()
-	return math.floor(remainingFrames / FPS * 100) / 100 -- Rounded to 2 decimals, accuracy is 1 frame (1/30 second)
+	-- Truncate to 2 decimals, accuracy is 1 frame (1/30 second)
+	-- not necessary to round, as the remaining time is already quantized to 1 frame, but this way we avoid displaying values like 0.33333333334 instead of 0.3
+	return math.floor(remainingFrames / FPS * 100) / 100
 end
 
 --- Get the formatted remaining time of a timer.
@@ -387,11 +401,15 @@ function Timer:IfRemainingTimeIs(operator, seconds)
 		TEN.Util.PrintLog("Error in Timer:IfRemainingTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 		return false
 	end
+	local op = CheckOperator(operator)
+	if not op then
+		TEN.Util.PrintLog("Error in Timer:IfRemainingTimeIs(): invalid operator for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
+		return false
+	end
 	local timer = LevelVars.Engine.Timer.timers[self.name]
 	local remainingTime = timer.remainingTime
 	local time = TEN.Time(seconds * FPS)
-	local test = COMPARISON_OPS[operator + 1](remainingTime, time)
-	return test
+	return op(remainingTime, time)
 end
 
 --- Get the total time of a timer in game frames. This is the amount of time the timer will start with, as well as when starting a new loop.
@@ -417,7 +435,9 @@ end
 -- end
 function Timer:GetTotalTimeInSeconds()
 	local totalFrames = LevelVars.Engine.Timer.timers[self.name].totalTime:GetFrameCount()
-	return math.floor(totalFrames / FPS * 100) / 100 -- Rounded to 2 decimals, accuracy is 1 frame (1/30 second)
+	-- Truncate to 2 decimals, accuracy is 1 frame (1/30 second)
+	-- not necessary to round, as the remaining time is already quantized to 1 frame, but this way we avoid displaying values like 0.33333333334 instead of 0.3
+	return math.floor(totalFrames / FPS * 100) / 100
 end
 
 --- Get the formatted total time of a timer. This is the amount of time the timer will start with, as well as when starting a new loop
@@ -491,9 +511,14 @@ function Timer:IfTotalTimeIs(operator, seconds)
 		TEN.Util.PrintLog("Error in Timer:IfTotalTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 		return false
 	end
+	local op = CheckOperator(operator)
+	if not op then
+		TEN.Util.PrintLog("Error in Timer:IfTotalTimeIs(): invalid operator for '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
+		return false
+	end
 	local totalTime = LevelVars.Engine.Timer.timers[self.name].totalTime
 	local time = TEN.Time(seconds * FPS)
-	return COMPARISON_OPS[operator + 1](totalTime, time)
+	return op(totalTime, time)
 end
 
 --- Set whether or not the timer loops.
