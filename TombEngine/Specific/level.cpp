@@ -603,6 +603,10 @@ void LoadCameras()
 	}
 
 	NumberSpotcams = ReadCount();
+	TENLog("Flyby camera count: " + std::to_string(NumberSpotcams), LogLevel::Info);
+
+	if (NumberSpotcams > MAX_SPOTCAMS)
+		throw std::exception(fmt::format("Maximum number of flyby cameras is currently {}. Reduce amount of flyby cameras in your level.", MAX_SPOTCAMS).c_str());
 
 	// TODO: Read properly!
 	if (NumberSpotcams != 0)
