@@ -131,16 +131,16 @@ namespace TEN::Platform
 			stack.AddrFrame.Mode =
 			stack.AddrStack.Mode = AddrModeFlat;
 
-#ifdef _M_IX86
-			DWORD machineType = IMAGE_FILE_MACHINE_I386;
-			stack.AddrPC.Offset = ctx.Eip;
-			stack.AddrFrame.Offset = ctx.Ebp;
-			stack.AddrStack.Offset = ctx.Esp;
-#elif _M_X64
+#if PLATFORM_64BIT
 			DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
 			stack.AddrPC.Offset = ctx.Rip;
 			stack.AddrFrame.Offset = ctx.Rsp;
 			stack.AddrStack.Offset = ctx.Rsp;
+#else
+			DWORD machineType = IMAGE_FILE_MACHINE_I386;
+			stack.AddrPC.Offset = ctx.Eip;
+			stack.AddrFrame.Offset = ctx.Ebp;
+			stack.AddrStack.Offset = ctx.Esp;
 #endif
 
 			auto thread = GetCurrentThread();
