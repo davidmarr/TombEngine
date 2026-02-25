@@ -77,10 +77,8 @@ Util.GenerateTimeFormattedString = function(time, timerFormat)
 end
 
 -- Check if table has particular value.
+-- Used by: Timer.lua
 Util.TableHasValue = function(tbl, val)
-	if not Type.IsTable(tbl) then
-		return false
-	end
 	for _, value in pairs(tbl) do
 		if value == val then
 			return true
