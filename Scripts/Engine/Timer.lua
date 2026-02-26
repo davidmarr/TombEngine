@@ -348,6 +348,17 @@ end
 -- if Timer.IfExists("my_timer") then
 --    Timer.Get("my_timer"):SetRemainingTime(3.5)
 -- end
+--
+-- -- Example 2: Round to the nearest frame
+-- if Timer.IfExists("my_timer") then
+--    Timer.Get("my_timer"):SetRemainingTime(5.68) -- value will be converted in 5.66 seconds
+-- end
+--
+-- -- Example 3: Round to 2 decimal places and convert to the nearest frame
+-- if Timer.IfExists("my_timer") then
+--    -- value will be rounded to 7.02 seconds and converted to 7.03 seconds that is 211 frames at 30 FPS
+--    Timer.Get("my_timer"):SetRemainingTime(7.019)
+-- end
 function Timer:SetRemainingTime(remainingTime)
 	if not Type.IsNumber(remainingTime) or remainingTime < 0 then
 		TEN.Util.PrintLog("Error in Timer:SetRemainingTime(): wrong value  (" .. tostring(remainingTime) .. ")  for remainingTime in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
@@ -472,6 +483,17 @@ end
 -- -- Example:
 -- if Timer.IfExists("my_timer") then
 --    Timer.Get("my_timer"):SetTotalTime(3.5)
+-- end
+--
+-- -- Example 2: Round to the nearest frame
+-- if Timer.IfExists("my_timer") then
+--    Timer.Get("my_timer"):SetTotalTime(5.68) -- value will be converted in 5.66 seconds
+-- end
+--
+-- -- Example 3: Round to 2 decimal places and convert to the nearest frame
+-- if Timer.IfExists("my_timer") then
+--    -- value will be rounded to 7.02 seconds and converted to 7.03 seconds that is 211 frames at 30 FPS
+--    Timer.Get("my_timer"):SetTotalTime(7.019)
 -- end
 function Timer:SetTotalTime(totalTime)
 	if not Type.IsNumber(totalTime) or totalTime < 0 then
