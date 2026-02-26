@@ -1042,8 +1042,10 @@ bool CreaturePathfind(ItemInfo* item, Vector3i prevPos, short angle, short tilt)
 	else if (LOT->IsJumping)
 	{
 		// JUMPING/MONKEYSWING: Special traversal in progress.
-		floor = GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &roomNumber);
-		int height2 = GetFloorHeight(floor, item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z);
+		// NOTE: Use 'y' (top of bounding box) instead of raw Y position to prevent
+		// GetFloor from resolving through floor portals into rooms below (e.g. pits).
+		floor = GetFloor(item->Pose.Position.x, y, item->Pose.Position.z, &roomNumber);
+		int height2 = GetFloorHeight(floor, item->Pose.Position.x, y, item->Pose.Position.z);
 		item->Floor = height2;
 
 		if (LOT->IsMonkeying)
