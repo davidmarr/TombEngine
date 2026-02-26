@@ -55,7 +55,6 @@ local IsRotation = Type.IsRotation
 local IsBoolean = Type.IsBoolean
 local IsString = Type.IsString
 local IsTable = Type.IsTable
-local IsNull = Type.IsNull
 local IsEnumValue = Type.IsEnumValue
 
 -- ----------------------------------------------------------------------------
