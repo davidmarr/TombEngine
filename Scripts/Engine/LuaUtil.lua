@@ -1808,13 +1808,15 @@ end
 -- -- Mixed with LuaUtil.Format:
 -- local enemy = "Skeleton"
 -- local dmg = 50
--- LuaUtil.ColorLog(LuaUtil.Format("{{cyan}}{enemy}{{/}} dealt {{red}}{{bold}}{dmg}{{/}} damage", { enemy = enemy, dmg = dmg }))
+-- LuaUtil.ColorLog(
+--  LuaUtil.Format("{{cyan}}{enemy}{{/}} dealt {{red}}{{bold}}{dmg}{{/}} damage", { enemy = enemy, dmg = dmg })
+-- )
 -- -- Console: "Skeleton" cyan, " dealt " default, "50" red bold, " damage" default
 --
 -- -- With log level (default is INFO = 2):
--- LuaUtil.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)             -- ERROR
--- LuaUtil.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                     -- WARNING
--- LuaUtil.ColorLog("{{green}}All systems operational{{/}}")                    -- INFO (default)
+-- LuaUtil.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)                    -- ERROR
+-- LuaUtil.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                            -- WARNING
+-- LuaUtil.ColorLog("{{green}}All systems operational{{/}}")                          -- INFO (default)
 -- LuaUtil.ColorLog("{{green}}All systems operational{{/}}", TEN.Util.LogLevel.INFO)  -- equivalent
 --
 -- -- Text without tags (printed as-is):
