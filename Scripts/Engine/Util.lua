@@ -8,6 +8,9 @@ local Type = require("Engine.Type")
 local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
 local LogMessage  = TEN.Util.PrintLog
 local logLevelWarning = TEN.Util.LogLevel.WARNING
+local IsString = Type.IsString
+local IsTable = Type.IsTable
+local IsBoolean = Type.IsBoolean
 local concat = table.concat
 local format = string.format
 
@@ -18,10 +21,10 @@ end
 -- Check if the time format is correct.
 -- Used by: Timer.lua
 Util.CheckTimeFormat = function(timerFormat, errorText)
-	errorText = errorText and Type.IsString(errorText) and errorText or false
-	if Type.IsTable(timerFormat) then
+	errorText = errorText and IsString(errorText) and errorText or false
+	if IsTable(timerFormat) then
 		for k, v in pairs(timerFormat) do
-			if not VALID_KEYS[k] or type(v) ~= "boolean" then
+			if not VALID_KEYS[k] or not IsBoolean(v) then
 				if errorText then
 					LogMessage(errorText, logLevelWarning)
 				end
@@ -29,7 +32,7 @@ Util.CheckTimeFormat = function(timerFormat, errorText)
 			end
 		end
 		return timerFormat
-	elseif Type.IsBoolean(timerFormat) then
+	elseif IsBoolean(timerFormat) then
 		return timerFormat and { seconds = true } or timerFormat
 	end
 	if errorText then
