@@ -56,6 +56,7 @@ local IsBoolean = Type.IsBoolean
 local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsNull = Type.IsNull
+local IsEnumValue = Type.IsEnumValue
 
 -- ----------------------------------------------------------------------------
 -- MATH FUNCTIONS
@@ -98,8 +99,9 @@ local MAX_ELEMENTS = 1000   -- Maximum elements processed in deep operations (pr
 -- Cached logging functions and levels from TEN.Util for error reporting in LuaUtil functions
 -- ----------------------------------------------------------------------------
 local LogMessage  = TEN.Util.PrintLog
-local logLevelError  = TEN.Util.LogLevel.ERROR
-local logLevelWarning = TEN.Util.LogLevel.WARNING
+local logLevelEnums = TEN.Util.LogLevel
+local logLevelError  = logLevelEnums.ERROR
+local logLevelWarning = logLevelEnums.WARNING
 
 -- -----------------------------------------------------------------------------
 -- TEN ENGINE TYPES
@@ -122,6 +124,30 @@ local COMPARISON_OPS = {
     function(a, b) return a <= b end,   -- 3: less than or equal
     function(a, b) return a > b end,    -- 4: greater than
     function(a, b) return a >= b end,   -- 5: greater than or equal
+}
+
+-- ----------------------------------------------------------------------------
+-- ANSI ESCAPE CODES
+-- Lookup table for console styling (Styled and ColorLog functions).
+-- Maps style names to ANSI SGR parameter numbers.
+-- ----------------------------------------------------------------------------
+local ESC = "\27["
+local ANSI_RESET = "\27[0m"
+local ANSI_CODES = {
+    -- Text colors (foreground)
+    black   = "30", red     = "31", green   = "32", yellow  = "33",
+    blue    = "34", magenta = "35", cyan    = "36", white   = "37",
+    -- Background colors
+    bg_black   = "40", bg_red     = "41", bg_green   = "42", bg_yellow  = "43",
+    bg_blue    = "44", bg_magenta = "45", bg_cyan    = "46", bg_white   = "47",
+    -- Styles
+    bold      = "1",
+    underline = "4",
+    -- Selective resets
+    ["/bold"]      = "22",
+    ["/underline"] = "24",
+    ["/color"]     = "39",
+    ["/bg"]        = "49",
 }
 
 -- ----------------------------------------------------------------------------
@@ -531,6 +557,15 @@ local function orbitPositionRaw(center, radius, angle, axis)
     local perp1 = axisN:Cross(arbitrary):Normalize()
     local perp2 = axisN:Cross(perp1):Normalize()
     return center + (perp1 * c + perp2 * s) * radius
+end
+
+local function TableHasValueRaw(tbl, value)
+    for _, v in next, tbl do
+        if v == value then
+            return true
+        end
+    end
+    return false
 end
 
 --- General utilities.
@@ -1183,6 +1218,630 @@ LuaUtil.Trim = function(str, chars)
 
     local j = str:find(backPattern, i)
     return str:sub(i, j)
+end
+
+--- Check if a string starts with a given prefix.
+-- Uses direct byte comparison via `string.sub` — no pattern engine is involved,
+-- so special characters like `.`, `%`, `(`, `[`, `{` are completely safe.
+-- The comparison is case-sensitive: `"Hello"` does NOT start with `"hello"`.
+-- An empty prefix `""` always returns `true` (every string starts with the empty string).
+-- @tparam string str The string to check.
+-- @tparam string prefix The prefix to look for.
+-- @treturn[1] bool True if str starts with prefix, false otherwise.
+-- @treturn[2] bool false If an error occurs (invalid argument types).
+-- @usage
+-- -- Basic usage:
+-- local result = LuaUtil.StartsWith("hello world", "hello")
+-- -- Result: true
+--
+-- -- No match:
+-- local result = LuaUtil.StartsWith("hello world", "world")
+-- -- Result: false
+--
+-- -- Case-sensitive:
+-- local result = LuaUtil.StartsWith("Hello", "hello")
+-- -- Result: false
+--
+-- -- Case-insensitive workaround:
+-- local str = "Hello World"
+-- local result = LuaUtil.StartsWith(str:lower(), "hello")
+-- -- Result: true
+--
+-- -- Empty prefix (always true):
+-- local result = LuaUtil.StartsWith("hello", "")
+-- -- Result: true
+--
+-- -- Prefix longer than string:
+-- local result = LuaUtil.StartsWith("hi", "hello")
+-- -- Result: false
+--
+-- -- Special characters (safe, no escaping needed):
+-- local result = LuaUtil.StartsWith("[test].lua", "[test]")
+-- -- Result: true
+--
+-- local result = LuaUtil.StartsWith("100% done", "100%")
+-- -- Result: true
+--
+-- local result = LuaUtil.StartsWith("(value)", "(val")
+-- -- Result: true
+--
+-- -- Single character:
+-- local result = LuaUtil.StartsWith("/path/to/file", "/")
+-- -- Result: true
+--
+-- -- Practical: check file extension prefix
+-- local filename = "level_01.trc"
+-- if LuaUtil.StartsWith(filename, "level_") then
+--     -- Process level file...
+-- end
+--
+-- -- Practical: check command prefix
+-- local input = "/teleport 100 200 300"
+-- if LuaUtil.StartsWith(input, "/") then
+--     -- Parse command...
+-- end
+--
+-- -- Practical: filter items by prefix
+-- local items = {"key_gold", "key_silver", "medipack", "key_bronze"}
+-- local keys = {}
+-- for _, item in ipairs(items) do
+--     if LuaUtil.StartsWith(item, "key_") then
+--         keys[#keys + 1] = item
+--     end
+-- end
+-- -- Result: {"key_gold", "key_silver", "key_bronze"}
+LuaUtil.StartsWith = function(str, prefix)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.StartsWith: str is not a string.", logLevelError)
+        return false
+    end
+
+    if not IsString(prefix) then
+        LogMessage("Error in LuaUtil.StartsWith: prefix is not a string.", logLevelError)
+        return false
+    end
+
+    return str:sub(1, #prefix) == prefix
+end
+
+--- Check if a string ends with a given suffix.
+-- Uses direct byte comparison via `string.sub` with a negative index — no pattern engine
+-- is involved, so special characters like `.`, `%`, `(`, `[`, `{` are completely safe.
+-- The comparison is case-sensitive: `"Hello"` does NOT end with `"ELLO"`.
+-- An empty suffix `""` always returns `true` (every string ends with the empty string).
+-- @tparam string str The string to check.
+-- @tparam string suffix The suffix to look for.
+-- @treturn[1] bool True if str ends with suffix, false otherwise.
+-- @treturn[2] bool false If an error occurs (invalid argument types).
+-- @usage
+-- -- Basic usage:
+-- local result = LuaUtil.EndsWith("hello world", "world")
+-- -- Result: true
+--
+-- -- No match:
+-- local result = LuaUtil.EndsWith("hello world", "hello")
+-- -- Result: false
+--
+-- -- Case-sensitive:
+-- local result = LuaUtil.EndsWith("Hello", "ELLO")
+-- -- Result: false
+--
+-- -- Case-insensitive workaround:
+-- local str = "Level.LUA"
+-- local result = LuaUtil.EndsWith(str:lower(), ".lua")
+-- -- Result: true
+--
+-- -- Empty suffix (always true):
+-- local result = LuaUtil.EndsWith("hello", "")
+-- -- Result: true
+--
+-- -- Suffix longer than string:
+-- local result = LuaUtil.EndsWith("hi", "hello")
+-- -- Result: false
+--
+-- -- Special characters (safe, no escaping needed):
+-- local result = LuaUtil.EndsWith("file[1].lua", ".lua")
+-- -- Result: true
+--
+-- local result = LuaUtil.EndsWith("100% done", "% done")
+-- -- Result: true
+--
+-- local result = LuaUtil.EndsWith("test(value)", "(value)")
+-- -- Result: true
+--
+-- -- Single character:
+-- local result = LuaUtil.EndsWith("path/to/file/", "/")
+-- -- Result: true
+--
+-- -- Practical: check file extension
+-- local filename = "level_01.lua"
+-- if LuaUtil.EndsWith(filename, ".lua") then
+--     -- Process Lua file...
+-- end
+--
+-- -- Practical: check string terminator
+-- local line = "This is a sentence."
+-- if LuaUtil.EndsWith(line, ".") then
+--     -- Sentence ends with a period
+-- end
+--
+-- -- Practical: filter files by extension
+-- local files = {"main.lua", "config.txt", "utils.lua", "readme.md"}
+-- local luaFiles = {}
+-- for _, file in ipairs(files) do
+--     if LuaUtil.EndsWith(file, ".lua") then
+--         luaFiles[#luaFiles + 1] = file
+--     end
+-- end
+-- -- Result: {"main.lua", "utils.lua"}
+LuaUtil.EndsWith = function(str, suffix)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.EndsWith: str is not a string.", logLevelError)
+        return false
+    end
+
+    if not IsString(suffix) then
+        LogMessage("Error in LuaUtil.EndsWith: suffix is not a string.", logLevelError)
+        return false
+    end
+
+    local suffixLen = #suffix
+    if suffixLen == 0 then
+        return true
+    end
+
+    return str:sub(-suffixLen) == suffix
+end
+
+--- Check if a string contains a given substring.
+-- Uses `string.find` with plain mode enabled — no pattern engine is involved,
+-- so special characters like `.`, `%`, `(`, `[`, `{` are completely safe.
+-- The comparison is case-sensitive: `"Hello"` does NOT contain `"hello"`.
+-- An empty substring `""` always returns `true` (every string contains the empty string).
+-- Unlike `StartsWith` and `EndsWith`, this searches **anywhere** in the string —
+-- use it when you don't know (or don't care) where the substring appears.
+-- @tparam string str The string to search in.
+-- @tparam string substring The substring to look for.
+-- @treturn[1] bool True if str contains substring, false otherwise.
+-- @treturn[2] bool false If an error occurs (invalid argument types).
+-- @usage
+-- -- Keyword in the middle of a name:
+-- local result = LuaUtil.Contains("room_secret_01", "secret")
+-- -- Result: true
+--
+-- -- No match:
+-- local result = LuaUtil.Contains("enemy_fire_boss", "water")
+-- -- Result: false
+--
+-- -- Case-sensitive:
+-- local result = LuaUtil.Contains("Lara Croft", "lara")
+-- -- Result: false
+--
+-- -- Case-insensitive workaround:
+-- local result = LuaUtil.Contains(("Lara Croft"):lower(), "lara")
+-- -- Result: true
+--
+-- -- Empty substring (always true):
+-- local result = LuaUtil.Contains("hello", "")
+-- -- Result: true
+--
+-- -- Substring longer than string:
+-- local result = LuaUtil.Contains("hi", "hello world")
+-- -- Result: false
+--
+-- -- Special characters (safe, no escaping needed):
+-- local result = LuaUtil.Contains("damage = hp * (1 + bonus%)", "(1 + bonus%)")
+-- -- Result: true
+--
+-- -- Check if a separator exists to decide how to parse:
+-- local entry = "health=100"
+-- if LuaUtil.Contains(entry, "=") then
+--     local parts = LuaUtil.SplitString(entry, "=")
+--     -- parts: {"health", "100"}
+-- end
+--
+-- -- Practical: detect element type in object names
+-- local objName = "enemy_fire_boss"
+-- if LuaUtil.Contains(objName, "fire") then
+--     -- Apply fire resistance logic...
+-- elseif LuaUtil.Contains(objName, "water") then
+--     -- Apply water resistance logic...
+-- end
+--
+-- -- Practical: check if a path goes through a specific folder
+-- local path = "levels/egypt/secret/room_01"
+-- if LuaUtil.Contains(path, "/secret/") then
+--     -- Secret area detected
+-- end
+--
+-- -- Practical: filter objects by attribute in their name
+-- local objects = {"trap_spike_01", "door_main", "trap_fire_02", "pickup_key", "trap_spike_02"}
+-- local traps = {}
+-- for _, obj in ipairs(objects) do
+--     if LuaUtil.Contains(obj, "spike") then
+--         traps[#traps + 1] = obj
+--     end
+-- end
+-- -- Result: {"trap_spike_01", "trap_spike_02"}
+--
+-- -- Practical: search within a multi-word description
+-- local description = "An ancient golden key found in the Temple of Horus"
+-- if LuaUtil.Contains(description, "golden key") then
+--     -- Highlight item as important
+-- end
+LuaUtil.Contains = function(str, substring)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.Contains: str is not a string.", logLevelError)
+        return false
+    end
+
+    if not IsString(substring) then
+        LogMessage("Error in LuaUtil.Contains: substring is not a string.", logLevelError)
+        return false
+    end
+
+    return str:find(substring, 1, true) ~= nil
+end
+
+--- Replace occurrences of a substring with a replacement string.
+-- Uses `string.find` with plain mode — no pattern engine is involved,
+-- so special characters like `.`, `%`, `(`, `[`, `{` are completely safe
+-- in both the search and replacement strings.
+-- The search is case-sensitive: `"Hello"` will NOT match `"hello"`.
+-- By default, all occurrences are replaced. Use the optional count parameter
+-- to limit the number of replacements (e.g. `1` to replace only the first match).
+-- @tparam string str The original string.
+-- @tparam string search The substring to find. Must not be empty.
+-- @tparam string replacement The string to substitute in place of each match.
+-- @tparam[opt] number count Maximum number of replacements. If omitted, replaces all occurrences.
+-- Must be a positive integer (>= 1).
+-- @treturn[1] string The string with replacements applied.
+-- @treturn[2] string The original string unchanged if search is not found or an error occurs.
+-- @usage
+-- -- Replace all occurrences (default):
+-- local result = LuaUtil.Replace("room_old_old_01", "old", "new")
+-- -- Result: "room_new_new_01"
+--
+-- -- Replace only the first occurrence:
+-- local result = LuaUtil.Replace("room_old_old_01", "old", "new", 1)
+-- -- Result: "room_new_old_01"
+--
+-- -- Replace first 2 occurrences:
+-- local result = LuaUtil.Replace("a-b-c-d", "-", "/", 2)
+-- -- Result: "a/b/c-d"
+--
+-- -- No match (string unchanged):
+-- local result = LuaUtil.Replace("hello world", "planet", "moon")
+-- -- Result: "hello world"
+--
+-- -- Remove a substring (empty replacement):
+-- local result = LuaUtil.Replace("door_01_locked", "_locked", "")
+-- -- Result: "door_01"
+--
+-- -- Special characters in search (safe, no escaping needed):
+-- local result = LuaUtil.Replace("HP: 100% (full)", "100%", "50%")
+-- -- Result: "HP: 50% (full)"
+--
+-- local result = LuaUtil.Replace("items[0] = sword", "[0]", "[1]")
+-- -- Result: "items[1] = sword"
+--
+-- -- Special characters in replacement (safe):
+-- local result = LuaUtil.Replace("value = x", "x", "(a + b)")
+-- -- Result: "value = (a + b)"
+--
+-- -- Practical: rename an object ID
+-- local objectId = "trap_spike_room03"
+-- local newId = LuaUtil.Replace(objectId, "room03", "room07")
+-- -- Result: "trap_spike_room07"
+--
+-- -- Practical: sanitize display text (remove unwanted characters)
+-- local rawText = "***DANGER***"
+-- local clean = LuaUtil.Replace(rawText, "*", "")
+-- -- Result: "DANGER"
+--
+-- -- Practical: convert separator format
+-- local csv = "apple;banana;cherry"
+-- local tsv = LuaUtil.Replace(csv, ";", "\t")
+-- -- Result: "apple\tbanana\tcherry"
+--
+-- -- Practical: fix path separators
+-- local winPath = "scripts\\levels\\egypt\\main.lua"
+-- local unixPath = LuaUtil.Replace(winPath, "\\", "/")
+-- -- Result: "scripts/levels/egypt/main.lua"
+--
+-- -- Practical: build display text from template stored in a variable
+-- local template = "## HP ##/## MAX_HP ##"
+-- local step1 = LuaUtil.Replace(template, "## HP ##", tostring(75))
+-- local step2 = LuaUtil.Replace(step1, "## MAX_HP ##", tostring(100))
+-- -- Result: "75/100"
+--
+-- -- Practical: censor a word (replace first only)
+-- local msg = "The secret door hides a secret passage"
+-- local censored = LuaUtil.Replace(msg, "secret", "hidden", 1)
+-- -- Result: "The hidden door hides a secret passage"
+LuaUtil.Replace = function(str, search, replacement, count)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.Replace: str is not a string.", logLevelError)
+        return str
+    end
+
+    if not IsString(search) then
+        LogMessage("Error in LuaUtil.Replace: search is not a string.", logLevelError)
+        return str
+    end
+
+    if not IsString(replacement) then
+        LogMessage("Error in LuaUtil.Replace: replacement is not a string.", logLevelError)
+        return str
+    end
+
+    local searchLen = #search
+    if searchLen == 0 then
+        LogMessage("Error in LuaUtil.Replace: search string is empty.", logLevelError)
+        return str
+    end
+
+    if count ~= nil then
+        if not IsNumber(count) or count < 1 or floor(count) ~= count then
+            LogMessage("Error in LuaUtil.Replace: count must be a positive integer.", logLevelError)
+            return str
+        end
+    end
+
+    local parts = {}
+    local partsCount = 0
+    local start = 1
+    local replaced = 0
+
+    while true do
+        local i, j = str:find(search, start, true)
+        if not i then
+            partsCount = partsCount + 1
+            parts[partsCount] = str:sub(start)
+            break
+        end
+
+        partsCount = partsCount + 1
+        parts[partsCount] = str:sub(start, i - 1)
+        partsCount = partsCount + 1
+        parts[partsCount] = replacement
+        start = j + 1
+        replaced = replaced + 1
+
+        if count and replaced >= count then
+            partsCount = partsCount + 1
+            parts[partsCount] = str:sub(start)
+            break
+        end
+    end
+
+    return table.concat(parts)
+end
+
+--- Console utilities.
+-- Functions for formatted console output with colors and styles.
+-- Two functions are provided:
+--
+-- - `Styled`: returns a styled string you can store or concatenate.
+-- - `ColorLog`: parses inline `{{tag}}` markup and prints directly to the console.
+--
+-- <h3>Available styles:</h3>
+-- <table class="tableSP">
+-- <tr><td>Text colors</td><td>`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `black`</td></tr>
+-- <tr><td>Background colors</td><td>`bg_red`, `bg_green`, `bg_yellow`, `bg_blue`, `bg_magenta`, `bg_cyan`, `bg_white`, `bg_black`</td></tr>
+-- <tr><td>Text styles</td><td>`bold`, `underline`</td></tr>
+-- </table>
+--
+-- <h3>Reset tags (ColorLog only):</h3>
+-- <table class="tableSP">
+-- <tr><td>Reset all styles</td><td>`{{/}}`</td></tr>
+-- <tr><td>Reset specific style</td><td>`{{/bold}}`, `{{/underline}}`, `{{/color}}`, `{{/bg}}`</td></tr>
+-- </table>
+--
+-- <h3>Examples usage:</h3>
+-- `local msg = LuaUtil.Styled(" ALERT ", "black", "bg_red")`
+--
+-- `TEN.Util.PrintLog(msg, TEN.Util.LogLevel.WARNING)`
+--
+-- Console output: <code style="background: #000; color: #fff; padding: 4px; font-family: monospace;">
+-- [2026-Feb-26 15:01:55]
+-- <span style="color: yellow;">[warning]</span>
+-- <span style="background-color: red; color: black; padding: 0 4px; font-weight: bold;">ALERT</span>
+-- </code>
+--
+-- <br>`LuaUtil.ColorLog("{{red}}Error:{{/}} file not found")`
+--
+-- Console output: <code style="background: #000; color: #fff; padding: 4px; font-family: monospace;">
+-- [2026-Feb-26 15:01:55]
+-- <span style="color: lime;">[info]</span>
+-- <span style="color: red;">Error:</span> file not found
+-- </code>
+-- @section console
+
+--- Apply ANSI styling to a text string and return it.
+-- Wraps the text with ANSI escape codes and appends an automatic reset at the end.
+-- The returned string can be used anywhere: `PrintLog`, concatenation, tables, etc.
+-- Multiple styles can be combined by passing them as separate arguments.
+-- Invalid style names are silently ignored (no crash, no error) — the text is still returned.
+-- @tparam string text The text to style.
+-- @tparam string ... One or more style names to apply.
+-- @treturn[1] string The text wrapped in ANSI escape codes.
+-- @treturn[2] string The original text unchanged if no valid styles are provided or an error occurs.
+-- @usage
+-- -- Single color:
+-- local msg = LuaUtil.Styled("Hello", "red")
+-- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO)
+-- -- Console: "Hello" in red
+--
+-- -- Multiple styles combined:
+-- local msg = LuaUtil.Styled("CRITICAL", "red", "bold", "underline")
+-- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.ERROR)
+-- -- Console: "CRITICAL" in red, bold and underlined
+--
+-- -- Background color:
+-- local msg = LuaUtil.Styled(" ALERT ", "white", "bg_red")
+-- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.WARNING)
+-- -- Console: " ALERT " with white text on red background
+--
+-- -- Concatenate multiple styled segments:
+-- local line = LuaUtil.Styled("HP:", "cyan") .. " " .. LuaUtil.Styled("0", "red", "bold") .. "/" .. LuaUtil.Styled("100", "green")
+-- TEN.Util.PrintLog(line, TEN.Util.LogLevel.INFO)
+-- -- Console: "HP:" in cyan, "0" in red bold, "/" default, "100" in green
+--
+-- -- Bold header with normal body:
+-- local header = LuaUtil.Styled("[TRAP]", "yellow", "bold")
+-- local body = " spike_01 activated at frame 120"
+-- TEN.Util.PrintLog(header .. body, TEN.Util.LogLevel.INFO)
+-- -- Console: "[TRAP]" bold yellow, rest in default color
+--
+-- -- Build reusable labels:
+-- local OK   = LuaUtil.Styled("[OK]", "green", "bold")
+-- local FAIL = LuaUtil.Styled("[FAIL]", "red", "bold")
+-- local WARN = LuaUtil.Styled("[WARN]", "yellow", "bold")
+-- TEN.Util.PrintLog(OK .. " Door opened", TEN.Util.LogLevel.INFO)
+-- TEN.Util.PrintLog(FAIL .. " Texture not found", TEN.Util.LogLevel.ERROR)
+-- TEN.Util.PrintLog(WARN .. " Low health", TEN.Util.LogLevel.WARNING)
+--
+-- -- Highlighted value in a debug line:
+-- local pos = entity:GetPosition()
+-- local msg = "Position: " .. LuaUtil.Styled(tostring(pos), "cyan", "bold")
+-- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO)
+--
+-- -- Invalid style names are ignored (no crash):
+-- local msg = LuaUtil.Styled("Hello", "pink")  -- "pink" is not valid
+-- -- Result: "Hello" without any styling
+--
+-- -- No styles provided (text returned as-is):
+-- local msg = LuaUtil.Styled("Hello")
+-- -- Result: "Hello"
+LuaUtil.Styled = function(text, ...)
+    if not IsString(text) then
+        LogMessage("Error in LuaUtil.Styled: text is not a string.", logLevelError)
+        return ""
+    end
+
+    local args = {...}
+    local argCount = #args
+    if argCount == 0 then
+        return text
+    end
+
+    local codes = {}
+    local codesCount = 0
+    for i = 1, argCount do
+        local styleName = args[i]
+        if IsString(styleName) then
+            local code = ANSI_CODES[styleName]
+            if code then
+                codesCount = codesCount + 1
+                codes[codesCount] = code
+            end
+        end
+    end
+
+    if codesCount == 0 then
+        return text
+    end
+
+    return ESC .. table.concat(codes, ";") .. "m" .. text .. ANSI_RESET
+end
+
+--- Print a styled message to the console using inline `{{tag}}` markup.
+-- Parses `{{styleName}}` tags in the string and converts them to ANSI escape codes.
+-- Multiple styles can be stacked: each `{{tag}}` adds to the current style.
+-- Use `{{/}}` to reset all styles, or selective resets like `{{/bold}}` to remove one style.
+-- The function always appends a final reset to prevent style leaking into subsequent log lines.
+-- Invalid tag names are silently removed (no crash, no error).
+-- @tparam string str The string with `{{tag}}` markup.
+-- @tparam[opt=2] number logLevel The TEN log level: 0 = ERROR, 1 = WARNING, 2 = INFO.
+-- @usage
+-- -- Simple colored message:
+-- LuaUtil.ColorLog("{{red}}Error: texture not found{{/}}")
+-- -- Console: "Error: texture not found" in red
+--
+-- -- Multiple colors in one line:
+-- LuaUtil.ColorLog("{{green}}Loaded:{{/}} room_01 — {{yellow}}Skipped:{{/}} room_02")
+-- -- Console: "Loaded:" green, " room_01 — " default, "Skipped:" yellow, " room_02" default
+--
+-- -- Combining color and style:
+-- LuaUtil.ColorLog("{{red}}{{bold}}DANGER:{{/}} Lava is rising!")
+-- -- Console: "DANGER:" in red bold, " Lava is rising!" in default
+--
+-- -- Selective reset (remove bold, keep color):
+-- LuaUtil.ColorLog("{{red}}{{bold}}Title{{/bold}} still red{{/}} normal text")
+-- -- Console: "Title" red bold, " still red" red, " normal text" default
+--
+-- -- Selective reset (change color, keep bold):
+-- LuaUtil.ColorLog("{{bold}}{{red}}Red bold {{/color}}{{blue}}Blue bold{{/}}")
+-- -- Console: "Red bold " red bold, "Blue bold" blue bold
+--
+-- -- Background color:
+-- LuaUtil.ColorLog("{{bg_red}}{{white}} CRITICAL {{/}} System failure")
+-- -- Console: " CRITICAL " white on red, " System failure" default
+--
+-- -- Underlined text:
+-- LuaUtil.ColorLog("Press {{underline}}{{bold}}E{{/}} to interact")
+-- -- Console: "Press " default, "E" bold underlined, " to interact" default
+--
+-- -- Styled status line:
+-- local hp = 15
+-- local maxHp = 100
+-- LuaUtil.ColorLog(LuaUtil.Format("{{red}}HP: {{bold}}{hp}{{/bold}}/{maxHp}{{/}}", { hp = hp, maxHp = maxHp }))
+-- -- Console: "HP: " red, "15" red bold, "/100" red
+--
+-- -- Mixed with LuaUtil.Format:
+-- local enemy = "Skeleton"
+-- local dmg = 50
+-- LuaUtil.ColorLog(LuaUtil.Format("{{cyan}}{enemy}{{/}} dealt {{red}}{{bold}}{dmg}{{/}} damage", { enemy = enemy, dmg = dmg }))
+-- -- Console: "Skeleton" cyan, " dealt " default, "50" red bold, " damage" default
+--
+-- -- With log level (default is INFO = 2):
+-- LuaUtil.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)             -- ERROR
+-- LuaUtil.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                     -- WARNING
+-- LuaUtil.ColorLog("{{green}}All systems operational{{/}}")                    -- INFO (default)
+-- LuaUtil.ColorLog("{{green}}All systems operational{{/}}", TEN.Util.LogLevel.INFO)  -- equivalent
+--
+-- -- Text without tags (printed as-is):
+-- LuaUtil.ColorLog("Plain text, no styling")
+-- -- Console: "Plain text, no styling" in default color
+--
+-- -- Invalid tags are silently removed:
+-- LuaUtil.ColorLog("{{pink}}Hello{{/}}")
+-- -- Console: "Hello" in default color ("pink" is not a valid style)
+--
+-- -- Practical: debug header with separator
+-- LuaUtil.ColorLog("{{cyan}}{{bold}}========== LEVEL START =========={{/}}")
+--
+-- -- Practical: entity spawn log
+-- LuaUtil.ColorLog(LuaUtil.Format("{{green}}+{{/}} Spawned {{bold}}{name}{{/}} at {pos}", {
+--     name = "enemy_mummy_01",
+--     pos = tostring(TEN.Vec3(1024, -512, 3072))
+-- }))
+-- -- Console: "+" green, " Spawned " default, "enemy_mummy_01" bold, " at {1024, -512, 3072}" default
+LuaUtil.ColorLog = function(str, logLevel)
+    if not IsString(str) then
+        LogMessage("Error in LuaUtil.ColorLog: str is not a string.", logLevelError)
+        return
+    end
+
+    logLevel = logLevel or 2
+    if not IsEnumValue(logLevel, logLevelEnums, false) then
+        LogMessage("Error in LuaUtil.ColorLog: logLevel is not a valid value. It must be 0, 1, or 2.", logLevelError)
+        return
+    end
+
+    local result = str:gsub("{{(.-)}}", function(tag)
+        if tag == "/" then
+            return ANSI_RESET
+        end
+        local code = ANSI_CODES[tag]
+        if code then
+            return ESC .. code .. "m"
+        end
+        return ""
+    end)
+
+    LogMessage(result .. ANSI_RESET, logLevel)
 end
 
 --- Mathematical functions.
@@ -4496,12 +5155,7 @@ LuaUtil.TableHasValue = function (tbl, val)
         LogMessage("Error in LuaUtil.TableHasValue: input is not a table.", logLevelError)
         return false
     end
-    for _, value in pairs(tbl) do
-        if value == val then
-            return true
-        end
-    end
-    return false
+    return TableHasValueRaw(tbl, val)
 end
 
 --- Check if a table contains a specific key.
