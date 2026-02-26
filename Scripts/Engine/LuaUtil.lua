@@ -571,6 +571,13 @@ local function TableHasValueRaw(tbl, value)
     return false
 end
 
+-- neutralizes ANSI escape codes in a string to prevent corrupted sequences
+local function NeutralizeANSI(s)
+    return s:gsub("\27%[([0-9;]+)m", function(seq)
+        return "\27[\226\128\139" .. seq .. "m"
+    end)
+end
+
 --- General utilities.
 -- Generic helper functions that work with multiple data types.
 -- @section general
@@ -1659,6 +1666,10 @@ end
 -- <span style="color: lime;">[info]</span>
 -- <span style="color: red;">Error:</span> file not found
 -- </code>
+-- <h3>Note:</h3> LuaUtil automatically protects your text from special sequences that could confuse the console.
+-- If your message contains strange characters like "[31m" or "[0m", you will not break the display:
+-- the system neutralizes them invisibly. You can write any text without worrying about errors.
+-- You do not need to know ANSI codes: just use tags and style names.
 -- @section console
 
 --- Apply ANSI styling to a text string and return it.
@@ -1750,8 +1761,9 @@ LuaUtil.Styled = function(text, ...)
     if codesCount == 0 then
         return text
     end
-
-    return ESC .. table.concat(codes, ";") .. "m" .. text .. ANSI_RESET
+    -- Filter: Neutralizes suspicious ANSI sequences in user text
+    local safeText = NeutralizeANSI(text)
+    return ESC .. table.concat(codes, ";") .. "m" .. safeText .. ANSI_RESET
 end
 
 --- Print a styled message to the console using inline `{{tag}}` markup.
@@ -1847,8 +1859,9 @@ LuaUtil.ColorLog = function(str, logLevel)
         LogMessage("Error in LuaUtil.ColorLog: logLevel is not a valid value. It must be 0, 1, or 2.", logLevelError)
         return
     end
+    local safeText = NeutralizeANSI(str)
 
-    local result = str:gsub("{{(.-)}}", function(tag)
+    local result = safeText:gsub("{{(.-)}}", function(tag)
         if tag == "/" then
             return ANSI_RESET
         end
@@ -1858,7 +1871,7 @@ LuaUtil.ColorLog = function(str, logLevel)
         end
         return ""
     end)
-
+    -- Filter: Neutralizes suspicious ANSI sequences in user text
     LogMessage(result .. ANSI_RESET, logLevel)
 end
 
