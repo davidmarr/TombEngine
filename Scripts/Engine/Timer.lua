@@ -296,7 +296,7 @@ function Timer:GetRemainingTime()
 end
 
 --- Get the remaining time of a timer in seconds.
--- @treturn float The remaining time in seconds of timer.<br>Accuracy is 1 game frame (1/30 of a second).
+-- @treturn float The remaining time in seconds of timer. Accuracy is 1 game frame (1/30 of a second). 
 -- @usage
 -- -- Example:
 -- local timer = 0
@@ -423,8 +423,7 @@ function Timer:GetTotalTime()
 end
 
 --- Get the total time of a timer in seconds. This is the amount of time the timer will start with, as well as when starting a new loop
--- @treturn float The timer's total time in seconds.<br>
--- Accuracy is 1 frame (1/30 second).
+-- @treturn float The timer's total time in seconds. Accuracy is 1 frame (1/30 second).
 -- @usage
 -- -- Example:
 -- local total = 0
