@@ -142,9 +142,13 @@ local ANSI_CODES = {
     -- Styles
     bold      = "1",
     underline = "4",
+    dim       = "2",
+    blink     = "5",
     -- Selective resets
     ["/bold"]      = "22",
     ["/underline"] = "24",
+    ["/dim"]       = "22",
+    ["/blink"]     = "25",
     ["/color"]     = "39",
     ["/bg"]        = "49",
 }
@@ -1628,7 +1632,7 @@ end
 -- <table class="tableSP">
 -- <tr><td>Text colors</td><td>`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `black`</td></tr>
 -- <tr><td>Background colors</td><td>`bg_red`, `bg_green`, `bg_yellow`, `bg_blue`, `bg_magenta`, `bg_cyan`, `bg_white`, `bg_black`</td></tr>
--- <tr><td>Text styles</td><td>`bold`, `underline`</td></tr>
+-- <tr><td>Text styles</td><td>`bold`, `underline`, `dim`, `blink`</td></tr>
 -- </table>
 --
 -- <h3>Reset tags (ColorLog only):</h3>
@@ -1706,6 +1710,11 @@ end
 -- local msg = "Position: " .. LuaUtil.Styled(tostring(pos), "cyan", "bold")
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO)
 --
+-- -- Blinking warning:
+-- local msg = LuaUtil.Styled("WARNING: Lava rising!", "red", "blink")
+-- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.WARNING)
+-- Console: "WARNING: Lava rising!" in blinking red
+--
 -- -- Invalid style names are ignored (no crash):
 -- local msg = LuaUtil.Styled("Hello", "pink")  -- "pink" is not valid
 -- -- Result: "Hello" without any styling
@@ -1781,6 +1790,10 @@ end
 -- -- Underlined text:
 -- LuaUtil.ColorLog("Press {{underline}}{{bold}}E{{/}} to interact")
 -- -- Console: "Press " default, "E" bold underlined, " to interact" default
+--
+-- -- Blinking text:
+-- LuaUtil.ColorLog("{{red}}{{blink}}WARNING: Lava rising!{{/}}")
+-- -- Console: "WARNING: Lava rising!" in blinking red
 --
 -- -- Styled status line:
 -- local hp = 15
