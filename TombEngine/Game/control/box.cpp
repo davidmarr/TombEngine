@@ -1042,10 +1042,8 @@ bool CreaturePathfind(ItemInfo* item, Vector3i prevPos, short angle, short tilt)
 	else if (LOT->IsJumping)
 	{
 		// JUMPING/MONKEYSWING: Special traversal in progress.
-		// NOTE: Use 'y' (top of bounding box) instead of raw Y position to prevent
-		// GetFloor from resolving through floor portals into rooms below (e.g. pits).
-		floor = GetFloor(item->Pose.Position.x, y, item->Pose.Position.z, &roomNumber);
-		int height2 = GetFloorHeight(floor, item->Pose.Position.x, y, item->Pose.Position.z);
+		floor = GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &roomNumber);
+		int height2 = GetFloorHeight(floor, item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z);
 		item->Floor = height2;
 
 		if (LOT->IsMonkeying)
@@ -1101,7 +1099,12 @@ bool CreaturePathfind(ItemInfo* item, Vector3i prevPos, short angle, short tilt)
 	}
 
 	// Update room number if creature moved to different room.
-	UpdateItemRoom(item->Index);
+	// NOTE: Skip room update during jumps/monkeyswings to prevent UpdateItemRoom from
+	// resolving through floor portals (e.g. pits) and assigning the creature to the room below.
+	// The room will be correctly updated once the creature lands and ground movement resumes.
+	if (!LOT->IsJumping)
+		UpdateItemRoom(item->Index);
+
 	return true;
 }
 
