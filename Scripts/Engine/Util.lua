@@ -6,8 +6,11 @@ local Util = {}
 local Type = require("Engine.Type")
 -- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
 local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
+local LogMessage  = TEN.Util.PrintLog
+local logLevelWarning = TEN.Util.LogLevel.WARNING
 local concat = table.concat
 local format = string.format
+
 
 Util.ShortenTENCalls = function()
 	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
@@ -21,7 +24,7 @@ Util.CheckTimeFormat = function(timerFormat, errorText)
 		for k, v in pairs(timerFormat) do
 			if not VALID_KEYS[k] or type(v) ~= "boolean" then
 				if errorText then
-					TEN.Util.PrintLog(errorText, TEN.Util.LogLevel.WARNING)
+					LogMessage(errorText, logLevelWarning)
 				end
 				return false
 			end
@@ -31,7 +34,7 @@ Util.CheckTimeFormat = function(timerFormat, errorText)
 		return timerFormat and { seconds = true } or timerFormat
 	end
 	if errorText then
-		TEN.Util.PrintLog(errorText, TEN.Util.LogLevel.WARNING)
+		LogMessage(errorText, logLevelWarning)
 	end
 	return false
 end
