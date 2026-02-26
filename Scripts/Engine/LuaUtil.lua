@@ -5561,6 +5561,7 @@ LuaUtil.SetTableReadOnly = function(tbl)
         end,
         __pairs = function() return pairs(tbl) end,
         __ipairs = function() return ipairs(tbl) end,
+        __len = function() return #tbl end,
     })
 end
 
