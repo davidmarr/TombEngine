@@ -1795,6 +1795,10 @@ end
 -- LuaUtil.ColorLog("{{red}}{{blink}}WARNING: Lava rising!{{/}}")
 -- -- Console: "WARNING: Lava rising!" in blinking red
 --
+-- -- Dim text:
+-- LuaUtil.ColorLog("{{dim}}Debug: value = 42{{/}}")
+-- -- Console: "Debug: value = 42" in dimmed color
+--
 -- -- Styled status line:
 -- local hp = 15
 -- local maxHp = 100
