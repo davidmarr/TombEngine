@@ -11,7 +11,6 @@ local logLevelWarning = TEN.Util.LogLevel.WARNING
 local concat = table.concat
 local format = string.format
 
-
 Util.ShortenTENCalls = function()
 	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
 end
