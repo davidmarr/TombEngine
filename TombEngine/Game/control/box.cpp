@@ -1099,7 +1099,12 @@ bool CreaturePathfind(ItemInfo* item, Vector3i prevPos, short angle, short tilt)
 	}
 
 	// Update room number if creature moved to different room.
-	UpdateItemRoom(item->Index);
+	// NOTE: Skip room update during jumps/monkeyswings to prevent UpdateItemRoom from
+	// resolving through floor portals (e.g. pits) and assigning the creature to the room below.
+	// The room will be correctly updated once the creature lands and ground movement resumes.
+	if (!LOT->IsJumping)
+		UpdateItemRoom(item->Index);
+
 	return true;
 }
 
