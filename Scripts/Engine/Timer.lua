@@ -788,6 +788,11 @@ function Timer:IsActive()
 	return LevelVars.Engine.Timer.timers[self.name].active
 end
 
+-- Deprecated method
+function Timer:IsTicking()
+	return not LevelVars.Engine.Timer.timers[self.name].paused
+end
+
 LevelFuncs.Engine.Timer.Decrease = function ()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active and not t.paused then
