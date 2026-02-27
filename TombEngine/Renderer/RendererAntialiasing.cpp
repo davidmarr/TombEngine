@@ -7,9 +7,6 @@ namespace TEN::Renderer
 {
 	void Renderer::ApplyAntialiasing(RenderTarget2D* renderTarget, RenderView& view)
 	{
-		BindConstantBufferVS(ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
-		BindConstantBufferPS(ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
-
 		switch (g_Configuration.AntialiasingMode)
 		{
 		case AntialiasingMode::None:

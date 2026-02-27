@@ -1371,7 +1371,7 @@ namespace TEN::Renderer
 	void Renderer::RenderFreezeMode(float interpFactor, bool staticBackground)
 	{
 		if (staticBackground)
-		{	
+		{
 			// Set basic render states.
 			SetBlendMode(BlendMode::Opaque);
 			SetCullMode(CullMode::CounterClockwise);
@@ -1409,6 +1409,9 @@ namespace TEN::Renderer
 
 		if (staticBackground)
 		{
+			BindConstantBufferVS(ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
+			BindConstantBufferPS(ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
+
 			ApplyGlow(&_renderTarget, _gameCamera);
 			ApplyAntialiasing(&_renderTarget, _gameCamera);
 			CopyRenderTarget(&_renderTarget, &_backBuffer, _gameCamera);
