@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 345px;}</style>
---- Lua support functions to simplify operations in scripts. To use, include the module with:
+--- Lua support functions to simplify operations in scripts.
 ---
 --- **Design Philosophy:**
 --- LuaUtil is designed primarily for:
@@ -17,8 +17,8 @@
 ---
 --- To use, include the module with:
 ---
----	local LuaUtil = require("Engine.LuaUtil")
---- @luautil LuaUtil
+---	local LuaUtil = require("Engine.LuaUtil-old")
+-- @luautil LuaUtil-old
 
 local Type= require("Engine.Type")
 local LuaUtil = {}

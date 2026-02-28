@@ -93,4 +93,17 @@ Util.CompareValue = function(operand, reference, operator)
 	return operators[operator + 1] and operators[operator + 1](operand, reference) or false
 end
 
+-- Support function to get the maximum positive integer index in a table.
+-- Used by array-like operations that must work with sparse tables.
+-- Used by: StringUtils.lua,
+Util.GetMaxNumericIndex = function(tbl)
+    local maxIndex = 0
+    for key, _ in next, tbl do
+        if type(key) == "number" and key > 0 and floor(key) == key and key > maxIndex then
+            maxIndex = key
+        end
+    end
+    return maxIndex
+end
+
 return Util
