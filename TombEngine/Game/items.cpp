@@ -652,7 +652,9 @@ void InitializeItem(short itemNumber)
 	auto* item = &g_Level.Items[itemNumber];
 	const auto& object = Objects[item->ObjectNumber];
 
-	SetAnimation(item, 0);
+	if (!object.Animations.empty())
+		SetAnimation(item, 0);
+
 	item->Animation.RequiredState = NO_VALUE;
 	item->Animation.Velocity = Vector3::Zero;
 	item->Animation.AnimObjectID = item->ObjectNumber;
