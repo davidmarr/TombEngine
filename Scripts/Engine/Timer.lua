@@ -788,9 +788,12 @@ function Timer:IsActive()
 	return LevelVars.Engine.Timer.timers[self.name].active
 end
 
--- Deprecated method
+--- Checks if the timer has ticked.
+-- Returns `true` only if the timer is ticking, i.e., it is active and not paused.
+-- @treturn bool `true` if the timer ticked, `false` otherwise.
 function Timer:IsTicking()
-	return not LevelVars.Engine.Timer.timers[self.name].paused
+    local thisTimer = LevelVars.Engine.Timer.timers[self.name]
+    return not thisTimer.paused and thisTimer.active
 end
 
 LevelFuncs.Engine.Timer.Decrease = function ()
