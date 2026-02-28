@@ -134,7 +134,7 @@ void InitializeSpotCam(short Sequence)
 
 	Lara.Inventory.IsBusy = 0;
 
-	CameraFade = -1;
+	CameraFade = NO_VALUE;
 	LastSpotCamSequence = Sequence;
 	TrackCameraInit = false;
 	SpotcamTimer = 0;
