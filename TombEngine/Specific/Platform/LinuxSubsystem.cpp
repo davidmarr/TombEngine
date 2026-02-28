@@ -106,6 +106,11 @@ namespace TEN::Platform
 		// No Linux-specific prerequisites to check.
 	}
 
+	void LinuxSubsystem::ConfigureConsole()
+	{
+		// No Linux-specific console things to configure.
+	}
+
 	void LinuxSubsystem::HideConsole()
 	{
 		// No-op on Linux; console hiding is not applicable.

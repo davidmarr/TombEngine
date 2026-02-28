@@ -35,6 +35,7 @@ namespace TEN::Platform
 		virtual bool CreateDummyTitleLevel(const std::string& levelPath) = 0;
 		virtual void InstallCrashHandler() = 0;
 		virtual void CheckPrerequisites() = 0;
+		virtual void ConfigureConsole() = 0;
 		virtual void HideConsole() = 0;
 		virtual void ShowErrorMessage(const std::string& text) = 0;
 

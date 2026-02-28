@@ -1379,17 +1379,22 @@ namespace TEN::Renderer
 	void Renderer::RenderFreezeMode(float interpFactor, bool staticBackground)
 	{
 		if (staticBackground)
-		{	
+		{
 			// Set basic render states.
 			SetBlendMode(BlendMode::Opaque);
 			SetCullMode(CullMode::CounterClockwise);
 
 			// Clear screen
 			_graphicsDevice->ClearRenderTarget2D(_backBuffer->GetRenderTarget(), Colors::Black);
+			_graphicsDevice->ClearRenderTarget2D(_emissiveAndRoughnessRenderTarget->GetRenderTarget(), Colors::Transparent);
 			_graphicsDevice->ClearDepthStencil(_backBuffer->GetDepthTarget(), DepthStencilClearFlags::DepthAndStencil, 1.0f, 0);
-		
+
+			std::vector<IRenderTarget2D*> renderTargets;
+			renderTargets.push_back(_backBuffer->GetRenderTarget());
+			renderTargets.push_back(_emissiveAndRoughnessRenderTarget->GetRenderTarget());
+
 			// Bind back buffer.
-			_graphicsDevice->BindRenderTarget(_backBuffer->GetRenderTarget(), _backBuffer->GetDepthTarget());
+			_graphicsDevice->BindRenderTargets(renderTargets, _backBuffer->GetDepthTarget());
 			_graphicsDevice->SetViewport(_viewport);
 			_graphicsDevice->SetScissor(_viewport);
 
@@ -1408,7 +1413,17 @@ namespace TEN::Renderer
 		DrawDisplayItems();
 		DrawDisplaySprites(_gameCamera, true);
 		DrawAllStrings();
-		
+
+		if (staticBackground)
+		{
+			BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
+			BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::PostProcess, _cbPostProcessBuffer.get());
+
+			ApplyGlow(_renderTarget.get(), _gameCamera);
+			ApplyAntialiasing(_renderTarget.get(), _gameCamera);
+			CopyRenderTarget(_renderTarget.get(), _backBuffer.get(), _gameCamera);
+		}
+
 		ClearScene();
 
 		_graphicsDevice->ClearState();

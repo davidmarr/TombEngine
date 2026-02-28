@@ -57,6 +57,7 @@ namespace TEN::Platform
 		void InstallCrashHandler() override;
 		bool CreateDummyTitleLevel(const std::string& levelPath) override;
 		void CheckPrerequisites() override;
+		void ConfigureConsole() override;
 		void HideConsole() override;
 		void ShowErrorMessage(const std::string& msg) override;
 

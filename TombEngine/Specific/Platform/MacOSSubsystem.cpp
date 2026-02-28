@@ -112,6 +112,11 @@ namespace TEN::Platform
 		// No macOS-specific prerequisites to check.
 	}
 
+	void MacOSSubsystem::ConfigureConsole()
+	{
+		// No macOS-specific console things to configure.
+	}
+
 	void MacOSSubsystem::HideConsole()
 	{
 		// No-op on macOS; console hiding is not applicable.

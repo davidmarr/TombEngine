@@ -296,6 +296,8 @@ int main(int argc, char* argv[])
 		ConsoleThread = SDL_CreateThread(ConsoleInput, "ConsoleInput", nullptr);
 		if (ConsoleThread)
 			SDL_DetachThread(ConsoleThread);
+
+		g_Platform->ConfigureConsole();
 	}
 
 	// Initialize logging.

@@ -1098,8 +1098,8 @@ bool CreaturePathfind(ItemInfo* item, Vector3i prevPos, short angle, short tilt)
 		item->Pose.Orientation.x = 0;
 	}
 
-	// Update room number if creature moved to different room.
 	UpdateItemRoom(item->Index);
+
 	return true;
 }
 

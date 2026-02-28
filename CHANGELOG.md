@@ -11,7 +11,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added faster Xorshift32 random number generation method.
 * Added explosion decal effects to Atlantean enemy projectiles.
 * Added new debug page with memory usage statistics and more verbose logging for memory-related crashes.
-* Increased maximum amount of flyby cameras to 1024.
+* Removed original limits for flyby camera and sequence count.
 
 ### Bug fixes
 * Fixed incorrect handling of negative timer values in classic triggers.
@@ -30,6 +30,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed occasional wrong LASER_BEAM collision.
 * Fixed several BADDY1/2 issues.
 * Fixed original issue with BADDY1/2 with rolling out animation ignoring player on a distance larger than 1 block.
+* Fixed teleporting upwards after corner shimmy when another ledge is above.
 * Fixed submerging into the floor when picking up items under low-placed static meshes.
 * Fixed asymmetrically placed plinth pickups (OCB 3 and 4) and allow plinth pickups without static mesh underneath.
 * Fixed broken hardcoded camera when using the TURN_SWITCH.

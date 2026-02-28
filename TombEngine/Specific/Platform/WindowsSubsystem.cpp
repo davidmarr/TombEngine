@@ -445,6 +445,13 @@ namespace TEN::Platform
 		}
 	}
 
+	void WindowsSubsystem::ConfigureConsole()
+	{
+		// Set console to UTF-8 mode for proper Unicode character display.
+		SetConsoleOutputCP(CP_UTF8);
+		SetConsoleCP(CP_UTF8);
+	}
+
 	void WindowsSubsystem::HideConsole()
 	{
 		FreeConsole();

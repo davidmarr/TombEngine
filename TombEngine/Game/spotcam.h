@@ -1,8 +1,10 @@
 #pragma once
+
+#include <unordered_map>
+
 #include "Math/Math.h"
 #include "Specific/clock.h"
 
-constexpr auto MAX_SPOTCAMS = 1024;
 constexpr auto SPOTCAM_CINEMATIC_BARS_HEIGHT = 1.0f / 16;
 constexpr auto SPOTCAM_CINEMATIC_BARS_SPEED = 1.0f;
 
@@ -47,11 +49,10 @@ enum SPOTCAM_FLAGS
 	SCF_CAMERA_ONE_SHOT			= (1 << 15),
 };
 
-extern SPOTCAM SpotCam[MAX_SPOTCAMS];
-extern int SpotCamRemap[MAX_SPOTCAMS];
-extern int CameraCnt[MAX_SPOTCAMS];
+extern std::vector<SPOTCAM> SpotCam;
+extern std::unordered_map<int, int> SpotCamRemap;
+extern std::vector<int> CameraCnt;
 extern int LastSpotCamSequence;
-extern int NumberSpotcams;
 extern bool UseSpotCam;
 extern bool SpotcamSwitched;
 extern bool SpotcamDontDrawLara;
