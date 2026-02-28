@@ -793,7 +793,7 @@ end
 -- @treturn bool `true` if the timer ticked, `false` otherwise.
 function Timer:IsTicking()
     local thisTimer = LevelVars.Engine.Timer.timers[self.name]
-    return not thisTimer.paused and thisTimer.active
+    return not thisTimer.paused and thisTimer.active or false
 end
 
 LevelFuncs.Engine.Timer.Decrease = function ()
