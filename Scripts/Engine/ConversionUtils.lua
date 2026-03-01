@@ -99,8 +99,7 @@ ConversionUtils.FramesToSeconds = function(frames, fps)
         return 0
     end
 
-    -- truncate to 2 decimal places for consistency with SecondsToFrames input
-    return floor((frames / fps) * 100) / 100
+    return frames / fps
 end
 
 --- Convert a hexadecimal color string to a TEN.Color object.
