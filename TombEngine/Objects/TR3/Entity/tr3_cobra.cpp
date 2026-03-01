@@ -172,7 +172,7 @@ namespace TEN::Entities::Creatures::TR3
 			}
 		}
 
-		CreatureJoint(item, 1, tilt);
+		CreatureJoint(item, 1, tilt / 1.5f);
 		CreatureAnimation(itemNumber, angle, 0);
 	}
 }

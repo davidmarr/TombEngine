@@ -106,6 +106,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->intelligent = true;
 		obj->nonLot = true;
 		obj->SetBoneRotationFlags(1, ROT_Z);
+		obj->SetBoneRotationFlags(7, ROT_Z);
 		obj->SetHitEffect();
 	}
 
