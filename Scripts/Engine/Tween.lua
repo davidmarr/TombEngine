@@ -89,7 +89,8 @@
 --	    -- Check if player facing direction changed significantly
 --	    local playerYaw = Lara:GetRotation().y
 --	    local newTarget = -playerYaw + 180  -- Offset because sprite points down
---	    local angleDelta = math.abs(LuaUtil.WrapAngle(newTarget - lastTargetAngle, -180, 180))
+--      -- Use MathUtils.WrapAngle to calculate shortest angle difference between new target and last target
+--	    local angleDelta = math.abs(MathUtils.WrapAngle(newTarget - lastTargetAngle, -180, 180))
 --
 --	    -- Update tween only if rotation changed by more than 3 degrees
 --	    if angleDelta > 3 then
@@ -113,6 +114,16 @@
 
 local Type = require("Engine.Type")
 local LuaUtil = require("Engine.LuaUtil")
+local Util = require("Engine.Util")
+local TableUtils = require("Engine.TableUtils")
+local ConversionUtils = require("Engine.ConversionUtils")
+
+local WrapAngle = Util.WrapAngleRaw
+local TableHasValue = Util.TableHasValue
+local SetTableReadOnly = TableUtils.SetTableReadOnly
+local SecondsToFrames = ConversionUtils.SecondsToFrames
+local FramesToSeconds = ConversionUtils.FramesToSeconds
+
 
 local IsNumber = Type.IsNumber
 local IsVec2 = Type.IsVec2
@@ -182,7 +193,7 @@ local CheckEasingParams = function (functionName, easing, easingParams)
             LogMessage("Warning in ".. functionName .. ": easingParams must be a table for BOUNCE. Using default values '4' and '0.5'", logLevelWarning)
             return {4, 0.5}
         end
-        if not easingParams.bounces or not IsNumber(easingParams.bounces) or easingParams.bounces < 1 or not LuaUtil.IsInteger(easingParams.bounces) then
+        if not easingParams.bounces or not IsNumber(easingParams.bounces) or easingParams.bounces < 1 or (easingParams.bounces % 1 ~= 0) then
             LogMessage("Warning in ".. functionName .. ": easingParams.bounces must be an integer and >= 1 for BOUNCE. Using default value '4'", logLevelWarning)
             easingParams.bounces = 4
         end
@@ -212,7 +223,7 @@ Tween.Mode = {
     PING_PONG = 2,         -- from → to → from
 }
 
-Tween.Mode = LuaUtil.SetTableReadOnly(Tween.Mode)
+Tween.Mode = SetTableReadOnly(Tween.Mode)
 
 Tween.Easing = {
     LERP = 1,
@@ -223,7 +234,7 @@ Tween.Easing = {
     BOUNCE = 6
 }
 
-Tween.Easing = LuaUtil.SetTableReadOnly(Tween.Easing)
+Tween.Easing = SetTableReadOnly(Tween.Easing)
 
 Tween.UpdateMode = {
     GAMEPLAY_ONLY = 1,  -- Update only during normal gameplay (PRELOOP)
@@ -231,7 +242,7 @@ Tween.UpdateMode = {
     ALWAYS = 3          -- Update in both contexts
 }
 
-Tween.UpdateMode = LuaUtil.SetTableReadOnly(Tween.UpdateMode)
+Tween.UpdateMode = SetTableReadOnly(Tween.UpdateMode)
 
 Tween.ColorSpace = {
     RGB = 1,
@@ -239,7 +250,7 @@ Tween.ColorSpace = {
     OKLCH = 3
 }
 
-Tween.ColorSpace = LuaUtil.SetTableReadOnly(Tween.ColorSpace)
+Tween.ColorSpace = SetTableReadOnly(Tween.ColorSpace)
 
 Tween.CallbackType = {
     ON_START = "onStart",
@@ -250,7 +261,7 @@ Tween.CallbackType = {
     ON_FROM = "onFrom"
 }
 
-Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
+Tween.CallbackType = SetTableReadOnly(Tween.CallbackType)
 
 --- Create tween instance
 -- @tparam TweenParameters params Table with parameters
@@ -309,7 +320,7 @@ Tween.Create = function(params)
         LogMessage("Warning in Tween.Create(): params.loopCount must be a positive integer or nil. Using default value 'nil'", logLevelWarning)
         params.loopCount = nil
     end
-    if params.loopCount and not LuaUtil.IsInteger(params.loopCount) then
+    if params.loopCount and params.loopCount % 1 ~= 0 then
         LogMessage("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", logLevelWarning)
         params.loopCount = math.floor(params.loopCount)
     end
@@ -325,13 +336,13 @@ Tween.Create = function(params)
     if params.wrapAngle and not IsNumber(params.from) then
         LogMessage("Warning in Tween.Create(): params.wrapAngle is only supported for numeric values. Flag will be ignored for this tween.", logLevelWarning)
     end
-    if params.mode and not LuaUtil.TableHasValue(Tween.Mode, params.mode) then
+    if params.mode and not TableHasValue(Tween.Mode, params.mode) then
         LogMessage("Warning in Tween.Create(): params.mode has invalid value. Using default value 'ONCE'", logLevelWarning)
     end
-    if params.updateMode and not LuaUtil.TableHasValue(Tween.UpdateMode, params.updateMode) then
+    if params.updateMode and not TableHasValue(Tween.UpdateMode, params.updateMode) then
         LogMessage("Warning in Tween.Create(): params.updateMode has invalid value. Using default value 'GAMEPLAY_ONLY'", logLevelWarning)
     end
-    if params.easing and not LuaUtil.TableHasValue(Tween.Easing, params.easing) then
+    if params.easing and not TableHasValue(Tween.Easing, params.easing) then
         LogMessage("Warning in Tween.Create(): params.easing has invalid value. Using default value 'LERP'", logLevelWarning)
     end
     if params.onStart and not IsLevelFunc(params.onStart) then
@@ -358,9 +369,9 @@ Tween.Create = function(params)
     thisTween.from = params.from
     thisTween.to = params.to
     thisTween.period = params.period
-    thisTween.mode = LuaUtil.TableHasValue(Tween.Mode, params.mode) and params.mode or Tween.Mode.ONCE
-    thisTween.updateMode = LuaUtil.TableHasValue(Tween.UpdateMode, params.updateMode) and params.updateMode or Tween.UpdateMode.GAMEPLAY_ONLY
-    thisTween.easing = LuaUtil.TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
+    thisTween.mode = TableHasValue(Tween.Mode, params.mode) and params.mode or Tween.Mode.ONCE
+    thisTween.updateMode = TableHasValue(Tween.UpdateMode, params.updateMode) and params.updateMode or Tween.UpdateMode.GAMEPLAY_ONLY
+    thisTween.easing = TableHasValue(Tween.Easing, params.easing) and  params.easing or Tween.Easing.LERP
 
     if params.easingParams and thisTween.easing == Tween.Easing.LERP then
         LogMessage("Warning in Tween.Create(): easingParams are not used with LERP easing. Ignoring easingParams.", logLevelWarning)
@@ -375,12 +386,12 @@ Tween.Create = function(params)
     thisTween.loopCount = params.loopCount or nil
     thisTween.autoStart = IsBoolean(params.autoStart) and params.autoStart or false
     thisTween.seamlessLoop = IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
-    -- wrapAngle: only effective for numeric values (uses shortest angular path like LuaUtil.LerpAngle)
+    -- wrapAngle: only effective for numeric values (uses shortest angular path like MathUtils.LerpAngle)
     thisTween.wrapAngle = IsBoolean(params.wrapAngle) and params.wrapAngle and IsNumber(params.from) or false
 
     -- Pre-calculate effectiveTo for wrapAngle (shortest angular path)
     if thisTween.wrapAngle then
-        local delta = LuaUtil.WrapAngle(thisTween.to - thisTween.from, -180, 180)
+        local delta = WrapAngle(thisTween.to - thisTween.from, -180, 180)
         thisTween.effectiveTo = thisTween.from + delta
     end
 
@@ -389,7 +400,7 @@ Tween.Create = function(params)
     thisTween.paused = false
 
     thisTween.interpolation = TWEEN_INTERPOLATIONS[thisTween.easing]
-    thisTween.interpolationDuration = LuaUtil.SecondsToFrames(thisTween.period)
+    thisTween.interpolationDuration = SecondsToFrames(thisTween.period)
 
     -- Interpolation state
     thisTween.elapsed = 0
@@ -641,7 +652,7 @@ function Tween:SetProgress(t)
     if not IsNumber(t) then
         return LogMessage("Error in Tween:SetProgress(t): t must be a number", logLevelError)
     end
-    local clampT = LuaUtil.Clamp(t, 0, 1)
+    local clampT = math.max(0, math.min(1, t))
     LevelVars.Engine.Tween.tweens[self.name].progress = clampT
 end
 
@@ -658,7 +669,7 @@ function Tween:GetTimeRemaining()
     if remainingFrames < 0 then
         remainingFrames = 0
     end
-    return LuaUtil.Round(LuaUtil.FramesToSeconds(remainingFrames), 2)  -- Assuming 30 FPS
+    return LuaUtil.Round(FramesToSeconds(remainingFrames), 2)  -- Assuming 30 FPS
 end
 
 --- Get the period of the tween (in seconds)
@@ -684,7 +695,7 @@ function Tween:SetPeriod(period)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.period = period
-    t.interpolationDuration = LuaUtil.SecondsToFrames(period)
+    t.interpolationDuration = SecondsToFrames(period)
 end
 
 --- Get the 'from' value of the tween
@@ -715,7 +726,7 @@ function Tween:SetFrom(value)
     t.from = value
     -- Recalculate effectiveTo if wrapAngle is active
     if t.wrapAngle then
-        local delta = LuaUtil.WrapAngle(t.to - t.from, -180, 180)
+        local delta = WrapAngle(t.to - t.from, -180, 180)
         t.effectiveTo = t.from + delta
     end
 end
@@ -748,7 +759,7 @@ function Tween:SetTo(value)
     t.to = value
     -- Recalculate effectiveTo if wrapAngle is active
     if t.wrapAngle then
-        local delta = LuaUtil.WrapAngle(t.to - t.from, -180, 180)
+        local delta = WrapAngle(t.to - t.from, -180, 180)
         t.effectiveTo = t.from + delta
     end
 end
@@ -788,7 +799,7 @@ function Tween:SetFromAndTo(from, to)
     t.to = to
     -- Recalculate effectiveTo if wrapAngle is active
     if t.wrapAngle then
-        local delta = LuaUtil.WrapAngle(t.to - t.from, -180, 180)
+        local delta = WrapAngle(t.to - t.from, -180, 180)
         t.effectiveTo = t.from + delta
     end
 end
@@ -817,7 +828,7 @@ end
 --     Tween.Get("myTween"):SetEasing(Tween.Easing.SMOOTHSTEP, {edge0 = 0.2, edge1 = 0.8})
 -- end
 function Tween:SetEasing(easing, params)
-    if not LuaUtil.TableHasValue(Tween.Easing, easing) then
+    if not TableHasValue(Tween.Easing, easing) then
         return LogMessage("Error in Tween:SetEasing(easing): invalid easing value", logLevelError)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
@@ -865,12 +876,15 @@ end
 --     Tween.Get("myTween"):SetLoopCount(5)  -- Set loop count to 5
 -- end
 function Tween:SetLoopCount(count)
-    if not (IsNull(count) or (LuaUtil.IsInteger(count) and count > 0)) then
-        return LogMessage("Error in Tween:SetLoopCount(): count must be a positive integer or nil", logLevelError)
-    end
-    if not LuaUtil.IsInteger(count) then
-        LogMessage("Warning in Tween:SetLoopCount(): count is not an integer, flooring the value", logLevelWarning)
-        count = math.floor(count)
+    if count ~= nil then
+        if not IsNumber(count) or count <= 0 then
+            return LogMessage("Error in Tween:SetLoopCount(): count deve essere un intero positivo o nil", logLevelError)
+        end
+
+        if count % 1 ~= 0 then
+            LogMessage("Warning in Tween:SetLoopCount(): count non è un intero, arrotondamento (floor)", logLevelWarning)
+            count = math.floor(count)
+        end
     end
     LevelVars.Engine.Tween.tweens[self.name].loopCount = count
 end
@@ -893,7 +907,7 @@ end
 --     Tween.Get("myTween"):SetUpdateMode(Tween.UpdateMode.ALWAYS)
 -- end
 function Tween:SetUpdateMode(mode)
-    if not LuaUtil.TableHasValue(Tween.UpdateMode, mode) then
+    if not TableHasValue(Tween.UpdateMode, mode) then
         return LogMessage("Error in Tween:SetUpdateMode(mode): invalid updateMode value", logLevelError)
     end
     LevelVars.Engine.Tween.tweens[self.name].updateMode = mode
@@ -926,7 +940,7 @@ end
 --     Tween.Get("myTween"):SetCallback(Tween.CallbackType.ON_UPDATE, LevelFuncs.MyTweenOnUpdate)
 -- end
 function Tween:SetCallback(callbackType, func)
-    if not LuaUtil.TableHasValue(Tween.CallbackType, callbackType) then
+    if not TableHasValue(Tween.CallbackType, callbackType) then
         return LogMessage("Error in Tween:SetCallback(callbackType, func): invalid callbackType", logLevelError)
     end
     if not IsLevelFunc(func) then
