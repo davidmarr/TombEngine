@@ -74,7 +74,7 @@ function Get-FieldDocumentation {
         $line = $Lines[$i].Trim()
 
         if ($line.StartsWith('///') -or $line.StartsWith('//')) {
-            if ($line -match '//\s*@tfield(?:\[([^\]]*)\])?\s+(\w+)\s+\w+\s+(.+)$') {
+            if ($line -match '//\s*@tfield(?:\[([^\]]*)\])?\s+([\w.:]+)\s+\w+\s+(.+)$') {
                 # Extract optional modifiers, type and description from @tfield line
                 $optModifiers = $matches[1]
                 $fieldType = $matches[2]
@@ -106,7 +106,15 @@ function Get-FieldDocumentation {
 
     # Build description from collected comment lines
     if ($commentLines.Count -gt 0) {
-        $description = $commentLines -join " "
+        $joinedComments = $commentLines -join " "
+
+        if ([string]::IsNullOrWhiteSpace($description)) {
+            # No existing description (e.g., from @tfield); use comment lines as description.
+            $description = $joinedComments
+        } else {
+            # Existing description present; append additional comment lines.
+            $description = "$description $joinedComments"
+        }
     }
 
     return @{
