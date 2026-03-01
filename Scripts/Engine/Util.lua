@@ -180,8 +180,6 @@ Util.WrapAngleRaw = function(angle, minVal, range)
     return angle - range * floor((angle - minVal) / range)
 end
 
-
-
 -- Support function for HSL to Color conversion (no type checking, used internally)
 -- Takes h, s, l, a as separate parameters to avoid table allocation
 -- Returns a Color object directly
