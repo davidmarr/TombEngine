@@ -112,7 +112,7 @@ namespace TEN::Entities::Creatures::TR3
 				if (abs(AI.angle) < turnStep)
 					item->Pose.Orientation.y += AI.angle;
 				else if (AI.angle < 0)
-					item->Pose.Orientation.y -= turnStep - ANGLE(2.0f);
+					item->Pose.Orientation.y -= turnStep;
 				else
 					item->Pose.Orientation.y += turnStep;
 			}
