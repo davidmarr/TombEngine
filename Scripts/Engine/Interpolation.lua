@@ -147,29 +147,17 @@ local ColorToOKLchRaw = Util.ColorToOKLchRaw
 local OKLchToColorRaw = Util.OKLchToColorRaw
 
 local IsNumber = Type.IsNumber
-local IsVec2 = Type.IsVec2
-local IsVec3 = Type.IsVec3
 local IsColor = Type.IsColor
-local IsTime = Type.IsTime
-local IsRotation = Type.IsRotation
 local IsBoolean = Type.IsBoolean
-local IsString = Type.IsString
 local IsTable = Type.IsTable
-local IsEnumValue = Type.IsEnumValue
 
 local floor = math.floor
 local max = math.max
 local min = math.min
-local random = math.random
-local randomseed = math.randomseed
 local abs = math.abs
 local sin = math.sin
 local cos = math.cos
 local asin = math.asin
-local atan = math.atan
-local deg = math.deg
-local sqrt = math.sqrt
-local rad = math.rad
 local pi = math.pi
 
 local LogMessage  = TEN.Util.PrintLog
@@ -177,11 +165,7 @@ local logLevelEnums = TEN.Util.LogLevel
 local logLevelError  = logLevelEnums.ERROR
 local logLevelWarning = logLevelEnums.WARNING
 
-local Vec2 = TEN.Vec2
-local Vec3 = TEN.Vec3
-local Rotation = TEN.Rotation
 local Color = TEN.Color
-local Time = TEN.Time
 
 -- Helper function for hue interpolation with different modes
 local function InterpolateHue(h1, h2, t, mode)
