@@ -2,7 +2,7 @@
 --- Lua support functions to simplify operations in scripts.
 ---
 --- **Design Philosophy:**
---- LuaUtil is designed primarily for:
+--- GeneralUtils is designed primarily for:
 --- 
 --- - Writing Lua modules and scripts
 --- - Simplifying Node creation in TombEditor's Node Editor
@@ -17,8 +17,8 @@
 ---
 --- To use, include the module with:
 ---
----	local LuaUtils = require("Engine.LuaUtils")
--- @luautil LuaUtils
+---	local GeneralUtils = require("Engine.GeneralUtils")
+-- @luautil GeneralUtils
 
 local Type= require("Engine.Type")
 local MAX_DEPTH = 10        -- Maximum recursion depth for deep operations (prevents stack overflow)
@@ -82,7 +82,7 @@ local LogMessage  = TEN.Util.PrintLog
 local _nextCopyId = 1          -- Progressive ID generator for each copy operation
 local _activeCopies = {}       -- Tracks active copy operations: { [id] = { depth, elementCount, visited } }
 
-local LuaUtils = {}
+local GeneralUtils = {}
 
 -- Support function for deep table copy
 local function DeepCopyRecursive(original, copyId)
@@ -90,7 +90,7 @@ local function DeepCopyRecursive(original, copyId)
 
     -- Check maximum depth
     if context.depth >= MAX_DEPTH then
-        LogMessage("Warning in LuaUtils.CloneValue: Maximum depth (" ..  MAX_DEPTH .. ") exceeded.", logLevelWarning)
+        LogMessage("Warning in GeneralUtils.CloneValue: Maximum depth (" ..  MAX_DEPTH .. ") exceeded.", logLevelWarning)
         return {}
     end
 
@@ -109,7 +109,7 @@ local function DeepCopyRecursive(original, copyId)
 
         -- Check maximum elements
         if context.elementCount >= MAX_ELEMENTS then
-            LogMessage("Warning in LuaUtils.CloneValue: Maximum elements (" .. MAX_ELEMENTS .. ") exceeded.", logLevelWarning)
+            LogMessage("Warning in GeneralUtils.CloneValue: Maximum elements (" .. MAX_ELEMENTS .. ") exceeded.", logLevelWarning)
             return copy
         end
 
@@ -161,32 +161,32 @@ end
 -- print(row[1].x)  -- Prints 500! Original was modified
 --
 -- -- Solution: use CloneValue
--- local t2 = LuaUtils.CloneValue(t1.rotation)  -- Independent copy
+-- local t2 = GeneralUtils.CloneValue(t1.rotation)  -- Independent copy
 -- t2.x = 500
 -- print(row[1].x)  -- Prints 244 (original unchanged)
 --
 -- -- Example with Vec3:
 -- local pos1 = TEN.Vec3(100, 200, 300)
--- local pos2 = LuaUtils.CloneValue(pos1)
+-- local pos2 = GeneralUtils.CloneValue(pos1)
 -- pos2.x = 999
 -- -- pos1.x is still 100
 --
 -- -- Example with Color:
 -- local color1 = TEN.Color(255, 0, 0, 255)
--- local color2 = LuaUtils.CloneValue(color1)
+-- local color2 = GeneralUtils.CloneValue(color1)
 -- color2.r = 0
 -- -- color1.r is still 255
 --
 -- -- Example with table:
 -- local config = { speed = 10, enabled = true }
--- local configCopy = LuaUtils.CloneValue(config)
+-- local configCopy = GeneralUtils.CloneValue(config)
 -- configCopy.speed = 20
 -- -- config.speed is still 10
 --
 -- -- Example with primitives (returned as-is):
--- local num = LuaUtils.CloneValue(42)        -- Returns 42
--- local str = LuaUtils.CloneValue("hello")   -- Returns "hello"
--- local bool = LuaUtils.CloneValue(true)     -- Returns true
+-- local num = GeneralUtils.CloneValue(42)        -- Returns 42
+-- local str = GeneralUtils.CloneValue("hello")   -- Returns "hello"
+-- local bool = GeneralUtils.CloneValue(true)     -- Returns true
 --
 -- -- Practical use: safe parameter passing
 -- function ModifyPosition(pos)
@@ -194,11 +194,11 @@ end
 --         TEN.Util.PrintLog("Error: expected Vec3", TEN.Util.LogLevel.ERROR)
 --         return
 --     end
---     local safePos = LuaUtils.CloneValue(pos)
+--     local safePos = GeneralUtils.CloneValue(pos)
 --     safePos.x = safePos.x + 100
 --     return safePos  -- Original pos is unchanged
 -- end
-LuaUtils.CloneValue = function(value)
+GeneralUtils.CloneValue = function(value)
     -- Handle primitive types (these are copied by value in Lua)
     local valueType = type(value)
     if valueType == "nil" or valueType == "boolean" or valueType == "number" or valueType == "string" then
@@ -249,7 +249,7 @@ LuaUtils.CloneValue = function(value)
     end
 
     -- Unsupported type
-    LogMessage("Warning in LuaUtils.CloneValue: unsupported type '" .. valueType .. "'. Returning nil.", logLevelWarning)
+    LogMessage("Warning in GeneralUtils.CloneValue: unsupported type '" .. valueType .. "'. Returning nil.", logLevelWarning)
     return nil
 end
 
@@ -266,25 +266,25 @@ end
 --
 -- -- Solution with GetOrDefault:
 -- local enabled = false
--- local result = LuaUtils.GetOrDefault(enabled, true)  -- Result: false ✅ (correct!)
+-- local result = GeneralUtils.GetOrDefault(enabled, true)  -- Result: false ✅ (correct!)
 --
 -- -- Example with 0 (another falsy value in 'or'):
 -- local damage = 0
 -- local finalDamage = damage or 10  -- Result: 10 ❌ (wrong! 0 is valid)
--- local finalDamage = LuaUtils.GetOrDefault(damage, 10)  -- Result: 0 ✅ (correct!)
+-- local finalDamage = GeneralUtils.GetOrDefault(damage, 10)  -- Result: 0 ✅ (correct!)
 --
 -- -- Example with nil (works like 'or'):
 -- local speed = nil
--- local finalSpeed = LuaUtils.GetOrDefault(speed, 100)  -- Result: 100 ✅
+-- local finalSpeed = GeneralUtils.GetOrDefault(speed, 100)  -- Result: 100 ✅
 --
 -- -- Example with configuration:
 -- local config = { volume = 0, mute = false }
--- local volume = LuaUtils.GetOrDefault(config.volume, 100)  -- Result: 0 (not 100!)
--- local mute = LuaUtils.GetOrDefault(config.mute, true)     -- Result: false (not true!)
+-- local volume = GeneralUtils.GetOrDefault(config.volume, 100)  -- Result: 0 (not 100!)
+-- local mute = GeneralUtils.GetOrDefault(config.mute, true)     -- Result: false (not true!)
 --
 -- -- Practical use: optional function parameters
 -- function SetPlayerSpeed(speed)
---     speed = LuaUtils.GetOrDefault(speed, 10)  -- Default to 10 if not provided
+--     speed = GeneralUtils.GetOrDefault(speed, 10)  -- Default to 10 if not provided
 --     player.speed = speed
 -- end
 -- SetPlayerSpeed(0)      -- Sets speed to 0 (not 10!)
@@ -293,8 +293,8 @@ end
 --
 -- -- Example with table field:
 -- local settings = { showHUD = false }  -- User explicitly disabled HUD
--- local showHUD = LuaUtils.GetOrDefault(settings.showHUD, true)  -- Result: false (respects user choice)
-LuaUtils.GetOrDefault = function(value, defaultValue)
+-- local showHUD = GeneralUtils.GetOrDefault(settings.showHUD, true)  -- Result: false (respects user choice)
+GeneralUtils.GetOrDefault = function(value, defaultValue)
     if value == nil then
         return defaultValue
     end
@@ -308,36 +308,36 @@ end
 -- @treturn bool True if the value is nil, empty string, or empty table. False otherwise.
 -- @usage
 -- -- Nil values:
--- local isEmpty = LuaUtils.IsEmpty(nil)  -- Result: true
+-- local isEmpty = GeneralUtils.IsEmpty(nil)  -- Result: true
 --
 -- -- Empty strings:
--- local isEmpty = LuaUtils.IsEmpty("")  -- Result: true
--- local isEmpty = LuaUtils.IsEmpty("   ")  -- Result: false (not empty, contains spaces)
+-- local isEmpty = GeneralUtils.IsEmpty("")  -- Result: true
+-- local isEmpty = GeneralUtils.IsEmpty("   ")  -- Result: false (not empty, contains spaces)
 --
 -- -- Empty tables:
--- local isEmpty = LuaUtils.IsEmpty({})  -- Result: true
--- local isEmpty = LuaUtils.IsEmpty({ a = 1 })  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty({})  -- Result: true
+-- local isEmpty = GeneralUtils.IsEmpty({ a = 1 })  -- Result: false
 --
 -- -- Important: Lua doesn't store nil values in tables!
--- local isEmpty = LuaUtils.IsEmpty({nil, nil, nil})  -- Result: true (table is actually empty!)
--- local isEmpty = LuaUtils.IsEmpty({1, nil, 3})      -- Result: false (has elements at index 1 and 3)
+-- local isEmpty = GeneralUtils.IsEmpty({nil, nil, nil})  -- Result: true (table is actually empty!)
+-- local isEmpty = GeneralUtils.IsEmpty({1, nil, 3})      -- Result: false (has elements at index 1 and 3)
 -- -- Explanation: In Lua, {nil, nil, nil} creates an empty table because nil values are not stored.
 --
 -- -- Numbers (never empty, even 0):
--- local isEmpty = LuaUtils.IsEmpty(0)  -- Result: false
--- local isEmpty = LuaUtils.IsEmpty(-5)  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty(0)  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty(-5)  -- Result: false
 --
 -- -- Booleans (never empty, even false):
--- local isEmpty = LuaUtils.IsEmpty(false)  -- Result: false
--- local isEmpty = LuaUtils.IsEmpty(true)  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty(false)  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty(true)  -- Result: false
 --
 -- -- TEN types (never empty):
--- local isEmpty = LuaUtils.IsEmpty(TEN.Vec3(0, 0, 0))  -- Result: false
--- local isEmpty = LuaUtils.IsEmpty(TEN.Color(0, 0, 0, 0))  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty(TEN.Vec3(0, 0, 0))  -- Result: false
+-- local isEmpty = GeneralUtils.IsEmpty(TEN.Color(0, 0, 0, 0))  -- Result: false
 --
 -- -- Practical use: validate user input
 -- function ProcessName(name)
---     if LuaUtils.IsEmpty(name) then
+--     if GeneralUtils.IsEmpty(name) then
 --         TEN.Util.PrintLog("Error: Name cannot be empty!", TEN.Util.LogLevel.ERROR)
 --         return false
 --     end
@@ -347,7 +347,7 @@ end
 --
 -- -- Practical use: check if table has data
 -- local inventory = {}
--- if LuaUtils.IsEmpty(inventory) then
+-- if GeneralUtils.IsEmpty(inventory) then
 --     TEN.Util.PrintLog("Inventory is empty", TEN.Util.LogLevel.INFO)
 -- else
 --     -- Show inventory...
@@ -355,10 +355,10 @@ end
 --
 -- -- Practical use: validate configuration
 -- local config = LoadConfig()
--- if LuaUtils.IsEmpty(config) then
+-- if GeneralUtils.IsEmpty(config) then
 --     config = GetDefaultConfig()  -- Use defaults if config is empty
 -- end
-LuaUtils.IsEmpty = function(value)
+GeneralUtils.IsEmpty = function(value)
     -- Check for nil
     if value == nil then
         return true
@@ -392,18 +392,18 @@ end
 -- @treturn[1] bool The result of the comparison.
 -- @treturn[2] bool false If an error occurs (invalid operator or type mismatch), with an error message.
 -- @usage
--- local isEqual = LuaUtils.CompareValues(5, 5, 0) -- true
--- local isNotEqual = LuaUtils.CompareValues("hello", "world", 1) -- true
--- local isLessThan = LuaUtils.CompareValues(3.5, 4.0, 2) -- true
--- local isGreaterOrEqual = LuaUtils.CompareValues(TEN.Time(10), TEN.Time(5), 5) -- true
-LuaUtils.CompareValues = function(operand, reference, operator)
+-- local isEqual = GeneralUtils.CompareValues(5, 5, 0) -- true
+-- local isNotEqual = GeneralUtils.CompareValues("hello", "world", 1) -- true
+-- local isLessThan = GeneralUtils.CompareValues(3.5, 4.0, 2) -- true
+-- local isGreaterOrEqual = GeneralUtils.CompareValues(TEN.Time(10), TEN.Time(5), 5) -- true
+GeneralUtils.CompareValues = function(operand, reference, operator)
     -- Validate operator
     local op = CheckOperator(operator)
     if not op then
-        LogMessage("Error in LuaUtils.CompareValues: invalid operator for comparison", logLevelError)
+        LogMessage("Error in GeneralUtils.CompareValues: invalid operator for comparison", logLevelError)
         return false
     end
-    local errorMessage = "Error in LuaUtils.CompareValues: operand and reference must be equal types."
+    local errorMessage = "Error in GeneralUtils.CompareValues: operand and reference must be equal types."
 
     -- Lazy type checking
     if IsNumber(operand) then
@@ -430,7 +430,7 @@ LuaUtils.CompareValues = function(operand, reference, operator)
         return op(operand, reference)
     end
 
-    LogMessage("Error in LuaUtils.CompareValues: unsupported type.", logLevelError)
+    LogMessage("Error in GeneralUtils.CompareValues: unsupported type.", logLevelError)
     return false
 end
 
@@ -441,17 +441,17 @@ end
 -- @treturn[1] bool True if value is within range.
 -- @treturn[2] bool false If an error occurs.
 -- @usage
--- local inRange = LuaUtils.IsInRange(5, 1, 10) -- true
--- local outOfRange = LuaUtils.IsInRange(15, 1, 10) -- false
--- local errorCase = LuaUtils.IsInRange(5, 10, 1) -- false (minValue greater than maxValue)
-LuaUtils.IsInRange = function(value, minValue, maxValue)
+-- local inRange = GeneralUtils.IsInRange(5, 1, 10) -- true
+-- local outOfRange = GeneralUtils.IsInRange(15, 1, 10) -- false
+-- local errorCase = GeneralUtils.IsInRange(5, 10, 1) -- false (minValue greater than maxValue)
+GeneralUtils.IsInRange = function(value, minValue, maxValue)
     if not (IsNumber(value) and IsNumber(minValue) and IsNumber(maxValue)) then
-        LogMessage("Error in LuaUtils.IsInRange: all parameters must be numbers.", logLevelError)   
+        LogMessage("Error in GeneralUtils.IsInRange: all parameters must be numbers.", logLevelError)   
         return false
     end
 
     if minValue > maxValue then
-        LogMessage("Error in LuaUtils.IsInRange: minValue cannot be greater than maxValue.", logLevelError)
+        LogMessage("Error in GeneralUtils.IsInRange: minValue cannot be greater than maxValue.", logLevelError)
         return false
     end
 
@@ -479,7 +479,7 @@ end
 -- </table>
 --
 -- <h3>Examples usage:</h3>
--- `local msg = LuaUtils.Styled(" ALERT ", "black", "bg_red")`
+-- `local msg = GeneralUtils.Styled(" ALERT ", "black", "bg_red")`
 --
 -- `TEN.Util.PrintLog(msg, TEN.Util.LogLevel.WARNING)`
 --
@@ -489,14 +489,14 @@ end
 -- <span style="background-color: red; color: black; padding: 0 4px; font-weight: bold;">ALERT</span>
 -- </code>
 --
--- <br>`LuaUtils.ColorLog("{{red}}Error:{{/}} file not found")`
+-- <br>`GeneralUtils.ColorLog("{{red}}Error:{{/}} file not found")`
 --
 -- Console output: <code style="background: #000; color: #fff; padding: 4px; font-family: monospace;">
 -- [2026-Feb-26 15:01:55]
 -- <span style="color: lime;">[info]</span>
 -- <span style="color: red;">Error:</span> file not found
 -- </code>
--- <h3>Note:</h3> LuaUtils automatically protects your text from special sequences that could confuse the console.
+-- <h3>Note:</h3> GeneralUtils automatically protects your text from special sequences that could confuse the console.
 -- If your message contains strange characters like "[31m" or "[0m", you will not break the display:
 -- the system neutralizes them invisibly. You can write any text without worrying about errors.
 -- You do not need to know ANSI codes: just use tags and style names.
@@ -513,60 +513,60 @@ end
 -- @treturn[2] string The original text unchanged if no valid styles are provided or an error occurs.
 -- @usage
 -- -- Single color:
--- local msg = LuaUtils.Styled("Hello", "red")
+-- local msg = GeneralUtils.Styled("Hello", "red")
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO)
 -- -- Console: "Hello" in red
 --
 -- -- Multiple styles combined:
--- local msg = LuaUtils.Styled("CRITICAL", "red", "bold", "underline")
+-- local msg = GeneralUtils.Styled("CRITICAL", "red", "bold", "underline")
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.ERROR)
 -- -- Console: "CRITICAL" in red, bold and underlined
 --
 -- -- Background color:
--- local msg = LuaUtils.Styled(" ALERT ", "white", "bg_red")
+-- local msg = GeneralUtils.Styled(" ALERT ", "white", "bg_red")
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.WARNING)
 -- -- Console: " ALERT " with white text on red background
 --
 -- -- Concatenate multiple styled segments:
--- local line = LuaUtils.Styled("HP:", "cyan") .. " " .. LuaUtils.Styled("0", "red", "bold") .. "/" .. LuaUtils.Styled("100", "green")
+-- local line = GeneralUtils.Styled("HP:", "cyan") .. " " .. GeneralUtils.Styled("0", "red", "bold") .. "/" .. GeneralUtils.Styled("100", "green")
 -- TEN.Util.PrintLog(line, TEN.Util.LogLevel.INFO)
 -- -- Console: "HP:" in cyan, "0" in red bold, "/" default, "100" in green
 --
 -- -- Bold header with normal body:
--- local header = LuaUtils.Styled("[TRAP]", "yellow", "bold")
+-- local header = GeneralUtils.Styled("[TRAP]", "yellow", "bold")
 -- local body = " spike_01 activated at frame 120"
 -- TEN.Util.PrintLog(header .. body, TEN.Util.LogLevel.INFO)
 -- -- Console: "[TRAP]" bold yellow, rest in default color
 --
 -- -- Build reusable labels:
--- local OK   = LuaUtils.Styled("[OK]", "green", "bold")
--- local FAIL = LuaUtils.Styled("[FAIL]", "red", "bold")
--- local WARN = LuaUtils.Styled("[WARN]", "yellow", "bold")
+-- local OK   = GeneralUtils.Styled("[OK]", "green", "bold")
+-- local FAIL = GeneralUtils.Styled("[FAIL]", "red", "bold")
+-- local WARN = GeneralUtils.Styled("[WARN]", "yellow", "bold")
 -- TEN.Util.PrintLog(OK .. " Door opened", TEN.Util.LogLevel.INFO)
 -- TEN.Util.PrintLog(FAIL .. " Texture not found", TEN.Util.LogLevel.ERROR)
 -- TEN.Util.PrintLog(WARN .. " Low health", TEN.Util.LogLevel.WARNING)
 --
 -- -- Highlighted value in a debug line:
 -- local pos = entity:GetPosition()
--- local msg = "Position: " .. LuaUtils.Styled(tostring(pos), "cyan", "bold")
+-- local msg = "Position: " .. GeneralUtils.Styled(tostring(pos), "cyan", "bold")
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO)
 --
 -- -- Blinking warning:
--- local msg = LuaUtils.Styled("WARNING: Lava rising!", "red", "blink")
+-- local msg = GeneralUtils.Styled("WARNING: Lava rising!", "red", "blink")
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.WARNING)
 -- Console: "WARNING: Lava rising!" in blinking red
 --
 -- -- Invalid style names are ignored (no crash):
--- local msg = LuaUtils.Styled("Hello", "pink")  -- "pink" is not valid
+-- local msg = GeneralUtils.Styled("Hello", "pink")  -- "pink" is not valid
 -- TEN.Util.PrintLog(msg, TEN.Util.LogLevel.INFO) -- Console: "Hello" in default color (invalid style ignored)
 -- -- Result: "Hello" without any styling
 --
 -- -- No styles provided (text returned as-is):
--- local msg = LuaUtils.Styled("Hello")
+-- local msg = GeneralUtils.Styled("Hello")
 -- -- Result: "Hello"
-LuaUtils.Styled = function(text, ...)
+GeneralUtils.Styled = function(text, ...)
     if not IsString(text) then
-        LogMessage("Error in LuaUtils.Styled: text is not a string.", logLevelError)
+        LogMessage("Error in GeneralUtils.Styled: text is not a string.", logLevelError)
         return ""
     end
 
@@ -607,62 +607,62 @@ end
 -- @tparam[opt=2] number logLevel The TEN log level: 0 = ERROR, 1 = WARNING, 2 = INFO.
 -- @usage
 -- -- Simple colored message:
--- LuaUtils.ColorLog("{{red}}Error: texture not found{{/}}")
+-- GeneralUtils.ColorLog("{{red}}Error: texture not found{{/}}")
 -- -- Console: "Error: texture not found" in red
 --
 -- -- Multiple colors in one line:
--- LuaUtil.ColorLog("{{green}}Loaded:{{/}} room_01 — {{yellow}}Skipped:{{/}} room_02")
+-- GeneralUtils.ColorLog("{{green}}Loaded:{{/}} room_01 — {{yellow}}Skipped:{{/}} room_02")
 -- -- Console: "Loaded:" green, " room_01 — " default, "Skipped:" yellow, " room_02" default
 --
 -- -- Combining color and style:
--- LuaUtils.ColorLog("{{red}}{{bold}}DANGER:{{/}} Lava is rising!")
+-- GeneralUtils.ColorLog("{{red}}{{bold}}DANGER:{{/}} Lava is rising!")
 -- -- Console: "DANGER:" in red bold, " Lava is rising!" in default
 --
 -- -- Selective reset (remove bold, keep color):
--- LuaUtils.ColorLog("{{red}}{{bold}}Title{{/bold}} still red{{/}} normal text")
+-- GeneralUtils.ColorLog("{{red}}{{bold}}Title{{/bold}} still red{{/}} normal text")
 -- -- Console: "Title" red bold, " still red" red, " normal text" default
 --
 -- -- Selective reset (change color, keep bold):
--- LuaUtils.ColorLog("{{bold}}{{red}}Red bold {{/color}}{{blue}}Blue bold{{/}}")
+-- GeneralUtils.ColorLog("{{bold}}{{red}}Red bold {{/color}}{{blue}}Blue bold{{/}}")
 -- -- Console: "Red bold " red bold, "Blue bold" blue bold
 --
 -- -- Background color:
--- LuaUtils.ColorLog("{{bg_red}}{{white}} CRITICAL {{/}} System failure")
+-- GeneralUtils.ColorLog("{{bg_red}}{{white}} CRITICAL {{/}} System failure")
 -- -- Console: " CRITICAL " white on red, " System failure" default
 --
 -- -- Underlined text:
--- LuaUtils.ColorLog("Press {{underline}}{{bold}}E{{/}} to interact")
+-- GeneralUtils.ColorLog("Press {{underline}}{{bold}}E{{/}} to interact")
 -- -- Console: "Press " default, "E" bold underlined, " to interact" default
 --
 -- -- Blinking text:
--- LuaUtils.ColorLog("{{red}}{{blink}}WARNING: Lava rising!{{/}}")
+-- GeneralUtils.ColorLog("{{red}}{{blink}}WARNING: Lava rising!{{/}}")
 -- -- Console: "WARNING: Lava rising!" in blinking red
 --
 -- -- Dim text:
--- LuaUtils.ColorLog("{{dim}}Debug: value = 42{{/}}")
+-- GeneralUtils.ColorLog("{{dim}}Debug: value = 42{{/}}")
 -- -- Console: "Debug: value = 42" in dimmed color
 --
 -- -- With log level (default is INFO = 2):
--- LuaUtils.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)                    -- ERROR
--- LuaUtils.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                            -- WARNING
--- LuaUtils.ColorLog("{{green}}All systems operational{{/}}")                          -- INFO (default)
--- LuaUtils.ColorLog("{{green}}All systems operational{{/}}", TEN.Util.LogLevel.INFO)  -- equivalent
+-- GeneralUtils.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)                    -- ERROR
+-- GeneralUtils.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                            -- WARNING
+-- GeneralUtils.ColorLog("{{green}}All systems operational{{/}}")                          -- INFO (default)
+-- GeneralUtils.ColorLog("{{green}}All systems operational{{/}}", TEN.Util.LogLevel.INFO)  -- equivalent
 --
 -- -- Text without tags (printed as-is):
--- LuaUtils.ColorLog("Plain text, no styling")
+-- GeneralUtils.ColorLog("Plain text, no styling")
 -- -- Console: "Plain text, no styling" in default color
 --
 -- -- Invalid tags are silently removed:
--- LuaUtils.ColorLog("{{pink}}Hello{{/}}")
+-- GeneralUtils.ColorLog("{{pink}}Hello{{/}}")
 -- -- Console: "Hello" in default color ("pink" is not a valid style)
 --
 -- -- Practical: debug header with separator
--- LuaUtils.ColorLog("{{cyan}}{{bold}}========== LEVEL START =========={{/}}")
+-- GeneralUtils.ColorLog("{{cyan}}{{bold}}========== LEVEL START =========={{/}}")
 --
 -- -- Mixed with StringUtils.Format function:
 -- local enemy = "Skeleton"
 -- local dmg = 50
--- LuaUtils.ColorLog(
+-- GeneralUtils.ColorLog(
 --     StringUtils.Format(
 --         "{{cyan}}{enemy}{{/}} dealt {{red}}{{bold}}{dmg}{{/}} damage", 
 --         { enemy = enemy, dmg = dmg }
@@ -671,7 +671,7 @@ end
 -- -- Console: "Skeleton" cyan, " dealt " default, "50" red bold, " damage" default
 --
 -- -- Practical: entity spawn log
--- LuaUtils.ColorLog(
+-- GeneralUtils.ColorLog(
 --     StringUtils.Format(
 --         "{{green}}+{{/}} Spawned {{bold}}{name}{{/}} at {pos}", 
 --         { name = "enemy_mummy_01", pos = TEN.Vec3(1024, -512, 3072) }
@@ -682,22 +682,22 @@ end
 -- -- Styled status line:
 -- local hp = 15
 -- local maxHp = 100
--- LuaUtils.ColorLog(
+-- GeneralUtils.ColorLog(
 --     StringUtils.Format(
 --         "{{red}}HP: {{bold}}{hp}{{/bold}}/{maxHp}{{/}}", 
 --         { hp = hp, maxHp = maxHp }
 --     )
 -- )
 -- -- Console: "HP: " red, "15" red bold, "/100" red
-LuaUtils.ColorLog = function(str, logLevel)
+GeneralUtils.ColorLog = function(str, logLevel)
     if not IsString(str) then
-        LogMessage("Error in LuaUtils.ColorLog: str is not a string.", logLevelError)
+        LogMessage("Error in GeneralUtils.ColorLog: str is not a string.", logLevelError)
         return
     end
 
     logLevel = logLevel or 2
     if not IsEnumValue(logLevel, logLevelEnums, false) then
-        LogMessage("Error in LuaUtils.ColorLog: logLevel is not a valid value. It must be 0, 1, or 2.", logLevelError)
+        LogMessage("Error in GeneralUtils.ColorLog: logLevel is not a valid value. It must be 0, 1, or 2.", logLevelError)
         return
     end
     local safeText = NeutralizeANSI(str)
@@ -716,4 +716,4 @@ LuaUtils.ColorLog = function(str, logLevel)
     LogMessage(result .. ANSI_RESET, logLevel)
 end
 
-return LuaUtils
+return GeneralUtils
