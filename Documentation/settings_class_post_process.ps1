@@ -66,16 +66,28 @@ function Get-FieldDocumentation {
     $summary = ""
     $description = ""
     $fieldType = ""
+    $optional = $false
+    $defaultValue = ""
     $commentLines = @()
 
     for ($i = $FieldIndex - 1; $i -ge 0; $i--) {
         $line = $Lines[$i].Trim()
 
         if ($line.StartsWith('///') -or $line.StartsWith('//')) {
-            if ($line -match '//\s*@tfield\s+(\w+)\s+\w+\s+(.+)$') {
-                # Extract type and description from @tfield line
-                $fieldType = $matches[1]
-                $description = $matches[2]
+            if ($line -match '//\s*@tfield(?:\[([^\]]*)\])?\s+(\w+)\s+\w+\s+(.+)$') {
+                # Extract optional modifiers, type and description from @tfield line
+                $optModifiers = $matches[1]
+                $fieldType = $matches[2]
+                $description = $matches[3]
+
+                # Parse optional/default value from modifiers (e.g. "opt=true", "opt")
+                if ($optModifiers) {
+                    $optional = $true
+
+                    if ($optModifiers -match 'opt=(.+)') {
+                        $defaultValue = $matches[1] -replace '&#44;', ','
+                    }
+                }
             } elseif ($line.StartsWith('///')) {
                 # Three slashes indicate summary text
                 $summary = $line.TrimStart('/').Trim()
@@ -97,17 +109,12 @@ function Get-FieldDocumentation {
         $description = $commentLines -join " "
     }
 
-    # Add type annotation to summary if we have both type and summary
-    if ($fieldType -and $summary) {
-        $summary = "($fieldType) $summary"
-    } elseif ($fieldType -and $description) {
-        # If no summary but we have description, add type to description
-        $description = "($fieldType) $description"
-    }
-
     return @{
         Summary = $summary
         Description = $description
+        Type = $fieldType
+        Optional = $optional
+        DefaultValue = $defaultValue
     }
 }
 
@@ -289,6 +296,9 @@ function Parse-SettingsFromCpp {
                 Name = $fieldName
                 Summary = $fieldDoc.Summary
                 Description = $fieldDoc.Description
+                Type = $fieldDoc.Type
+                Optional = $fieldDoc.Optional
+                DefaultValue = $fieldDoc.DefaultValue
             }
 
             $fieldBuffer += $fieldInfo
@@ -322,6 +332,11 @@ function New-XmlFieldElement {
     $fieldElement = $XmlDoc.CreateElement("field")
     $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "name" $FieldInfo.Name)) | Out-Null
 
+    # Add type if available
+    if ($FieldInfo.Type -and $FieldInfo.Type.Trim() -ne "") {
+        $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "type" $FieldInfo.Type)) | Out-Null
+    }
+
     # Only add summary if it's not empty
     if ($FieldInfo.Summary -and $FieldInfo.Summary.Trim() -ne "") {
         $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "summary" $FieldInfo.Summary)) | Out-Null
@@ -330,6 +345,15 @@ function New-XmlFieldElement {
     # Only add description if it's not empty
     if ($FieldInfo.Description -and $FieldInfo.Description.Trim() -ne "") {
         $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "description" $FieldInfo.Description)) | Out-Null
+    }
+
+    # Add optional/default value info
+    if ($FieldInfo.Optional) {
+        $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "optional" "true")) | Out-Null
+
+        if ($FieldInfo.DefaultValue -and $FieldInfo.DefaultValue.Trim() -ne "") {
+            $fieldElement.AppendChild((New-XmlElementWithText $XmlDoc "defaultValue" $FieldInfo.DefaultValue)) | Out-Null
+        }
     }
 
     return $fieldElement
