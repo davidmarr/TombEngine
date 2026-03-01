@@ -114,11 +114,21 @@
 local Type = require("Engine.Type")
 local LuaUtil = require("Engine.LuaUtil")
 
+local IsNumber = Type.IsNumber
+local IsVec2 = Type.IsVec2
+local IsVec3 = Type.IsVec3
+local IsColor = Type.IsColor
+local IsTime = Type.IsTime
+local IsRotation = Type.IsRotation
+local IsBoolean = Type.IsBoolean
+local IsString = Type.IsString
+local IsTable = Type.IsTable
+
 local Tween = {}
 Tween.__index = Tween
 LevelFuncs.Engine.Tween = {}
 
-LevelFuncs.Engine.Tween.IsValidTweenValue = function(value)
+local IsValidTweenValue = function(value)
     return Type.IsNumber(value) or
            Type.IsColor(value) or
            Type.IsRotation(value) or
@@ -126,7 +136,7 @@ LevelFuncs.Engine.Tween.IsValidTweenValue = function(value)
            Type.IsVec3(value)
 end
 
-LevelFuncs.Engine.Tween.CheckEasingParams = function (functionName, easing, easingParams)
+local CheckEasingParams = function (functionName, easing, easingParams)
     if easing == Tween.Easing.SMOOTHSTEP or easing == Tween.Easing.SMOOTHERSTEP then
         if not Type.IsTable(easingParams) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
@@ -274,11 +284,11 @@ Tween.Create = function(params)
     if LevelVars.Engine.Tween.tweens[params.name] then
         TEN.Util.PrintLog("Warning in Tween.Create(): tween with name '" .. params.name .. "' already exists. Overwriting.", TEN.Util.LogLevel.WARNING)
     end
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(params.from) then
+    if not IsValidTweenValue(params.from) then
         TEN.Util.PrintLog("Error in Tween.Create(): params.from has invalid type", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(params.to) then
+    if not IsValidTweenValue(params.to) then
         TEN.Util.PrintLog("Error in Tween.Create(): params.to has invalid type", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -353,7 +363,7 @@ Tween.Create = function(params)
     end
 
     if params.easingParams then
-        thisTween.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween.Create()", thisTween.easing, params.easingParams)
+        thisTween.easingParams = CheckEasingParams("Tween.Create()", thisTween.easing, params.easingParams)
     end
 
 
@@ -690,7 +700,7 @@ end
 --     Tween.Get("myTween"):SetFrom(0)  -- Set 'from' value to 0
 -- end
 function Tween:SetFrom(value)
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(value) then
+    if not IsValidTweenValue(value) then
         return TEN.Util.PrintLog("Error in Tween:SetFrom(value): invalid value type", TEN.Util.LogLevel.ERROR)
     end
     if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].to) then
@@ -723,7 +733,7 @@ end
 --     Tween.Get("myTween"):SetTo(100)  -- Set 'to' value to 100
 -- end
 function Tween:SetTo(value)
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(value) then
+    if not IsValidTweenValue(value) then
         return TEN.Util.PrintLog("Error in Tween:SetTo(value): invalid value type", TEN.Util.LogLevel.ERROR)
     end
     if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].from) then
@@ -759,10 +769,10 @@ end
 --     Tween.Get("myTween"):SetFromAndTo(0, 100)  -- Set 'from' to 0 and 'to' to 100
 -- end
 function Tween:SetFromAndTo(from, to)
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(from) then
+    if not IsValidTweenValue(from) then
         return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): invalid 'from' value type", TEN.Util.LogLevel.ERROR)
     end
-    if not LevelFuncs.Engine.Tween.IsValidTweenValue(to) then
+    if not IsValidTweenValue(to) then
         return TEN.Util.PrintLog("Error in Tween:SetFromAndTo(from, to): invalid 'to' value type", TEN.Util.LogLevel.ERROR)
     end
     if getmetatable(from) ~= getmetatable(to) then
@@ -812,7 +822,7 @@ function Tween:SetEasing(easing, params)
         return TEN.Util.PrintLog("Error in Tween:SetEasing(): params must be a table", TEN.Util.LogLevel.ERROR)
     end
     if params and Type.IsTable(params) then
-        t.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween:SetEasing()", easing, params)
+        t.easingParams = CheckEasingParams("Tween:SetEasing()", easing, params)
     else
         t.easingParams = nil
     end
@@ -829,7 +839,7 @@ function Tween:SetEasingParams(params)
         return TEN.Util.PrintLog("Error in Tween:SetEasingParams(params): params must be a table", TEN.Util.LogLevel.ERROR)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
-    t.easingParams = LevelFuncs.Engine.Tween.CheckEasingParams("Tween:SetEasingParams()", t.easing, params)
+    t.easingParams = CheckEasingParams("Tween:SetEasingParams()", t.easing, params)
 end
 
 --- Get the loop count of the tween
