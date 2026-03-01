@@ -2,7 +2,7 @@
 --- Lua support functions for working with tables.
 ---
 --- **Design Philosophy:**
---- MathUtils is designed primarily for:
+--- TableUtils is designed primarily for:
 --- 
 --- - Writing Lua modules and scripts
 --- - Simplifying Node creation in TombEditor's Node Editor
@@ -27,16 +27,7 @@ local TableUtils = {}
 local TableHasValueRaw = Util.TableHasValue
 local GetMaxNumericIndex = Util.GetMaxNumericIndex
 
-local IsNumber = Type.IsNumber
-local IsVec2 = Type.IsVec2
-local IsVec3 = Type.IsVec3
-local IsColor = Type.IsColor
-local IsTime = Type.IsTime
-local IsRotation = Type.IsRotation
-local IsBoolean = Type.IsBoolean
-local IsString = Type.IsString
 local IsTable = Type.IsTable
-local IsEnumValue = Type.IsEnumValue
 
 local LogMessage  = TEN.Util.PrintLog
 local logLevelEnums = TEN.Util.LogLevel
