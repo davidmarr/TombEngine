@@ -101,8 +101,6 @@ end
 local floor = math.floor
 local max = math.max
 local min = math.min
-local random = math.random
-local randomseed = math.randomseed
 local abs = math.abs
 local sin = math.sin
 local cos = math.cos
