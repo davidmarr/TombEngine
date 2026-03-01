@@ -136,7 +136,7 @@ end
 --
 -- -- Practical: UI display
 -- local msg = StringUtils.Format("Timer: {seconds}s | Score: {score}", {
---     seconds = StringUtils.Round(timer, 1),
+--     seconds = MathUtils.Round(timer, 1), -- round to 1 decimal place for display with MathUtils module
 --     score = playerScore
 -- })
 -- -- Result: "Timer: 12.3s | Score: 1500"
