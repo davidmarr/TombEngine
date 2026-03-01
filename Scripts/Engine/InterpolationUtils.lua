@@ -139,6 +139,7 @@ local InterpolationUtils = {}
 local Util = require("Engine.Util")
 local Type = require("Engine.Type")
 
+local Round = Util.Round
 local InterpolateValues = Util.InterpolateValues
 local WrapAngleRaw = Util.WrapAngleRaw
 local HSLtoColorRaw = Util.HSLtoColorRaw
@@ -186,10 +187,6 @@ local function InterpolateHue(h1, h2, t, mode)
     end
 
     return (h1 + delta * t) % 360
-end
-
-local function Round(num, mult)
-    return floor(num * mult + 0.5) / mult
 end
 
 --- Interpolation functions
