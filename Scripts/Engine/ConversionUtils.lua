@@ -273,15 +273,15 @@ end
 -- @usage
 -- -- Example: Get OKLch values from a color
 -- local color = TEN.Color(255, 87, 51, 255)
--- local oklch = LuaUtil.ColorToOKLch(color)
+-- local oklch = ConversionUtils.ColorToOKLch(color)
 -- -- Result: { l = 0.68, c = 0.18, h = 29.2, a = 1.0 }
 --
 -- -- Practical example: Desaturate while preserving perceived brightness
 -- local vividColor = TEN.Color(255, 0, 128, 255)
--- local oklch = LuaUtil.ColorToOKLch(vividColor)
+-- local oklch = ConversionUtils.ColorToOKLch(vividColor)
 -- if oklch then
 --     oklch.c = oklch.c * 0.5  -- Reduce chroma by 50%
---     local desaturatedColor = LuaUtil.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
+--     local desaturatedColor = ConversionUtils.OKLchToColor(oklch.l, oklch.c, oklch.h, oklch.a)
 --     sprite:SetColor(desaturatedColor)
 -- end
 --

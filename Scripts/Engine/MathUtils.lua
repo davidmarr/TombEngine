@@ -493,9 +493,9 @@ end
 -- -- Result: TEN.Color(251, 100, 10, 255)
 --
 -- -- Example: Clamp a Time duration between 1 and 5 seconds
--- local duration = TEN.Time(LuaUtil.SecondsToFrames(7))
--- local minDuration = TEN.Time(LuaUtil.SecondsToFrames(1))
--- local maxDuration = TEN.Time(LuaUtil.SecondsToFrames(5))
+-- local duration = TEN.Time(ConversionUtils.SecondsToFrames(7))
+-- local minDuration = TEN.Time(ConversionUtils.SecondsToFrames(1))
+-- local maxDuration = TEN.Time(ConversionUtils.SecondsToFrames(5))
 -- local clampedDuration = MathUtils.Clamp(duration, minDuration, maxDuration)
 -- -- Result: TEN.Time.FromSeconds(5)
 --

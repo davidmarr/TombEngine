@@ -51,7 +51,7 @@ local function CompareRecursive(t1, t2, compareId)
 
     -- Check maximum depth
     if context.depth >= MAX_DEPTH then
-        LogMessage("Warning in LuaUtil.CompareTablesDeep: Maximum depth (" .. MAX_DEPTH .. ") exceeded.", logLevelWarning)
+        LogMessage("Warning in TableUtils.CompareTablesDeep: Maximum depth (" .. MAX_DEPTH .. ") exceeded.", logLevelWarning)
         return false
     end
 
@@ -73,7 +73,7 @@ local function CompareRecursive(t1, t2, compareId)
 
         -- Check maximum elements
         if context.elementCount >= MAX_ELEMENTS then
-            LogMessage("Warning in LuaUtil.CompareTablesDeep: Maximum elements (" ..  MAX_ELEMENTS .. ") exceeded.", logLevelWarning)
+            LogMessage("Warning in TableUtils.CompareTablesDeep: Maximum elements (" ..  MAX_ELEMENTS .. ") exceeded.", logLevelWarning)
             return false
         end
 
