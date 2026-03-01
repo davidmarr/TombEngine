@@ -25,7 +25,7 @@ local Type = require("Engine.Type")
 local Util = require("Engine.Util")
 
 local logLevelError  = TEN.Util.LogLevel.ERROR
-
+local Round = Util.Round
 local WrapAngleRaw = Util.WrapAngleRaw
 local IsNumber = Type.IsNumber
 local IsVec2 = Type.IsVec2
@@ -44,11 +44,6 @@ local Rotation = TEN.Rotation
 local Color = TEN.Color
 local Time = TEN.Time
 local LogMessage  = TEN.Util.PrintLog
-
--- Support function for rounding numbers to a specified number of decimal places
-local function Round(num, mult)
-    return floor(num * mult + 0.5) / mult
-end
 
 --- Checks if a value is an integer (a number without fractional part).
 -- @tparam number n The value to check
