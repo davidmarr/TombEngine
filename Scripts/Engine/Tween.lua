@@ -113,11 +113,12 @@
 -- @luautil Tween
 
 local Type = require("Engine.Type")
-local LuaUtil = require("Engine.LuaUtil")
 local Util = require("Engine.Util")
 local TableUtils = require("Engine.TableUtils")
 local ConversionUtils = require("Engine.ConversionUtils")
+local InterpolationUtils = require("Engine.InterpolationUtils")
 
+local Round = Util.Round
 local WrapAngle = Util.WrapAngleRaw
 local TableHasValue = Util.TableHasValue
 local SetTableReadOnly = TableUtils.SetTableReadOnly
@@ -135,6 +136,10 @@ local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsLevelFunc = Type.IsLevelFunc
 local IsNull = Type.IsNull
+
+local floor = math.floor
+local max = math.max
+local min = math.min
 
 local LogMessage  = TEN.Util.PrintLog
 local logLevelError  = TEN.Util.LogLevel.ERROR
@@ -322,7 +327,7 @@ Tween.Create = function(params)
     end
     if params.loopCount and params.loopCount % 1 ~= 0 then
         LogMessage("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", logLevelWarning)
-        params.loopCount = math.floor(params.loopCount)
+        params.loopCount = floor(params.loopCount)
     end
     if params.autoStart and not IsBoolean(params.autoStart) then
         LogMessage("Warning in Tween.Create(): params.autoStart must be a boolean. Using default value 'false'", logLevelWarning)
@@ -652,7 +657,7 @@ function Tween:SetProgress(t)
     if not IsNumber(t) then
         return LogMessage("Error in Tween:SetProgress(t): t must be a number", logLevelError)
     end
-    local clampT = math.max(0, math.min(1, t))
+    local clampT = max(0, min(1, t))
     LevelVars.Engine.Tween.tweens[self.name].progress = clampT
 end
 
@@ -669,7 +674,7 @@ function Tween:GetTimeRemaining()
     if remainingFrames < 0 then
         remainingFrames = 0
     end
-    return LuaUtil.Round(FramesToSeconds(remainingFrames), 2)  -- Assuming 30 FPS
+    return Round(FramesToSeconds(remainingFrames), 2)  -- Assuming 30 FPS
 end
 
 --- Get the period of the tween (in seconds)
@@ -883,7 +888,7 @@ function Tween:SetLoopCount(count)
 
         if count % 1 ~= 0 then
             LogMessage("Warning in Tween:SetLoopCount(): count non è un intero, arrotondamento (floor)", logLevelWarning)
-            count = math.floor(count)
+            count = floor(count)
         end
     end
     LevelVars.Engine.Tween.tweens[self.name].loopCount = count
@@ -1012,9 +1017,9 @@ end
 -- @tfield[opt=Tween.Easing.LERP] int easing Easing function (use `Tween.Easing`)
 -- @tfield[opt=nil] int loopCount Number of loops (nil for infinite). In RESTART mode, each loop is a complete from→to cycle. In PING_PONG mode, each loop is ONE DIRECTION (from→to or to→from). This follows DOTween/GSAP conventions.
 -- @tfield[opt=false] bool autoStart Whether to start the tween immediately
--- @tfield[opt] table easingParams Optional parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `LuaUtil.Smoothstep` and `LuaUtil.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `LuaUtil.Elastic`. If not provided, default parameters will be used. For BOUNCE expects `bounces` (integer) and `damping` (number) fields, see `LuaUtil.Bounce`.
+-- @tfield[opt] table easingParams Optional parameters for easing function. See documentation for each easing type for details. For SMOOTHSTEP and SMOOTHERSTEP expect `edge0` and `edge1` numeric fields. see `InterpolationUtils.Smoothstep` and `InterpolationUtils.Smootherstep`. ELASTIC expects `amplitude` and `period` numeric fields, see `InterpolationUtils.Elastic`. If not provided, default parameters will be used. For BOUNCE expects `bounces` (integer) and `damping` (number) fields, see `InterpolationUtils.Bounce`.
 -- @tfield[opt=false] bool seamlessLoop When true, RESTART mode uses seamless loop transitions for cyclic values like rotations (0-360°). When false (default), uses precise reset for better accuracy with Vec3/Color. Only affects RESTART mode - PING_PONG always uses seamless transitions. Use true for smooth infinite rotations, false for precise positional loops.
--- @tfield[opt=false] bool wrapAngle When true, interpolates numeric values using the **shortest angular path** (like `LuaUtil.LerpAngle`). Only works with numeric `from`/`to` values - ignored for Color, Vec2, Vec3. For Rotation primitives, use `Rotation:Lerp()` which already handles shortest path automatically. Perfect for 2D UI elements like compass needles, gauges, and indicators. Example: from=350° to=10° will interpolate through 0° (20° path) instead of going the long way (340° path).
+-- @tfield[opt=false] bool wrapAngle When true, interpolates numeric values using the **shortest angular path** (like `InterpolationUtils.LerpAngle`). Only works with numeric `from`/`to` values - ignored for Color, Vec2, Vec3. For Rotation primitives, use `Rotation:Lerp()` which already handles shortest path automatically. Perfect for 2D UI elements like compass needles, gauges, and indicators. Example: from=350° to=10° will interpolate through 0° (20° path) instead of going the long way (340° path).
 -- @tfield[opt] function onStart function in LevelFuncs hierarchy called on start. Signature: `function(tween)`
 -- @tfield[opt] function onComplete function in LevelFuncs hierarchy called on complete. Signature: `function(value, tween)`
 -- @tfield[opt] function onLoop function in LevelFuncs hierarchy called on loop. Signature: `function(value, tween)`
@@ -1032,12 +1037,12 @@ end
 ---
 -- Constants for tween easing functions.
 -- @table Easing
--- @tfield 1 LERP Linear interpolation. See `LuaUtil.Lerp`. Default easing.
--- @tfield 2 SMOOTHSTEP Smoothstep interpolation. See `LuaUtil.Smoothstep`.
--- @tfield 3 SMOOTHERSTEP Smootherstep interpolation. See `LuaUtil.Smootherstep`.
--- @tfield 4 EASE_IN_OUT Ease in-out interpolation. See `LuaUtil.EaseInOut`.
--- @tfield 5 ELASTIC Elastic interpolation. See `LuaUtil.Elastic`.
--- @tfield 6 BOUNCE Bounce interpolation. See `LuaUtil.Bounce`.
+-- @tfield 1 LERP Linear interpolation. See `InterpolationUtils.Lerp`. Default easing.
+-- @tfield 2 SMOOTHSTEP Smoothstep interpolation. See `InterpolationUtils.Smoothstep`.
+-- @tfield 3 SMOOTHERSTEP Smootherstep interpolation. See `InterpolationUtils.Smootherstep`.
+-- @tfield 4 EASE_IN_OUT Ease in-out interpolation. See `InterpolationUtils.EaseInOut`.
+-- @tfield 5 ELASTIC Elastic interpolation. See `InterpolationUtils.Elastic`.
+-- @tfield 6 BOUNCE Bounce interpolation. See `InterpolationUtils.Bounce`.
 
 ---
 -- Constants for tween update modes.
@@ -1123,15 +1128,15 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
                     local targetTo = t.wrapAngle and t.effectiveTo or t.to
                     if t.direction == 1 then
                         if t.easingParams then
-                            t.value = LuaUtil[t.interpolation](t.from, targetTo, t.progress, table.unpack(t.easingParams))
+                            t.value = InterpolationUtils[t.interpolation](t.from, targetTo, t.progress, table.unpack(t.easingParams))
                         else
-                            t.value = LuaUtil[t.interpolation](t.from, targetTo, t.progress)
+                            t.value = InterpolationUtils[t.interpolation](t.from, targetTo, t.progress)
                         end
                     else
                         if t.easingParams then
-                            t.value = LuaUtil[t.interpolation](targetTo, t.from, t.progress, table.unpack(t.easingParams))
+                            t.value = InterpolationUtils[t.interpolation](targetTo, t.from, t.progress, table.unpack(t.easingParams))
                         else
-                            t.value = LuaUtil[t.interpolation](targetTo, t.from, t.progress)
+                            t.value = InterpolationUtils[t.interpolation](targetTo, t.from, t.progress)
                         end
                     end
 
