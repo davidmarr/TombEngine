@@ -1515,10 +1515,10 @@ InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options
     if space == 0 then
         local inv = 1 - t
         return Color(
-            Round(colorA.r * inv + colorB.r * t, 10),
-            Round(colorA.g * inv + colorB.g * t, 10),
-            Round(colorA.b * inv + colorB.b * t, 10),
-            Round(colorA.a * inv + colorB.a * t, 10)
+            Round(colorA.r * inv + colorB.r * t, 1),
+            Round(colorA.g * inv + colorB.g * t, 1),
+            Round(colorA.b * inv + colorB.b * t, 1),
+            Round(colorA.a * inv + colorB.a * t, 1)
         )
     end
 
