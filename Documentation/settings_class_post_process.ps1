@@ -81,11 +81,11 @@ function Get-FieldDocumentation {
                 $description = $matches[3]
 
                 # Parse optional/default value from modifiers (e.g. "opt=true", "opt")
-                if ($optModifiers) {
+                if ($optModifiers -match '(?:^|,)\s*opt(?:=([^,]*))?') {
                     $optional = $true
 
-                    if ($optModifiers -match 'opt=(.+)') {
-                        $defaultValue = $matches[1] -replace '&#44;', ','
+                    if ($matches[1] -ne $null) {
+                        $defaultValue = $matches[1].Trim() -replace '&#44;', ','
                     }
                 }
             } elseif ($line.StartsWith('///')) {
