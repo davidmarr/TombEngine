@@ -350,4 +350,9 @@ Util.InterpolateValues = function(a, b, clampedT, functionName)
     return a
 end
 
+-- Support function for rounding numbers to a specified number of decimal places
+Util.Round = function(num, mult)
+    return floor(num * mult + 0.5) / mult
+end
+
 return Util
