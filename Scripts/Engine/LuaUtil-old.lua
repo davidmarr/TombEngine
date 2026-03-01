@@ -563,7 +563,7 @@ local function orbitPositionRaw(center, radius, angle, axis)
 end
 
 local function TableHasValueRaw(tbl, value)
-    for _, v in next, tbl do
+    for _, v in pairs(tbl) do
         if v == value then
             return true
         end
