@@ -123,34 +123,36 @@ local IsRotation = Type.IsRotation
 local IsBoolean = Type.IsBoolean
 local IsString = Type.IsString
 local IsTable = Type.IsTable
+local IsLevelFunc = Type.IsLevelFunc
+local IsNull = Type.IsNull
 
 local Tween = {}
 Tween.__index = Tween
 LevelFuncs.Engine.Tween = {}
 
 local IsValidTweenValue = function(value)
-    return Type.IsNumber(value) or
-           Type.IsColor(value) or
-           Type.IsRotation(value) or
-           Type.IsVec2(value) or
-           Type.IsVec3(value)
+    return IsNumber(value) or
+           IsColor(value) or
+           IsRotation(value) or
+           IsVec2(value) or
+           IsVec3(value)
 end
 
 local CheckEasingParams = function (functionName, easing, easingParams)
     if easing == Tween.Easing.SMOOTHSTEP or easing == Tween.Easing.SMOOTHERSTEP then
-        if not Type.IsTable(easingParams) then
+        if not IsTable(easingParams) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
             return {0, 1}
         end
-        if not easingParams.edge0 or not Type.IsNumber(easingParams.edge0) then
+        if not easingParams.edge0 or not IsNumber(easingParams.edge0) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.edge0 must be a number for SMOOTHSTEP/SMOOTHERSTEP. Using default value '0'", TEN.Util.LogLevel.WARNING)
             easingParams.edge0 = 0
         end
-        if not easingParams.edge1 or not Type.IsNumber(easingParams.edge1) then
+        if not easingParams.edge1 or not IsNumber(easingParams.edge1) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.edge1 must be a number for SMOOTHSTEP/SMOOTHERSTEP. Using default value '1'", TEN.Util.LogLevel.WARNING)
             easingParams.edge1 = 1
         end
-        if Type.IsNumber(easingParams.edge1) and Type.IsNumber(easingParams.edge0) and easingParams.edge1 - easingParams.edge0 == 0 then
+        if IsNumber(easingParams.edge1) and IsNumber(easingParams.edge0) and easingParams.edge1 - easingParams.edge0 == 0 then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.edge1 must be different from edge0 for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", TEN.Util.LogLevel.WARNING)
             easingParams.edge0 = 0
             easingParams.edge1 = 1
@@ -158,30 +160,30 @@ local CheckEasingParams = function (functionName, easing, easingParams)
         return {easingParams.edge0, easingParams.edge1}
     end
     if easing == Tween.Easing.ELASTIC then
-        if not Type.IsTable(easingParams) then
+        if not IsTable(easingParams) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for ELASTIC. Using default values '1.0' and '0.3'", TEN.Util.LogLevel.WARNING)
             return {1.0, 0.3}
         end
-        if not easingParams.amplitude or not Type.IsNumber(easingParams.amplitude) or easingParams.amplitude < 1 then
+        if not easingParams.amplitude or not IsNumber(easingParams.amplitude) or easingParams.amplitude < 1 then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.amplitude must be a number >= 1 for ELASTIC. Using default value '1.0'", TEN.Util.LogLevel.WARNING)
             easingParams.amplitude = 1.0
         end
-        if not easingParams.period or not Type.IsNumber(easingParams.period) then
+        if not easingParams.period or not IsNumber(easingParams.period) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.period must be a number for ELASTIC. Using default value '0.3'", TEN.Util.LogLevel.WARNING)
             easingParams.period = 0.3
         end
         return {easingParams.amplitude, easingParams.period}
     end
     if easing == Tween.Easing.BOUNCE then
-        if not Type.IsTable(easingParams) then
+        if not IsTable(easingParams) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams must be a table for BOUNCE. Using default values '4' and '0.5'", TEN.Util.LogLevel.WARNING)
             return {4, 0.5}
         end
-        if not easingParams.bounces or not Type.IsNumber(easingParams.bounces) or easingParams.bounces < 1 or not LuaUtil.IsInteger(easingParams.bounces) then
+        if not easingParams.bounces or not IsNumber(easingParams.bounces) or easingParams.bounces < 1 or not LuaUtil.IsInteger(easingParams.bounces) then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.bounces must be an integer and >= 1 for BOUNCE. Using default value '4'", TEN.Util.LogLevel.WARNING)
             easingParams.bounces = 4
         end
-        if not easingParams.damping or not Type.IsNumber(easingParams.damping) or easingParams.damping < 0 or easingParams.damping > 1 then
+        if not easingParams.damping or not IsNumber(easingParams.damping) or easingParams.damping < 0 or easingParams.damping > 1 then
             TEN.Util.PrintLog("Warning in ".. functionName .. ": easingParams.damping must be a number between 0 and 1 for BOUNCE. Using default value '0.5'", TEN.Util.LogLevel.WARNING)
             easingParams.damping = 0.5
         end
@@ -273,11 +275,11 @@ Tween.CallbackType = LuaUtil.SetTableReadOnly(Tween.CallbackType)
 Tween.Create = function(params)
 
     -- Validate parameters
-    if not Type.IsTable(params) then
+    if not IsTable(params) then
         TEN.Util.PrintLog("Error in Tween.Create(): params must be a table", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not Type.IsString(params.name) then
+    if not IsString(params.name) then
         TEN.Util.PrintLog("Error in Tween.Create(): params.name must be a string", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -296,11 +298,11 @@ Tween.Create = function(params)
         TEN.Util.PrintLog("Error in Tween.Create(): params.from and params.to must be of the same type", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if not Type.IsNumber(params.period) or params.period <= 0 then
+    if not IsNumber(params.period) or params.period <= 0 then
         TEN.Util.PrintLog("Error in Tween.Create(): params.period must be a positive number", TEN.Util.LogLevel.ERROR)
         return nil
     end
-    if params.loopCount and (not Type.IsNumber(params.loopCount) or params.loopCount <= 0) then
+    if params.loopCount and (not IsNumber(params.loopCount) or params.loopCount <= 0) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount must be a positive integer or nil. Using default value 'nil'", TEN.Util.LogLevel.WARNING)
         params.loopCount = nil
     end
@@ -308,16 +310,16 @@ Tween.Create = function(params)
         TEN.Util.PrintLog("Warning in Tween.Create(): params.loopCount is not an integer, flooring the value", TEN.Util.LogLevel.WARNING)
         params.loopCount = math.floor(params.loopCount)
     end
-    if params.autoStart and not Type.IsBoolean(params.autoStart) then
+    if params.autoStart and not IsBoolean(params.autoStart) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.autoStart must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
     end
-    if params.seamlessLoop and not Type.IsBoolean(params.seamlessLoop) then
+    if params.seamlessLoop and not IsBoolean(params.seamlessLoop) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.seamlessLoop must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
     end
-    if params.wrapAngle and not Type.IsBoolean(params.wrapAngle) then
+    if params.wrapAngle and not IsBoolean(params.wrapAngle) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.wrapAngle must be a boolean. Using default value 'false'", TEN.Util.LogLevel.WARNING)
     end
-    if params.wrapAngle and not Type.IsNumber(params.from) then
+    if params.wrapAngle and not IsNumber(params.from) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.wrapAngle is only supported for numeric values. Flag will be ignored for this tween.", TEN.Util.LogLevel.WARNING)
     end
     if params.mode and not LuaUtil.TableHasValue(Tween.Mode, params.mode) then
@@ -329,22 +331,22 @@ Tween.Create = function(params)
     if params.easing and not LuaUtil.TableHasValue(Tween.Easing, params.easing) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.easing has invalid value. Using default value 'LERP'", TEN.Util.LogLevel.WARNING)
     end
-    if params.onStart and not Type.IsLevelFunc(params.onStart) then
+    if params.onStart and not IsLevelFunc(params.onStart) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.onStart must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if params.onComplete and not Type.IsLevelFunc(params.onComplete) then
+    if params.onComplete and not IsLevelFunc(params.onComplete) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.onComplete must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if params.onLoop and not Type.IsLevelFunc(params.onLoop) then
+    if params.onLoop and not IsLevelFunc(params.onLoop) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.onLoop must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if params.onUpdate and not Type.IsLevelFunc(params.onUpdate) then
+    if params.onUpdate and not IsLevelFunc(params.onUpdate) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.onUpdate must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if params.onTo and not Type.IsLevelFunc(params.onTo) then
+    if params.onTo and not IsLevelFunc(params.onTo) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.onTo must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
-    if params.onFrom and not Type.IsLevelFunc(params.onFrom) then
+    if params.onFrom and not IsLevelFunc(params.onFrom) then
         TEN.Util.PrintLog("Warning in Tween.Create(): params.onFrom must be a LevelFunc. The callback will not be assigned", TEN.Util.LogLevel.WARNING)
     end
     -- Create tween
@@ -368,10 +370,10 @@ Tween.Create = function(params)
 
 
     thisTween.loopCount = params.loopCount or nil
-    thisTween.autoStart = Type.IsBoolean(params.autoStart) and params.autoStart or false
-    thisTween.seamlessLoop = Type.IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
+    thisTween.autoStart = IsBoolean(params.autoStart) and params.autoStart or false
+    thisTween.seamlessLoop = IsBoolean(params.seamlessLoop) and params.seamlessLoop or false
     -- wrapAngle: only effective for numeric values (uses shortest angular path like LuaUtil.LerpAngle)
-    thisTween.wrapAngle = Type.IsBoolean(params.wrapAngle) and params.wrapAngle and Type.IsNumber(params.from) or false
+    thisTween.wrapAngle = IsBoolean(params.wrapAngle) and params.wrapAngle and IsNumber(params.from) or false
 
     -- Pre-calculate effectiveTo for wrapAngle (shortest angular path)
     if thisTween.wrapAngle then
@@ -402,12 +404,12 @@ Tween.Create = function(params)
 
     -- Callbacks
     thisTween.callbacks = {
-        onStart = Type.IsLevelFunc(params.onStart) and params.onStart or nil,
-        onComplete = Type.IsLevelFunc(params.onComplete) and params.onComplete or nil,
-        onLoop = Type.IsLevelFunc(params.onLoop) and params.onLoop or nil,
-        onUpdate = Type.IsLevelFunc(params.onUpdate) and params.onUpdate or nil,
-        onTo = Type.IsLevelFunc(params.onTo) and params.onTo or nil,
-        onFrom = Type.IsLevelFunc(params.onFrom) and params.onFrom or nil,
+        onStart = IsLevelFunc(params.onStart) and params.onStart or nil,
+        onComplete = IsLevelFunc(params.onComplete) and params.onComplete or nil,
+        onLoop = IsLevelFunc(params.onLoop) and params.onLoop or nil,
+        onUpdate = IsLevelFunc(params.onUpdate) and params.onUpdate or nil,
+        onTo = IsLevelFunc(params.onTo) and params.onTo or nil,
+        onFrom = IsLevelFunc(params.onFrom) and params.onFrom or nil,
     }
 
     -- Callback ON_START if autoStart is true
@@ -426,7 +428,7 @@ end
 -- @tparam string name Name of the tween to delete
 -- @usage Tween.Delete("myTween")
 Tween.Delete = function (name)
-    if not Type.IsString(name) then
+    if not IsString(name) then
         TEN.Util.PrintLog("Error in Tween.Delete(): invalid name", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -441,7 +443,7 @@ end
 -- @treturn[2] nil If tween does not exist
 -- @usage local myTween = Tween.Get("myTween")
 Tween.Get = function(name)
-    if not Type.IsString(name) then
+    if not IsString(name) then
         TEN.Util.PrintLog("Error in Tween.Get(): invalid name", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -457,7 +459,7 @@ end
 -- @treturn bool True if exists, false otherwise
 -- @usage if Tween.IfExists("myTween") then ... end
 Tween.IfExists = function(name)
-    if not Type.IsString(name) then
+    if not IsString(name) then
         TEN.Util.PrintLog("Error in Tween.IfExists(): invalid name", TEN.Util.LogLevel.ERROR)
         return nil
     end
@@ -633,7 +635,7 @@ end
 -- @tparam number t Progress value to set (0.0 to 1.0). Values outside this range will be clamped.
 -- @usage myTween:SetProgress(0.5)  -- Set progress to halfway
 function Tween:SetProgress(t)
-    if not Type.IsNumber(t) then
+    if not IsNumber(t) then
         return TEN.Util.PrintLog("Error in Tween:SetProgress(t): t must be a number", TEN.Util.LogLevel.ERROR)
     end
     local clampT = LuaUtil.Clamp(t, 0, 1)
@@ -674,7 +676,7 @@ end
 --     Tween.Get("myTween"):SetPeriod(3.0)  -- Set period to 3 seconds
 -- end
 function Tween:SetPeriod(period)
-    if not Type.IsNumber(period) or period <= 0 then
+    if not IsNumber(period) or period <= 0 then
         return TEN.Util.PrintLog("Error in Tween:SetPeriod(period): period must be a positive number", TEN.Util.LogLevel.ERROR)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
@@ -818,10 +820,10 @@ function Tween:SetEasing(easing, params)
     local t = LevelVars.Engine.Tween.tweens[self.name]
     t.easing = easing
     t.interpolation = TWEEN_INTERPOLATIONS[easing]
-    if params and not Type.IsTable(params) then
+    if params and not IsTable(params) then
         return TEN.Util.PrintLog("Error in Tween:SetEasing(): params must be a table", TEN.Util.LogLevel.ERROR)
     end
-    if params and Type.IsTable(params) then
+    if params and IsTable(params) then
         t.easingParams = CheckEasingParams("Tween:SetEasing()", easing, params)
     else
         t.easingParams = nil
@@ -835,7 +837,7 @@ end
 --     Tween.Get("myTween"):SetEasingParams({edge0 = 0, edge1 = 1})
 -- end
 function Tween:SetEasingParams(params)
-    if not Type.IsTable(params) then
+    if not IsTable(params) then
         return TEN.Util.PrintLog("Error in Tween:SetEasingParams(params): params must be a table", TEN.Util.LogLevel.ERROR)
     end
     local t = LevelVars.Engine.Tween.tweens[self.name]
@@ -860,7 +862,7 @@ end
 --     Tween.Get("myTween"):SetLoopCount(5)  -- Set loop count to 5
 -- end
 function Tween:SetLoopCount(count)
-    if not (Type.IsNil(count) or (Type.IsInteger(count) and count > 0)) then
+    if not (IsNull(count) or (LuaUtil.IsInteger(count) and count > 0)) then
         return TEN.Util.PrintLog("Error in Tween:SetLoopCount(): count must be a positive integer or nil", TEN.Util.LogLevel.ERROR)
     end
     if not LuaUtil.IsInteger(count) then
@@ -924,7 +926,7 @@ function Tween:SetCallback(callbackType, func)
     if not LuaUtil.TableHasValue(Tween.CallbackType, callbackType) then
         return TEN.Util.PrintLog("Error in Tween:SetCallback(callbackType, func): invalid callbackType", TEN.Util.LogLevel.ERROR)
     end
-    if not Type.IsLevelFunc(func) then
+    if not IsLevelFunc(func) then
         return TEN.Util.PrintLog("Error in Tween:SetCallback(callbackType, func): func must be a LevelFunc", TEN.Util.LogLevel.ERROR)
     end
     LevelVars.Engine.Tween.tweens[self.name].callbacks[callbackType] = func
