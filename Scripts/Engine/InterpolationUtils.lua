@@ -41,7 +41,7 @@
 -- <pre class="example">
 --<span class="keyword">local</span> currentRot = obj:GetRotation()
 --<span class="keyword">local</span> targetRot = TEN.Rotation(<span class="number">0</span>, <span class="number">350</span>, <span class="number">0</span>)
---<span class="keyword">local</span> newRot = Interpolation.Lerp(currentRot, targetRot, <span class="number">0.5</span>)  <span class="comment">-- Automatically takes shortest path
+--<span class="keyword">local</span> newRot = InterpolationUtils.Lerp(currentRot, targetRot, <span class="number">0.5</span>)  <span class="comment">-- Automatically takes shortest path
 --</span>obj:SetRotation(newRot)</pre>
 --
 -- <h3>Special interpolations:</h3>
@@ -76,7 +76,7 @@
 -- <pre class="example">
 --<span class="keyword">local</span> currentRot = obj:GetRotation()
 --<span class="keyword">local</span> targetRot = TEN.Rotation(<span class="number">0</span>, <span class="number">350</span>, <span class="number">0</span>)
---currentRot.y = Interpolation.LerpAngle(currentRot.y, targetRot.y, <span class="number">0.5</span>)  <span class="comment">-- Redundant!
+--currentRot.y = InterpolationUtils.LerpAngle(currentRot.y, targetRot.y, <span class="number">0.5</span>)  <span class="comment">-- Redundant!
 --</span>obj:SetRotation(currentRot)</pre>
 --
 -- <br>**InterpolateColor** supports multiple color spaces for different use cases:
@@ -132,10 +132,10 @@
 --
 --- To use, include the module with:
 ---
----	local Interpolation = require("Engine.Interpolation")
--- @luautil Interpolation
+---	local InterpolationUtils = require("Engine.InterpolationUtils")
+-- @luautil InterpolationUtils
 
-local Interpolation = {}
+local InterpolationUtils = {}
 local Util = require("Engine.Util")
 local Type = require("Engine.Type")
 
@@ -205,7 +205,7 @@ end
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers):
--- local interpolated = Interpolation.Lerp(0, 10, 0.5) -- Result: 5
+-- local interpolated = InterpolationUtils.Lerp(0, 10, 0.5) -- Result: 5
 --
 -- -- Demonstration of linear progression (0 to 10):
 -- --   t    | result
@@ -229,7 +229,7 @@ end
 -- --  0.50  | 127 | 0 | 127
 -- --  0.75  | 64  | 0 | 191
 -- --  1.00  | 0   | 0 | 255
--- local interpolatedColor = Interpolation.Lerp(color1, color2, 0.5) -- Result: Purple (127, 0, 127, 255)
+-- local interpolatedColor = InterpolationUtils.Lerp(color1, color2, 0.5) -- Result: Purple (127, 0, 127, 255)
 --
 -- -- Example with Rotations:
 -- local rot1 = TEN.Rotation(0, 0, 0)
@@ -242,7 +242,7 @@ end
 -- --  0.50  | 45   | 90  | 22.5
 -- --  0.75  | 67.5 | 135 | 33.75
 -- --  1.00  | 90   | 180 | 45
--- local interpolatedRot = Interpolation.Lerp(rot1, rot2, 0.5)
+-- local interpolatedRot = InterpolationUtils.Lerp(rot1, rot2, 0.5)
 --
 -- -- Example with Vec2:
 -- local vec1 = TEN.Vec2(100, 200)
@@ -255,7 +255,7 @@ end
 -- --  0.50  | 200 | 300
 -- --  0.75  | 250 | 350
 -- --  1.00  | 300 | 400
--- local interpolatedVec2 = Interpolation.Lerp(vec1, vec2, 0.5) -- Result: Vec2(200, 300)
+-- local interpolatedVec2 = InterpolationUtils.Lerp(vec1, vec2, 0.5) -- Result: Vec2(200, 300)
 --
 -- -- Example with Vec3 (linear camera movement):
 -- local vec3_1 = TEN.Vec3(100, 200, 300)
@@ -268,7 +268,7 @@ end
 -- --  0.50  | 150 | 300 | 450
 -- --  0.75  | 175 | 350 | 525
 -- --  1.00  | 200 | 400 | 600
--- local interpolatedVec3 = Interpolation.Lerp(vec3_1, vec3_2, 0.5) -- Result: Vec3(150, 300, 450)
+-- local interpolatedVec3 = InterpolationUtils.Lerp(vec3_1, vec3_2, 0.5) -- Result: Vec3(150, 300, 450)
 --
 -- -- Practical animation example (moving platform with constant speed over 4 seconds):
 -- -- Lerp is perfect for mechanical movements that should be predictable and constant
@@ -287,7 +287,7 @@ end
 --             local t = currentFrame / animationDuration  -- 0.0 to 1.0
 --
 --             -- Linear interpolation creates constant speed movement (perfect for platforms!)
---             local currentPos = Interpolation.Lerp(startPos, endPos, t)
+--             local currentPos = InterpolationUtils.Lerp(startPos, endPos, t)
 --             platform:SetPosition(currentPos)
 --
 --             -- Visual progression (linear, constant speed):
@@ -319,14 +319,14 @@ end
 -- -- ✗ Organic movements (use Smoothstep)
 -- -- ✗ Cinematic camera (use Smootherstep)
 -- -- ✗ Natural phenomena like fog, wind (use Smoothstep/Smootherstep)
-Interpolation.Lerp = function(a, b, t)
+InterpolationUtils.Lerp = function(a, b, t)
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.Lerp: interpolation factor t is not a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Lerp: interpolation factor t is not a number.", logLevelError)
         return a
     end
     -- Clamp t to the range [0, 1]
     local clampedT = max(0, min(1, t))
-    return InterpolateValues(a, b, clampedT, "Interpolation.Lerp")
+    return InterpolateValues(a, b, clampedT, "InterpolationUtils.Lerp")
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -341,7 +341,7 @@ end
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (edge0=0, edge1=1 implicit):
--- local smoothValue = Interpolation.Smoothstep(0, 10, 0.5) -- Result: 5.0
+-- local smoothValue = InterpolationUtils.Smoothstep(0, 10, 0.5) -- Result: 5.0
 -- 
 -- -- Demonstration of smooth progression (0 to 10):
 -- --   t    | result
@@ -365,7 +365,7 @@ end
 -- --  0.50  | 127 | 0 | 127
 -- --  0.75  | 56  | 0 | 199
 -- --  1.00  | 0   | 0 | 255
--- local smoothColor = Interpolation.Smoothstep(color1, color2, 0.5)
+-- local smoothColor = InterpolationUtils.Smoothstep(color1, color2, 0.5)
 -- 
 -- -- Example with Vec3 (smooth camera movement):
 -- local startPos = TEN.Vec3(0, 0, 0)
@@ -378,11 +378,11 @@ end
 -- --  0.50  | 500  | 250 | 1000
 -- --  0.75  | 844  | 422 | 1688
 -- --  1.00  | 1000 | 500 | 2000
--- local smoothPos = Interpolation.Smoothstep(startPos, endPos, 0.75)
+-- local smoothPos = InterpolationUtils.Smoothstep(startPos, endPos, 0.75)
 --
 -- -- Example with custom range (health bar that depletes from 100 to 0 over time):
 -- local currentHealth = 75  -- Current health value
--- local fadedHealth = Interpolation.Smoothstep(100, 0, currentHealth, 0, 100)
+-- local fadedHealth = InterpolationUtils.Smoothstep(100, 0, currentHealth, 0, 100)
 -- -- Maps health 0-100 to smooth 100-0 transition:
 -- --   Health | Result
 -- --   -------|-------
@@ -394,7 +394,7 @@ end
 --
 -- -- Example with temperature sensor (map sensor reading 20-30°C to 0-1 range):
 -- local temperature = 25  -- Current temperature in Celsius
--- local normalizedTemp = Interpolation.Smoothstep(0, 1, temperature, 20, 30)
+-- local normalizedTemp = InterpolationUtils.Smoothstep(0, 1, temperature, 20, 30)
 -- -- Result: 0.5 (smooth transition between 20°C and 30°C)
 --
 -- -- Practical animation example (platform moving smoothly over 3 seconds):
@@ -408,7 +408,7 @@ end
 -- LevelFuncs.OnLoop = function()
 --     if not animationComplete and currentFrame <= animationDuration then
 --         local t = currentFrame / animationDuration
---         local offset = Interpolation.Smoothstep(startPos, endPos, t)
+--         local offset = InterpolationUtils.Smoothstep(startPos, endPos, t)
 --         bridge:SetPosition(bridgeInitialPos + offset)
 --         currentFrame = currentFrame + 1
 --     else
@@ -417,18 +417,18 @@ end
 --         animationComplete = true
 --     end
 -- end
-Interpolation.Smoothstep = function (a, b, t, edge0, edge1)
+InterpolationUtils.Smoothstep = function (a, b, t, edge0, edge1)
     -- Default edge0 and edge1 if not provided
     edge0 = edge0 or 0
     edge1 = edge1 or 1
 
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.Smoothstep: t must be a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Smoothstep: t must be a number.", logLevelError)
         return a
     end
 
     if not (IsNumber(edge0) and IsNumber(edge1)) then
-        LogMessage("Error in Interpolation.Smoothstep: edge0 and edge1 must be numbers.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Smoothstep: edge0 and edge1 must be numbers.", logLevelError)
         return a
     end
 
@@ -436,7 +436,7 @@ Interpolation.Smoothstep = function (a, b, t, edge0, edge1)
 
     -- Check if edge0 and edge1 are equal (division by zero)
     if edgeDelta == 0 then
-        LogMessage("Error in Interpolation.Smoothstep: edge0 and edge1 cannot be equal.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Smoothstep: edge0 and edge1 cannot be equal.", logLevelError)
         return a
     end
 
@@ -446,7 +446,7 @@ Interpolation.Smoothstep = function (a, b, t, edge0, edge1)
     -- Evaluate polynomial
     -- Smoothstep formula: t²(3 - 2t) = 3t² - 2t³
     local smoothedT = normalizedT * normalizedT * (3 - 2 * normalizedT)
-    return InterpolateValues(a, b, smoothedT, "Interpolation.Smoothstep")
+    return InterpolateValues(a, b, smoothedT, "InterpolationUtils.Smoothstep")
 end
 
 --- Smoothly interpolate with smootherstep curve (Ken Perlin's improved version).
@@ -463,7 +463,7 @@ end
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers):
--- local smootherValue = Interpolation.Smootherstep(0, 10, 0.5) -- Result: 5
+-- local smootherValue = InterpolationUtils.Smootherstep(0, 10, 0.5) -- Result: 5
 --
 -- -- Comparison: Smoothstep vs Smootherstep (0 to 10):
 -- --   t    | Smoothstep | Smootherstep | Difference
@@ -491,7 +491,7 @@ end
 -- --  0.50  | 127 | 0 | 127
 -- --  0.75  | 27  | 0 | 228  (very gradual at end)
 -- --  1.00  | 0   | 0 | 255
--- local smootherColor = Interpolation.Smootherstep(color1, color2, 0.5)
+-- local smootherColor = InterpolationUtils.Smootherstep(color1, color2, 0.5)
 --
 -- -- Example with Vec3 (ultra-smooth camera position movement):
 -- local startPos = TEN.Vec3(0, 1000, 0)
@@ -504,11 +504,11 @@ end
 -- --  0.50  | 1000 | 1000 | 1500
 -- --  0.75  | 1791 | 1000 | 2687   (very gentle end)
 -- --  1.00  | 2000 | 1000 | 3000
--- local smootherPos = Interpolation.Smootherstep(startPos, endPos, 0.75)
+-- local smootherPos = InterpolationUtils.Smootherstep(startPos, endPos, 0.75)
 --
 -- -- Example with custom range (smooth light intensity fade based on distance):
 -- local distance = 1500  -- Distance from light source
--- local intensity = Interpolation.Smootherstep(1.0, 0.0, distance, 1000, 2000)
+-- local intensity = InterpolationUtils.Smootherstep(1.0, 0.0, distance, 1000, 2000)
 -- -- Maps distance 1000-2000 to intensity 1.0-0.0:
 -- --   Distance | Intensity (smootherstep)
 -- --   ---------|-------------------------
@@ -529,7 +529,7 @@ end
 -- --  0.50  | 0 | 45     | 0
 -- --  0.75  | 0 | 80.6   | 0   (very slow end)
 -- --  1.00  | 0 | 90     | 0
--- local smootherRot = Interpolation.Smootherstep(openRot, closedRot, 0.5)
+-- local smootherRot = InterpolationUtils.Smootherstep(openRot, closedRot, 0.5)
 --
 -- -- Practical example 1: Cinematic camera fly-through (ultra-smooth position change over 6 seconds)
 -- -- This creates a professional, broadcast-quality camera movement
@@ -543,7 +543,7 @@ end
 -- LevelFuncs.OnLoop = function()
 --     if animationActive and currentFrame <= animationDuration then
 --         local t = currentFrame / animationDuration
---         local cameraPos = Interpolation.Smootherstep(waypoint1, waypoint2, t)
+--         local cameraPos = InterpolationUtils.Smootherstep(waypoint1, waypoint2, t)
 --         camera:SetPosition(cameraPos)
 --         camera:Play()  -- Activate camera this frame
 --         currentFrame = currentFrame + 1
@@ -566,13 +566,13 @@ end
 --         local t = fogFrame / fogDuration
 --         
 --         -- Interpolate fog color (light blue → dark blue)
---         local fogColor = Interpolation.Smootherstep(clearFog.color, denseFog.color, t)
+--         local fogColor = InterpolationUtils.Smootherstep(clearFog.color, denseFog.color, t)
 --         
 --         -- Interpolate fog min distance (15 → 2 sectors, ultra-smooth)
---         local fogMin = Interpolation.Smootherstep(clearFog.minDistance, denseFog.minDistance, t)
+--         local fogMin = InterpolationUtils.Smootherstep(clearFog.minDistance, denseFog.minDistance, t)
 --         
 --         -- Interpolate fog max distance (25 → 8 sectors, ultra-smooth)
---         local fogMax = Interpolation.Smootherstep(clearFog.maxDistance, denseFog.maxDistance, t)
+--         local fogMax = InterpolationUtils.Smootherstep(clearFog.maxDistance, denseFog.maxDistance, t)
 --         
 --         level.fog = TEN.Flow.Fog(fogColor, fogMin, fogMax)
 --         
@@ -603,7 +603,7 @@ end
 --     
 --     if particleAge <= particleLifetime then
 --         local t = particleAge / particleLifetime
---         local currentColor = Interpolation.Smootherstep(startColor, endColor, t)
+--         local currentColor = InterpolationUtils.Smootherstep(startColor, endColor, t)
 --         
 --         -- Emit particle with smooth color transition
 --         TEN.Effects.EmitParticle(
@@ -643,7 +643,7 @@ end
 --     local t = pulseFrame / pulseDuration
 --     
 --     -- Use smootherstep for ultra-smooth radius transition
---     local currentRadius = Interpolation.Smootherstep(minRadius, maxRadius, t)
+--     local currentRadius = InterpolationUtils.Smootherstep(minRadius, maxRadius, t)
 --     
 --     -- Emit light this frame with smooth radius
 --     TEN.Effects.EmitLight(
@@ -690,18 +690,18 @@ end
 -- --
 -- -- Smootherstep is ~15% more expensive computationally than Smoothstep
 -- -- (requires evaluating a degree-5 polynomial vs degree-3)
-Interpolation.Smootherstep = function (a, b, t, edge0, edge1)
+InterpolationUtils.Smootherstep = function (a, b, t, edge0, edge1)
     -- Default edge0 and edge1 if not provided
     edge0 = edge0 or 0
     edge1 = edge1 or 1
 
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.Smootherstep: t must be a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Smootherstep: t must be a number.", logLevelError)
         return a
     end
 
     if not (IsNumber(edge0) and IsNumber(edge1)) then
-        LogMessage("Error in Interpolation.Smootherstep: edge0 and edge1 must be numbers.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Smootherstep: edge0 and edge1 must be numbers.", logLevelError)
         return a
     end
 
@@ -709,7 +709,7 @@ Interpolation.Smootherstep = function (a, b, t, edge0, edge1)
 
     -- Check if edge0 and edge1 are equal (division by zero)
     if edgeDelta == 0 then
-        LogMessage("Error in Interpolation.Smootherstep: edge0 and edge1 cannot be equal.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Smootherstep: edge0 and edge1 cannot be equal.", logLevelError)
         return a
     end
 
@@ -720,7 +720,7 @@ Interpolation.Smootherstep = function (a, b, t, edge0, edge1)
     -- This is identical to LevelFuncs.Engine.Node.Smoothstep
     local smootherT = (normalizedT ^ 3) * (normalizedT * (normalizedT * 6 - 15) + 10)
 
-    return InterpolateValues(a, b, smootherT, "Interpolation.Smootherstep")
+    return InterpolateValues(a, b, smootherT, "InterpolationUtils.Smootherstep")
 end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
@@ -734,7 +734,7 @@ end
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers):
--- local easeValue = Interpolation.EaseInOut(0, 10, 0.5) -- Result: 5
+-- local easeValue = InterpolationUtils.EaseInOut(0, 10, 0.5) -- Result: 5
 --
 -- -- Demonstration of ease-in-out progression (0 to 10):
 -- --   t    | result
@@ -758,7 +758,7 @@ end
 -- --  0.50  | 127 | 0 | 127
 -- --  0.75  | 64  | 0 | 191
 -- --  1.00  | 0   | 0 | 255
--- local easeColor = Interpolation.EaseInOut(color1, color2, 0.5)
+-- local easeColor = InterpolationUtils.EaseInOut(color1, color2, 0.5)
 --
 -- -- Example with Vec3 (camera movement with acceleration/deceleration):
 -- local startPos = TEN.Vec3(0, 0, 0)
@@ -771,7 +771,7 @@ end
 -- --  0.50  | 500  | 250 | 1000
 -- --  0.75  | 875  | 437 | 1750
 -- --  1.00  | 1000 | 500 | 2000
--- local easePos = Interpolation.EaseInOut(startPos, endPos, 0.75)
+-- local easePos = InterpolationUtils.EaseInOut(startPos, endPos, 0.75)
 --
 -- -- Example with Rotation (smooth door swing):
 -- local rot1 = TEN.Rotation(0, 0, 0)
@@ -784,7 +784,7 @@ end
 -- --  0.50  | 0 | 45   | 0
 -- --  0.75  | 0 | 78.75| 0
 -- --  1.00  | 0 | 90   | 0
--- local easeRot = Interpolation.EaseInOut(rot1, rot2, 0.5)
+-- local easeRot = InterpolationUtils.EaseInOut(rot1, rot2, 0.5)
 --
 -- -- Practical animation example (elevator moving with acceleration/deceleration over 4 seconds):
 -- local elevator = TEN.Objects.GetMoveableByName("elevator_1")
@@ -796,7 +796,7 @@ end
 -- LevelFuncs.OnLoop = function()
 --     if currentFrame <= animationDuration then
 --         local t = currentFrame / animationDuration
---         local newPos = Interpolation.EaseInOut(startPos, endPos, t)
+--         local newPos = InterpolationUtils.EaseInOut(startPos, endPos, t)
 --         elevator:SetPosition(newPos)
 --         currentFrame = currentFrame + 1
 --     else
@@ -805,9 +805,9 @@ end
 --         currentFrame = 0
 --     end
 -- end
-Interpolation.EaseInOut = function(a, b, t)
+InterpolationUtils.EaseInOut = function(a, b, t)
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.EaseInOut: interpolation factor t is not a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.EaseInOut: interpolation factor t is not a number.", logLevelError)
         return a
     end
 
@@ -822,7 +822,7 @@ Interpolation.EaseInOut = function(a, b, t)
         easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
     end
 
-    return InterpolateValues(a, b, easedT, "Interpolation.EaseInOut")
+    return InterpolateValues(a, b, easedT, "InterpolationUtils.EaseInOut")
 end
 
 --- Elastic interpolation with overshoot and bounce effect.
@@ -838,7 +838,7 @@ end
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers with default parameters):
--- local elasticValue = Interpolation.Elastic(0, 100, 0.5) -- Result: ~50 (with slight oscillation)
+-- local elasticValue = InterpolationUtils.Elastic(0, 100, 0.5) -- Result: ~50 (with slight oscillation)
 --
 -- -- Demonstration of elastic progression (0 to 10, amplitude=1.0, period=0.3):
 -- --   t    | result
@@ -852,7 +852,7 @@ end
 -- --  1.00  | 10.00
 --
 -- -- Example with different amplitude (more pronounced bounce):
--- local strongBounce = Interpolation.Elastic(0, 100, 0.8, 1.5, 0.3)
+-- local strongBounce = InterpolationUtils.Elastic(0, 100, 0.8, 1.5, 0.3)
 -- -- Higher amplitude = more overshoot:
 -- --   t    | result (amp=1.5)
 -- --  ------|------------------
@@ -860,7 +860,7 @@ end
 -- --  0.90  | 100.6  (stronger overshoot)
 --
 -- -- Example with different period (faster oscillations):
--- local fastOscillation = Interpolation.Elastic(0, 100, 0.8, 1.0, 0.15)
+-- local fastOscillation = InterpolationUtils.Elastic(0, 100, 0.8, 1.0, 0.15)
 -- -- Lower period = faster bounces
 --
 -- -- Example with Colors (elastic color transition red → green):
@@ -874,7 +874,7 @@ end
 -- --  0.50  | 127 | 127 | 0
 -- --  0.75  | 39  | 216 | 0   (overshoots in G)
 -- --  1.00  | 0   | 255 | 0
--- local elasticColor = Interpolation.Elastic(color1, color2, 0.75)
+-- local elasticColor = InterpolationUtils.Elastic(color1, color2, 0.75)
 --
 -- -- Example with Vec3 (UI element sliding with bounce):
 -- local startPos = TEN.Vec3(-500, 100, 0)  -- Off-screen left
@@ -888,7 +888,7 @@ end
 -- --  0.75  | -22    | 100 | 0   (almost there, slight overshoot)
 -- --  0.90  | 2      | 100 | 0   (overshoots right!)
 -- --  1.00  | 0      | 100 | 0   (settles)
--- local elasticPos = Interpolation.Elastic(startPos, endPos, 0.75, 1.2, 0.3)
+-- local elasticPos = InterpolationUtils.Elastic(startPos, endPos, 0.75, 1.2, 0.3)
 --
 -- -- Example with Rotation (door with elastic swing):
 -- local rot1 = TEN.Rotation(0, 0, 0)
@@ -902,7 +902,7 @@ end
 -- --  0.75  | 0 | 86     | 0   (approaching with overshoot)
 -- --  0.90  | 0 | 90.4   | 0   (overshoots!)
 -- --  1.00  | 0 | 90     | 0   (settles)
--- local elasticRot = Interpolation.Elastic(rot1, rot2, 0.75, 1.0, 0.3)
+-- local elasticRot = InterpolationUtils.Elastic(rot1, rot2, 0.75, 1.0, 0.3)
 --
 -- -- Practical example: Pickup item animation (item bounces toward player):
 -- local pickup = TEN.Objects.GetMoveableByName("pickup_item")
@@ -914,7 +914,7 @@ end
 -- LevelFuncs.OnLoop = function()
 --     if currentFrame <= animationDuration then
 --         local t = currentFrame / animationDuration
---         local pos = Interpolation.Elastic(startPos, playerPos, t, 1.3, 0.25)
+--         local pos = InterpolationUtils.Elastic(startPos, playerPos, t, 1.3, 0.25)
 --         pickup:SetPosition(pos)
 --         -- The item will "bounce" as it moves toward the player:
 --         -- - First undershoots (moves back slightly)
@@ -930,9 +930,9 @@ end
 --         end
 --     end
 -- end
-Interpolation.Elastic = function(a, b, t, amplitude, period)
+InterpolationUtils.Elastic = function(a, b, t, amplitude, period)
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.Elastic: interpolation factor t is not a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Elastic: interpolation factor t is not a number.", logLevelError)
         return a
     end
 
@@ -941,13 +941,13 @@ Interpolation.Elastic = function(a, b, t, amplitude, period)
     period = period or 0.3
 
     if not IsNumber(amplitude) or not IsNumber(period) then
-        LogMessage("Error in Interpolation.Elastic: amplitude and period must be numbers.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Elastic: amplitude and period must be numbers.", logLevelError)
         return a
     end
 
     -- Validate amplitude (must be >= 1.0 for proper elastic effect)
     if amplitude < 1.0 then
-        LogMessage("Warning in Interpolation.Elastic: amplitude should be >= 1.0 for proper elastic effect. Using 1.0.", logLevelWarning)
+        LogMessage("Warning in InterpolationUtils.Elastic: amplitude should be >= 1.0 for proper elastic effect. Using 1.0.", logLevelWarning)
         amplitude = 1.0
     end
 
@@ -981,7 +981,7 @@ Interpolation.Elastic = function(a, b, t, amplitude, period)
         easedT = (amplitude * (2 ^ (-10 * t)) * sin((t - s) * periodOverTwoPi)) / 2 + 1
     end
 
-    return InterpolateValues(a, b, easedT, "Interpolation.Elastic")
+    return InterpolateValues(a, b, easedT, "InterpolationUtils.Elastic")
 end
 
 --- Bounce interpolation with damped oscillation physics.
@@ -1005,7 +1005,7 @@ end
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
 -- -- Most common usage (numbers with default parameters):
--- local bounceValue = Interpolation.Bounce(0, 100, 0.75) -- Result: ~100 with bounce oscillations
+-- local bounceValue = InterpolationUtils.Bounce(0, 100, 0.75) -- Result: ~100 with bounce oscillations
 --
 -- -- Demonstration of bounce progression (0 to 10, bounces=4, damping=0.5):
 -- --   t    | result
@@ -1021,7 +1021,7 @@ end
 -- --  1.00  | 10.00  (settled at target)
 --
 -- -- Example with more bounces (energetic ball):
--- local energeticBounce = Interpolation.Bounce(0, 100, 0.8, 6, 0.6)
+-- local energeticBounce = InterpolationUtils.Bounce(0, 100, 0.8, 6, 0.6)
 -- -- More bounces with slower decay:
 -- --   t    | result (bounces=6, damping=0.6)
 -- --  ------|--------------------------------
@@ -1031,7 +1031,7 @@ end
 -- --  0.95  | 100.0  (still bouncing slightly)
 --
 -- -- Example with fewer bounces (heavy object):
--- local heavyBounce = Interpolation.Bounce(0, 100, 0.8, 2, 0.3)
+-- local heavyBounce = InterpolationUtils.Bounce(0, 100, 0.8, 2, 0.3)
 -- -- Fewer, sharper bounces with fast decay:
 -- --   t    | result (bounces=2, damping=0.3)
 -- --  ------|--------------------------------
@@ -1050,7 +1050,7 @@ end
 -- --  0.75  | 5   | 0 | 250  (approaching blue with bounce)
 -- --  0.85  | 10  | 0 | 245  (bounce back slightly)
 -- --  1.00  | 0   | 0 | 255  (settled at blue)
--- local bounceColor = Interpolation.Bounce(color1, color2, 0.75, 4, 0.5)
+-- local bounceColor = InterpolationUtils.Bounce(color1, color2, 0.75, 4, 0.5)
 --
 -- -- Example with Vec3 (ball bouncing toward ground):
 -- local startPos = TEN.Vec3(0, 1000, 0)  -- High in air
@@ -1064,7 +1064,7 @@ end
 -- --  0.85  | 0 | 5     | 0   (second smaller bounce)
 -- --  0.95  | 0 | 1     | 0   (tiny final bounce)
 -- --  1.00  | 0 | 0     | 0   (settled on ground)
--- local bouncePos = Interpolation.Bounce(startPos, endPos, 0.75, 4, 0.5)
+-- local bouncePos = InterpolationUtils.Bounce(startPos, endPos, 0.75, 4, 0.5)
 --
 -- -- Example with Rotation (door slamming with bounces):
 -- local rot1 = TEN.Rotation(0, 90, 0)   -- Door open
@@ -1078,7 +1078,7 @@ end
 -- --  0.85  | 0 | 0.5  | 0   (second bounce)
 -- --  0.95  | 0 | 0.1  | 0   (final tiny bounce)
 -- --  1.00  | 0 | 0    | 0   (fully closed)
--- local bounceRot = Interpolation.Bounce(rot1, rot2, 0.75, 3, 0.4)
+-- local bounceRot = InterpolationUtils.Bounce(rot1, rot2, 0.75, 3, 0.4)
 --
 -- -- Practical example 1: Dropping item with realistic bounce physics
 -- local item = TEN.Objects.GetMoveableByName("dropped_item")
@@ -1095,7 +1095,7 @@ end
 --         -- - First impact creates largest bounce
 --         -- - Each subsequent bounce is smaller
 --         -- - Eventually settles on ground
---         local pos = Interpolation.Bounce(startPos, endPos, t, 5, 0.6)
+--         local pos = InterpolationUtils.Bounce(startPos, endPos, t, 5, 0.6)
 --         item:SetPosition(pos)
 --         
 --         -- Optional: Play impact sound on each bounce peak
@@ -1120,7 +1120,7 @@ end
 --         -- - Use bounces=2 for just a couple of impacts
 --         -- - Use damping=0.3 for fast energy loss (hard surface)
 --         -- This creates a "slamming" effect rather than elastic bouncing
---         local pos = Interpolation.Bounce(startPos, endPos, t, 2, 0.3)
+--         local pos = InterpolationUtils.Bounce(startPos, endPos, t, 2, 0.3)
 --         stoneDoor:SetPosition(pos)
 --         
 --         -- Optional: Play slam sound when door reaches/bounces off endPos
@@ -1154,8 +1154,8 @@ end
 --         -- damping=0.4: Quick energy loss for "slamming" feel
 --         -- Both objects follow same curve toward their endpoints
 --         
---         local leftPos = Interpolation.Bounce(leftStart, leftEnd, t, 3, 0.4)
---         local rightPos = Interpolation.Bounce(rightStart, rightEnd, t, 3, 0.4)
+--         local leftPos = InterpolationUtils.Bounce(leftStart, leftEnd, t, 3, 0.4)
+--         local rightPos = InterpolationUtils.Bounce(rightStart, rightEnd, t, 3, 0.4)
 --         
 --         leftObject:SetPosition(leftPos)
 --         rightObject:SetPosition(rightPos)
@@ -1167,9 +1167,9 @@ end
 --         currentFrame = currentFrame + 1
 --     end
 -- end
-Interpolation.Bounce = function(a, b, t, bounces, damping)
+InterpolationUtils.Bounce = function(a, b, t, bounces, damping)
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.Bounce: interpolation factor t is not a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Bounce: interpolation factor t is not a number.", logLevelError)
         return a
     end
 
@@ -1178,19 +1178,19 @@ Interpolation.Bounce = function(a, b, t, bounces, damping)
     damping = damping or 0.5
 
     if not IsNumber(bounces) or not IsNumber(damping) then
-        LogMessage("Error in Interpolation.Bounce: bounces and damping must be numbers.", logLevelError)
+        LogMessage("Error in InterpolationUtils.Bounce: bounces and damping must be numbers.", logLevelError)
         return a
     end
 
     -- Validate bounces (must be positive integer)
     if bounces < 1 or bounces % 1 ~= 0 then
-        LogMessage("Warning in Interpolation.Bounce: bounces should be an integer >= 1. Using 1.", logLevelWarning)
+        LogMessage("Warning in InterpolationUtils.Bounce: bounces should be an integer >= 1. Using 1.", logLevelWarning)
         bounces = 1
     end
 
     -- Validate damping (0.0 to 1.0 range)
     if damping < 0.0 or damping > 1.0 then
-        LogMessage("Warning in Interpolation.Bounce: damping should be between 0.0 and 1.0. Clamping.", logLevelWarning)
+        LogMessage("Warning in InterpolationUtils.Bounce: damping should be between 0.0 and 1.0. Clamping.", logLevelWarning)
         damping = max(0.0, min(1.0, damping))
     end
 
@@ -1220,7 +1220,7 @@ Interpolation.Bounce = function(a, b, t, bounces, damping)
     local oscillation = abs(cos(t * pi * bounces))
     local easedT = 1 - (oscillation * decay)
 
-    return InterpolateValues(a, b, easedT, "Interpolation.Bounce")
+    return InterpolateValues(a, b, easedT, "InterpolationUtils.Bounce")
 end
 
 --- Special Interpolation functions
@@ -1231,11 +1231,11 @@ end
 -- 
 -- Lerp treats angles as linear numbers:
 --
---      LuaUtil.Lerp(350°, 10°, 0.5) = 180° ❌ (rotates 170° the long way!)
+--      InterpolationUtils.Lerp(350°, 10°, 0.5) = 180° ❌ (rotates 170° the long way!)
 -- 
 -- LerpAngle calculates shortest rotation path:
 --
---      LuaUtil.LerpAngle(350°, 10°, 0.5) = 0° ✅ (rotates 10° through 0°/360° boundary)
+--      InterpolationUtils.LerpAngle(350°, 10°, 0.5) = 0° ✅ (rotates 10° through 0°/360° boundary)
 --
 -- This prevents objects from "spinning wildly" when rotating across 0°/360°.
 --
@@ -1286,8 +1286,8 @@ end
 -- @treturn[2] float Value `a` if an error occurs.
 -- @usage
 -- -- Basic example: Why LerpAngle is needed
--- local angle1 = LuaUtil.Lerp(350, 10, 0.5)        -- Result: 180° (WRONG! Long way)
--- local angle2 = LuaUtil.LerpAngle(350, 10, 0.5)   -- Result: 0° (CORRECT! Short way)
+-- local angle1 = InterpolationUtils.Lerp(350, 10, 0.5)        -- Result: 180° (WRONG! Long way)
+-- local angle2 = InterpolationUtils.LerpAngle(350, 10, 0.5)   -- Result: 0° (CORRECT! Short way)
 --
 -- -- Demonstration: Rotating from 350° to 10° (should cross 0°/360°)
 -- --   t    | Lerp  | LerpAngle | Correct?
@@ -1314,7 +1314,7 @@ end
 --     
 --     -- Smoothly rotate arrow towards mouse using shortest path
 --     local currentAngle = arrowSprite:GetRotation()
---     local newAngle = LuaUtil.LerpAngle(currentAngle, targetAngle, rotationSpeed)
+--     local newAngle = InterpolationUtils.LerpAngle(currentAngle, targetAngle, rotationSpeed)
 --     arrowSprite:SetRotation(newAngle)
 --     
 --     arrowSprite:Draw()
@@ -1336,27 +1336,27 @@ end
 --     
 --     -- Smoothly rotate needle towards north using shortest path
 --     local currentNeedleAngle = compassNeedle:GetRotation()
---     local newNeedleAngle = LuaUtil.LerpAngle(currentNeedleAngle, needleTargetAngle, 0.15)
+--     local newNeedleAngle = InterpolationUtils.LerpAngle(currentNeedleAngle, needleTargetAngle, 0.15)
 --     compassNeedle:SetRotation(newNeedleAngle)
 --     
 --     compassNeedle:Draw()
 -- end
-Interpolation.LerpAngle = function(a, b, t, minValue, maxValue)
+InterpolationUtils.LerpAngle = function(a, b, t, minValue, maxValue)
     minValue = minValue or 0
     maxValue = maxValue or 360
 
     if not (IsNumber(a) and IsNumber(b) and IsNumber(t)) then
-        LogMessage("Error in Interpolation.LerpAngle: a, b, and t must be numbers.", logLevelError)
+        LogMessage("Error in InterpolationUtils.LerpAngle: a, b, and t must be numbers.", logLevelError)
         return a
     end
 
     if not (IsNumber(minValue) and IsNumber(maxValue)) then
-        LogMessage("Error in Interpolation.LerpAngle: minValue and maxValue must be numbers.", logLevelError)
+        LogMessage("Error in InterpolationUtils.LerpAngle: minValue and maxValue must be numbers.", logLevelError)
         return a
     end
 
     if minValue >= maxValue then
-        LogMessage("Error in Interpolation.LerpAngle: minValue must be less than maxValue.", logLevelError)
+        LogMessage("Error in InterpolationUtils.LerpAngle: minValue must be less than maxValue.", logLevelError)
         return a
     end
 
@@ -1405,7 +1405,7 @@ end
 -- -- Example with RGB interpolation (red to blue):
 -- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
 -- local color2 = TEN.Color(0, 0, 255, 255)  -- Blue
--- local rgbColor = Interpolation.InterpolateColor(color1, color2, 0.5) -- t = 0.5, RGB space
+-- local rgbColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5) -- t = 0.5, RGB space
 -- --   t    | R   | G | B
 -- --  ------|-----|---|-----
 -- --  0.00  | 255 | 0 | 0
@@ -1415,7 +1415,7 @@ end
 -- --  1.00  | 0   | 0 | 255
 --
 -- -- Example with HSL interpolation (red to blue, shortest hue path):
--- local hslColor = Interpolation.InterpolateColor(color1, color2, 0.5, 1)
+-- local hslColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 1)
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
@@ -1425,7 +1425,7 @@ end
 -- --  1.00  | 0   | 0   | 255
 --
 -- -- Example with HSL interpolation (red to blue, longest hue path):
--- local hslLongColor = Interpolation.InterpolateColor(color1, color2, 0.5, 1, { huePath = "longest" })
+-- local hslLongColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 1, { huePath = "longest" })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
@@ -1435,7 +1435,7 @@ end
 -- --  1.00  | 0   | 0   | 255
 --
 -- -- Example with OKLch interpolation (red to blue, shortest hue path):
--- local oklchShortColor = Interpolation.InterpolateColor(color1, color2, 0.5, 2)
+-- local oklchShortColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 2)
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
@@ -1445,7 +1445,7 @@ end
 -- --  1.00  | 0   | 0   | 255
 --
 -- -- Example with OKLch interpolation (red to blue, preserving saturation):
--- local oklchColor = Interpolation.InterpolateColor(color1, color2, 0.5, 2, { preserveSaturation = true })
+-- local oklchColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 2, { preserveSaturation = true })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
@@ -1456,7 +1456,7 @@ end
 -- -- Note: Enabling preserveSaturation, with t = 1 does not yield pure blue due to saturation preservation.
 --
 -- -- Example with OKLch interpolation (red to blue, preserving lightness):
--- local oklchLightColor = Interpolation.InterpolateColor(color1, color2, 0.5, 2, { preserveLightness = true })
+-- local oklchLightColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 2, { preserveLightness = true })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
 -- --  0.00  | 255 | 0   | 0
@@ -1465,16 +1465,16 @@ end
 -- --  0.75  | 159 | 62  | 255
 -- --  1.00  | 28  | 103 | 255
 -- -- Note: Enabling preserveLightness, with t = 1 does not yield pure blue due to lightness preservation.
-Interpolation.InterpolateColor = function(colorA, colorB, t, space, options)
+InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options)
 
     -- Validate input parameters
     if not IsColor(colorA) or not IsColor(colorB) then
-        LogMessage("Error in Interpolation.InterpolateColor: colorA and colorB must be TEN.Color.", logLevelError)
+        LogMessage("Error in InterpolationUtils.InterpolateColor: colorA and colorB must be TEN.Color.", logLevelError)
         return colorA
     end
 
     if not IsNumber(t) then
-        LogMessage("Error in Interpolation.InterpolateColor: t must be a number.", logLevelError)
+        LogMessage("Error in InterpolationUtils.InterpolateColor: t must be a number.", logLevelError)
         return colorA
     end
 
@@ -1483,7 +1483,7 @@ Interpolation.InterpolateColor = function(colorA, colorB, t, space, options)
     space = space or 0
 
     if not IsNumber(space) or (space ~= 0  and space ~= 1 and space ~= 2) then
-        LogMessage("Warning in Interpolation.InterpolateColor: invalid colorSpace, using RGB.", logLevelWarning)
+        LogMessage("Warning in InterpolationUtils.InterpolateColor: invalid colorSpace, using RGB.", logLevelWarning)
         space = 0
     end
 
@@ -1495,21 +1495,21 @@ Interpolation.InterpolateColor = function(colorA, colorB, t, space, options)
     local huePath = options.huePath
     if huePath ~= "shortest" and huePath ~= "longest" and huePath ~= "increasing" and huePath ~= "decreasing" then
         if huePath ~= nil then
-            LogMessage("Warning in Interpolation.InterpolateColor: invalid huePath, using 'shortest'.", logLevelWarning)
+            LogMessage("Warning in InterpolationUtils.InterpolateColor: invalid huePath, using 'shortest'.", logLevelWarning)
         end
         huePath = "shortest"
     end
 
     local preserveS = options.preserveSaturation
     if preserveS ~= nil and not IsBoolean(preserveS) then
-        LogMessage("Warning in Interpolation.InterpolateColor: preserveSaturation must be boolean. Using false.", logLevelWarning)
+        LogMessage("Warning in InterpolationUtils.InterpolateColor: preserveSaturation must be boolean. Using false.", logLevelWarning)
         preserveS = false
     end
     preserveS = preserveS or false
 
     local preserveL = options.preserveLightness
     if preserveL ~= nil and not IsBoolean(preserveL) then
-        LogMessage("Warning in Interpolation.InterpolateColor: preserveLightness must be boolean. Using false.", logLevelWarning)
+        LogMessage("Warning in InterpolationUtils.InterpolateColor: preserveLightness must be boolean. Using false.", logLevelWarning)
         preserveL = false
     end
     preserveL = preserveL or false
@@ -1554,4 +1554,4 @@ Interpolation.InterpolateColor = function(colorA, colorB, t, space, options)
     end
 end
 
-return Interpolation
+return InterpolationUtils
