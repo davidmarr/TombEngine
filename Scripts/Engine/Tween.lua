@@ -142,12 +142,19 @@ local max = math.max
 local min = math.min
 
 local LogMessage  = TEN.Util.PrintLog
+local GetFreezeMode = TEN.Flow.GetFreezeMode
+local AddCallback = TEN.Logic.AddCallback
 local logLevelError  = TEN.Util.LogLevel.ERROR
 local logLevelWarning = TEN.Util.LogLevel.WARNING
+local CallbackPoint = TEN.Logic.CallbackPoint
+local FreezeModeNONE = TEN.Flow.FreezeMode.NONE
 
 local Tween = {}
 Tween.__index = Tween
 LevelFuncs.Engine.Tween = {}
+
+-- local reference for LevelFuncs.Engine.Tween to avoid table lookups
+local F = LevelFuncs.Engine.Tween
 
 local IsValidTweenValue = function(value)
     return IsNumber(value) or
@@ -212,6 +219,9 @@ end
 
 -- Storage
 LevelVars.Engine.Tween = { tweens = {} }
+
+-- local references to avoid table lookups
+local T = LevelVars.Engine.Tween.tweens
 
 local TWEEN_INTERPOLATIONS = {
     "Lerp",
@@ -302,7 +312,7 @@ Tween.Create = function(params)
         LogMessage("Error in Tween.Create(): params.name must be a string", logLevelError)
         return nil
     end
-    if LevelVars.Engine.Tween.tweens[params.name] then
+    if T[params.name] then
         LogMessage("Warning in Tween.Create(): tween with name '" .. params.name .. "' already exists. Overwriting.", logLevelWarning)
     end
     if not IsValidTweenValue(params.from) then
@@ -369,8 +379,8 @@ Tween.Create = function(params)
         LogMessage("Warning in Tween.Create(): params.onFrom must be a LevelFunc. The callback will not be assigned", logLevelWarning)
     end
     -- Create tween
-    LevelVars.Engine.Tween.tweens[params.name] = {}
-    local thisTween = LevelVars.Engine.Tween.tweens[params.name]
+    T[params.name] = {}
+    local thisTween = T[params.name]
     thisTween.from = params.from
     thisTween.to = params.to
     thisTween.period = params.period
@@ -448,11 +458,11 @@ end
 -- @usage Tween.Delete("myTween")
 Tween.Delete = function (name)
     if not IsString(name) then
-        TEN.Util.PrintLog("Error in Tween.Delete(): invalid name", TEN.Util.LogLevel.ERROR)
+        LogMessage("Error in Tween.Delete(): invalid name", logLevelError)
         return nil
     end
-    if LevelVars.Engine.Tween.tweens[name] then
-        LevelVars.Engine.Tween.tweens[name] = nil
+    if  T[name] then
+        T[name] = nil
     end
 end
 
@@ -466,7 +476,7 @@ Tween.Get = function(name)
         LogMessage("Error in Tween.Get(): invalid name", logLevelError)
         return nil
     end
-    if not LevelVars.Engine.Tween.tweens[name] then
+    if not T[name] then
         LogMessage("Error in Tween.Get(): tween '" .. name .. "' does not exist. Use Tween.Create() first or check Tween.IfExists()", logLevelError)
         return nil
     end
@@ -482,7 +492,7 @@ Tween.IfExists = function(name)
         LogMessage("Error in Tween.IfExists(): invalid name", logLevelError)
         return nil
     end
-    return LevelVars.Engine.Tween.tweens[name] and true or false
+    return T[name] and true or false
 end
 
 ----
@@ -529,7 +539,7 @@ end
 --     Tween.Get("myTween"):Start()
 -- end
 function Tween:Start()
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     if t.completed then
         self:Reset()
     end
@@ -550,7 +560,7 @@ end
 --     Tween.Get("myTween"):Restart()
 -- end
 function Tween:Restart()
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.active = true
     t.paused = false
     t.elapsed = 0
@@ -574,7 +584,7 @@ end
 --     Tween.Get("myTween"):Pause()
 -- end
 function Tween:Pause()
-    LevelVars.Engine.Tween.tweens[self.name].paused = true
+    T[self.name].paused = true
 end
 
 --- Stop the tween
@@ -583,7 +593,7 @@ end
 --     Tween.Get("myTween"):Stop()
 -- end
 function Tween:Stop()
-    LevelVars.Engine.Tween.tweens[self.name].active = false
+    T[self.name].active = false
 end
 
 --- Reset the tween to the initial state
@@ -592,7 +602,7 @@ end
 --     Tween.Get("myTween"):Reset()
 -- end
 function Tween:Reset()
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.active = false
     t.paused = false
     t.elapsed = 0
@@ -614,7 +624,7 @@ end
 --     direction = Tween.Get("myTween"):GetDirection()
 -- end
 function Tween:GetDirection()
-    return LevelVars.Engine.Tween.tweens[self.name].direction
+    return T[self.name].direction
 end
 
 --- Get the current loop index (0-based)
@@ -625,7 +635,7 @@ end
 --     currentLoop = Tween.Get("myTween"):GetCurrentLoop()
 -- end
 function Tween:GetCurrentLoop()
-    return LevelVars.Engine.Tween.tweens[self.name].currentLoopIndex
+    return T[self.name].currentLoopIndex
 end
 
 --- Get the current value of the tween
@@ -636,7 +646,7 @@ end
 --     currentValue = Tween.Get("myTween"):GetValue()
 -- end
 function Tween:GetValue()
-    return LevelVars.Engine.Tween.tweens[self.name].value
+    return T[self.name].value
 end
 
 --- Get the current progress of the tween (0.0 to 1.0)
@@ -647,7 +657,7 @@ end
 --     progress = Tween.Get("myTween"):GetProgress()
 -- end
 function Tween:GetProgress()
-    return LevelVars.Engine.Tween.tweens[self.name].progress
+    return T[self.name].progress
 end
 
 --- Set the current progress of the tween (0.0 to 1.0)
@@ -658,7 +668,7 @@ function Tween:SetProgress(t)
         return LogMessage("Error in Tween:SetProgress(t): t must be a number", logLevelError)
     end
     local clampT = max(0, min(1, t))
-    LevelVars.Engine.Tween.tweens[self.name].progress = clampT
+    T[self.name].progress = clampT
 end
 
 --- Get the time remaining for the tween to complete (in seconds)
@@ -669,7 +679,7 @@ end
 --     timeRemaining = Tween.Get("myTween"):GetTimeRemaining()
 -- end
 function Tween:GetTimeRemaining()
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     local remainingFrames = t.interpolationDuration - t.elapsed
     if remainingFrames < 0 then
         remainingFrames = 0
@@ -685,7 +695,7 @@ end
 --     period = Tween.Get("myTween"):GetPeriod()
 -- end
 function Tween:GetPeriod()
-    return LevelVars.Engine.Tween.tweens[self.name].period
+    return T[self.name].period
 end
 
 --- Set the period of the tween (in seconds)
@@ -698,7 +708,7 @@ function Tween:SetPeriod(period)
     if not IsNumber(period) or period <= 0 then
         return LogMessage("Error in Tween:SetPeriod(period): period must be a positive number", logLevelError)
     end
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.period = period
     t.interpolationDuration = SecondsToFrames(period)
 end
@@ -711,7 +721,7 @@ end
 --     fromValue = Tween.Get("myTween"):GetFrom()
 -- end
 function Tween:GetFrom()
-    return LevelVars.Engine.Tween.tweens[self.name].from
+    return T[self.name].from
 end
 
 --- Set the 'from' value of the tween
@@ -724,10 +734,10 @@ function Tween:SetFrom(value)
     if not IsValidTweenValue(value) then
         return LogMessage("Error in Tween:SetFrom(value): invalid value type", logLevelError)
     end
-    if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].to) then
+    if getmetatable(value) ~= getmetatable(T[self.name].to) then
         return LogMessage("Error in Tween:SetFrom(value): 'from' value type must match 'to' value type", logLevelError)
     end
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.from = value
     -- Recalculate effectiveTo if wrapAngle is active
     if t.wrapAngle then
@@ -744,7 +754,7 @@ end
 --     toValue = Tween.Get("myTween"):GetTo()
 -- end
 function Tween:GetTo()
-    return LevelVars.Engine.Tween.tweens[self.name].to
+    return T[self.name].to
 end
 
 --- Set the 'to' value of the tween
@@ -757,10 +767,10 @@ function Tween:SetTo(value)
     if not IsValidTweenValue(value) then
         return LogMessage("Error in Tween:SetTo(value): invalid value type", logLevelError)
     end
-    if getmetatable(value) ~= getmetatable(LevelVars.Engine.Tween.tweens[self.name].from) then
+    if getmetatable(value) ~= getmetatable(T[self.name].from) then
         return LogMessage("Error in Tween:SetTo(value): 'to' value type must match 'from' value type", logLevelError)
     end
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.to = value
     -- Recalculate effectiveTo if wrapAngle is active
     if t.wrapAngle then
@@ -778,7 +788,7 @@ end
 --     fromValue, toValue = Tween.Get("myTween"):GetFromAndTo()
 -- end
 function Tween:GetFromAndTo()
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     return t.from, t.to
 end
 
@@ -799,7 +809,7 @@ function Tween:SetFromAndTo(from, to)
     if getmetatable(from) ~= getmetatable(to) then
         return LogMessage("Error in Tween:SetFromAndTo(from, to): 'from' and 'to' value types must match", logLevelError)
     end
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.from = from
     t.to = to
     -- Recalculate effectiveTo if wrapAngle is active
@@ -817,7 +827,7 @@ end
 --     easing = Tween.Get("myTween"):GetEasing()
 -- end
 function Tween:GetEasing()
-    return LevelVars.Engine.Tween.tweens[self.name].easing
+    return T[self.name].easing
 end
 
 --- Set the easing function of the tween
@@ -836,7 +846,7 @@ function Tween:SetEasing(easing, params)
     if not TableHasValue(Tween.Easing, easing) then
         return LogMessage("Error in Tween:SetEasing(easing): invalid easing value", logLevelError)
     end
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.easing = easing
     t.interpolation = TWEEN_INTERPOLATIONS[easing]
     if params and not IsTable(params) then
@@ -859,7 +869,7 @@ function Tween:SetEasingParams(params)
     if not IsTable(params) then
         return LogMessage("Error in Tween:SetEasingParams(params): params must be a table", logLevelError)
     end
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.easingParams = CheckEasingParams("Tween:SetEasingParams()", t.easing, params)
 end
 
@@ -871,7 +881,7 @@ end
 --     loopCount = Tween.Get("myTween"):GetLoopCount()
 -- end
 function Tween:GetLoopCount()
-    return LevelVars.Engine.Tween.tweens[self.name].loopCount
+    return T[self.name].loopCount
 end
 
 --- Set the loop count of the tween. Remember that nil means infinite loops! Not a zero value.
@@ -891,7 +901,7 @@ function Tween:SetLoopCount(count)
             count = floor(count)
         end
     end
-    LevelVars.Engine.Tween.tweens[self.name].loopCount = count
+    T[self.name].loopCount = count
 end
 
 --- Get the update mode of the tween
@@ -902,7 +912,7 @@ end
 --     updateMode = Tween.Get("myTween"):GetUpdateMode()
 -- end
 function Tween:GetUpdateMode()
-    return LevelVars.Engine.Tween.tweens[self.name].updateMode
+    return T[self.name].updateMode
 end
 
 --- Set the update mode of the tween
@@ -915,7 +925,7 @@ function Tween:SetUpdateMode(mode)
     if not TableHasValue(Tween.UpdateMode, mode) then
         return LogMessage("Error in Tween:SetUpdateMode(mode): invalid updateMode value", logLevelError)
     end
-    LevelVars.Engine.Tween.tweens[self.name].updateMode = mode
+    T[self.name].updateMode = mode
 end
 
 --- Reverse the tween direction
@@ -924,7 +934,7 @@ end
 --     Tween.Get("myTween"):Reverse()
 -- end
 function Tween:Reverse()
-    local t = LevelVars.Engine.Tween.tweens[self.name]
+    local t = T[self.name]
     t.direction = -t.direction
 end
 
@@ -951,7 +961,7 @@ function Tween:SetCallback(callbackType, func)
     if not IsLevelFunc(func) then
         return LogMessage("Error in Tween:SetCallback(callbackType, func): func must be a LevelFunc", logLevelError)
     end
-    LevelVars.Engine.Tween.tweens[self.name].callbacks[callbackType] = func
+    T[self.name].callbacks[callbackType] = func
 end
 
 --- Check if the tween is currently active
@@ -961,7 +971,7 @@ end
 --  ...
 -- end
 function Tween:IsActive()
-    return LevelVars.Engine.Tween.tweens[self.name].active
+    return T[self.name].active
 end
 
 --- Check if the tween is currently paused
@@ -971,7 +981,7 @@ end
 --  ... 
 -- end
 function Tween:IsPaused()
-    return LevelVars.Engine.Tween.tweens[self.name].paused
+    return T[self.name].paused
 end
 
 --- Check if the tween has completed
@@ -981,7 +991,7 @@ end
 --  ... 
 -- end
 function Tween:IsCompleted()
-    return LevelVars.Engine.Tween.tweens[self.name].completed
+    return T[self.name].completed
 end
 
 ----
@@ -1085,12 +1095,12 @@ end
 -- end
 --
 -- -- Create the tween
--- LevelFuncs.Engine.Tween.Create(bridgeTweenParams)
+-- Tween.Create(bridgeTweenParams)
 
-LevelFuncs.Engine.Tween.UpdateAll = function()
-    local isInFreeze = TEN.Flow.GetFreezeMode() ~= TEN.Flow.FreezeMode.NONE
+F.UpdateAll = function()
+    local isInFreeze = GetFreezeMode() ~= FreezeModeNONE
 
-    for name, t in pairs(LevelVars.Engine.Tween.tweens) do
+    for name, t in pairs(T) do
         if t.active and not t.paused then
             -- Check if should update based on updateMode and current freeze state
             local shouldUpdate = (t.updateMode == Tween.UpdateMode.ALWAYS) or
@@ -1210,8 +1220,8 @@ LevelFuncs.Engine.Tween.UpdateAll = function()
     end -- close for each tween
 end
 
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Tween.UpdateAll)
+AddCallback(CallbackPoint.PRE_LOOP, F.UpdateAll)
 
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Tween.UpdateAll)
+AddCallback(CallbackPoint.PRE_FREEZE, F.UpdateAll)
 
 return Tween
