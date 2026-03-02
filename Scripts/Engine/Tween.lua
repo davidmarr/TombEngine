@@ -135,7 +135,6 @@ local IsBoolean = Type.IsBoolean
 local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsLevelFunc = Type.IsLevelFunc
-local IsNull = Type.IsNull
 
 local floor = math.floor
 local max = math.max
