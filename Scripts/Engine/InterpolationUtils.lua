@@ -196,7 +196,7 @@ end
 -- Unlike Smoothstep and EaseInOut, Lerp maintains uniform velocity throughout the entire transition.
 -- @tparam float|Color|Rotation|Vec2|Vec3 a The start value (number, Color, Rotation, Vec2, or Vec3).
 -- @tparam float|Color|Rotation|Vec2|Vec3 b The end value (number, Color, Rotation, Vec2, or Vec3).
--- @tparam float t The interpolation factor (0.0 to 1.0).
+-- @tparam float t The interpolation factor (0.0 to 1.0). It will be clamped to this range if out of bounds.
 -- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value.
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
@@ -330,7 +330,7 @@ end
 -- then applies a smooth S-curve (Hermite polynomial: 3t² - 2t³ or t²(3 - 2t)) for smoother transitions.
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value (returned when t <= edge0).
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value (returned when t >= edge1).
--- @tparam float t The input value to be normalized and interpolated.
+-- @tparam float t The interpolation factor (0.0 to 1.0). It will be clamped to this range if out of bounds or if edge0/edge1 are invalid.
 -- @tparam[opt=0] float edge0 Lower edge: the value of t that maps to 0 (start of interpolation range).
 -- @tparam[opt=1] float edge1 Upper edge: the value of t that maps to 1 (end of interpolation range).
 -- @treturn[1] float|Color|Rotation|Vec2|Vec3 Smoothly interpolated result.
@@ -452,7 +452,7 @@ end
 -- Identical to **LevelFuncs.Engine.Node.Smoothstep** used in the Node Editor.
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
--- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam float t Interpolation factor (0.0 to 1.0). It will be clamped to this range if out of bounds or if edge0/edge1 are invalid.
 -- @tparam[opt=0] float edge0 Left edge for custom input range (optional, defaults to 0).
 -- @tparam[opt=1] float edge1 Right edge for custom input range (optional, defaults to 1).
 -- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value.
@@ -725,7 +725,7 @@ end
 -- Uses quadratic formula: t < 0.5 → 2t², otherwise → 1 - 2(1-t)²
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
--- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam float t Interpolation factor (0.0 to 1.0). It will be clamped to this range if out of bounds.
 -- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value.
 -- @treturn[2] float|Color|Rotation|Vec2|Vec3 Value `a` if an error occurs.
 -- @usage
@@ -827,7 +827,7 @@ end
 -- Uses EaseInOutElastic curve with configurable amplitude (overshoot amount) and period (oscillation frequency).
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
--- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam float t Interpolation factor (0.0 to 1.0). It will be clamped to this range if out of bounds.
 -- @tparam[opt=1.0] float amplitude Controls the overshoot amount (default: 1.0). Higher values = more pronounced bounce.
 -- @tparam[opt=0.3] float period Controls oscillation frequency (default: 0.3). Lower values = faster oscillations.
 -- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value with elastic effect.
@@ -994,7 +994,7 @@ end
 -- - Use high `bounces` (5-7) and high `damping` (0.6-0.8) for elastic bouncing
 -- @tparam float|Color|Rotation|Vec2|Vec3 a Start value.
 -- @tparam float|Color|Rotation|Vec2|Vec3 b End value.
--- @tparam float t Interpolation factor (0.0 to 1.0).
+-- @tparam float t Interpolation factor (0.0 to 1.0). It will be clamped to this range if out of bounds.
 -- @tparam[opt=4] float bounces Number of bounces (default: 4). Higher values = more bounces before settling.
 -- @tparam[opt=0.5] float damping Bounce intensity/energy loss (default: 0.5, range: 0.0-1.0). Lower values = faster decay, higher values = longer bounces.
 -- @treturn[1] float|Color|Rotation|Vec2|Vec3 The interpolated value with bounce effect.
