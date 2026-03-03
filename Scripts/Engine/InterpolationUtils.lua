@@ -147,13 +147,12 @@ local ColorToOKLchRaw = Util.ColorToOKLchRaw
 local OKLchToColorRaw = Util.OKLchToColorRaw
 
 local IsValidInterpolationValue = Util.IsValidInterpolationValue
-local SmoothstepRawT = Util.SmoothstepRawT
-local SmootherstepRawT = Util.SmootherstepRawT
-local EaseInOutRawT = Util.EaseInOutRawT
-local ElasticRawT = Util.ElasticRawT
-local BounceRawT = Util.BounceRawT
-local InterpolateValuesRaw = Util.InterpolateValuesRaw
-
+local LerpRaw = Util.LerpRaw
+local SmoothstepRaw = Util.SmoothstepRaw
+local SmootherstepRaw = Util.SmootherstepRaw
+local EaseInOutRaw = Util.EaseInOutRaw
+local ElasticRaw = Util.ElasticRaw
+local BounceRaw = Util.BounceRaw
 
 local IsNumber = Type.IsNumber
 local IsColor = Type.IsColor
@@ -347,9 +346,8 @@ InterpolationUtils.Lerp = function(a, b, t)
         LogMessage("Error in InterpolationUtils.Lerp: interpolation factor t is not a number.", logLevelError)
         return a
     end
-    -- Clamp t to the range [0, 1]
-    local clampedT = max(0, min(1, t))
-    return InterpolateValuesRaw(a, b, clampedT)
+
+    return LerpRaw(a, b, t)
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -466,8 +464,7 @@ InterpolationUtils.Smoothstep = function (a, b, t, edge0, edge1)
         return a
     end
 
-    t = SmoothstepRawT(t, edge0, edgeDelta)
-    return InterpolateValuesRaw(a, b, t)
+    return SmoothstepRaw(a, b, t, edge0, edgeDelta)
 end
 
 --- Smoothly interpolate with smootherstep curve (Ken Perlin's improved version).
@@ -736,9 +733,8 @@ InterpolationUtils.Smootherstep = function (a, b, t, edge0, edge1)
         LogMessage("Error in InterpolationUtils.Smootherstep: edge0 and edge1 cannot be equal.", logLevelError)
         return a
     end
-    -- return InterpolateValues(a, b, smootherT, "InterpolationUtils.Smootherstep")
-    t = SmootherstepRawT(t, edge0, edgeDelta)
-    return InterpolateValuesRaw(a, b, t)
+
+    return SmootherstepRaw(a, b, t, edge0, edgeDelta)
 end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
@@ -832,8 +828,7 @@ InterpolationUtils.EaseInOut = function(a, b, t)
         return a
     end
 
-    t = EaseInOutRawT(t)
-    return InterpolateValuesRaw(a, b, t)
+    return EaseInOutRaw(a, b, t)
 end
 
 --- Elastic interpolation with overshoot and bounce effect.
@@ -965,18 +960,7 @@ InterpolationUtils.Elastic = function(a, b, t, amplitude, period)
         amplitude = 1.0
     end
 
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
-    -- Handle edge cases (no oscillation at start/end)
-    if t == 0 then
-        return a
-    elseif t == 1 then
-        return b
-    end
-
-    t = ElasticRawT(t, amplitude, period)
-    return InterpolateValuesRaw(a, b, t)
+    return ElasticRaw(a, b, t, amplitude, period)
 end
 
 --- Bounce interpolation with damped oscillation physics.
@@ -1192,18 +1176,7 @@ InterpolationUtils.Bounce = function(a, b, t, bounces, damping)
         damping = max(0.0, min(1.0, damping))
     end
 
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-    -- Handle edge cases
-    if t == 0 then
-        return a
-    elseif t == 1 then
-        return b
-    end
-
-    -- return InterpolateValues(a, b, easedT, "InterpolationUtils.Bounce")
-    t = BounceRawT(t, bounces, damping)
-    return InterpolateValuesRaw(a, b, t)
+    return BounceRaw(a, b, t, bounces, damping)
 end
 
 --- Special Interpolation functions
