@@ -386,52 +386,6 @@ Util.BounceRawT = function(t, bounces, damping)
     return easedT
 end
 
--- Helper function for type checking and interpolation
-Util.InterpolateValues = function(a, b, clampedT, functionName)
-    if IsNumber(a) then
-        if not IsNumber(b) then
-            LogMessage("Error in " .. functionName .. ": type mismatch.", logLevelError)
-            return a
-        end
-        return a + (b - a) * clampedT
-    end
-
-    if IsVec3(a) then
-        if not IsVec3(b) then
-            LogMessage("Error in " .. functionName .. ": type mismatch.", logLevelError)
-            return a
-        end
-        return a:Lerp(b, clampedT)
-    end
-
-    if IsVec2(a) then
-        if not IsVec2(b) then
-            LogMessage("Error in " .. functionName .. ": type mismatch.", logLevelError)
-            return a
-        end
-        return a:Lerp(b, clampedT)
-    end
-
-    if IsColor(a) then
-        if not IsColor(b) then
-            LogMessage("Error in " .. functionName .. ": type mismatch.", logLevelError)
-            return a
-        end
-        return a:Lerp(b, clampedT)
-    end
-
-    if IsRotation(a) then
-        if not IsRotation(b) then
-            LogMessage("Error in " .. functionName .. ": type mismatch.", logLevelError)
-            return a
-        end
-        return a:Lerp(b, clampedT)
-    end
-
-    LogMessage("Error in " .. functionName .. ": unsupported type.", logLevelError)
-    return a
-end
-
 -- Support function for rounding numbers to a specified number of decimal places
 Util.Round = function(num, mult)
     return floor(num * mult + 0.5) / mult
