@@ -161,11 +161,6 @@ local IsTable = Type.IsTable
 
 local max = math.max
 local min = math.min
-local abs = math.abs
-local sin = math.sin
-local cos = math.cos
-local asin = math.asin
-local pi = math.pi
 
 local LogMessage  = TEN.Util.PrintLog
 local logLevelEnums = TEN.Util.LogLevel
