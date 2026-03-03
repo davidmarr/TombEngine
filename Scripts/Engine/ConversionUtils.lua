@@ -17,7 +17,7 @@
 ---
 --- To use, include the module with:
 ---
----	local ConversionUtils = require("Engine.Conversion")
+---	local ConversionUtils = require("Engine.ConversionUtils")
 -- @luautil ConversionUtils
 
 local ConversionUtils = {}
