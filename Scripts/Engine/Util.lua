@@ -111,8 +111,6 @@ local sqrt = math.sqrt
 local rad = math.rad
 local pi = math.pi
 local Color = TEN.Color
-local logLevelEnums = TEN.Util.LogLevel
-local logLevelError  = logLevelEnums.ERROR
 
 local IsNumber = Type.IsNumber
 local IsVec2 = Type.IsVec2
@@ -312,24 +310,39 @@ Util.IsValidInterpolationValue = function(value)
            IsVec3(value)
 end
 
-Util.InterpolateValuesRaw = function(a, b, t)
+local InterpolateValuesRaw = function(a, b, t)
     if IsNumber(a) then
         return a + (b - a) * t
     end
     return a:Lerp(b, t)
 end
 
-Util.SmoothstepRawT = function(t, edge0, edgeDelta)
-    t = max(0, min(1, (t - edge0) / edgeDelta))
-    return t * t * (3 - 2 * t)
+Util.LerpRaw = function (a, b, t)
+    local clampedT = max(0, min(1, t))
+    return InterpolateValuesRaw(a, b, clampedT)
 end
 
-Util.SmootherstepRawT  = function(t, edge0, edgeDelta)
+Util.SmoothstepRaw = function(a, b, t, edge0, edgeDelta)
+    -- Scale, bias and saturate t to 0..1 range
     t = max(0, min(1, (t - edge0) / edgeDelta))
-    return t * t * t * (t * (t * 6 - 15) + 10)
+
+    -- Evaluate polynomial
+    -- Smoothstep formula: t²(3 - 2t) = 3t² - 2t³
+    t = t * t * (3 - 2 * t)
+    return InterpolateValuesRaw(a, b, t)
 end
 
-Util.EaseInOutRawT = function(t)
+Util.SmootherstepRaw  = function(a, b, t, edge0, edgeDelta)
+    -- Scale, bias and saturate t to 0..1 range
+    t = max(0, min(1, (t - edge0) / edgeDelta))
+
+    -- Ken Perlin's smootherstep polynomial: 6t⁵ - 15t⁴ + 10t³
+    -- This is identical to LevelFuncs.Engine.Node.Smoothstep
+    t = t * t * t * (t * (t * 6 - 15) + 10)
+    return InterpolateValuesRaw(a, b, t)
+end
+
+Util.EaseInOutRaw  = function(a, b, t)
     -- Clamp t to [0, 1]
     t = max(0, min(1, t))
 
@@ -340,10 +353,20 @@ Util.EaseInOutRawT = function(t)
     else
         easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
     end
-    return easedT
+    return InterpolateValuesRaw(a, b, easedT)
 end
 
-Util.ElasticRawT = function(t, amplitude, period)
+Util.ElasticRaw  = function(a, b, t, amplitude, period)
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
+
+    -- Handle edge cases (no oscillation at start/end)
+    if t == 0 then
+        return a
+    elseif t == 1 then
+        return b
+    end
+
     -- EaseInOutElastic formula
     local twoPi = 2 * pi
 
@@ -363,10 +386,20 @@ Util.ElasticRawT = function(t, amplitude, period)
         t = t * 2 - 1
         easedT = (amplitude * (2 ^ (-10 * t)) * sin((t - s) * periodOverTwoPi)) / 2 + 1
     end
-    return easedT
+    return InterpolateValuesRaw(a, b, easedT)
 end
 
-Util.BounceRawT = function(t, bounces, damping)
+Util.BounceRaw = function(a, b, t, bounces, damping)
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
+
+    -- Handle edge cases
+    if t == 0 then
+        return a
+    elseif t == 1 then
+        return b
+    end
+
     -- Bounce formula:
     -- Uses exponential decay combined with sine wave for bounce oscillations
     -- Formula: easedT = 1 - (cos(t * π * bounces) * (1 - t)^(1/damping))
@@ -383,7 +416,7 @@ Util.BounceRawT = function(t, bounces, damping)
     local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
     local oscillation = abs(cos(t * pi * bounces))
     local easedT = 1 - (oscillation * decay)
-    return easedT
+    return InterpolateValuesRaw(a, b, easedT)
 end
 
 -- Support function for rounding numbers to a specified number of decimal places
