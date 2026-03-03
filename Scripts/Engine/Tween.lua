@@ -400,10 +400,7 @@ Tween.Create = function(params)
         params.easingParams = nil
     end
 
-    if params.easingParams then
-        thisTween.easingParams = CheckEasingParams("Tween.Create()", thisTween.easing, params.easingParams)
-    end
-
+    thisTween.easingParams = CheckEasingParams("Tween.Create()", thisTween.easing, params.easingParams)
 
     thisTween.loopCount = params.loopCount or nil
     thisTween.autoStart = IsBoolean(params.autoStart) and params.autoStart or false
