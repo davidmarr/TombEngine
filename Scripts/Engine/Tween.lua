@@ -175,7 +175,9 @@ end
 local CheckEasingParams = function (functionName, easing, easingParams)
     if easing == Tween.Easing.SMOOTHSTEP or easing == Tween.Easing.SMOOTHERSTEP then
         if not IsTable(easingParams) then
-            LogMessage("Warning in ".. functionName .. ": easingParams must be a table for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", logLevelWarning)
+            if easingParams ~= nil then
+                LogMessage("Warning in ".. functionName .. ": easingParams should be a table for SMOOTHSTEP/SMOOTHERSTEP. Using default values '0' and '1'", logLevelWarning)
+            end
             return {0, 1}
         end
         if not easingParams.edge0 or not IsNumber(easingParams.edge0) then
@@ -195,7 +197,9 @@ local CheckEasingParams = function (functionName, easing, easingParams)
     end
     if easing == Tween.Easing.ELASTIC then
         if not IsTable(easingParams) then
-            LogMessage("Warning in ".. functionName .. ": easingParams must be a table for ELASTIC. Using default values '1.0' and '0.3'", logLevelWarning)
+            if easingParams ~= nil then
+                LogMessage("Warning in ".. functionName .. ": easingParams should be a table for ELASTIC. Using default values '1.0' and '0.3'", logLevelWarning)
+            end
             return {1.0, 0.3}
         end
         if not easingParams.amplitude or not IsNumber(easingParams.amplitude) or easingParams.amplitude < 1 then
@@ -210,7 +214,9 @@ local CheckEasingParams = function (functionName, easing, easingParams)
     end
     if easing == Tween.Easing.BOUNCE then
         if not IsTable(easingParams) then
-            LogMessage("Warning in ".. functionName .. ": easingParams must be a table for BOUNCE. Using default values '4' and '0.5'", logLevelWarning)
+            if easingParams ~= nil then
+                LogMessage("Warning in ".. functionName .. ": easingParams should be a table for BOUNCE. Using default values '4' and '0.5'", logLevelWarning)
+            end
             return {4, 0.5}
         end
         if not easingParams.bounces or not IsNumber(easingParams.bounces) or easingParams.bounces < 1 or (easingParams.bounces % 1 ~= 0) then
