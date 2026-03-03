@@ -25,11 +25,12 @@ local StringUtils = {}
 local Type= require("Engine.Type")
 local Util = require("Engine.Util")
 
+local logLevelError  = TEN.Util.LogLevel.ERROR
+
 local floor = math.floor
 local IsNumber = Type.IsNumber
 local IsString = Type.IsString
 local IsTable = Type.IsTable
-local logLevelError  = TEN.Util.LogLevel.ERROR
 local GetMaxNumericIndex = Util.GetMaxNumericIndex
 local LogMessage  = TEN.Util.PrintLog
 
