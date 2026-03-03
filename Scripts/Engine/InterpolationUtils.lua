@@ -152,7 +152,6 @@ local IsColor = Type.IsColor
 local IsBoolean = Type.IsBoolean
 local IsTable = Type.IsTable
 
-local floor = math.floor
 local max = math.max
 local min = math.min
 local abs = math.abs
