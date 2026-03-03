@@ -144,6 +144,7 @@ local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsLevelFunc = Type.IsLevelFunc
 
+local next = next
 local floor = math.floor
 local max = math.max
 local min = math.min
@@ -1104,7 +1105,7 @@ end
 F.UpdateAll = function()
     local isInFreeze = GetFreezeMode() ~= FreezeModeNONE
 
-    for name, t in pairs(T) do
+    for _, t in next, T do
         if t.active and not t.paused then
             -- Check if should update based on updateMode and current freeze state
             local shouldUpdate = (t.updateMode == Tween.UpdateMode.ALWAYS) or
