@@ -116,7 +116,16 @@ local Type = require("Engine.Type")
 local Util = require("Engine.Util")
 local TableUtils = require("Engine.TableUtils")
 local ConversionUtils = require("Engine.ConversionUtils")
-local InterpolationUtils = require("Engine.InterpolationUtils")
+
+local Interpolations =
+{
+    Lerp = Util.LerpRaw,
+    Smoothstep = Util.SmoothstepRaw,
+    Smootherstep = Util.SmootherstepRaw,
+    EaseInOut = Util.EaseInOutRaw,
+    Elastic = Util.ElasticRaw,
+    Bounce = Util.BounceRaw
+}
 
 local Round = Util.Round
 local WrapAngle = Util.WrapAngleRaw
@@ -124,7 +133,6 @@ local TableHasValue = Util.TableHasValue
 local SetTableReadOnly = TableUtils.SetTableReadOnly
 local SecondsToFrames = ConversionUtils.SecondsToFrames
 local FramesToSeconds = ConversionUtils.FramesToSeconds
-
 
 local IsNumber = Type.IsNumber
 local IsVec2 = Type.IsVec2
@@ -182,7 +190,7 @@ local CheckEasingParams = function (functionName, easing, easingParams)
             easingParams.edge0 = 0
             easingParams.edge1 = 1
         end
-        return {easingParams.edge0, easingParams.edge1}
+        return {easingParams.edge0, easingParams.edge1 - easingParams.edge0}
     end
     if easing == Tween.Easing.ELASTIC then
         if not IsTable(easingParams) then
@@ -1137,15 +1145,15 @@ F.UpdateAll = function()
                     local targetTo = t.wrapAngle and t.effectiveTo or t.to
                     if t.direction == 1 then
                         if t.easingParams then
-                            t.value = InterpolationUtils[t.interpolation](t.from, targetTo, t.progress, table.unpack(t.easingParams))
+                            t.value = Interpolations[t.interpolation](t.from, targetTo, t.progress, table.unpack(t.easingParams))
                         else
-                            t.value = InterpolationUtils[t.interpolation](t.from, targetTo, t.progress)
+                            t.value = Interpolations[t.interpolation](t.from, targetTo, t.progress)
                         end
                     else
                         if t.easingParams then
-                            t.value = InterpolationUtils[t.interpolation](targetTo, t.from, t.progress, table.unpack(t.easingParams))
+                            t.value = Interpolations[t.interpolation](targetTo, t.from, t.progress, table.unpack(t.easingParams))
                         else
-                            t.value = InterpolationUtils[t.interpolation](targetTo, t.from, t.progress)
+                            t.value = Interpolations[t.interpolation](targetTo, t.from, t.progress)
                         end
                     end
 
