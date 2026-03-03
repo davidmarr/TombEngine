@@ -23,6 +23,12 @@
 local ConversionUtils = {}
 local Type = require("Engine.Type")
 local Util = require("Engine.Util")
+
+local FPS = 30 -- Default frames per second for time-frame conversions
+local logLevelEnums = TEN.Util.LogLevel
+local logLevelError  = logLevelEnums.ERROR
+local logLevelWarning = logLevelEnums.WARNING
+
 local HSLtoColorRaw = Util.HSLtoColorRaw
 local ColorToHSLRaw = Util.ColorToHSLRaw
 local ColorToOKLchRaw = Util.ColorToOKLchRaw
@@ -37,13 +43,7 @@ local max = math.max
 local min = math.min
 
 local LogMessage  = TEN.Util.PrintLog
-local logLevelEnums = TEN.Util.LogLevel
-local logLevelError  = logLevelEnums.ERROR
-local logLevelWarning = logLevelEnums.WARNING
-
 local Color = TEN.Color
-
-local FPS = 30              -- Default frames per second for time-frame conversions
 
 --- Convert seconds to frames (assuming 30 FPS).
 -- @tparam float seconds Time in seconds. Seconds can be a float value with two decimal places.

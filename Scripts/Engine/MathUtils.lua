@@ -25,9 +25,8 @@ local Type = require("Engine.Type")
 local Util = require("Engine.Util")
 
 local logLevelError  = TEN.Util.LogLevel.ERROR
-
-local WrapAngleRaw = Util.WrapAngleRaw
 local Round = Util.Round
+local WrapAngleRaw = Util.WrapAngleRaw
 local IsNumber = Type.IsNumber
 local IsVec2 = Type.IsVec2
 local IsVec3 = Type.IsVec3
