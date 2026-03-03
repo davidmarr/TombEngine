@@ -304,6 +304,88 @@ Util.OKLchToColorRaw = function(L, C, h, a)
     return Color(r, g, b, alpha)
 end
 
+Util.IsValidInterpolationValue = function(value)
+    return IsNumber(value) or
+           IsColor(value) or
+           IsRotation(value) or
+           IsVec2(value) or
+           IsVec3(value)
+end
+
+Util.InterpolateValuesRaw = function(a, b, t)
+    if IsNumber(a) then
+        return a + (b - a) * t
+    end
+    return a:Lerp(b, t)
+end
+
+Util.SmoothstepRawT = function(t, edge0, edgeDelta)
+    t = max(0, min(1, (t - edge0) / edgeDelta))
+    return t * t * (3 - 2 * t)
+end
+
+Util.SmootherstepRawT  = function(t, edge0, edgeDelta)
+    t = max(0, min(1, (t - edge0) / edgeDelta))
+    return t * t * t * (t * (t * 6 - 15) + 10)
+end
+
+Util.EaseInOutRawT = function(t)
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
+
+    -- EaseInOutQuad formula
+    local easedT
+    if t < 0.5 then
+        easedT = 2 * t * t  -- Ease in: acceleration
+    else
+        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
+    end
+    return easedT
+end
+
+Util.ElasticRawT = function(t, amplitude, period)
+    -- EaseInOutElastic formula
+    local twoPi = 2 * pi
+
+    -- Calculate phase shift 's' to adjust the sine wave's starting point
+    -- The phase shift ensures the elastic curve starts at 0 and ends at 1
+    -- Formula: s = period / (2π) * arcsin(1 / amplitude)
+    local s = period / (2 * pi) * asin(1 / amplitude)
+    local periodOverTwoPi = twoPi / period
+    local easedT
+
+    if t < 0.5 then
+        -- Ease In (first half) - undershoot at start
+        t = t * 2
+        easedT = -(amplitude * (2 ^ (10 * (t - 1))) * sin((t - 1 - s) * periodOverTwoPi)) / 2
+    else
+        -- Ease Out (second half) - overshoot at end
+        t = t * 2 - 1
+        easedT = (amplitude * (2 ^ (-10 * t)) * sin((t - s) * periodOverTwoPi)) / 2 + 1
+    end
+    return easedT
+end
+
+Util.BounceRawT = function(t, bounces, damping)
+    -- Bounce formula:
+    -- Uses exponential decay combined with sine wave for bounce oscillations
+    -- Formula: easedT = 1 - (cos(t * π * bounces) * (1 - t)^(1/damping))
+    -- 
+    -- The formula works as follows:
+    -- 1. cos(t * π * bounces): Creates oscillations (bounces)
+    -- 2. (1 - t)^(1/damping): Exponential decay envelope
+    --    - damping controls decay speed
+    --    - Lower damping = faster energy loss
+    --    - Higher damping = longer bounces
+    -- 3. Multiply them: Bounces that decrease in amplitude
+    -- 4. (1 - result): Invert so we approach target value instead of 0
+
+    local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
+    local oscillation = abs(cos(t * pi * bounces))
+    local easedT = 1 - (oscillation * decay)
+    return easedT
+end
+
 -- Helper function for type checking and interpolation
 Util.InterpolateValues = function(a, b, clampedT, functionName)
     if IsNumber(a) then
