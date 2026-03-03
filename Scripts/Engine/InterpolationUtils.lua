@@ -140,12 +140,20 @@ local Util = require("Engine.Util")
 local Type = require("Engine.Type")
 
 local Round = Util.Round
-local InterpolateValues = Util.InterpolateValues
 local WrapAngleRaw = Util.WrapAngleRaw
 local HSLtoColorRaw = Util.HSLtoColorRaw
 local ColorToHSLRaw = Util.ColorToHSLRaw
 local ColorToOKLchRaw = Util.ColorToOKLchRaw
 local OKLchToColorRaw = Util.OKLchToColorRaw
+
+local IsValidInterpolationValue = Util.IsValidInterpolationValue
+local SmoothstepRawT = Util.SmoothstepRawT
+local SmootherstepRawT = Util.SmootherstepRawT
+local EaseInOutRawT = Util.EaseInOutRawT
+local ElasticRawT = Util.ElasticRawT
+local BounceRawT = Util.BounceRawT
+local InterpolateValuesRaw = Util.InterpolateValuesRaw
+
 
 local IsNumber = Type.IsNumber
 local IsColor = Type.IsColor
@@ -186,6 +194,22 @@ local function InterpolateHue(h1, h2, t, mode)
     end
 
     return (h1 + delta * t) % 360
+end
+
+local function ValidateAB (a, b, functionName)
+    if not IsValidInterpolationValue(a) then
+        LogMessage("Error in " .. functionName .. ": value a is not a valid interpolation type.", logLevelError)
+        return false
+    end
+    if not IsValidInterpolationValue(b) then
+        LogMessage("Error in " .. functionName .. ": value b is not a valid interpolation type.", logLevelError)
+        return false
+    end
+    if getmetatable(a) ~= getmetatable(b) then
+        LogMessage("Error in " .. functionName .. ": value a and b are of different types.", logLevelError)
+        return false
+    end
+    return true
 end
 
 --- Interpolation functions
@@ -316,13 +340,16 @@ end
 -- -- ✗ Cinematic camera (use Smootherstep)
 -- -- ✗ Natural phenomena like fog, wind (use Smoothstep/Smootherstep)
 InterpolationUtils.Lerp = function(a, b, t)
+    if not ValidateAB(a, b, "InterpolationUtils.Lerp") then
+        return a
+    end
     if not IsNumber(t) then
         LogMessage("Error in InterpolationUtils.Lerp: interpolation factor t is not a number.", logLevelError)
         return a
     end
     -- Clamp t to the range [0, 1]
     local clampedT = max(0, min(1, t))
-    return InterpolateValues(a, b, clampedT, "InterpolationUtils.Lerp")
+    return InterpolateValuesRaw(a, b, clampedT)
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -414,6 +441,9 @@ end
 --     end
 -- end
 InterpolationUtils.Smoothstep = function (a, b, t, edge0, edge1)
+    if not ValidateAB(a, b, "InterpolationUtils.Smoothstep") then
+        return a
+    end
     -- Default edge0 and edge1 if not provided
     edge0 = edge0 or 0
     edge1 = edge1 or 1
@@ -436,13 +466,8 @@ InterpolationUtils.Smoothstep = function (a, b, t, edge0, edge1)
         return a
     end
 
-    -- Scale, bias and saturate t to 0..1 range
-    local normalizedT = max(0, min(1, (t - edge0) / edgeDelta))
-
-    -- Evaluate polynomial
-    -- Smoothstep formula: t²(3 - 2t) = 3t² - 2t³
-    local smoothedT = normalizedT * normalizedT * (3 - 2 * normalizedT)
-    return InterpolateValues(a, b, smoothedT, "InterpolationUtils.Smoothstep")
+    t = SmoothstepRawT(t, edge0, edgeDelta)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 --- Smoothly interpolate with smootherstep curve (Ken Perlin's improved version).
@@ -687,6 +712,9 @@ end
 -- -- Smootherstep is ~15% more expensive computationally than Smoothstep
 -- -- (requires evaluating a degree-5 polynomial vs degree-3)
 InterpolationUtils.Smootherstep = function (a, b, t, edge0, edge1)
+    if not ValidateAB(a, b, "InterpolationUtils.Smootherstep") then
+        return a
+    end
     -- Default edge0 and edge1 if not provided
     edge0 = edge0 or 0
     edge1 = edge1 or 1
@@ -708,15 +736,9 @@ InterpolationUtils.Smootherstep = function (a, b, t, edge0, edge1)
         LogMessage("Error in InterpolationUtils.Smootherstep: edge0 and edge1 cannot be equal.", logLevelError)
         return a
     end
-
-    -- Scale, bias and saturate t to 0..1 range
-    local normalizedT = max(0, min(1, (t - edge0) / edgeDelta))
-
-    -- Ken Perlin's smootherstep polynomial: 6t⁵ - 15t⁴ + 10t³
-    -- This is identical to LevelFuncs.Engine.Node.Smoothstep
-    local smootherT = (normalizedT ^ 3) * (normalizedT * (normalizedT * 6 - 15) + 10)
-
-    return InterpolateValues(a, b, smootherT, "InterpolationUtils.Smootherstep")
+    -- return InterpolateValues(a, b, smootherT, "InterpolationUtils.Smootherstep")
+    t = SmootherstepRawT(t, edge0, edgeDelta)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 --- Smoothly interpolate with ease-in-out quadratic curve.
@@ -802,23 +824,16 @@ end
 --     end
 -- end
 InterpolationUtils.EaseInOut = function(a, b, t)
+    if not ValidateAB(a, b, "InterpolationUtils.EaseInOut") then
+        return a
+    end
     if not IsNumber(t) then
         LogMessage("Error in InterpolationUtils.EaseInOut: interpolation factor t is not a number.", logLevelError)
         return a
     end
 
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
-    -- EaseInOutQuad formula
-    local easedT
-    if t < 0.5 then
-        easedT = 2 * t * t  -- Ease in: acceleration
-    else
-        easedT = 1 - 2 * (1 - t) * (1 - t)  -- Ease out: deceleration
-    end
-
-    return InterpolateValues(a, b, easedT, "InterpolationUtils.EaseInOut")
+    t = EaseInOutRawT(t)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 --- Elastic interpolation with overshoot and bounce effect.
@@ -927,6 +942,9 @@ end
 --     end
 -- end
 InterpolationUtils.Elastic = function(a, b, t, amplitude, period)
+    if not ValidateAB(a, b, "InterpolationUtils.Elastic") then
+        return a
+    end
     if not IsNumber(t) then
         LogMessage("Error in InterpolationUtils.Elastic: interpolation factor t is not a number.", logLevelError)
         return a
@@ -957,27 +975,8 @@ InterpolationUtils.Elastic = function(a, b, t, amplitude, period)
         return b
     end
 
-    -- EaseInOutElastic formula
-    local twoPi = 2 * pi
-
-    -- Calculate phase shift 's' to adjust the sine wave's starting point
-    -- The phase shift ensures the elastic curve starts at 0 and ends at 1
-    -- Formula: s = period / (2π) * arcsin(1 / amplitude)
-    local s = period / (2 * pi) * asin(1 / amplitude)
-    local periodOverTwoPi = twoPi / period
-    local easedT
-
-    if t < 0.5 then
-        -- Ease In (first half) - undershoot at start
-        t = t * 2
-        easedT = -(amplitude * (2 ^ (10 * (t - 1))) * sin((t - 1 - s) * periodOverTwoPi)) / 2
-    else
-        -- Ease Out (second half) - overshoot at end
-        t = t * 2 - 1
-        easedT = (amplitude * (2 ^ (-10 * t)) * sin((t - s) * periodOverTwoPi)) / 2 + 1
-    end
-
-    return InterpolateValues(a, b, easedT, "InterpolationUtils.Elastic")
+    t = ElasticRawT(t, amplitude, period)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 --- Bounce interpolation with damped oscillation physics.
@@ -1164,6 +1163,9 @@ end
 --     end
 -- end
 InterpolationUtils.Bounce = function(a, b, t, bounces, damping)
+    if not ValidateAB(a, b, "InterpolationUtils.Bounce") then
+        return a
+    end
     if not IsNumber(t) then
         LogMessage("Error in InterpolationUtils.Bounce: interpolation factor t is not a number.", logLevelError)
         return a
@@ -1199,24 +1201,9 @@ InterpolationUtils.Bounce = function(a, b, t, bounces, damping)
         return b
     end
 
-    -- Bounce formula:
-    -- Uses exponential decay combined with sine wave for bounce oscillations
-    -- Formula: easedT = 1 - (cos(t * π * bounces) * (1 - t)^(1/damping))
-    -- 
-    -- The formula works as follows:
-    -- 1. cos(t * π * bounces): Creates oscillations (bounces)
-    -- 2. (1 - t)^(1/damping): Exponential decay envelope
-    --    - damping controls decay speed
-    --    - Lower damping = faster energy loss
-    --    - Higher damping = longer bounces
-    -- 3. Multiply them: Bounces that decrease in amplitude
-    -- 4. (1 - result): Invert so we approach target value instead of 0
-
-    local decay = (1 - t) ^ (1 / (damping + 0.1))  -- Add 0.1 to prevent division issues
-    local oscillation = abs(cos(t * pi * bounces))
-    local easedT = 1 - (oscillation * decay)
-
-    return InterpolateValues(a, b, easedT, "InterpolationUtils.Bounce")
+    -- return InterpolateValues(a, b, easedT, "InterpolationUtils.Bounce")
+    t = BounceRawT(t, bounces, damping)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 --- Special Interpolation functions
