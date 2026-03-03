@@ -116,9 +116,7 @@ local IsNumber = Type.IsNumber
 local IsVec2 = Type.IsVec2
 local IsVec3 = Type.IsVec3
 local IsColor = Type.IsColor
-local IsTime = Type.IsTime
 local IsRotation = Type.IsRotation
-local IsEnumValue = Type.IsEnumValue
 
 
 -- Helper function for HSL to RGB conversion
