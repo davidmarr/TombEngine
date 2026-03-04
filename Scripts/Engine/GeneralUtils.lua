@@ -188,6 +188,16 @@ end
 -- local str = GeneralUtils.CloneValue("hello")   -- Returns "hello"
 -- local bool = GeneralUtils.CloneValue(true)     -- Returns true
 --
+-- -- Error handling example:
+-- local pos1 = TEN.Vec3(100, 200, 300)
+-- local posCopy = GeneralUtils.CloneValue(pos1)
+-- if posCopy then
+--     posCopy.x = 999
+--     -- pos1.x is still 100
+-- else
+--     TEN.Util.PrintLog("Failed to clone value", TEN.Util.LogLevel.ERROR)
+-- end
+--
 -- -- Practical use: safe parameter passing
 -- function ModifyPosition(pos)
 --     if not Type.IsVec3(pos) then -- Validate input type with Type module
