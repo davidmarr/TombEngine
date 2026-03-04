@@ -208,6 +208,9 @@ end
 --     safePos.x = safePos.x + 100
 --     return safePos  -- Original pos is unchanged
 -- end
+--
+-- -- Unsupported types (e.g., functions) are returned nil
+-- local funcCopy = GeneralUtils.CloneValue(function() end)  -- Logs warning, returns nil
 GeneralUtils.CloneValue = function(value)
     -- Handle primitive types (these are copied by value in Lua)
     local valueType = type(value)
