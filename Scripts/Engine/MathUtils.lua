@@ -594,7 +594,8 @@ end
 -- local inRange = MathUtils.IsInRange(5, 1, 10) -- true
 -- local outOfRange = MathUtils.IsInRange(15, 1, 10) -- false
 --
--- -- Error handling example:
+-- -- Edge cases:
+--
 -- -- This will log an error and return false because minValue is greater than maxValue
 -- local errorCase = MathUtils.IsInRange(5, 10, 1)
 --
