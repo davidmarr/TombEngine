@@ -405,10 +405,30 @@ end
 -- @treturn[1] bool The result of the comparison.
 -- @treturn[2] bool false If an error occurs (invalid operator or type mismatch), with an error message.
 -- @usage
--- local isEqual = GeneralUtils.CompareValues(5, 5, 0) -- true
--- local isNotEqual = GeneralUtils.CompareValues("hello", "world", 1) -- true
--- local isLessThan = GeneralUtils.CompareValues(3.5, 4.0, 2) -- true
--- local isGreaterOrEqual = GeneralUtils.CompareValues(TEN.Time(10), TEN.Time(5), 5) -- true
+-- -- Examples with numbers:
+-- local isEqual = GeneralUtils.CompareValues(5, 5, 0) -- true (equal)
+-- local isLessThan = GeneralUtils.CompareValues(3.5, 4.0, 2) -- true (3.5 < 4.0)
+-- local isGreaterThan = GeneralUtils.CompareValues(10, 2, 4) -- true (10 > 2)
+--
+-- -- Examples with strings:
+-- local isEqual = GeneralUtils.CompareValues("test", "test", 0) -- true (equal)
+--
+-- local isLessThan = GeneralUtils.CompareValues("apple", "banana", 2) -- true 
+-- -- ("apple" < "banana" in lexicographical order)
+--
+-- local isGreaterThan = GeneralUtils.CompareValues("zebra", "ant", 4) -- true
+-- -- ("zebra" > "ant" in lexicographical order)
+--
+-- local sLessThan = GeneralUtils.CompareValues("Z", "a", 2) -- true ("Z" < "a" in ASCII)
+--
+-- local isLessThan = GeneralUtils.CompareValues("2", "15", 2) -- false 
+-- -- ("2" > "15" in lexicographical order, because '2' > '1')
+--
+-- -- Examples with Time:
+-- local time1 = TEN.Time(120)  -- 120 frames
+-- local time2 = TEN.Time(150)  -- 150 frames
+-- local isLessThan = GeneralUtils.CompareValues(time1, time2, 2) -- true (120 < 150)
+-- local isGreaterThanOrEqual = GeneralUtils.CompareValues(time1, time2, 5) -- false (120 >= 150 is false)
 GeneralUtils.CompareValues = function(operand, reference, operator)
     -- Validate operator
     local op = CheckOperator(operator)
