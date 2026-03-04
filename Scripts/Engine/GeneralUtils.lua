@@ -467,30 +467,6 @@ GeneralUtils.CompareValues = function(operand, reference, operator)
     return false
 end
 
---- Check if a value is within a range (inclusive).
--- @tparam float value The value to check.
--- @tparam float minValue Minimum value.
--- @tparam float maxValue Maximum value.
--- @treturn[1] bool True if value is within range.
--- @treturn[2] bool false If an error occurs.
--- @usage
--- local inRange = GeneralUtils.IsInRange(5, 1, 10) -- true
--- local outOfRange = GeneralUtils.IsInRange(15, 1, 10) -- false
--- local errorCase = GeneralUtils.IsInRange(5, 10, 1) -- false (minValue greater than maxValue)
-GeneralUtils.IsInRange = function(value, minValue, maxValue)
-    if not (IsNumber(value) and IsNumber(minValue) and IsNumber(maxValue)) then
-        LogMessage("Error in GeneralUtils.IsInRange: all parameters must be numbers.", logLevelError)   
-        return false
-    end
-
-    if minValue > maxValue then
-        LogMessage("Error in GeneralUtils.IsInRange: minValue cannot be greater than maxValue.", logLevelError)
-        return false
-    end
-
-    return value >= minValue and value <= maxValue
-end
-
 --- Console utilities.
 -- Functions for formatted console output with colors and styles.
 -- Two functions are provided:
