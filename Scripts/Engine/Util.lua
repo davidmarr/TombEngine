@@ -119,7 +119,7 @@ local IsColor = Type.IsColor
 local IsRotation = Type.IsRotation
 
 
--- Helper function for HSL to RGB conversion
+-- HSL to RGB conversion
 local function HueToRgb(p, q, t)
     if t < 0 then
         t = t + 1
@@ -139,7 +139,7 @@ local function HueToRgb(p, q, t)
     return p
 end
 
--- Helper functions for sRGB and Linear color space conversion
+-- sRGB and Linear color space conversion
 local function SrgbToLinear(c)
     if c <= 0.04045 then
         return c / 12.92
@@ -148,7 +148,7 @@ local function SrgbToLinear(c)
     end
 end
 
--- Helper function for Linear to sRGB color space conversion
+-- Linear to sRGB color space conversion
 local function LinearToSrgb(c)
     if c <= 0.0031308 then
         return c * 12.92
@@ -157,7 +157,7 @@ local function LinearToSrgb(c)
     end
 end
 
--- Support function to get the maximum positive integer index in a table.
+-- Get the maximum positive integer index in a table.
 -- Used by array-like operations that must work with sparse tables.
 -- Used by: StringUtils.lua,
 Util.GetMaxNumericIndex = function(tbl)
@@ -170,13 +170,13 @@ Util.GetMaxNumericIndex = function(tbl)
     return maxIndex
 end
 
--- Support function for angle wrapping (used in interpolation)
+-- Angle wrapping (used in interpolation)
 -- Used by: MathUtils.lua
 Util.WrapAngleRaw = function(angle, minVal, range)
     return angle - range * floor((angle - minVal) / range)
 end
 
--- Support function for HSL to Color conversion (no type checking, used internally)
+-- HSL to Color conversion (no type checking, used internally)
 -- Takes h, s, l, a as separate parameters to avoid table allocation
 -- Returns a Color object directly
 Util.HSLtoColorRaw = function(h, s, l, a)
@@ -203,7 +203,7 @@ Util.HSLtoColorRaw = function(h, s, l, a)
     )
 end
 
--- Support function for Color to HSL conversion (no type checking, used internally)
+-- Color to HSL conversion (no type checking, used internally)
 -- Returns h, s, l as multiple values (no table allocation)
 Util.ColorToHSLRaw = function(color)
     local r = color.r / 255
@@ -227,7 +227,7 @@ Util.ColorToHSLRaw = function(color)
     return h, s, l
 end
 
--- Support function for Color to OKLch conversion (no type checking, used internally)
+-- Color to OKLch conversion (no type checking, used internally)
 -- Returns L, C, h as multiple values (no table allocation)
 Util.ColorToOKLchRaw = function(color)
     local r = SrgbToLinear(color.r / 255)
@@ -255,7 +255,7 @@ Util.ColorToOKLchRaw = function(color)
     return L, C, h
 end
 
--- Support function for OKLch to Color conversion (no type checking, used internally)
+-- OKLch to Color conversion (no type checking, used internally)
 -- Takes L, C, h, a as separate parameters to avoid table allocation
 -- Returns a Color object directly
 Util.OKLchToColorRaw = function(L, C, h, a)
@@ -300,6 +300,7 @@ Util.OKLchToColorRaw = function(L, C, h, a)
     return Color(r, g, b, alpha)
 end
 
+-- Check if a value is valid for interpolation (number, color, rotation, or vector)
 Util.IsValidInterpolationValue = function(value)
     return IsNumber(value) or
            IsColor(value) or
@@ -308,6 +309,8 @@ Util.IsValidInterpolationValue = function(value)
            IsVec3(value)
 end
 
+-- Core interpolation that handles different types (number, color, rotation, vector) without clamping t.
+-- Clamping is handled by the caller to allow for extrapolation if desired.
 local InterpolateValuesRaw = function(a, b, t)
     if IsNumber(a) then
         return a + (b - a) * t
@@ -315,11 +318,15 @@ local InterpolateValuesRaw = function(a, b, t)
     return a:Lerp(b, t)
 end
 
+-- Linear interpolation (no type checking, used internally)
 Util.LerpRaw = function (a, b, t)
     local clampedT = max(0, min(1, t))
     return InterpolateValuesRaw(a, b, clampedT)
 end
 
+-- Smoothstep interpolation (no type checking, used internally)
+-- edge0 and edgeDelta are used to scale and bias t before applying the smoothstep formula
+-- edgeDelta is the difference between edge1 and edge0, which defines the range over which the smoothstep transition occurs
 Util.SmoothstepRaw = function(a, b, t, edge0, edgeDelta)
     -- Scale, bias and saturate t to 0..1 range
     t = max(0, min(1, (t - edge0) / edgeDelta))
@@ -330,6 +337,9 @@ Util.SmoothstepRaw = function(a, b, t, edge0, edgeDelta)
     return InterpolateValuesRaw(a, b, t)
 end
 
+-- Smootherstep interpolation (no type checking, used internally)
+-- edge0 and edgeDelta are used to scale and bias t before applying the smootherstep formula
+-- edgeDelta is the difference between edge1 and edge0, which defines the range over which the smootherstep transition occurs
 Util.SmootherstepRaw  = function(a, b, t, edge0, edgeDelta)
     -- Scale, bias and saturate t to 0..1 range
     t = max(0, min(1, (t - edge0) / edgeDelta))
@@ -340,6 +350,8 @@ Util.SmootherstepRaw  = function(a, b, t, edge0, edgeDelta)
     return InterpolateValuesRaw(a, b, t)
 end
 
+-- Ease-in-out interpolation (no type checking, used internally)
+-- Uses the easeInOutQuad formula, which provides a smooth acceleration and deceleration.
 Util.EaseInOutRaw  = function(a, b, t)
     -- Clamp t to [0, 1]
     t = max(0, min(1, t))
@@ -354,6 +366,9 @@ Util.EaseInOutRaw  = function(a, b, t)
     return InterpolateValuesRaw(a, b, easedT)
 end
 
+-- Ease-in-out elastic interpolation (no type checking, used internally)
+-- This function creates an elastic easing effect, where the value overshoots and oscillates before settling at the target.
+-- The amplitude controls the height of the overshoot, while the period controls the frequency of the oscillations.
 Util.ElasticRaw  = function(a, b, t, amplitude, period)
     -- Clamp t to [0, 1]
     t = max(0, min(1, t))
@@ -387,6 +402,9 @@ Util.ElasticRaw  = function(a, b, t, amplitude, period)
     return InterpolateValuesRaw(a, b, easedT)
 end
 
+-- Bounce interpolation (no type checking, used internally)
+-- This function creates a bouncing effect, where the value bounces towards the target before settling.
+-- The bounces parameter controls how many times it bounces, while the damping parameter controls how quickly the bounces decrease in amplitude.
 Util.BounceRaw = function(a, b, t, bounces, damping)
     -- Clamp t to [0, 1]
     t = max(0, min(1, t))
