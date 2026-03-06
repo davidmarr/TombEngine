@@ -117,16 +117,6 @@ local Util = require("Engine.Util")
 local TableUtils = require("Engine.TableUtils")
 local ConversionUtils = require("Engine.ConversionUtils")
 
-local Interpolations =
-{
-    Lerp = Util.LerpRaw,
-    Smoothstep = Util.SmoothstepRaw,
-    Smootherstep = Util.SmootherstepRaw,
-    EaseInOut = Util.EaseInOutRaw,
-    Elastic = Util.ElasticRaw,
-    Bounce = Util.BounceRaw
-}
-
 local Round = Util.Round
 local WrapAngle = Util.WrapAngleRaw
 local TableHasValue = Util.TableHasValue
@@ -157,13 +147,87 @@ local logLevelWarning = TEN.Util.LogLevel.WARNING
 local CallbackPoint = TEN.Logic.CallbackPoint
 local FreezeModeNONE = TEN.Flow.FreezeMode.NONE
 
-local Tween = {}
-Tween.__index = Tween
+local Interpolations =
+{
+    Lerp = Util.LerpRaw,
+    Smoothstep = Util.SmoothstepRaw,
+    Smootherstep = Util.SmootherstepRaw,
+    EaseInOut = Util.EaseInOutRaw,
+    Elastic = Util.ElasticRaw,
+    Bounce = Util.BounceRaw
+}
+
+local TWEEN_INTERPOLATIONS = {
+    "Lerp",
+    "Smoothstep",
+    "Smootherstep",
+    "EaseInOut",
+    "Elastic",
+    "Bounce"
+}
+
+-- Storage
+LevelVars.Engine.Tween = { tweens = {} }
+
+-- local references to avoid table lookups
+local T = LevelVars.Engine.Tween.tweens
+
+-- Special functions for Tween
 LevelFuncs.Engine.Tween = {}
 
 -- local reference for LevelFuncs.Engine.Tween to avoid table lookups
 local F = LevelFuncs.Engine.Tween
 
+local Tween = {}
+Tween.__index = Tween
+
+Tween.Mode = {
+    ONCE = 0,              -- from → to (stop)
+    RESTART = 1,           -- from → to - from → to
+    PING_PONG = 2,         -- from → to → from
+}
+
+Tween.Mode = SetTableReadOnly(Tween.Mode)
+
+Tween.Easing = {
+    LERP = 1,
+    SMOOTHSTEP = 2,
+    SMOOTHERSTEP = 3,
+    EASE_IN_OUT = 4,
+    ELASTIC = 5,
+    BOUNCE = 6
+}
+
+Tween.Easing = SetTableReadOnly(Tween.Easing)
+
+Tween.UpdateMode = {
+    GAMEPLAY_ONLY = 1,  -- Update only during normal gameplay (PRELOOP)
+    FREEZE_ONLY = 2,    -- Update only during freeze/pause (PRE_FREEZE)
+    ALWAYS = 3          -- Update in both contexts
+}
+
+Tween.UpdateMode = SetTableReadOnly(Tween.UpdateMode)
+
+Tween.ColorSpace = {
+    RGB = 1,
+    HSL = 2,
+    OKLCH = 3
+}
+
+Tween.ColorSpace = SetTableReadOnly(Tween.ColorSpace)
+
+Tween.CallbackType = {
+    ON_START = "onStart",
+    ON_COMPLETE = "onComplete",
+    ON_LOOP = "onLoop",
+    ON_UPDATE = "onUpdate",
+    ON_TO = "onTo",
+    ON_FROM = "onFrom"
+}
+
+Tween.CallbackType = SetTableReadOnly(Tween.CallbackType)
+
+-- Helper function to validate tween values (numbers, Color, Rotation, Vec2, Vec3)
 local IsValidTweenValue = function(value)
     return IsNumber(value) or
            IsColor(value) or
@@ -172,6 +236,7 @@ local IsValidTweenValue = function(value)
            IsVec3(value)
 end
 
+-- Helper function to check and sanitize easing parameters based on easing type. Returns a table of parameters to be used in interpolation functions.
 local CheckEasingParams = function (functionName, easing, easingParams)
     if easing == Tween.Easing.SMOOTHSTEP or easing == Tween.Easing.SMOOTHERSTEP then
         if not IsTable(easingParams) then
@@ -230,67 +295,6 @@ local CheckEasingParams = function (functionName, easing, easingParams)
         return {easingParams.bounces, easingParams.damping}
     end
 end
-
--- Storage
-LevelVars.Engine.Tween = { tweens = {} }
-
--- local references to avoid table lookups
-local T = LevelVars.Engine.Tween.tweens
-
-local TWEEN_INTERPOLATIONS = {
-    "Lerp",
-    "Smoothstep",
-    "Smootherstep",
-    "EaseInOut",
-    "Elastic",
-    "Bounce"
-}
-
-Tween.Mode = {
-    ONCE = 0,              -- from → to (stop)
-    RESTART = 1,           -- from → to - from → to
-    PING_PONG = 2,         -- from → to → from
-}
-
-Tween.Mode = SetTableReadOnly(Tween.Mode)
-
-Tween.Easing = {
-    LERP = 1,
-    SMOOTHSTEP = 2,
-    SMOOTHERSTEP = 3,
-    EASE_IN_OUT = 4,
-    ELASTIC = 5,
-    BOUNCE = 6
-}
-
-Tween.Easing = SetTableReadOnly(Tween.Easing)
-
-Tween.UpdateMode = {
-    GAMEPLAY_ONLY = 1,  -- Update only during normal gameplay (PRELOOP)
-    FREEZE_ONLY = 2,    -- Update only during freeze/pause (PRE_FREEZE)
-    ALWAYS = 3          -- Update in both contexts
-}
-
-Tween.UpdateMode = SetTableReadOnly(Tween.UpdateMode)
-
-Tween.ColorSpace = {
-    RGB = 1,
-    HSL = 2,
-    OKLCH = 3
-}
-
-Tween.ColorSpace = SetTableReadOnly(Tween.ColorSpace)
-
-Tween.CallbackType = {
-    ON_START = "onStart",
-    ON_COMPLETE = "onComplete",
-    ON_LOOP = "onLoop",
-    ON_UPDATE = "onUpdate",
-    ON_TO = "onTo",
-    ON_FROM = "onFrom"
-}
-
-Tween.CallbackType = SetTableReadOnly(Tween.CallbackType)
 
 --- Create tween instance
 -- @tparam TweenParameters params Table with parameters
