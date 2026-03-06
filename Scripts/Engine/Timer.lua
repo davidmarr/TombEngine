@@ -132,7 +132,8 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.active = false
 	thisTimer.paused = true
 	thisTimer.skipFirstTick = true
-	thisTimer.pos = TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
+	thisTimer.posX = 50.0
+	thisTimer.posY = 90.0
 	thisTimer.scale = 1
 	thisTimer.unpausedColor = TEN.Color(255, 255, 255)
 	thisTimer.pausedColor = TEN.Color(255, 255, 0)
@@ -616,7 +617,8 @@ function Timer:SetPosition(x, y)
 	elseif not Type.IsNumber(y) then
 		TEN.Util.PrintLog("Error in Timer:SetPosition(): wrong value for Y in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
-		LevelVars.Engine.Timer.timers[self.name].pos = TEN.Vec2(TEN.Util.PercentToScreen(x, y))
+		LevelVars.Engine.Timer.timers[self.name].posX = x
+		LevelVars.Engine.Timer.timers[self.name].posY = y
 	end
 end
 
@@ -629,8 +631,9 @@ end
 --    Timer.Get("my_timer"):SetPosition(pos.x + 10, pos.y + 10)
 -- end
 function Timer:GetPosition()
-	local pos = LevelVars.Engine.Timer.timers[self.name].pos
-	return TEN.Vec2(TEN.Util.ScreenToPercent(pos.x, pos.y))
+	local posX = LevelVars.Engine.Timer.timers[self.name].posX
+	local posY = LevelVars.Engine.Timer.timers[self.name].posY
+	return TEN.Vec2(posX, posY)
 end
 
 --- Set the scale of the displayed timer when it is active.
@@ -815,7 +818,8 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 			if t.timerFormat then
 				local text = Utility.GenerateTimeFormattedString(t.remainingTime, t.timerFormat)
 				local color = t.paused and t.pausedColor or t.unpausedColor
-				local timerString = TEN.Strings.DisplayString(text, t.pos, t.scale, color, false, t.stringOption)
+				local pos = TEN.Vec2(TEN.Util.PercentToScreen(t.posX, t.posY))
+				local timerString = TEN.Strings.DisplayString(text, pos, t.scale, color, false, t.stringOption)
 				local time = (t.remainingTime == ZERO and not t.loop and not t.isInternal) and 1 or FRAME_TIME
 				TEN.Strings.ShowString(timerString, time)
 			end
