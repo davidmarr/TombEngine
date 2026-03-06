@@ -584,6 +584,37 @@ MathUtils.Clamp = function(value, minValue, maxValue)
     return value
 end
 
+--- Check if a value is within a range (inclusive).
+-- @tparam float value The value to check.
+-- @tparam float minValue Minimum value.
+-- @tparam float maxValue Maximum value.
+-- @treturn[1] bool True if value is within range.
+-- @treturn[2] bool false If an error occurs.
+-- @usage
+-- local inRange = MathUtils.IsInRange(5, 1, 10) -- true
+-- local outOfRange = MathUtils.IsInRange(15, 1, 10) -- false
+--
+-- -- Edge cases:
+--
+-- -- This will log an error and return false because minValue is greater than maxValue
+-- local errorCase = MathUtils.IsInRange(5, 10, 1)
+--
+-- -- This will log an error and return false because value is not a number
+-- local errorCase2 = MathUtils.IsInRange("5", 1, 10)
+MathUtils.IsInRange = function(value, minValue, maxValue)
+    if not (IsNumber(value) and IsNumber(minValue) and IsNumber(maxValue)) then
+        LogMessage("Error in MathUtils.IsInRange: all parameters must be numbers.", logLevelError)   
+        return false
+    end
+
+    if minValue > maxValue then
+        LogMessage("Error in MathUtils.IsInRange: minValue cannot be greater than maxValue.", logLevelError)
+        return false
+    end
+
+    return value >= minValue and value <= maxValue
+end
+
 --- Wrap an angle to a specific range (e.g., 0-360 or -180 to 180).
 -- Useful for normalizing rotation angles and preventing overflow.
 -- Unlike Clamp, this function wraps values cyclically (e.g., 450° → 90°).

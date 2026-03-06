@@ -188,6 +188,16 @@ end
 -- local str = GeneralUtils.CloneValue("hello")   -- Returns "hello"
 -- local bool = GeneralUtils.CloneValue(true)     -- Returns true
 --
+-- -- Error handling example:
+-- local pos1 = TEN.Vec3(100, 200, 300)
+-- local posCopy = GeneralUtils.CloneValue(pos1)
+-- if posCopy then
+--     posCopy.x = 999
+--     -- pos1.x is still 100
+-- else
+--     TEN.Util.PrintLog("Failed to clone value", TEN.Util.LogLevel.ERROR)
+-- end
+--
 -- -- Practical use: safe parameter passing
 -- function ModifyPosition(pos)
 --     if not Type.IsVec3(pos) then -- Validate input type with Type module
@@ -198,6 +208,9 @@ end
 --     safePos.x = safePos.x + 100
 --     return safePos  -- Original pos is unchanged
 -- end
+--
+-- -- Unsupported types (e.g., functions) are returned nil
+-- local funcCopy = GeneralUtils.CloneValue(function() end)  -- Logs warning, returns nil
 GeneralUtils.CloneValue = function(value)
     -- Handle primitive types (these are copied by value in Lua)
     local valueType = type(value)
@@ -392,10 +405,30 @@ end
 -- @treturn[1] bool The result of the comparison.
 -- @treturn[2] bool false If an error occurs (invalid operator or type mismatch), with an error message.
 -- @usage
--- local isEqual = GeneralUtils.CompareValues(5, 5, 0) -- true
--- local isNotEqual = GeneralUtils.CompareValues("hello", "world", 1) -- true
--- local isLessThan = GeneralUtils.CompareValues(3.5, 4.0, 2) -- true
--- local isGreaterOrEqual = GeneralUtils.CompareValues(TEN.Time(10), TEN.Time(5), 5) -- true
+-- -- Examples with numbers:
+-- local isEqual = GeneralUtils.CompareValues(5, 5, 0) -- true (equal)
+-- local isLessThan = GeneralUtils.CompareValues(3.5, 4.0, 2) -- true (3.5 < 4.0)
+-- local isGreaterThan = GeneralUtils.CompareValues(10, 2, 4) -- true (10 > 2)
+--
+-- -- Examples with strings:
+-- local isEqual = GeneralUtils.CompareValues("test", "test", 0) -- true (equal)
+--
+-- local isLessThan = GeneralUtils.CompareValues("apple", "banana", 2) -- true 
+-- -- ("apple" < "banana" in lexicographical order)
+--
+-- local isGreaterThan = GeneralUtils.CompareValues("zebra", "ant", 4) -- true
+-- -- ("zebra" > "ant" in lexicographical order)
+--
+-- local sLessThan = GeneralUtils.CompareValues("Z", "a", 2) -- true ("Z" < "a" in ASCII)
+--
+-- local isLessThan = GeneralUtils.CompareValues("2", "15", 2) -- false 
+-- -- ("2" > "15" in lexicographical order, because '2' > '1')
+--
+-- -- Examples with Time:
+-- local time1 = TEN.Time(120)  -- 120 frames
+-- local time2 = TEN.Time(150)  -- 150 frames
+-- local isLessThan = GeneralUtils.CompareValues(time1, time2, 2) -- true (120 < 150)
+-- local isGreaterThanOrEqual = GeneralUtils.CompareValues(time1, time2, 5) -- false (120 >= 150 is false)
 GeneralUtils.CompareValues = function(operand, reference, operator)
     -- Validate operator
     local op = CheckOperator(operator)
@@ -432,30 +465,6 @@ GeneralUtils.CompareValues = function(operand, reference, operator)
 
     LogMessage("Error in GeneralUtils.CompareValues: unsupported type.", logLevelError)
     return false
-end
-
---- Check if a value is within a range (inclusive).
--- @tparam float value The value to check.
--- @tparam float minValue Minimum value.
--- @tparam float maxValue Maximum value.
--- @treturn[1] bool True if value is within range.
--- @treturn[2] bool false If an error occurs.
--- @usage
--- local inRange = GeneralUtils.IsInRange(5, 1, 10) -- true
--- local outOfRange = GeneralUtils.IsInRange(15, 1, 10) -- false
--- local errorCase = GeneralUtils.IsInRange(5, 10, 1) -- false (minValue greater than maxValue)
-GeneralUtils.IsInRange = function(value, minValue, maxValue)
-    if not (IsNumber(value) and IsNumber(minValue) and IsNumber(maxValue)) then
-        LogMessage("Error in GeneralUtils.IsInRange: all parameters must be numbers.", logLevelError)   
-        return false
-    end
-
-    if minValue > maxValue then
-        LogMessage("Error in GeneralUtils.IsInRange: minValue cannot be greater than maxValue.", logLevelError)
-        return false
-    end
-
-    return value >= minValue and value <= maxValue
 end
 
 --- Console utilities.
