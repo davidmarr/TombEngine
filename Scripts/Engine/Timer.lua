@@ -547,7 +547,7 @@ end
 -- end
 function Timer:SetLooping(looping)
 	if not Type.IsBoolean(looping) then
-		TEN.Util.PrintLog("Error in Timer:SetLooping(): wrong value for looping in '" .. self.name .. "' timer", Util.LogLevel.ERROR)
+		TEN.Util.PrintLog("Error in Timer:SetLooping(): wrong value for looping in '" .. self.name .. "' timer", TEN.Util.LogLevel.ERROR)
 	else
 		LevelVars.Engine.Timer.timers[self.name].loop = looping
 	end
