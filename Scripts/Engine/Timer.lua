@@ -169,7 +169,7 @@ Timer.Get = function (name)
     end
     local timer = LevelVars.Engine.Timer.timers[name]
     if not timer then
-        return TEN.Util.PrintLog("Warning in Timer.Get(): '" .. name .. "' timer not found", TEN.Util.LogLevel.ERROR)
+        return TEN.Util.PrintLog("Error in Timer.Get(): '" .. name .. "' timer not found", TEN.Util.LogLevel.ERROR)
     end
     return setmetatable({ name = name }, Timer)
 end
