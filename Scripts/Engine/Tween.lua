@@ -1235,8 +1235,12 @@ F.UpdateAll = function()
     end -- close for each tween
 end
 
-AddCallback(CallbackPoint.PRE_LOOP, F.UpdateAll)
+F.ReloadTweens = function()
+    T = LevelVars.Engine.Tween.tweens
+end
 
+AddCallback(CallbackPoint.PRE_LOOP, F.UpdateAll)
 AddCallback(CallbackPoint.PRE_FREEZE, F.UpdateAll)
+AddCallback(CallbackPoint.PRE_LOAD, F.ReloadTweens)
 
 return Tween
