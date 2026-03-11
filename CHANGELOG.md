@@ -36,6 +36,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed submerging into the floor when picking up items under low-placed static meshes.
 * Fixed asymmetrically placed plinth pickups (OCB 3 and 4) and allow plinth pickups without static mesh underneath.
 * Fixed broken hardcoded camera when using the TURN_SWITCH.
+* Fixed animation bug when Lara dies in a hanging state.
 * Fixed weapon unholstering animation when selecting a weapon from the inventory for the first time.
 * Fixed original issue with incorrect arm orientation with unholstered weapons.
 * Fixed original issue with aiming stutter with targets nearly out of sight.
@@ -50,7 +51,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed linear inventory not fading ammo and combine selectors.
 * Fixed crashes on certain GPUs with dynamic memory allocation.
 * Fixed loading of level files bigger than 2 GB (only for 64-bit systems).
-* Fixed animation glitch when Lara dies in a hanging state
 
 ### Lua API changes
 * Added `Collision.Ray` class for raycasting to detect rooms, items, and static meshes.
