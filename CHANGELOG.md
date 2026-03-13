@@ -32,6 +32,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed original issue with BADDY1/2 with rolling out animation ignoring player on a distance larger than 1 block.
 * Fixed explosion effect crash and OCB calculation for WINGED_MUMMY. 
   [For further information] (https://tombengine.com/asset/enemy/winged-mutant-mummy/)
+* Fixed TR3 bosses not dropping items when killed.
 * Fixed corrupted targeting at Lara in water rooms for some shooting creatures.
 * Fixed teleporting upwards after corner shimmy when another ledge is above.
 * Fixed submerging into the floor when picking up items under low-placed static meshes.
