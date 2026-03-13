@@ -244,7 +244,6 @@ end
 -- -- Example:
 -- EventSequence.Get("my_seq")
 EventSequence.Get = function(name)
-	local self = {}
 	if not Type.IsString(name) then
 		return TEN.Util.PrintLog("Error in EventSequence.Get(): invalid name", TEN.Util.LogLevel.ERROR)
 	end
