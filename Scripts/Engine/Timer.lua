@@ -376,9 +376,9 @@ end
 -- @tparam int operator The type of comparison.<br>
 -- 0 : If the remaining time is equal to the value<br>
 -- 1 : If the remaining time is different from the value<br>
--- 2 : If the remaining time is less the value<br>
+-- 2 : If the remaining time is less than the value<br>
 -- 3 : If the remaining time is less or equal to the value<br>
--- 4 : If the remaining time is greater the value<br>
+-- 4 : If the remaining time is greater than the value<br>
 -- 5 : If the remaining time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
@@ -520,8 +520,8 @@ end
 -- @usage
 -- -- Example: this function checks if totalTime is equal to 5.1 seconds
 -- if Timer.IfExists("my_timer") and Timer.Get("my_timer"):IfTotalTimeIs(0, 5.1) then
---    local currentToltalTime = Timer.Get("my_timer"):GetTotalTime()
---    Timer.Get("my_timer"):SetTotalTime(currentToltalTime + 1.0)
+--    local currentTotalTime = Timer.Get("my_timer"):GetTotalTime()
+--    Timer.Get("my_timer"):SetTotalTime(currentTotalTime + 1.0)
 -- end
 function Timer:IfTotalTimeIs(operator, seconds)
 	local op = CheckOperator(operator)
