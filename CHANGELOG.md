@@ -76,6 +76,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added special tables `LevelVars`, `GameVars` and `LevelFunc` to the documentation.
 * Added `Logic.CallbackPoint`, `Logic.EventType` and `Logic.EndReason` enums to the documentation.
 * Improved `EventSequence` handling and stability.
+* Improved `Timer` class timestep handling.
 * Fixed `yOffset` argument in `Flow.InventoryItem` constructor giving inconsistent results with different screen resolutions.
 * Fixed `Effects.EmitLight` crashing the game if called with zero or near-zero light radius.
 * Fixed `View.SetCineBars` not working correctly.
