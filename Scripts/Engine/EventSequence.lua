@@ -67,6 +67,7 @@ LevelFuncs.Engine.EventSequence.CallNext = function(sequenceName, nextTimerName,
 	if not thisES then
 		return
 	end
+	
 	if thisES.stopRequested then
 		thisES.stopRequested = false
 		return
@@ -216,7 +217,7 @@ EventSequence.Create = function (name, loop, timerFormat, ...)
 			local n = #funcAndArgs
 			func = funcAndArgs[1]
 			if n > 1 then
-				table.move(funcAndArgs, 2, n, 1, args) -- copy arguments
+				table.move(funcAndArgs, 2, n, 1, args) -- Copy arguments.
 			end
 		else
 			func = funcAndArgs
@@ -314,7 +315,7 @@ end
 -- end
 function EventSequence:Start()
 	local thisES = LevelVars.Engine.EventSequence.sequences[self.name]
-	thisES.stopRequested = false -- clear stale stop requests before a new run
+	thisES.stopRequested = false -- Clear stale stop requests before a new run.
 	Timer.Get(thisES.timers[thisES.currentTimer]):Start()
 end
 
