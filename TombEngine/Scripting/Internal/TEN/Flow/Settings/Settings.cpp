@@ -559,7 +559,7 @@ namespace TEN::Scripting
 		"titleLogoPosition", &UISettings::TitleLogoPosition,
 
 		/// Title logo scale.
-		// @tfield[opt=TEN.Vec2(1&#44; 1)] Vec2 titleLogoScale Title level logo scale.
+		// @tfield[opt=0.38] float titleLogoScale Title level logo scale.
 		"titleLogoScale", &UISettings::TitleLogoScale,
 
 		/// Title logo color.
