@@ -206,7 +206,7 @@ EventSequence.Create = function (name, loop, timerFormat, ...)
 
 		local timerIndex = #thisES.timers + 1
 		local timerName = "__TEN_eventSequence_" .. name .. "_timer" .. timerIndex
-		local nextTimerName = "__TEN_eventSequence_" .. name .. "_timer" .. timerIndex + 1
+		local nextTimerName = "__TEN_eventSequence_" .. name .. "_timer" .. (timerIndex + 1)
 
 		local func
 		local args = {}
@@ -246,11 +246,14 @@ end
 -- EventSequence.Get("my_seq")
 EventSequence.Get = function(name)
 	if not Type.IsString(name) then
-		return TEN.Util.PrintLog("Error in EventSequence.Get(): invalid name", TEN.Util.LogLevel.ERROR)
+		TEN.Util.PrintLog("Error in EventSequence.Get(): invalid name", TEN.Util.LogLevel.ERROR)
+		return nil
 	end
+	
 	local thisES = LevelVars.Engine.EventSequence.sequences[name]
 	if not thisES then
-		return TEN.Util.PrintLog("Warning in EventSequence.Get(): sequence with name '".. name .."' sequence not found", TEN.Util.LogLevel.WARNING)
+		TEN.Util.PrintLog("Warning in EventSequence.Get(): sequence with name '".. name .."' not found", TEN.Util.LogLevel.WARNING)
+		return nil
 	end
 	return setmetatable({name = name}, EventSequence)
 end
