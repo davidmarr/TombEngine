@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
- 
-#include "Game/animation.h"
+
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/collision/Sphere.h"
 #include "Game/effects/Decal.h"
@@ -18,6 +18,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Sphere;
 using namespace TEN::Effects::Decal;
 using namespace TEN::Effects::Environment;
@@ -444,7 +445,7 @@ namespace TEN::Renderer
 			if (item.Model.Color.w < EPSILON)
 				continue;
 
-			if (item.ObjectNumber == ID_LARA && (SpotcamOverlay || SpotcamDontDrawLara))
+			if (item.ObjectNumber == ID_LARA && UseSpotCam && (SpotcamOverlay || SpotcamDontDrawLara))
 				continue;
 
 			if (item.ObjectNumber == ID_LARA && CurrentLevel == 0 && !g_GameFlow->IsLaraInTitleEnabled())
