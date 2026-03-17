@@ -131,7 +131,6 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	thisTimer.funcArgs = { ... }
 	thisTimer.active = false
 	thisTimer.paused = true
-	thisTimer.skipFirstTick = true
 	thisTimer.posX = 50.0
 	thisTimer.posY = 90.0
 	thisTimer.scale = 1
@@ -366,7 +365,6 @@ function Timer:SetRemainingTime(remainingTime)
 	else
 		local thisTimer = LevelVars.Engine.Timer.timers[self.name]
 		thisTimer.remainingTime = TEN.Time(Round2Decimal(remainingTime) * FPS)
-		thisTimer.skipFirstTick = true
 	end
 end
 
@@ -802,11 +800,7 @@ end
 LevelFuncs.Engine.Timer.Decrease = function ()
 	for _, t in pairs(LevelVars.Engine.Timer.timers) do
 		if t.active and not t.paused then
-			if t.skipFirstTick then
-				t.skipFirstTick = false
-			else
-				t.remainingTime = t.remainingTime - 1
-			end
+			t.remainingTime = t.remainingTime - 1
 		end
 	end
 end
@@ -829,7 +823,6 @@ LevelFuncs.Engine.Timer.UpdateAll = function()
 				else
 					t.active = false
 				end
-				t.skipFirstTick = true
 				if t.func then
 					t.func(unpack(t.funcArgs))
 				end
