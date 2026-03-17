@@ -590,6 +590,46 @@ TableUtils.RemoveKey = function(tbl, key)
     return false
 end
 
+--- Clear all key-value pairs from a table.
+-- This function removes all entries from the table, leaving it empty.
+-- Works with both associative tables and array tables.
+-- Note: __This function does not create a new table__; it modifies the existing table in place.
+-- @tparam table tbl The table to clear.
+-- @treturn[1] bool True if the table was successfully cleared.
+-- @treturn[2] bool False if the input is not a table.
+-- @usage
+-- -- Example with associative table:
+-- local player = { name = "Lara", health = 100, ammo = 50 }
+-- local cleared = TableUtils.ClearTable(player) -- Result: true
+-- -- player is now: {}
+--
+-- -- Example with array table:
+-- local colors = { "red", "green", "blue" }
+-- local cleared = TableUtils.ClearTable(colors) -- Result: true
+-- -- colors is now: {}
+--
+-- -- Example with nested tables:
+-- local config = { display = { width = 1920, height = 1080 }, sound = { volume = 80 } }
+-- local cleared = TableUtils.ClearTable(config) -- Result: true
+-- -- config is now: {}
+--
+-- -- Example with non-table input:
+-- local notATable = "I am a string"
+-- local cleared = TableUtils.ClearTable(notATable) -- Result: false (error logged)
+-- -- notATable remains unchanged: "I am a string"
+TableUtils.ClearTable = function(tbl)
+    if not IsTable(tbl) then
+        LogMessage("Error in TableUtils.ClearTable: input is not a table.", logLevelError)
+        return false
+    end
+
+    for k in next, tbl do
+        tbl[k] = nil
+    end
+
+    return true
+end
+
 --- Create a read-only version of a table.
 -- @tparam table tbl The table to make read-only.
 -- @treturn[1] table A read-only version of the input table.
