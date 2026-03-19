@@ -332,10 +332,15 @@ end
 -- @treturn[1] float|Vec2|Vec3|Rotation|Color|Time Random value between minValue and maxValue.
 -- @treturn[2] nil If an error occurs.
 -- @usage
--- local rand1 = MathUtils.Random(1, 10)          -- Random number between 1 and 10
--- local rand2 = MathUtils.Random(0.0, 1.0)       -- Random float between 0.0 and 1.0
--- local rand3 = MathUtils.Random(1, 100, 42)     -- Random number with seed 42
--- 
+-- -- Random number between 1 and 10
+-- local rand1 = MathUtils.Random(1, 10)
+--
+-- -- Random float between 0.0 and 1.0
+-- local rand2 = MathUtils.Random(0.0, 1.0)
+--
+-- -- Random number with seed 42
+-- local rand3 = MathUtils.Random(1, 100, 42)
+--
 -- -- Random position in a rectangle:
 -- local randomPos = MathUtils.Random(
 --     TEN.Vec2(0, 0), 
