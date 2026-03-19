@@ -383,6 +383,8 @@ MathUtils.Random = function(minValue, maxValue, seed)
 
     if seed then
         randomseed(seed)
+        random()
+        random()
     end
     local errorMessageBase = "Error in MathUtils.Random: minValue and maxValue must be the same type."
 
