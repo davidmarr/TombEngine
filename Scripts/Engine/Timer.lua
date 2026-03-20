@@ -255,6 +255,7 @@ end
 -- end
 function Timer:Stop()
 	LevelVars.Engine.Timer.timers[self.name].active = false
+	LevelVars.Engine.Timer.timers[self.name].paused = false
 end
 
 --- Pause or unpause the timer. If showing the remaining time on-screen, its default color will be set to yellow (paused) or white (unpaused).
