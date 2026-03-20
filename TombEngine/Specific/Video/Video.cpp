@@ -171,6 +171,7 @@ namespace TEN::Video
 		auto pluginCachePath = g_Platform->GetBinaryPath(false) + VIDEO_PLUGIN_CACHE_PATH;
 
 		std::vector<const char*> vlcArgs;
+		vlcArgs.push_back("--vout=vdummy");		 // Use dummy video output (headless); --vout=none breaks VLC 4.0 decoder device.
 		vlcArgs.push_back("--aout=amem");		 // Route audio to memory callbacks (BASS) instead of system output.
 		vlcArgs.push_back("--no-video-title");	 // Disable video title display.
 		vlcArgs.push_back("--no-media-library"); // Disable media library to increase loading speed.
