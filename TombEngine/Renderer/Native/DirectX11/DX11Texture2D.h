@@ -36,7 +36,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11Texture2D* GetD3D11Texture() const noexcept { return _texture.Get(); }
 		bool IsValid() override { return _texture != nullptr; }
 
-		DX11Texture2D(ID3D11Device* device, int width, int height, DXGI_FORMAT format, void* data);
+		DX11Texture2D(ID3D11Device* device, int width, int height, DXGI_FORMAT format, void* data, bool isDynamic = false);
 		DX11Texture2D(ID3D11Device* device, const std::wstring& fileName);
 		DX11Texture2D(ID3D11Device* device, int dataSize, unsigned char* data);
 	};
