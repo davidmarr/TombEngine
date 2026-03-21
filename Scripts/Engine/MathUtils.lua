@@ -178,7 +178,7 @@ end
 -- @tparam number|Vec2|Vec3|Time b (same type as a)
 -- @tparam number|Vec2|Vec3|Time ... (same type as a and b)
 -- @treturn[1] number|Vec2|Vec3|Time The maximum value.
--- @treturn[2] number|Vec2|Vec3|Time the value of the first argument if an error occurs (type mismatch or unsupported type), with an error message.
+-- @treturn[2] number|Vec2|Vec3|Time the value of `*a*` if an error occurs (type mismatch or unsupported type), with an error message
 -- @usage
 -- local max = MathUtils.Max(5, 10, 3) -- Result: 10
 -- local maxVec = MathUtils.Max(TEN.Vec3(1, 5, 3), TEN.Vec3(2, 4, 6)) -- Result: Vec3(2, 5, 6)
@@ -325,7 +325,9 @@ MathUtils.Truncate = function(num, decimals)
     return result
 end
 
---- Generate a random number or vector/color/time with optional seed. The function uses the current game time in frames as seed for randomness if the seed parameter is not provided, ensuring different random values each time the game is played. For reproducible randomness, a specific seed can be provided.
+--- Generate a random number or vector/color/time with optional seed.
+-- The function uses the current game time in frames as seed for randomness if the seed parameter is not provided, ensuring different random values each time the game is played.
+-- For reproducible randomness, a specific seed can be provided.
 -- @tparam float|Vec2|Vec3|Rotation|Color|Time minValue Minimum value.
 -- @tparam float|Vec2|Vec3|Rotation|Color|Time maxValue Maximum value (same type as minValue).
 -- @tparam[opt] float seed Seed for reproducible randomness.
@@ -687,6 +689,6 @@ LevelFuncs.StartRandomSeed = function()
     for i = 1, 3 do random() end
 end
 
-TEN.Logic.AddCallback(CallbackPoint.PRE_START, LevelFuncs.StartRandomSeed)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_START, LevelFuncs.StartRandomSeed)
 
 return MathUtils
