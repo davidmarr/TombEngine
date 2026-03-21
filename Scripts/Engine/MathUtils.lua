@@ -48,6 +48,7 @@ local LogMessage  = TEN.Util.PrintLog
 local errorMessageMax = "Error in MathUtils.Max: all arguments must be the same type."
 local errorMessageMin = "Error in MathUtils.Min: all arguments must be the same type."
 local errorMessageRandom = "Error in MathUtils.Random: minValue and maxValue must be the same type."
+local errorMessageBase = "Error in MathUtils.Clamp: value, minValue, and maxValue must be the same type."
 
 --- Checks if a value is an integer (a number without fractional part).
 -- @tparam number n The value to check
@@ -385,7 +386,6 @@ end
 -- local randomColor = MathUtils.Random(color1, color2) or TEN.Color(255, 255, 255, 255)
 -- sprite:SetColor(randomColor)
 MathUtils.Random = function(minValue, maxValue, seed)
-
     if seed then
         if not IsNumber(seed) then
             LogMessage("Warning: seed must be a number. Will be used current game time in frames", logLevelWarning)
@@ -521,7 +521,6 @@ end
 -- local clampedValue = MathUtils.Clamp(value, minValue, maxValue) or defaultValue
 MathUtils.Clamp = function(value, minValue, maxValue)
     -- Lazy type checking: check only what's needed
-    local errorMessageBase = "Error in MathUtils.Clamp: value, minValue, and maxValue must be the same type."
     if IsNumber(value) then
         if not (IsNumber(minValue) and IsNumber(maxValue)) then
             LogMessage(errorMessageBase, logLevelError)
