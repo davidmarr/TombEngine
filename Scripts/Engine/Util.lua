@@ -2,15 +2,34 @@
 
 -- Internal functions specific to modules. These are not intended for end users. These functions are not documented in the API reference.
 
-local Util = {}
 local Type = require("Engine.Type")
--- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
-local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
+local Util = {}
+
 local LogMessage  = TEN.Util.PrintLog
 local logLevelWarning = TEN.Util.LogLevel.WARNING
+local Color = TEN.Color
 local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsBoolean = Type.IsBoolean
+local floor = math.floor
+local max = math.max
+local min = math.min
+local abs = math.abs
+local sin = math.sin
+local cos = math.cos
+local asin = math.asin
+local atan = math.atan
+local deg = math.deg
+local sqrt = math.sqrt
+local rad = math.rad
+local pi = math.pi
+local IsNumber = Type.IsNumber
+local IsVec2 = Type.IsVec2
+local IsVec3 = Type.IsVec3
+local IsColor = Type.IsColor
+local IsRotation = Type.IsRotation
+-- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
+local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
 
 Util.ShortenTENCalls = function()
 	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
@@ -95,29 +114,6 @@ Util.TableHasValue = function(tbl, val)
 	end
 	return false
 end
-
--------------------------------------------------------------------------------
-
-local floor = math.floor
-local max = math.max
-local min = math.min
-local abs = math.abs
-local sin = math.sin
-local cos = math.cos
-local asin = math.asin
-local atan = math.atan
-local deg = math.deg
-local sqrt = math.sqrt
-local rad = math.rad
-local pi = math.pi
-local Color = TEN.Color
-
-local IsNumber = Type.IsNumber
-local IsVec2 = Type.IsVec2
-local IsVec3 = Type.IsVec3
-local IsColor = Type.IsColor
-local IsRotation = Type.IsRotation
-
 
 -- HSL to RGB conversion
 local function HueToRgb(p, q, t)
