@@ -31,12 +31,50 @@ local IsRotation = Type.IsRotation
 -- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
 local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
 
-Util.ShortenTENCalls = function()
-	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
-end
-
 local function pad2(n)
     return (n < 10) and ("0" .. n) or tostring(n)
+end
+
+-- HSL to RGB conversion
+local function HueToRgb(p, q, t)
+    if t < 0 then
+        t = t + 1
+    end
+    if t > 1 then
+        t = t - 1
+    end
+    if t < 1 / 6 then
+        return p + (q - p) * 6 * t
+    end
+    if t < 1 / 2 then
+        return q
+    end
+    if t < 2 / 3 then
+        return p + (q - p) * (2 / 3 - t) * 6
+    end
+    return p
+end
+
+-- sRGB and Linear color space conversion
+local function SrgbToLinear(c)
+    if c <= 0.04045 then
+        return c / 12.92
+    else
+        return ((c + 0.055) / 1.055) ^ 2.4
+    end
+end
+
+-- Linear to sRGB color space conversion
+local function LinearToSrgb(c)
+    if c <= 0.0031308 then
+        return c * 12.92
+    else
+        return 1.055 * (c ^ (1 / 2.4)) - 0.055
+    end
+end
+
+Util.ShortenTENCalls = function()
+	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
 end
 
 -- Check if the time format is correct.
@@ -113,44 +151,6 @@ Util.TableHasValue = function(tbl, val)
 		end
 	end
 	return false
-end
-
--- HSL to RGB conversion
-local function HueToRgb(p, q, t)
-    if t < 0 then
-        t = t + 1
-    end
-    if t > 1 then
-        t = t - 1
-    end
-    if t < 1 / 6 then
-        return p + (q - p) * 6 * t
-    end
-    if t < 1 / 2 then
-        return q
-    end
-    if t < 2 / 3 then
-        return p + (q - p) * (2 / 3 - t) * 6
-    end
-    return p
-end
-
--- sRGB and Linear color space conversion
-local function SrgbToLinear(c)
-    if c <= 0.04045 then
-        return c / 12.92
-    else
-        return ((c + 0.055) / 1.055) ^ 2.4
-    end
-end
-
--- Linear to sRGB color space conversion
-local function LinearToSrgb(c)
-    if c <= 0.0031308 then
-        return c * 12.92
-    else
-        return 1.055 * (c ^ (1 / 2.4)) - 0.055
-    end
 end
 
 -- Get the maximum positive integer index in a table.
