@@ -10,6 +10,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Fixed `Timer` class not working correctly with single frame intervals.
+* Fixed `Lara:SetWeaponMode` and `Lara:GetWeaponMode` returning weapon modes for unfitting weapons.
 * Fixed alpha value being ignored for `Flow.Settings.UI.shadowTextColor` parameter.
 
 ## [Version 1.11]
