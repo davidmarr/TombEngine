@@ -1353,9 +1353,11 @@ end
 -- @treturn[1] Color The interpolated color.
 -- @treturn[2] Color `colorA` if an error occurs.
 -- @usage
--- -- Example with RGB interpolation (red to blue):
--- local color1 = TEN.Color(255, 0, 0, 255)  -- Red
--- local color2 = TEN.Color(0, 0, 255, 255)  -- Blue
+-- -- Examples of interpolation from red to blue in different color spaces and with different options
+-- local color1 = TEN.Color(255, 0, 0)  -- Red
+-- local color2 = TEN.Color(0, 0, 255)  -- Blue
+--
+-- -- Example with RGB interpolation:
 -- local rgbColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5) -- t = 0.5, RGB space
 -- --   t    | R   | G | B
 -- --  ------|-----|---|-----
@@ -1365,7 +1367,7 @@ end
 -- --  0.75  | 64  | 0 | 191
 -- --  1.00  | 0   | 0 | 255
 --
--- -- Example with HSL interpolation (red to blue, shortest hue path):
+-- -- Example with HSL interpolation (shortest hue path):
 -- local hslColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 1)
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
@@ -1375,7 +1377,7 @@ end
 -- --  0.75  | 127 | 0   | 255
 -- --  1.00  | 0   | 0   | 255
 --
--- -- Example with HSL interpolation (red to blue, longest hue path):
+-- -- Example with HSL interpolation (longest hue path):
 -- local hslLongColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 1, { huePath = "longest" })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
@@ -1385,7 +1387,7 @@ end
 -- --  0.75  | 0   | 255 | 255
 -- --  1.00  | 0   | 0   | 255
 --
--- -- Example with OKLch interpolation (red to blue, shortest hue path):
+-- -- Example with OKLch interpolation (shortest hue path):
 -- local oklchShortColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 2)
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
@@ -1395,7 +1397,7 @@ end
 -- --  0.75  | 122 | 25  | 244
 -- --  1.00  | 0   | 0   | 255
 --
--- -- Example with OKLch interpolation (red to blue, preserving saturation):
+-- -- Example with OKLch interpolation (preserving saturation):
 -- local oklchColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 2, { preserveSaturation = true })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
@@ -1406,7 +1408,7 @@ end
 -- --  1.00  | 2   | 52  | 225
 -- -- Note: Enabling preserveSaturation, with t = 1 does not yield pure blue due to saturation preservation.
 --
--- -- Example with OKLch interpolation (red to blue, preserving lightness):
+-- -- Example with OKLch interpolation (preserving lightness):
 -- local oklchLightColor = InterpolationUtils.InterpolateColor(color1, color2, 0.5, 2, { preserveLightness = true })
 -- --   t    | R   | G   | B
 -- --  ------|-----|-----|-----
