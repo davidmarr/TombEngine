@@ -456,7 +456,7 @@ function Timer:GetTotalTimeInSeconds()
 	local totalFrames = LevelVars.Engine.Timer.timers[self.name].totalTime:GetFrameCount()
 	-- Truncate to 2 decimals, accuracy is 1 frame (1/30 second)
 	-- not necessary to round, as the remaining time is already quantized to 1 frame, but this way we avoid displaying values like 0.33333333334 instead of 0.3
-	return floor(totalFrames / FPS * 100) / 100
+	return floor(totalFrames / FPS * 10) / 10
 end
 
 --- Get the formatted total time of a timer. This is the amount of time the timer will start with, as well as when starting a new loop
