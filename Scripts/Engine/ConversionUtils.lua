@@ -408,11 +408,23 @@ ConversionUtils.OKLchToColor = function(l, c, h, a)
         LogMessage("Error in ConversionUtils.OKLchToColor: l, c, h must be numbers.", logLevelError)
         return nil
     end
-
+    if l < 0 or l > 1 then
+        LogMessage("Error in ConversionUtils.OKLchToColor: l must be between 0 and 1.", logLevelError)
+        return nil
+    end
+    if c < 0 or c > 0.4 then
+        LogMessage("Error in ConversionUtils.OKLchToColor: c must be between 0 and 0.4.", logLevelError)
+        return nil
+    end
+    if h < 0 or h >= 360 then
+        LogMessage("Error in ConversionUtils.OKLchToColor: h must be between 0 and 360.", logLevelError)
+        return nil
+    end
     if a and not IsNumber(a) then
         LogMessage("Error in ConversionUtils.OKLchToColor: a must be a number.", logLevelError)
         return nil
     end
+    a = max(0, min(1, a))
 
     return OKLchToColorRaw(l, c, h, a)
 end
