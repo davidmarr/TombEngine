@@ -341,8 +341,9 @@ InterpolationUtils.Lerp = function(a, b, t)
         LogMessage("Error in InterpolationUtils.Lerp: interpolation factor t is not a number.", logLevelError)
         return a
     end
+    local clampedT = max(0, min(1, t))
 
-    return LerpRaw(a, b, t)
+    return LerpRaw(a, b, clampedT)
 end
 
 --- Smoothly interpolate between two values using Hermite interpolation.
@@ -823,6 +824,9 @@ InterpolationUtils.EaseInOut = function(a, b, t)
         return a
     end
 
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
+
     return EaseInOutRaw(a, b, t)
 end
 
@@ -954,6 +958,9 @@ InterpolationUtils.Elastic = function(a, b, t, amplitude, period)
         LogMessage("Warning in InterpolationUtils.Elastic: amplitude should be >= 1.0 for proper elastic effect. Using 1.0.", logLevelWarning)
         amplitude = 1.0
     end
+
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
 
     return ElasticRaw(a, b, t, amplitude, period)
 end
@@ -1170,6 +1177,8 @@ InterpolationUtils.Bounce = function(a, b, t, bounces, damping)
         LogMessage("Warning in InterpolationUtils.Bounce: damping should be between 0.0 and 1.0. Clamping.", logLevelWarning)
         damping = max(0.0, min(1.0, damping))
     end
+    -- Clamp t to [0, 1]
+    t = max(0, min(1, t))
 
     return BounceRaw(a, b, t, bounces, damping)
 end

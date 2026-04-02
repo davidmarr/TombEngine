@@ -316,8 +316,7 @@ end
 
 -- Linear interpolation (no type checking, used internally)
 Util.LerpRaw = function (a, b, t)
-    local clampedT = max(0, min(1, t))
-    return InterpolateValuesRaw(a, b, clampedT)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 -- Smoothstep interpolation (no type checking, used internally)
@@ -349,9 +348,6 @@ end
 -- Ease-in-out interpolation (no type checking, used internally)
 -- Uses the easeInOutQuad formula, which provides a smooth acceleration and deceleration.
 Util.EaseInOutRaw  = function(a, b, t)
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
     -- EaseInOutQuad formula
     local easedT
     if t < 0.5 then
@@ -366,9 +362,6 @@ end
 -- This function creates an elastic easing effect, where the value overshoots and oscillates before settling at the target.
 -- The amplitude controls the height of the overshoot, while the period controls the frequency of the oscillations.
 Util.ElasticRaw  = function(a, b, t, amplitude, period)
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
     -- Handle edge cases (no oscillation at start/end)
     if t == 0 then
         return a
@@ -402,9 +395,6 @@ end
 -- This function creates a bouncing effect, where the value bounces towards the target before settling.
 -- The bounces parameter controls how many times it bounces, while the damping parameter controls how quickly the bounces decrease in amplitude.
 Util.BounceRaw = function(a, b, t, bounces, damping)
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
     -- Handle edge cases
     if t == 0 then
         return a
