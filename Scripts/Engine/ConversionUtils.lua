@@ -377,7 +377,7 @@ end
 -- -- Example: Lava pulse (brightness variation) - Complete working example
 -- -- Demonstrates OKLch advantage: changing lightness without color shift
 -- local lavaObj = TEN.Objects.GetMoveableByName("LavaGlow")
--- local baseLava = ConversionUtils.ColorToOKLch(TEN.Color(200, 60, 20, 255))  -- Dark red-orange
+-- local baseLava = ConversionUtils.ColorToOKLch(TEN.Color(200, 60, 20))  -- Dark red-orange
 -- local pulseTime = 0
 -- local pulseSpeed = 1 / ConversionUtils.SecondsToFrames(2)  -- 2 second pulse cycle
 -- LevelFuncs.OnLoop = function()
