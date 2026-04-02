@@ -37,6 +37,7 @@ local OKLchToColorRaw = Util.OKLchToColorRaw
 local IsNumber = Type.IsNumber
 local IsColor = Type.IsColor
 local IsString = Type.IsString
+local IsBoolean = Type.IsBoolean
 
 local floor = math.floor
 local max = math.max
@@ -332,7 +333,12 @@ end
 -- @tparam float l Lightness value (0.0 to 1.0, where 0 = black, 1 = white).
 -- @tparam float c Chroma value (0.0 to ~0.4, where 0 = gray, higher = more saturated).
 -- @tparam float h Hue angle in degrees (0 to 360).
--- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
+-- @tparam[opt={}] table opts Optional parameters.
+--
+-- - `a` (float): Alpha value (0.0 to 1.0).<br>*Default: 1.0*.
+--
+-- - `preserveGamut` (boolean): If true, adjusts saturation/lightness to keep colors within displayable gamut.<br>*Default: false*.
+--
 -- @treturn[1] Color The TEN.Color object.
 -- @treturn[2] nil If an error occurs.
 -- @usage
@@ -399,9 +405,10 @@ end
 --
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.OKLchToColor(l, c, h, a) or TEN.Color(128, 128, 128, 255)
-ConversionUtils.OKLchToColor = function(l, c, h, a)
-    -- Default alpha
-    a = a or 1.0
+ConversionUtils.OKLchToColor = function(l, c, h, opts)
+    opts = opts or {}
+    local a = opts.a or 1
+    local preserveGamut = opts.preserveGamut or false
 
     -- Validate parameters
     if not (IsNumber(l) and IsNumber(c) and IsNumber(h)) then
@@ -421,12 +428,16 @@ ConversionUtils.OKLchToColor = function(l, c, h, a)
         return nil
     end
     if a and not IsNumber(a) then
-        LogMessage("Error in ConversionUtils.OKLchToColor: a must be a number.", logLevelError)
-        return nil
+        LogMessage("Warning in ConversionUtils.OKLchToColor: a should be a number. Defaulting to 1.", logLevelWarning)
+        a = 1
+    end
+    if not IsBoolean(preserveGamut) then
+        LogMessage("Warning in ConversionUtils.OKLchToColor: preserveGamut should be a boolean. Defaulting to false.", logLevelWarning)
+        preserveGamut = false
     end
     a = max(0, min(1, a))
 
-    return OKLchToColorRaw(l, c, h, a)
+    return OKLchToColorRaw(l, c, h, {a = a, preserveGamut = preserveGamut})
 end
 
 return ConversionUtils
