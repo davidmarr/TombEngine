@@ -613,7 +613,13 @@ end
 -- The function always appends a final reset to prevent style leaking into subsequent log lines.
 -- Invalid tag names are silently removed (no crash, no error).
 -- @tparam string str The string with `{{tag}}` markup.
--- @tparam[opt=2] number logLevel The TEN log level: 0 = ERROR, 1 = WARNING, 2 = INFO.
+-- @tparam[opt=2] number logLevel The Log level or `Util.LogLevel` value:
+--
+-- 0 = ERROR
+--
+-- 1 = WARNING
+--
+-- 2 = INFO<br>
 -- @usage
 -- -- Simple colored message:
 -- GeneralUtils.ColorLog("{{red}}Error: texture not found{{/}}")
@@ -651,11 +657,18 @@ end
 -- GeneralUtils.ColorLog("{{dim}}Debug: value = 42{{/}}")
 -- -- Console: "Debug: value = 42" in dimmed color
 --
--- -- With log level (default is INFO = 2):
--- GeneralUtils.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)                    -- ERROR
--- GeneralUtils.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                            -- WARNING
--- GeneralUtils.ColorLog("{{green}}All systems operational{{/}}")                          -- INFO (default)
--- GeneralUtils.ColorLog("{{green}}All systems operational{{/}}", TEN.Util.LogLevel.INFO)  -- equivalent
+-- -- With Log levels:
+-- GeneralUtils.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", 0)                       -- ERROR
+--
+-- GeneralUtils.ColorLog("{{red}}{{bold}}FATAL: out of memory{{/}}", TEN.Util.LogLevel.ERROR) -- equivalent
+--
+-- GeneralUtils.ColorLog("{{yellow}}Warning: low ammo{{/}}", 1)                               -- WARNING
+--
+-- GeneralUtils.ColorLog("{{yellow}}Warning: low ammo{{/}}", TEN.Util.LogLevel.WARNING)       -- equivalent
+--
+-- GeneralUtils.ColorLog("{{green}}All systems operational{{/}}")                             -- INFO (default)
+--
+-- GeneralUtils.ColorLog("{{green}}All systems operational{{/}}", TEN.Util.LogLevel.INFO)     -- equivalent
 --
 -- -- Text without tags (printed as-is):
 -- GeneralUtils.ColorLog("Plain text, no styling")
