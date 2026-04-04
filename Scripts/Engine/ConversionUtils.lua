@@ -224,7 +224,7 @@ end
 -- Uses the Color:GetHue() method for accurate hue extraction.
 -- @tparam Color color The TEN.Color object to convert.
 -- @treturn[1] table A table with h, s, l, a values { h = float, s = float, l = float, a = float }.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If the parameter is not a valid TEN Color.
 -- @usage
 -- -- Example: Get HSL values from a color
 -- local color = TEN.Color(255, 87, 51, 255)
@@ -276,7 +276,7 @@ end
 -- - Rainbow gradients with consistent perceived brightness
 -- @tparam Color color The TEN.Color object to convert.
 -- @treturn[1] table A table with l, c, h, a values { l = float (0-1), c = float (0-0.4), h = float (0-360), a = float (0-1) }.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If the parameter is not a valid TEN Color.
 -- @usage
 -- -- Example: Get OKLch values from a color
 -- local color = TEN.Color(255, 87, 51, 255)
