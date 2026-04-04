@@ -73,41 +73,6 @@ local function LinearToSrgb(c)
     end
 end
 
-local function OKLabToColorInternal(L, A, B, a)
-    -- OKLab to LMS (inverse matrix)
-    local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B
-    local m_cbrt = L - 0.1055613458 * A - 0.0638541728 * B
-    local s_cbrt = L - 0.0894841775 * A - 1.2914855480 * B
-
-    -- Cube (inverse of cube root)
-    local l_ = l_cbrt * l_cbrt * l_cbrt
-    local m_ = m_cbrt * m_cbrt * m_cbrt
-    local s_ = s_cbrt * s_cbrt * s_cbrt
-
-    -- LMS to linear RGB (inverse matrix)
-    local r_lin =  4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
-    local g_lin = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
-    local b_lin = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
-
-    -- Clamp to valid range before gamma correction
-    r_lin = max(0, min(1, r_lin))
-    g_lin = max(0, min(1, g_lin))
-    b_lin = max(0, min(1, b_lin))
-
-    -- Linear RGB to sRGB
-    local r = LinearToSrgb(r_lin)
-    local g = LinearToSrgb(g_lin)
-    local b = LinearToSrgb(b_lin)
-
-    -- Clamp and convert to 0-255 range
-    r = floor(r * 255 + 0.5)
-    g = floor(g * 255 + 0.5)
-    b = floor(b * 255 + 0.5)
-    local alpha = floor(max(0, min(1, a)) * 255 + 0.5)
-
-    return Color(r, g, b, alpha), r_lin, g_lin, b_lin
-end
-
 Util.ShortenTENCalls = function()
 	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
 end
@@ -288,53 +253,47 @@ end
 
 -- OKLch to Color conversion (no type checking, used internally)
 -- Takes L, C, h, a as separate parameters to avoid table allocation
--- opts is a table that can contain:
--- a: alpha value (0-1, default 1)
--- preserveGamut: boolean that determines whether to preserve the gamut (default false). If true, it will use binary search to find the maximum C that is still in gamut, which preserves the hue and lightness as much as possible while ensuring the color is displayable. If false, it will directly convert using the provided L, C, h values, which may result in out-of-gamut colors but preserves the intended hue and lightness without modification.
 -- Returns a Color object directly
-Util.OKLchToColorRaw = function(L, C, h, opts)
-    local a = opts.a
-    local preserveGamut = opts.preserveGamut
+Util.OKLchToColorRaw = function(L, C, h, a)
 
+    -- Convert back to OKLab
     local hRad = rad(h)
+    local A = C * cos(hRad)
+    local B = C * sin(hRad)
+    a = a or 1  -- Default alpha to 1 if not provided
 
-    if not preserveGamut then
-        -- Without gamut preservation, we can directly convert using the provided L, C, h values. This may result in out-of-gamut colors, but it preserves the intended hue and lightness without modification.
-        local A = C * cos(hRad)
-        local B = C * sin(hRad)
-        return OKLabToColorInternal(L, A, B, a)
-    end
+    -- OKLab to LMS (inverse matrix)
+    local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B
+    local m_cbrt = L - 0.1055613458 * A - 0.0638541728 * B
+    local s_cbrt = L - 0.0894841775 * A - 1.2914855480 * B
 
-    -- preserveGamut = true: use binary search to find the maximum C that is still in gamut, which preserves the hue and lightness as much as possible while ensuring the color is displayable.
-    local lowC, highC = 0, C
-    local bestColor = nil
+    -- Cube (inverse of cube root)
+    local l_ = l_cbrt * l_cbrt * l_cbrt
+    local m_ = m_cbrt * m_cbrt * m_cbrt
+    local s_ = s_cbrt * s_cbrt * s_cbrt
 
-    for i = 1, 10 do
-        local midC = (lowC + highC) * 0.5
-        local A = midC * cos(hRad)
-        local B = midC * sin(hRad)
+    -- LMS to linear RGB (inverse matrix)
+    local r_lin =  4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
+    local g_lin = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
+    local b_lin = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
 
-        local color, r_lin, g_lin, b_lin = OKLabToColorInternal(L, A, B, a)
+    -- Clamp to valid range before gamma correction
+    r_lin = max(0, min(1, r_lin))
+    g_lin = max(0, min(1, g_lin))
+    b_lin = max(0, min(1, b_lin))
 
-        -- Check if the resulting color is in gamut by verifying that the linear RGB values are within the 0-1 range. This is a more accurate way to check gamut than checking the final sRGB values, as it accounts for the non-linear nature of the sRGB color space.
-        if r_lin >= 0 and r_lin <= 1 and
-           g_lin >= 0 and g_lin <= 1 and
-           b_lin >= 0 and b_lin <= 1 then
-            bestColor = color
-            lowC = midC
-        else
-            highC = midC
-        end
-    end
+    -- Linear RGB to sRGB
+    local r = LinearToSrgb(r_lin)
+    local g = LinearToSrgb(g_lin)
+    local b = LinearToSrgb(b_lin)
 
-    -- If bestColor is not nil, it means we found a valid color within the gamut. If it is nil, it means even the lowest C value is out of gamut, so we fall back to the original C without clamping, which may produce an out-of-gamut color but preserves the intended hue and lightness as much as possible.
-    if bestColor then
-        return bestColor
-    else
-        local A = C * cos(hRad)
-        local B = C * sin(hRad)
-        return OKLabToColorInternal(L, A, B, a)
-    end
+    -- Clamp and convert to 0-255 range
+    r = floor(r * 255 + 0.5)
+    g = floor(g * 255 + 0.5)
+    b = floor(b * 255 + 0.5)
+    local alpha = floor(max(0, min(1, a)) * 255 + 0.5)
+
+    return Color(r, g, b, alpha)
 end
 
 -- Check if a value is valid for interpolation (number, color, rotation, or vector)

@@ -1348,8 +1348,6 @@ end
 
 --- Interpolates between two colors in specified color space with options.
 -- Supports RGB, HSL, and OKLch color spaces with customizable hue interpolation paths and saturation/lightness preservation.
---
--- Note: Enabling `preserveSaturation` or `preserveLightness` may prevent __the interpolated color from reaching colorB at t=1__ , as it maintains the starting saturation or lightness.
 -- @tparam Color colorA Starting color.
 -- @tparam Color colorB Ending color.
 -- @tparam float t Interpolation factor (0.0 to 1.0).
@@ -1360,8 +1358,6 @@ end
 -- - `preserveSaturation` (boolean): If true, preserves starting saturation in HSL/OKLch.<br>*Default: false*.
 --
 -- - `preserveLightness` (boolean): If true, preserves starting lightness in HSL/OKLch.<br>*Default: false*.
---
--- - `preserveGamut` (boolean): Only applicable when using OKLch color space. If true, adjusts saturation/lightness to keep colors within displayable gamut.<br>*Default: false*.
 --
 -- @treturn[1] Color The interpolated color.
 -- @treturn[2] Color `colorA` if an error occurs.
@@ -1480,12 +1476,6 @@ InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options
     end
     preserveL = preserveL or false
 
-    local preserveGamut = options.preserveGamut
-    if preserveGamut ~= nil and not IsBoolean(preserveGamut) then
-        LogMessage("Warning in InterpolationUtils.InterpolateColor: preserveGamut must be boolean. Using false.", logLevelWarning)
-        preserveGamut = false
-    end
-
     -- RGB
     if space == 0 then
         local inv = 1 - t
@@ -1520,7 +1510,7 @@ InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options
         local c = preserveS and cA or (cA + (cB - cA) * t)
         local h = InterpolateHue(hA, hB, t, huePath)
 
-        local finalColor = OKLchToColorRaw(l, c, h, { a = 1, preserveGamut = preserveGamut })
+        local finalColor = OKLchToColorRaw(l, c, h)
         finalColor.a = colorA.a + (colorB.a - colorA.a) * t
         return finalColor
     end
