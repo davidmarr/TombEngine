@@ -198,8 +198,8 @@ ConversionUtils.HSLtoColor = function(h, s, l, a)
     end
 
     if a and not IsNumber(a) then
-        LogMessage("Error in ConversionUtils.HSLtoColor: a must be a number.", logLevelError)
-        return nil
+        LogMessage("Warning in ConversionUtils.HSLtoColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
+        a = 1.0
     end
 
     a = a or 1.0
@@ -428,13 +428,10 @@ ConversionUtils.OKLchToColor = function(l, c, h, a)
         LogMessage("Error in ConversionUtils.OKLchToColor: c must be between 0 and 0.4.", logLevelError)
         return nil
     end
-    if h < 0 or h > 360 then
-        LogMessage("Error in ConversionUtils.OKLchToColor: h must be between 0 and 360.", logLevelError)
-        return nil
-    end
+    h = h % 360  -- Wrap hue to [0, 360)
     if a and not IsNumber(a) then
-        LogMessage("Error in ConversionUtils.OKLchToColor: a must be a number.", logLevelError)
-        return nil
+        LogMessage("Warning in ConversionUtils.OKLchToColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
+        a = 1.0
     end
     a = max(0, min(1, a))
 
