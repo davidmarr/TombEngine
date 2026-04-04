@@ -177,7 +177,6 @@ end
 -- Returns a Color object directly
 Util.HSLtoColorRaw = function(h, s, l, a)
     local r, g, b
-    a = a or 1  -- Default alpha to 1 if not provided
 
     if s == 0 then
         r, g, b = l, l, l  -- Achromatic (gray)
@@ -260,7 +259,6 @@ Util.OKLchToColorRaw = function(L, C, h, a)
     local hRad = rad(h)
     local A = C * cos(hRad)
     local B = C * sin(hRad)
-    a = a or 1  -- Default alpha to 1 if not provided
 
     -- OKLab to LMS (inverse matrix)
     local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B

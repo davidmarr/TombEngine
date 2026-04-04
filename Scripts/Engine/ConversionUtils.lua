@@ -329,6 +329,18 @@ end
 
 --- Convert OKLch (Lightness, Chroma, Hue) values to a TEN.Color object.
 -- OKLch is a perceptually uniform color space, ideal for smooth color transitions.
+--
+-- Important: **Not all combinations of l, c, h can be displayed on a standard monitor (sRGB)**.
+-- High chroma values may be silently adjusted (colors become less vivid or shift slightly).
+-- This is most noticeable with blues at high brightness. To avoid this:
+--
+-- - Use lower chroma (c ≤ 0.15) for full hue cycles — all colors will display correctly
+--
+-- - Use higher chroma (up to 0.4) only for specific hues like red or orange
+--
+-- - When in doubt, start with c = 0.15 and increase until the result looks right
+--
+-- <p style = "margin: 10px 0 0 0px;">For full-spectrum color cycling (e.g. rainbow effects), prefer `HSLtoColor` which always produces displayable colors, at the cost of non-uniform perceived brightness.</p>
 -- @tparam float l Lightness value (0.0 to 1.0, where 0 = black, 1 = white).
 -- @tparam float c Chroma value (0.0 to ~0.4, where 0 = gray, higher = more saturated).
 -- @tparam float h Hue angle in degrees (0 to 360).

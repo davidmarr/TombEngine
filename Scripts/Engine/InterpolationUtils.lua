@@ -1496,7 +1496,7 @@ InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options
         local s = preserveS and sA or (sA + (sB - sA) * t)
         local l = preserveL and lA or (lA + (lB - lA) * t)
 
-        local finalColor = HSLtoColorRaw(h, s, l)
+        local finalColor = HSLtoColorRaw(h, s, l, 1)
         finalColor.a = colorA.a + (colorB.a - colorA.a) * t
         return finalColor
     end
@@ -1510,7 +1510,7 @@ InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options
         local c = preserveS and cA or (cA + (cB - cA) * t)
         local h = InterpolateHue(hA, hB, t, huePath)
 
-        local finalColor = OKLchToColorRaw(l, c, h)
+        local finalColor = OKLchToColorRaw(l, c, h, 1)
         finalColor.a = colorA.a + (colorB.a - colorA.a) * t
         return finalColor
     end
