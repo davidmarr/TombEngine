@@ -103,15 +103,20 @@ ConversionUtils.FramesToSeconds = function(frames, fps)
 end
 
 --- Convert a hexadecimal color string to a TEN.Color object.
--- @tparam string hex The hexadecimal color string (formats: "#RRGGBB", "RRGGBB", "#RRGGBBAA", "RRGGBBAA").
+--
+-- Allowed formats: "#RRGGBB", "RRGGBB", "#RRGGBBAA", "RRGGBBAA" (case-insensitive).
+-- @tparam string hex The hexadecimal color string
 -- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If the input string is invalid.
 -- @usage
 -- -- Example with 6-digit hex (RGB):
 -- local color = ConversionUtils.HexToColor("#FF5733") -- Result: TEN.Color(255, 87, 51, 255)
 --
 -- -- Example without hash:
 -- local color = ConversionUtils.HexToColor("00FF00") -- Result: TEN.Color(0, 255, 0, 255)
+--
+-- -- Example with lowercase hex:
+-- local color = ConversionUtils.HexToColor("#0000ff") -- Result: TEN.Color(0, 0, 255, 255)
 --
 -- -- Example with 8-digit hex (RGBA):
 -- local color = ConversionUtils.HexToColor("#FF573380") -- Result: TEN.Color(255, 87, 51, 128)
@@ -192,14 +197,15 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.HSLtoColor(hue, saturation, lightness, alpha) or TEN.Color(255, 255, 255, 255)
 ConversionUtils.HSLtoColor = function(h, s, l, a)
-    -- Default alpha to 1.0 if not provided
-    a = a or 1.0
-
     -- Validate parameters
     if not (IsNumber(h) and IsNumber(s) and IsNumber(l)) then
         LogMessage("Error in ConversionUtils.HSLtoColor: h, s, and l must be numbers.", logLevelError)
         return nil
     end
+
+    -- Default alpha to 1.0 if not provided
+    a = a or 1.0
+
     if not IsNumber(a) then
         LogMessage("Warning in ConversionUtils.HSLtoColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
         a = 1.0
@@ -413,14 +419,15 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.OKLchToColor(l, c, h, a) or TEN.Color(128, 128, 128, 255)
 ConversionUtils.OKLchToColor = function(l, c, h, a)
-    -- Default alpha to 1.0 if not provided
-    a = a or 1.0
-
     -- Validate parameters
     if not (IsNumber(l) and IsNumber(c) and IsNumber(h)) then
         LogMessage("Error in ConversionUtils.OKLchToColor: l, c, h must be numbers.", logLevelError)
         return nil
     end
+
+    -- Default alpha to 1.0 if not provided
+    a = a or 1.0
+
     if not IsNumber(a) then
         LogMessage("Warning in ConversionUtils.OKLchToColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
         a = 1.0
