@@ -201,8 +201,6 @@ namespace TEN::Renderer
 
 		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::AlphaBlend);
 
-		auto shadowColor = (Vector3)g_GameFlow->GetSettings()->UI.ShadowTextColor;
-
 		for (const auto& rString : _stringsToDraw)
 		{
 			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
@@ -211,10 +209,10 @@ namespace TEN::Renderer
 			if (rString.Flags & (int)PrintStringFlags::Outline)
 			{
 				_gameFont->DrawString(
-					_spriteBatch.get(), rString.String,
+					_spriteBatch.get(), rString.String.c_str(),
 					Vector2(drawPos.x + shadowOffset * rString.Scale, drawPos.y + shadowOffset * rString.Scale),
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-					0.0f, Vector4::Zero, rString.Scale);
+					0.0f, Vector2::Zero, rString.Scale);
 			}
 
 			// Draw string.
