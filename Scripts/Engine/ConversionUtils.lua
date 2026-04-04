@@ -192,17 +192,18 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.HSLtoColor(hue, saturation, lightness, alpha) or TEN.Color(255, 255, 255, 255)
 ConversionUtils.HSLtoColor = function(h, s, l, a)
+    -- Default alpha to 1.0 if not provided
+    a = a or 1.0
+
+    -- Validate parameters
     if not (IsNumber(h) and IsNumber(s) and IsNumber(l)) then
         LogMessage("Error in ConversionUtils.HSLtoColor: h, s, and l must be numbers.", logLevelError)
         return nil
     end
-
-    if a and not IsNumber(a) then
+    if not IsNumber(a) then
         LogMessage("Warning in ConversionUtils.HSLtoColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
         a = 1.0
     end
-
-    a = a or 1.0
 
     -- Clamp values to valid ranges
     h = h % 360
@@ -412,7 +413,7 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.OKLchToColor(l, c, h, a) or TEN.Color(128, 128, 128, 255)
 ConversionUtils.OKLchToColor = function(l, c, h, a)
-    -- Default alpha
+    -- Default alpha to 1.0 if not provided
     a = a or 1.0
 
     -- Validate parameters
@@ -420,7 +421,7 @@ ConversionUtils.OKLchToColor = function(l, c, h, a)
         LogMessage("Error in ConversionUtils.OKLchToColor: l, c, h must be numbers.", logLevelError)
         return nil
     end
-    if a and not IsNumber(a) then
+    if not IsNumber(a) then
         LogMessage("Warning in ConversionUtils.OKLchToColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
         a = 1.0
     end
