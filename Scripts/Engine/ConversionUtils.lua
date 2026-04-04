@@ -166,7 +166,7 @@ end
 -- @tparam float l Lightness value (0.0 to 1.0).
 -- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
 -- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If parameters are invalid.
 -- @usage
 -- -- Example: Pure red
 -- local color = ConversionUtils.HSLtoColor(0, 1, 0.5) -- Result: TEN.Color(255, 0, 0, 255)
@@ -347,7 +347,7 @@ end
 -- @tparam float h Hue angle in degrees (0 to 360).
 -- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
 -- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If parameters are invalid.
 -- @usage
 -- -- Example: Create pure red in OKLch
 -- local red = ConversionUtils.OKLchToColor(0.63, 0.26, 29, 1.0)
