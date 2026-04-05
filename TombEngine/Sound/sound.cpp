@@ -1105,6 +1105,11 @@ void Sound_Reset()
 		if (Sound_CheckBASSError("Initializing BASS sound device", true))
 			return;
 
+		// Re-apply per-device 3D factors on new device (distance, rolloff, Doppler).
+		// These are per-device settings in BASS and reset to defaults on new device init.
+		// Without this, Doppler pitch shifts would behave incorrectly after switching devices.
+		BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
+
 		// Move all opened streams to new device.
 		for (int i = 0; i < SOUND_MAX_SAMPLES; i++)
 		{
@@ -1114,6 +1119,20 @@ void Sound_Reset()
 				BASS_ChannelLock(sample, true);
 				BASS_ChannelSetDevice(sample, newSoundDevice);
 				BASS_ChannelLock(sample, false);
+			}
+		}
+
+		// Move currently-playing sample channels to new device.
+		// Moving an HSAMPLE only routes future channels to the new device; existing channels
+		// remain on the old device and would be invalidated when it's freed below.
+		for (int i = 0; i < SOUND_MAX_CHANNELS; i++)
+		{
+			auto channel = SoundSlot[i].Channel;
+			if (channel != NULL && BASS_ChannelIsActive(channel))
+			{
+				BASS_ChannelLock(channel, true);
+				BASS_ChannelSetDevice(channel, newSoundDevice);
+				BASS_ChannelLock(channel, false);
 			}
 		}
 
@@ -1140,8 +1159,9 @@ void Sound_Reset()
 		BASS_SetDevice(prevSoundDevice);
 		BASS_Free();
 
-		// Set new device again.
+		// Set new device again and apply 3D changes.
 		BASS_SetDevice(newSoundDevice);
+		BASS_Apply3D();
 	}
 	else
 	{
