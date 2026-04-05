@@ -197,10 +197,7 @@ namespace TEN::Renderer
 		SetBlendMode(BlendMode::AlphaBlend);
 
 		float shadowOffset = 1.5f / (REFERENCE_FONT_SIZE / _gameFont->GetLineSpacing());
-
-		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::AlphaBlend);
-
-		auto shadowColor = (Vector3)g_GameFlow->GetSettings()->UI.ShadowTextColor;
+		auto shadowColor = (Vector4)g_GameFlow->GetSettings()->UI.ShadowTextColor;
 
 		for (const auto& rString : _stringsToDraw)
 		{
@@ -212,8 +209,8 @@ namespace TEN::Renderer
 				_gameFont->DrawString(
 					_spriteBatch.get(), rString.String,
 					Vector2(drawPos.x + shadowOffset * rString.Scale, drawPos.y + shadowOffset * rString.Scale),
-					Vector4(shadowColor.x, shadowColor.y, shadowColor.z, rString.Color.w) * ScreenFadeCurrent,
-					0.0f, Vector2::Zero, rString.Scale);
+					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
+					0.0f, Vector4::Zero, rString.Scale);
 			}
 
 			// Draw string.
