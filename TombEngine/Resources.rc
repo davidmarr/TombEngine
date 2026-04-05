@@ -3,6 +3,7 @@
 #pragma code_page(65001)
 
 #include "resource.h"
+#include "version.h"
 #include <winres.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -17,8 +18,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,10,0,2
- PRODUCTVERSION 1,10,0,2
+ FILEVERSION TEN_MAJOR_VERSION,TEN_MINOR_VERSION,TEN_BUILD_NUMBER,TEN_REVISION_NUMBER
+ PRODUCTVERSION TEN_MAJOR_VERSION,TEN_MINOR_VERSION,TEN_BUILD_NUMBER,TEN_REVISION_NUMBER
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -38,8 +39,8 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (c) 2024"
             VALUE "OriginalFilename", "TombEngine.exe"
             VALUE "ProductName", "Tomb Engine"
-            VALUE "FileVersion", "1.10.0.2"
-            VALUE "ProductVersion", "1.10.0.2"
+            VALUE "FileVersion", TEN_VERSION_STRING
+            VALUE "ProductVersion", TEN_VERSION_STRING
         END
     END
     BLOCK "VarFileInfo"
