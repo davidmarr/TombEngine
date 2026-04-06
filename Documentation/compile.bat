@@ -32,5 +32,13 @@ if %ERRORLEVEL% neq 0 (
     exit /b %ERRORLEVEL%
 )
 
+echo Copying TEN logo asset...
+copy /Y "..\TEN logo.png" "%DOC_DIR%\TEN logo.png" >nul
+
+if %ERRORLEVEL% neq 0 (
+    echo TEN logo copy failed with error code %ERRORLEVEL%
+    exit /b %ERRORLEVEL%
+)
+
 echo Documentation build completed successfully!
 exit /b 0

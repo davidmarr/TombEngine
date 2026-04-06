@@ -14,7 +14,7 @@ new_type("luautil", "6 Lua utility modules", true)
 not_luadoc = true
 
 local version = "2.0"
-project = "&nbsp;TombEngine"
+project = "TombEngine"
 title = "TombEngine " .. version .. " Lua API"
 description = "TombEngine " .. version .. " scripting interface"
 full_description = [[Welcome to the TombEngine scripting API.

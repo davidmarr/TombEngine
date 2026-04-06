@@ -119,6 +119,20 @@ table.index td { text-align: left; vertical-align: top; }
     overflow: visible;
 }
 
+#navigation .project-title {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0 1rem 0.5rem;
+}
+
+#navigation .project-title-logo {
+    display: block;
+    flex: 0 0 auto;
+    height: 2rem;
+    width: auto;
+}
+
 #navigation h2 {
     background-color:#e7e7e7;
     font-size:1.1em;
