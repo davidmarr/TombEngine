@@ -57,6 +57,8 @@ constexpr int LegacyLoopingTrackMax = 111;
 static int SecretSoundIndex = 5;
 static int GlobalMusicVolume;
 static int GlobalFXVolume;
+static bool BASS_Initialized = false;
+static int  CurrentReverbType = NO_VALUE;
 
 static Vector3 oldMikePos = Vector3::Zero;
 
@@ -917,14 +919,13 @@ void Sound_UpdateScene()
 
 	// Apply environmental effects
 
-	static int currentReverb = NO_VALUE;
 	auto roomReverb = g_Configuration.EnableReverb ? (int)g_Level.Rooms[Camera.pos.RoomNumber].reverbType : (int)ReverbType::Small;
 
-	if (currentReverb == NO_VALUE || roomReverb != currentReverb)
+	if (CurrentReverbType == NO_VALUE || roomReverb != CurrentReverbType)
 	{
-		currentReverb = roomReverb;
-		if (currentReverb < (int)ReverbType::Count)
-			BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Reverb], &BASS_ReverbTypes[(int)currentReverb]);
+		CurrentReverbType = roomReverb;
+		if (CurrentReverbType < (int)ReverbType::Count)
+			BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Reverb], &BASS_ReverbTypes[(int)CurrentReverbType]);
 	}
 
 	for (int i = 0; i < SOUND_MAX_CHANNELS; i++)
@@ -988,48 +989,24 @@ void Sound_UpdateScene()
 	BASS_Apply3D();
 }
 
-// Initialize BASS engine and also prepare all sound data.
-// Called once on engine start-up.
-void Sound_Init(const std::string& gameDirectory)
+// Initialize a BASS device and set up 3D mixdown, video stream, and effects.
+// Used by both Sound_Init (startup) and Sound_Reset (re-enabling after "No sound device").
+static bool Sound_InitDevice(int soundDevice)
 {
-	// Initialize and collect soundtrack paths.
-	FullAudioDirectory = gameDirectory + TRACKS_PATH;
-	EnumerateLegacyTracks();
-
-	// List all found sound devices. First device is always a dummy null device 
-	// so if the list returns 1 element that means that not sound devices are installed 
-	// on the system.
-	auto foundDevices = Sound_ListDevices();
-	if (foundDevices.size() <= 1)
-	{
-		TENLog("No sound devices found. Disabling sounds.", LogLevel::Warning);
-		g_Configuration.EnableSound = false;
-		return;
-	}
-
-	g_Platform->InitialiseAudioCodecs();
-
-	int soundDevice = g_Configuration.SoundDevice;
-
-	BASS_DEVICEINFO info;
-	if (!BASS_GetDeviceInfo(soundDevice, &info))
-	{
-		TENLog("Selected sound device is not available, using default", LogLevel::Warning);
-		soundDevice = NO_VALUE;
-	}
-
 	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
 	if (Sound_CheckBASSError("Initializing BASS sound device", true))
-		return;
+		return false;
+
+	BASS_Initialized = true;
 
 	// Initialize BASS_FX plugin.
 	BASS_FX_GetVersion();
 	if (Sound_CheckBASSError("Initializing FX plugin", true))
-		return;
+		return false;
 
 	// Set 3D world parameters.
 	// Rolloff is lessened since we have own attenuation implementation.
-	BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);	
+	BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
 	BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_FULL);
 
 	// Set minimum latency and 2 threads for updating.
@@ -1050,123 +1027,179 @@ void Sound_Init(const std::string& gameDirectory)
 	BASS_SetConfig(BASS_CONFIG_BUFFER, 300);
 
 	if (Sound_CheckBASSError("Starting 3D mixdown", true))
-		return;
+		return false;
 
-	// Initialize channels and tracks array
+	// Initialize channels and tracks array.
 	memset(SoundSlot, 0, sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS);
 
-	// Attach reverb effect to 3D channel
+	// Attach reverb effect to 3D channel.
  	BASS_FXHandler[(int)SoundFilter::Reverb] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_FREEVERB, 0);
 	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Reverb], &BASS_ReverbTypes[(int)ReverbType::Outside]);
 
 	if (Sound_CheckBASSError("Attaching environmental FX", true))
-		return;
+		return false;
 
-	// Apply slight compression to 3D channel
+	// Apply slight compression to 3D channel.
 	BASS_FXHandler[(int)SoundFilter::Compressor] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_COMPRESSOR2, 1);
 	auto comp = BASS_BFX_COMPRESSOR2{ 4.0f, -18.0f, 1.5f, 10.0f, 100.0f, -1 };
 	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Compressor], &comp);
 
 	if (Sound_CheckBASSError("Attaching compressor", true))
-		return;
+		return false;
 
-	return;
+	return true;
+}
+
+// Initialize BASS engine and also prepare all sound data.
+// Called once on engine start-up.
+void Sound_Init(const std::string& gameDirectory)
+{
+	// Initialize and collect soundtrack paths.
+	FullAudioDirectory = gameDirectory + TRACKS_PATH;
+	EnumerateLegacyTracks();
+
+	// List all found sound devices. First device is always a dummy null device
+	// so if the list returns 1 element that means that not sound devices are installed
+	// on the system.
+	auto foundDevices = Sound_ListDevices();
+	if (foundDevices.size() <= 1)
+	{
+		TENLog("No sound devices found. Disabling sounds.", LogLevel::Warning);
+		g_Configuration.EnableSound = false;
+		return;
+	}
+
+	g_Platform->InitialiseAudioCodecs();
+
+	int soundDevice = g_Configuration.SoundDevice;
+
+	BASS_DEVICEINFO info;
+	if (!BASS_GetDeviceInfo(soundDevice, &info))
+	{
+		TENLog("Selected sound device is not available, using default", LogLevel::Warning);
+		soundDevice = NO_VALUE;
+	}
+
+	Sound_InitDevice(soundDevice);
 }
 
 // Stop all sounds and streams, if any, unplug all channels from the mixer and unload BASS engine.
 // Must be called on engine quit.
 void Sound_DeInit()
 {
-	if (!g_Configuration.EnableSound)
+	if (!BASS_Initialized)
 		return;
 
 	TENLog("Shutting down BASS...", LogLevel::Info);
 	BASS_Free();
+	BASS_Initialized = false;
 
 	g_Platform->ReleaseAudioCodecs();
 }
 
 void Sound_Reset()
 {
-	if (g_Configuration.EnableSound)
+	if (!BASS_Initialized)
+		return;
+
+	if (!g_Configuration.EnableSound)
 	{
-		int prevSoundDevice = BASS_GetDevice();
-		int newSoundDevice = g_Configuration.SoundDevice;
-
-		auto info = BASS_DEVICEINFO{};
-		if (!BASS_GetDeviceInfo(newSoundDevice, &info))
-		{
-			TENLog("Selected sound device is not available, using default", LogLevel::Warning);
-			newSoundDevice = NO_VALUE;
-		}
-
-		// Init new device.
-		BASS_Init(newSoundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
-		if (Sound_CheckBASSError("Initializing BASS sound device", true))
-			return;
-
-		// Re-apply per-device 3D factors on new device (distance, rolloff, Doppler).
-		// These are per-device settings in BASS and reset to defaults on new device init.
-		// Without this, Doppler pitch shifts would behave incorrectly after switching devices.
-		BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
-
-		// Move all opened streams to new device.
-		for (int i = 0; i < SOUND_MAX_SAMPLES; i++)
-		{
-			auto sample = BASS_SamplePointer[i];
-			if (sample != NULL)
-			{
-				BASS_ChannelLock(sample, true);
-				BASS_ChannelSetDevice(sample, newSoundDevice);
-				BASS_ChannelLock(sample, false);
-			}
-		}
-
-		// Move currently-playing sample channels to new device.
-		// Moving an HSAMPLE only routes future channels to the new device; existing channels
-		// remain on the old device and would be invalidated when it's freed below.
-		for (int i = 0; i < SOUND_MAX_CHANNELS; i++)
-		{
-			auto channel = SoundSlot[i].Channel;
-			if (channel != NULL && BASS_ChannelIsActive(channel))
-			{
-				BASS_ChannelLock(channel, true);
-				BASS_ChannelSetDevice(channel, newSoundDevice);
-				BASS_ChannelLock(channel, false);
-			}
-		}
-
-		for (int i = 0; i < (int)SoundTrackType::Count; i++)
-		{
-			auto stream = SoundtrackSlot[i].Channel;
-			if (stream != NULL)
-			{
-				BASS_ChannelLock(stream, true);
-				BASS_ChannelSetDevice(stream, newSoundDevice);
-				BASS_ChannelLock(stream, false);
-			}
-		}
-
-		BASS_ChannelLock(BASS_3D_Mixdown, true);
-		BASS_ChannelSetDevice(BASS_3D_Mixdown, newSoundDevice);
-		BASS_ChannelLock(BASS_3D_Mixdown, false);
-
-		BASS_ChannelLock(BASS_Video, true);
-		BASS_ChannelSetDevice(BASS_Video, newSoundDevice);
-		BASS_ChannelLock(BASS_Video, false);
-
-		// Clear previous device.
-		BASS_SetDevice(prevSoundDevice);
-		BASS_Free();
-
-		// Set new device again and apply 3D changes.
-		BASS_SetDevice(newSoundDevice);
-		BASS_Apply3D();
+		// "No sound device" selected. Stop all playback but keep BASS alive
+		// so sample handles remain valid for when sound is re-enabled.
+		StopAllSounds();
+		StopSoundTracks(0, false);
+		return;
 	}
-	else
+
+	int prevSoundDevice = BASS_GetDevice();
+	int newSoundDevice = g_Configuration.SoundDevice;
+
+	auto info = BASS_DEVICEINFO{};
+	if (!BASS_GetDeviceInfo(newSoundDevice, &info))
 	{
-		Sound_DeInit();
+		TENLog("Selected sound device is not available, using default", LogLevel::Warning);
+		newSoundDevice = NO_VALUE;
 	}
+
+	// Init new device.
+	BASS_Init(newSoundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
+	if (Sound_CheckBASSError("Initializing BASS sound device", true))
+		return;
+
+	// Re-apply per-device settings on new device.
+	BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
+	BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_FULL);
+
+	// Move samples to new device.
+	for (int i = 0; i < SOUND_MAX_SAMPLES; i++)
+	{
+		auto sample = BASS_SamplePointer[i];
+		if (sample != NULL)
+		{
+			BASS_ChannelLock(sample, true);
+			BASS_ChannelSetDevice(sample, newSoundDevice);
+			BASS_ChannelLock(sample, false);
+		}
+	}
+
+	// Move currently-playing sample channels to new device.
+	// Moving an HSAMPLE only routes future channels to the new device; existing channels
+	// remain on the old device and would be invalidated when it's freed below.
+	for (int i = 0; i < SOUND_MAX_CHANNELS; i++)
+	{
+		auto channel = SoundSlot[i].Channel;
+		if (channel != NULL && BASS_ChannelIsActive(channel))
+		{
+			BASS_ChannelLock(channel, true);
+			BASS_ChannelSetDevice(channel, newSoundDevice);
+			BASS_ChannelLock(channel, false);
+		}
+	}
+
+	// Move soundtrack streams to new device.
+	for (int i = 0; i < (int)SoundTrackType::Count; i++)
+	{
+		auto stream = SoundtrackSlot[i].Channel;
+		if (stream != NULL)
+		{
+			BASS_ChannelLock(stream, true);
+			BASS_ChannelSetDevice(stream, newSoundDevice);
+			BASS_ChannelLock(stream, false);
+		}
+	}
+
+	// BASS_3D_Mixdown uses STREAMPROC_DEVICE_3D which is bound to the device it was
+	// created on. Moving it to another device does not make it the 3D mixdown for that
+	// device. Free the old streams and recreate them on the new device (which is current
+	// after BASS_Init above).
+	BASS_StreamFree(BASS_3D_Mixdown);
+	BASS_StreamFree(BASS_Video);
+
+	BASS_SetConfig(BASS_CONFIG_BUFFER, 40);
+	BASS_3D_Mixdown = BASS_StreamCreate(SOUND_SAMPLE_RATE, SOUND_CHANNEL_COUNT, BASS_SAMPLE_FLOAT, STREAMPROC_DEVICE_3D, NULL);
+	BASS_ChannelPlay(BASS_3D_Mixdown, false);
+
+	BASS_Video = BASS_StreamCreate(SOUND_SAMPLE_RATE, SOUND_CHANNEL_COUNT, BASS_SAMPLE_FLOAT, STREAMPROC_PUSH, NULL);
+	BASS_SetConfig(BASS_CONFIG_BUFFER, 300);
+
+	// Attach reverb and compressor FX to the new 3D mixdown.
+	BASS_FXHandler[(int)SoundFilter::Reverb] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_FREEVERB, 0);
+	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Reverb], &BASS_ReverbTypes[(int)ReverbType::Outside]);
+
+	BASS_FXHandler[(int)SoundFilter::Compressor] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_COMPRESSOR2, 1);
+	auto comp = BASS_BFX_COMPRESSOR2{ 4.0f, -18.0f, 1.5f, 10.0f, 100.0f, -1 };
+	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Compressor], &comp);
+
+	// Force reverb type re-evaluation on next frame.
+	CurrentReverbType = NO_VALUE;
+
+	// Free previous device.
+	BASS_SetDevice(prevSoundDevice);
+	BASS_Free();
+
+	// Set new device and apply 3D changes.
+	BASS_SetDevice(newSoundDevice);
+	BASS_Apply3D();
 }
 
 const char* Sound_GetBassErrorString(int errorCode)
