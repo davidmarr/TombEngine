@@ -271,7 +271,7 @@ a.doc-search-result.doc-search-result-active {
 #navigation li {
     text-indent: -1em;
     display: block;
-    margin: 3px 0px 0px 22px;
+    margin: 3px 0px 0px 0px;
 }
 
 #navigation li li a {
