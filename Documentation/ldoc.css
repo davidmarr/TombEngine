@@ -126,6 +126,20 @@ table.index td { text-align: left; vertical-align: top; }
     margin: 1rem 0 1rem 0.5rem;
 }
 
+#navigation .project-title-link,
+#navigation .project-title-link:link,
+#navigation .project-title-link:visited {
+    align-items: center;
+    color: inherit;
+    display: inline-flex;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+#navigation .project-title-link:hover {
+    text-decoration: none;
+}
+
 #navigation .project-title-logo {
     display: block;
     flex: 0 0 auto;

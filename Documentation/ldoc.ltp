@@ -29,13 +29,14 @@
 # local function M(txt,item) return ldoc.markup(txt,item,ldoc.plain) end
 # local nowrap = ldoc.wrap and '' or 'nowrap'
 # local asset_root = module and '../' or ''
+# local index_path = module and '../index.html' or 'index.html'
 # local logo_path = module and '../TEN%20logo.png' or 'TEN%20logo.png'
 
 <!-- Menu -->
 
 <div id="navigation">
 <br/>
-<h1 class="project-title"><img class="project-title-logo" src="$(logo_path)" alt="TEN logo" /><span>$(ldoc.project)</span></h1>
+<h1 class="project-title"><a class="project-title-link" href="$(index_path)"><img class="project-title-logo" src="$(logo_path)" alt="TEN logo" /><span>$(ldoc.project)</span></a></h1>
 
 <div id="doc-search">
 <input id="doc-search-input" type="text" placeholder="Search all documentation" autocomplete="off" />
@@ -44,14 +45,6 @@
     <div id="doc-search-results"></div>
 </div>
 </div>
-
-<ul>
-# if not ldoc.single and module then -- reference back to project index
-  <li><a href="../$(ldoc.output).html">Index</a></li>
-# else
-  <li><here>Index</here></li>
-# end
-</ul>
 
 # if ldoc.no_summary and module and not ldoc.one then -- bang out the functions on the side
 # for kind, items in module.kinds() do
