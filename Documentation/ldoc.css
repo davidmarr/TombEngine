@@ -184,10 +184,13 @@ table.index td { text-align: left; vertical-align: top; }
     overflow-y: auto;
 }
 
-a.doc-search-result {
+a.doc-search-result,
+a.doc-search-result:link,
+a.doc-search-result:visited {
     border-bottom: 1px solid #f0f0f0;
     color: #222222;
     display: block;
+    font-weight: normal;
     padding: 0.7rem 0.75rem;
     text-decoration: none;
 }
@@ -214,14 +217,21 @@ a.doc-search-result.doc-search-result-active {
     color: #7a7a7a;
     display: block;
     font-size: 0.78em;
+    font-weight: normal;
     margin-bottom: 0.25rem;
 }
 
 .doc-search-result-excerpt {
-    color: #333333;
+    color: #666666;
     display: block;
     font-size: 0.84em;
+    font-weight: normal;
     line-height: 1.35;
+}
+
+.doc-search-result-highlight {
+    color: #2b2b2b;
+    font-weight: bold;
 }
 
 #navigation h2 {

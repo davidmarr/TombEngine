@@ -35,6 +35,67 @@
         return element;
     }
 
+    function escapeHtml(text) {
+        return (text || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function escapeRegExp(text) {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function createHighlightedElement(className, text, terms) {
+        var element = document.createElement("span");
+        var uniqueTerms = [];
+        var seenTerms = {};
+
+        element.className = className;
+
+        for (var termIndex = 0; termIndex < terms.length; termIndex++) {
+            var term = terms[termIndex];
+            if (!term || seenTerms[term]) {
+                continue;
+            }
+
+            seenTerms[term] = true;
+            uniqueTerms.push(term);
+        }
+
+        uniqueTerms.sort(function (left, right) {
+            return right.length - left.length;
+        });
+
+        if (!uniqueTerms.length) {
+            element.textContent = text;
+            return element;
+        }
+
+        var matchPattern = new RegExp("(" + uniqueTerms.map(escapeRegExp).join("|") + ")", "gi");
+        var exactPattern = new RegExp("^(" + uniqueTerms.map(escapeRegExp).join("|") + ")$", "i");
+        var fragments = String(text || "").split(matchPattern);
+        var html = "";
+
+        for (var fragmentIndex = 0; fragmentIndex < fragments.length; fragmentIndex++) {
+            var fragment = fragments[fragmentIndex];
+            if (!fragment) {
+                continue;
+            }
+
+            if (exactPattern.test(fragment)) {
+                html += '<strong class="doc-search-result-highlight">' + escapeHtml(fragment) + "</strong>";
+            } else {
+                html += escapeHtml(fragment);
+            }
+        }
+
+        element.innerHTML = html;
+        return element;
+    }
+
     onReady(function () {
         var input = document.getElementById("doc-search-input");
         var popup = document.getElementById("doc-search-popup");
@@ -85,11 +146,13 @@
             var text = entry.text || "";
             var lowerText = text.toLowerCase();
             var matchIndex = query ? lowerText.indexOf(query) : -1;
+            var hasMatch = matchIndex >= 0;
 
             if (matchIndex < 0) {
                 for (var termIndex = 0; termIndex < terms.length; termIndex++) {
                     matchIndex = lowerText.indexOf(terms[termIndex]);
                     if (matchIndex >= 0) {
+                        hasMatch = true;
                         break;
                     }
                 }
@@ -111,7 +174,10 @@
                 excerpt += " ...";
             }
 
-            return excerpt;
+            return {
+                hasMatch: hasMatch,
+                text: excerpt
+            };
         }
 
         function search(query) {
@@ -161,7 +227,8 @@
                 matches.push({
                     entry: candidate,
                     score: score,
-                    excerpt: buildExcerpt(candidate, normalizedQuery, terms)
+                    excerpt: buildExcerpt(candidate, normalizedQuery, terms),
+                    terms: normalizedQuery.indexOf(" ") >= 0 ? [normalizedQuery].concat(terms) : terms
                 });
             }
 
@@ -205,7 +272,11 @@
 
                     link.appendChild(createTextElement("span", "doc-search-result-title", result.entry.title));
                     link.appendChild(createTextElement("span", "doc-search-result-meta", result.entry.section + " | " + result.entry.path));
-                    link.appendChild(createTextElement("span", "doc-search-result-excerpt", result.excerpt));
+                    if (result.excerpt.hasMatch) {
+                        link.appendChild(createHighlightedElement("doc-search-result-excerpt", result.excerpt.text, result.terms));
+                    } else {
+                        link.appendChild(createTextElement("span", "doc-search-result-excerpt", result.excerpt.text));
+                    }
 
                     link.addEventListener("mouseenter", function () {
                         activeIndex = indexInResults;
