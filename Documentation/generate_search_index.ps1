@@ -70,11 +70,32 @@ function Get-DocumentContentHtml {
     return $Html
 }
 
+function Get-NearestSectionName {
+    param(
+        [System.Collections.ArrayList]$Sections,
+        [int]$Position
+    )
+
+    $closestSection = ""
+
+    foreach ($section in $Sections) {
+        if ($section.Position -gt $Position) {
+            break
+        }
+
+        $closestSection = $section.Name
+    }
+
+    return $closestSection
+}
+
 $resolvedDocRoot = (Resolve-Path $DocRoot).Path
 
 if (-not $OutputFile) {
     $OutputFile = Join-Path $resolvedDocRoot "search-index.js"
 }
+
+$regexOptions = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [System.Text.RegularExpressions.RegexOptions]::Singleline
 
 $entries = Get-ChildItem -Path $resolvedDocRoot -Filter *.html -Recurse |
     Sort-Object FullName |
@@ -100,13 +121,114 @@ $entries = Get-ChildItem -Path $resolvedDocRoot -Filter *.html -Recurse |
             $heading = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
         }
 
-        [ordered]@{
+        $pageEntries = New-Object System.Collections.ArrayList
+        $null = $pageEntries.Add([ordered]@{
+            kind = "page"
             path = $relativePath
             section = $section
             title = $heading
             pageTitle = $pageTitle
             text = $documentText
+        })
+
+        $sectionMatches = [regex]::Matches(
+            $contentHtml,
+            '<h2[^>]*class="section-header[^"]*"[^>]*>\s*<a name="([^"]+)"></a>(.*?)</h2>',
+            $regexOptions)
+
+        $sections = New-Object System.Collections.ArrayList
+        foreach ($sectionMatch in $sectionMatches) {
+            $sectionName = Convert-HtmlToText -Html $sectionMatch.Groups[2].Value
+            if (-not [string]::IsNullOrWhiteSpace($sectionName)) {
+                $null = $sections.Add([ordered]@{
+                    Position = $sectionMatch.Index
+                    Name = $sectionName
+                })
+            }
         }
+
+        $summaryMatches = [regex]::Matches(
+            $contentHtml,
+            '<h2><a href="#([^"]+)">(.*?)</a></h2>\s*<table class="function_list">(.*?)</table>',
+            $regexOptions)
+
+        $summaryByKey = @{}
+        foreach ($summaryMatch in $summaryMatches) {
+            $summarySection = Convert-HtmlToText -Html $summaryMatch.Groups[2].Value
+            $rowMatches = [regex]::Matches(
+                $summaryMatch.Groups[3].Value,
+                '<tr>\s*<td class="name"[^>]*><a href="#([^"]+)">(.*?)</a></td>\s*<td class="summary">(.*?)</td>\s*</tr>',
+                $regexOptions)
+
+            foreach ($rowMatch in $rowMatches) {
+                $rowAnchor = $rowMatch.Groups[1].Value
+                $rowSummary = Convert-HtmlToText -Html $rowMatch.Groups[3].Value
+                $summaryByKey["$summarySection|$rowAnchor"] = $rowSummary
+            }
+        }
+
+        $detailMatches = [regex]::Matches(
+            $contentHtml,
+            '<dt>\s*<a name\s*=\s*"([^"]+)"></a>\s*<strong>(.*?)</strong>.*?</dt>\s*<dd>(.*?)</dd>',
+            $regexOptions)
+
+        $anchorCounts = @{}
+        foreach ($detailMatch in $detailMatches) {
+            $anchorName = $detailMatch.Groups[1].Value
+            if ($anchorCounts.ContainsKey($anchorName)) {
+                $anchorCounts[$anchorName]++
+            } else {
+                $anchorCounts[$anchorName] = 1
+            }
+        }
+
+        foreach ($detailMatch in $detailMatches) {
+            $anchorName = $detailMatch.Groups[1].Value
+            if ($anchorCounts[$anchorName] -ne 1) {
+                continue
+            }
+
+            $detailTitle = Convert-HtmlToText -Html $detailMatch.Groups[2].Value
+            $detailBody = Convert-HtmlToText -Html $detailMatch.Groups[3].Value
+            $detailSection = Get-NearestSectionName -Sections $sections -Position $detailMatch.Index
+            $detailSummary = ""
+
+            if (-not [string]::IsNullOrWhiteSpace($detailSection)) {
+                $summaryKey = "$detailSection|$anchorName"
+                if ($summaryByKey.ContainsKey($summaryKey)) {
+                    $detailSummary = $summaryByKey[$summaryKey]
+                }
+            }
+
+            $detailText = Normalize-Whitespace "$detailSummary $detailBody"
+            if ([string]::IsNullOrWhiteSpace($detailText)) {
+                $detailText = $detailSummary
+            }
+
+            if ([string]::IsNullOrWhiteSpace($detailTitle)) {
+                continue
+            }
+
+            $detailSectionLabel = $section
+            if (-not [string]::IsNullOrWhiteSpace($heading)) {
+                $detailSectionLabel += " / $heading"
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($detailSection)) {
+                $detailSectionLabel += " / $detailSection"
+            }
+
+            $null = $pageEntries.Add([ordered]@{
+                kind = "anchor"
+                path = "$relativePath#$anchorName"
+                section = $detailSectionLabel
+                title = $detailTitle
+                pageTitle = $pageTitle
+                text = $detailText
+            })
+        }
+
+        $pageEntries
     }
 
 $json = $entries | ConvertTo-Json -Depth 4 -Compress
