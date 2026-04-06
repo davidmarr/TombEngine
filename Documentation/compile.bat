@@ -40,5 +40,21 @@ if %ERRORLEVEL% neq 0 (
     exit /b %ERRORLEVEL%
 )
 
+echo Copying documentation search script...
+copy /Y ".\docs-search.js" "%DOC_DIR%\docs-search.js" >nul
+
+if %ERRORLEVEL% neq 0 (
+    echo Documentation search script copy failed with error code %ERRORLEVEL%
+    exit /b %ERRORLEVEL%
+)
+
+echo Generating documentation search index...
+powershell.exe -ExecutionPolicy Bypass -File "generate_search_index.ps1" -DocRoot "%DOC_DIR%"
+
+if %ERRORLEVEL% neq 0 (
+    echo Documentation search index generation failed with error code %ERRORLEVEL%
+    exit /b %ERRORLEVEL%
+)
+
 echo Documentation build completed successfully!
 exit /b 0
