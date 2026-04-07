@@ -209,7 +209,7 @@ namespace TEN::Renderer
 			if (rString.Flags & (int)PrintStringFlags::Outline)
 			{
 				_gameFont->DrawString(
-					_spriteBatch.get(), rString.String,
+					_spriteBatch.get(), rString.String.c_str(),
 					Vector2(drawPos.x + shadowOffset * rString.Scale, drawPos.y + shadowOffset * rString.Scale),
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
 					0.0f, Vector2::Zero, rString.Scale);
