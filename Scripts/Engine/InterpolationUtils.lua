@@ -1351,7 +1351,13 @@ end
 -- @tparam Color colorA Starting color.
 -- @tparam Color colorB Ending color.
 -- @tparam float t Interpolation factor (0.0 to 1.0).
--- @tparam[opt=0] int space Color space to use (0 = RGB, 1 = HSL, 2 = OKLch).
+-- @tparam[opt=0] int space Color space to use
+--
+-- 0 = RGB
+--
+-- 1 = HSL
+--
+-- 2 = OKLch<br>
 -- @tparam[opt={}] table options Additional options.
 --
 -- - `huePath` (string): Path for hue interpolation in HSL/OKLch<br>`("shortest", "longest", "increasing", "decreasing")`<br>*Default: "shortest"*.
