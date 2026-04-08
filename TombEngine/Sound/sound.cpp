@@ -989,31 +989,9 @@ void Sound_UpdateScene()
 	BASS_Apply3D();
 }
 
-// Initialize a BASS device and set up 3D mixdown, video stream, and effects.
-// Used by both Sound_Init (startup) and Sound_Reset (re-enabling after "No sound device").
-static bool Sound_InitDevice(int soundDevice)
+// Create 3D mixdown and video streams on the current BASS device, and attach FX.
+static void Sound_CreateMixdownStreams()
 {
-	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
-	if (Sound_CheckBASSError("Initializing BASS sound device", true))
-		return false;
-
-	BASS_Initialized = true;
-
-	// Initialize BASS_FX plugin.
-	BASS_FX_GetVersion();
-	if (Sound_CheckBASSError("Initializing FX plugin", true))
-		return false;
-
-	// Set 3D world parameters.
-	// Rolloff is lessened since we have own attenuation implementation.
-	BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
-	BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_FULL);
-
-	// Set minimum latency and 2 threads for updating.
-	// Most of modern PCs already have multi-core CPUs, so why not parallelize updating?
-	BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 2);
-	BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 10);
-
 	// Create 3D mixdown channel and make it play forever.
 	// For realtime mixer channels, we need minimum buffer latency. It shouldn't affect reliability.
 	BASS_SetConfig(BASS_CONFIG_BUFFER, 40);
@@ -1026,28 +1004,32 @@ static bool Sound_InitDevice(int soundDevice)
 	// Reset buffer back to normal value.
 	BASS_SetConfig(BASS_CONFIG_BUFFER, 300);
 
-	if (Sound_CheckBASSError("Starting 3D mixdown", true))
-		return false;
-
-	// Initialize channels and tracks array.
-	memset(SoundSlot, 0, sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS);
+	Sound_CheckBASSError("Starting 3D mixdown", true);
 
 	// Attach reverb effect to 3D channel.
- 	BASS_FXHandler[(int)SoundFilter::Reverb] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_FREEVERB, 0);
+	BASS_FXHandler[(int)SoundFilter::Reverb] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_FREEVERB, 0);
 	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Reverb], &BASS_ReverbTypes[(int)ReverbType::Outside]);
 
-	if (Sound_CheckBASSError("Attaching environmental FX", true))
-		return false;
+	Sound_CheckBASSError("Attaching environmental FX", true);
 
 	// Apply slight compression to 3D channel.
 	BASS_FXHandler[(int)SoundFilter::Compressor] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_COMPRESSOR2, 1);
 	auto comp = BASS_BFX_COMPRESSOR2{ 4.0f, -18.0f, 1.5f, 10.0f, 100.0f, -1 };
 	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Compressor], &comp);
 
-	if (Sound_CheckBASSError("Attaching compressor", true))
-		return false;
+	Sound_CheckBASSError("Attaching compressor", true);
 
-	return true;
+	// Force reverb type re-evaluation on next frame.
+	CurrentReverbType = NO_VALUE;
+}
+
+// Configure per-device settings on the current BASS device.
+static void Sound_ApplyDeviceSettings()
+{
+	BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
+	BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_FULL);
+	BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 2);
+	BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 10);
 }
 
 // Initialize BASS engine and also prepare all sound data.
@@ -1080,7 +1062,22 @@ void Sound_Init(const std::string& gameDirectory)
 		soundDevice = NO_VALUE;
 	}
 
-	Sound_InitDevice(soundDevice);
+	BASS_Init(soundDevice, SOUND_SAMPLE_RATE, BASS_DEVICE_3D, nullptr, NULL);
+	if (Sound_CheckBASSError("Initializing BASS sound device", true))
+		return;
+
+	BASS_Initialized = true;
+
+	// Initialize BASS_FX plugin.
+	BASS_FX_GetVersion();
+	if (Sound_CheckBASSError("Initializing FX plugin", true))
+		return;
+
+	Sound_ApplyDeviceSettings();
+	Sound_CreateMixdownStreams();
+
+	// Initialize channels and tracks array.
+	memset(SoundSlot, 0, sizeof(SoundEffectSlot) * SOUND_MAX_CHANNELS);
 }
 
 // Stop all sounds and streams, if any, unplug all channels from the mixer and unload BASS engine.
@@ -1104,10 +1101,16 @@ void Sound_Reset()
 
 	if (!g_Configuration.EnableSound)
 	{
-		// "No sound device" selected. Stop all playback but keep BASS alive
-		// so sample handles remain valid for when sound is re-enabled.
+		// "No sound device" selected. Stop SFX and pause soundtrack channels
+		// but keep BASS alive so all handles remain valid for when sound is re-enabled.
 		StopAllSounds();
-		StopSoundTracks(0, false);
+
+		for (int i = 0; i < (int)SoundTrackType::Count; i++)
+		{
+			if (SoundtrackSlot[i].Channel != NULL)
+				BASS_ChannelPause(SoundtrackSlot[i].Channel);
+		}
+
 		return;
 	}
 
@@ -1126,9 +1129,7 @@ void Sound_Reset()
 	if (Sound_CheckBASSError("Initializing BASS sound device", true))
 		return;
 
-	// Re-apply per-device settings on new device.
-	BASS_Set3DFactors(SOUND_BASS_UNITS, 1.5f, 1.0f);
-	BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_FULL);
+	Sound_ApplyDeviceSettings();
 
 	// Move samples to new device.
 	for (int i = 0; i < SOUND_MAX_SAMPLES; i++)
@@ -1156,7 +1157,7 @@ void Sound_Reset()
 		}
 	}
 
-	// Move soundtrack streams to new device.
+	// Move soundtrack streams to new device and resume if they were paused.
 	for (int i = 0; i < (int)SoundTrackType::Count; i++)
 	{
 		auto stream = SoundtrackSlot[i].Channel;
@@ -1165,33 +1166,17 @@ void Sound_Reset()
 			BASS_ChannelLock(stream, true);
 			BASS_ChannelSetDevice(stream, newSoundDevice);
 			BASS_ChannelLock(stream, false);
+
+			if (BASS_ChannelIsActive(stream) == BASS_ACTIVE_PAUSED)
+				BASS_ChannelPlay(stream, false);
 		}
 	}
 
 	// BASS_3D_Mixdown uses STREAMPROC_DEVICE_3D which is bound to the device it was
-	// created on. Moving it to another device does not make it the 3D mixdown for that
-	// device. Free the old streams and recreate them on the new device (which is current
-	// after BASS_Init above).
+	// created on. Free the old streams and recreate them on the new device.
 	BASS_StreamFree(BASS_3D_Mixdown);
 	BASS_StreamFree(BASS_Video);
-
-	BASS_SetConfig(BASS_CONFIG_BUFFER, 40);
-	BASS_3D_Mixdown = BASS_StreamCreate(SOUND_SAMPLE_RATE, SOUND_CHANNEL_COUNT, BASS_SAMPLE_FLOAT, STREAMPROC_DEVICE_3D, NULL);
-	BASS_ChannelPlay(BASS_3D_Mixdown, false);
-
-	BASS_Video = BASS_StreamCreate(SOUND_SAMPLE_RATE, SOUND_CHANNEL_COUNT, BASS_SAMPLE_FLOAT, STREAMPROC_PUSH, NULL);
-	BASS_SetConfig(BASS_CONFIG_BUFFER, 300);
-
-	// Attach reverb and compressor FX to the new 3D mixdown.
-	BASS_FXHandler[(int)SoundFilter::Reverb] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_FREEVERB, 0);
-	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Reverb], &BASS_ReverbTypes[(int)ReverbType::Outside]);
-
-	BASS_FXHandler[(int)SoundFilter::Compressor] = BASS_ChannelSetFX(BASS_3D_Mixdown, BASS_FX_BFX_COMPRESSOR2, 1);
-	auto comp = BASS_BFX_COMPRESSOR2{ 4.0f, -18.0f, 1.5f, 10.0f, 100.0f, -1 };
-	BASS_FXSetParameters(BASS_FXHandler[(int)SoundFilter::Compressor], &comp);
-
-	// Force reverb type re-evaluation on next frame.
-	CurrentReverbType = NO_VALUE;
+	Sound_CreateMixdownStreams();
 
 	// Free previous device.
 	BASS_SetDevice(prevSoundDevice);
