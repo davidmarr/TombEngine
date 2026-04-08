@@ -362,7 +362,10 @@ void ResumeAllSounds(SoundPauseMode mode)
 	if (mode == SoundPauseMode::Global)
 		BASS_Start();
 
-	if (g_Gui.GetInventoryMode() == InventoryMode::Pause || 
+	if (!g_Configuration.EnableSound)
+		return;
+
+	if (g_Gui.GetInventoryMode() == InventoryMode::Pause ||
 		g_Gui.GetInventoryMode() == InventoryMode::Statistics)
 	{
 		return;
