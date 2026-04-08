@@ -979,11 +979,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Sound\sound_effects.h" />
     <ClInclude Include="Specific\Input\Bindings.h" />
     <ClInclude Include="Specific\Input\Keys.h" />
-    <ClInclude Include="Specific\IO\ChunkId.h" />
-    <ClInclude Include="Specific\IO\ChunkReader.h" />
-    <ClInclude Include="Specific\IO\ChunkWriter.h" />
-    <ClInclude Include="Specific\IO\LEB128.h" />
-    <ClInclude Include="Specific\IO\Streams.h" />
     <ClInclude Include="Specific\Input\Input.h" />
     <ClInclude Include="Specific\Input\InputAction.h" />
     <ClInclude Include="Specific\LevelCameraInfo.h" />
@@ -1451,9 +1446,6 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Specific\Input\Input.cpp" />
     <ClCompile Include="Specific\Input\InputAction.cpp" />
     <ClCompile Include="Specific\Input\Keys.cpp" />
-    <ClCompile Include="Specific\IO\ChunkId.cpp" />
-    <ClCompile Include="Specific\IO\ChunkReader.cpp" />
-    <ClCompile Include="Specific\IO\Streams.cpp" />
     <ClCompile Include="Specific\level.cpp" />
     <ClCompile Include="Specific\Parallel.cpp" />
     <ClCompile Include="Specific\Platform\LinuxSubsystem.cpp" />
