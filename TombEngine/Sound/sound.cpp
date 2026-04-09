@@ -715,6 +715,9 @@ static void CALLBACK Sound_FinishOneshotTrack(HSYNC handle, DWORD channel, DWORD
 
 void Sound_VideoPlayCallback(void* data, const void* samples, unsigned count, int64_t pts)
 {
+	if (!g_Configuration.EnableSound)
+		return;
+
 	if (!BASS_ChannelIsActive(BASS_Video))
 	{
 		BASS_ChannelPlay(BASS_Video, false);
