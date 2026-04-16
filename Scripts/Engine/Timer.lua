@@ -72,7 +72,7 @@ end
 -- @tparam[opt=false] table|bool timerFormat Sets the remaining time display. See `timerFormat`.
 -- @tparam[opt=nil] LevelFunc func The function defined in the *LevelFuncs* table to call when the time is up
 -- @tparam[opt] any ... a variable number of arguments with which the above function will be called
--- @treturn[1] Timer The timer in its paused state
+-- @treturn[1] Timer The timer in its idle state, not yet started
 -- @treturn[2] nil If an error occurred
 -- @usage
 -- -- Example 1 simple timer:
@@ -130,7 +130,7 @@ Timer.Create = function (name, totalTime, loop, timerFormat, func, ...)
 	end
 	thisTimer.funcArgs = { ... }
 	thisTimer.active = false
-	thisTimer.paused = true
+	thisTimer.paused = false
 	thisTimer.posX = 50.0
 	thisTimer.posY = 90.0
 	thisTimer.scale = 1
