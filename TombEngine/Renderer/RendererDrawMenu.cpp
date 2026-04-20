@@ -863,7 +863,7 @@ namespace TEN::Renderer
 			UpdateAnimation(nullptr, *moveableObject, interpData, UINT_MAX);
 		}
 
-		auto pos = _viewportToolkit.Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
+		auto pos = _graphicsDevice->Unproject(Vector3(pos2D.x, pos2D.y, 1.0f), projMatrix, viewMatrix, Matrix::Identity);
 		auto color = NEUTRAL_COLOR;
 		color.w = opacity;
 
@@ -880,9 +880,9 @@ namespace TEN::Renderer
 		hudCamera.Frame = GlobalCounter;
 		hudCamera.InterpolatedFrame = (float)GlobalCounter + GetInterpolationFactor();
 		hudCamera.Gamma = g_Configuration.Gamma;
-		UpdateConstantBuffer(hudCamera, _cbCameraMatrices);
-		BindConstantBufferPS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices.get());
+		_graphicsDevice->BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		_graphicsDevice->BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 		_shaders.Bind(Shader::Inventory);
 
@@ -1054,9 +1054,9 @@ namespace TEN::Renderer
 		hudCamera.CamDirectionWS = -Vector4::UnitZ;
 		hudCamera.ViewProjection = viewMatrix * projMatrix;
 		hudCamera.Gamma = g_Configuration.Gamma;
-		_cbCameraMatrices.UpdateData(hudCamera, _context.Get());
-		BindConstantBufferPS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
-		BindConstantBufferVS(ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		UpdateConstantBuffer(&hudCamera, _cbCameraMatrices.get());
+		_graphicsDevice->BindConstantBuffer(ShaderStage::VertexShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
+		_graphicsDevice->BindConstantBuffer(ShaderStage::PixelShader, ConstantBufferRegister::Camera, _cbCameraMatrices.get());
 
 		_shaders.Bind(Shader::Inventory);
 

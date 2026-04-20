@@ -38,7 +38,7 @@ namespace TEN::Renderer
 		inputLayoutItems.push_back({ VertexInputFormat::VI_RGB32_Float, 0, "POSITION" });
 		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Snorm, 0, "NORMAL" });
 		inputLayoutItems.push_back({ VertexInputFormat::VI_RG32_Float, 0, "TEXCOORD" });
-		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA32_Float, 0, "COLOR" });
+		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Unorm, 0, "COLOR" });
 		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Snorm, 0, "TANGENT" });
 		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Snorm, 1, "NORMAL" });
 		inputLayoutItems.push_back({ VertexInputFormat::VI_RGBA8_Uint, 0, "BONEINDICES" });
