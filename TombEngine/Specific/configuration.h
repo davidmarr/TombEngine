@@ -25,6 +25,7 @@ struct GameConfiguration
 
 	int		   ScreenWidth		  = 0;
 	int		   ScreenHeight		  = 0;
+	float	   Gamma			  = 1.0f;
 	bool	   EnableWindowedMode = false;
 	ShadowMode ShadowType		  = ShadowMode::None;
 	int		   ShadowMapSize	  = DEFAULT_SHADOW_MAP_SIZE;
