@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Basic stopwatches that perform countup. Timers are updated automatically at every frame before OnLoop event.<br>To use Timer inside scripts you need to call the module:
+--- Basic frame-based stopwatch that perform countup. It updates at 30 FPS (one tick per frame), so time is quantized to 1/30s (0.03s) precision. Stopwatches are updated automatically at every frame before OnLoop event.<br>To use Stopwatch inside scripts you need to call the module:
 --	local Stopwatch = require("Engine.Stopwatch")
 --
 -- Example usage:
