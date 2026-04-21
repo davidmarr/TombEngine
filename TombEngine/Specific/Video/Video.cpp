@@ -435,8 +435,7 @@ namespace TEN::Video
 			libvlc_media_player_play(_player);
 
 		// If user pressed a key to break out from video, video has finished playback, or VLC failed, stop and delete it.
-		if (interruptPlayback || state == libvlc_Error ||
-			state == libvlc_Stopping || state == libvlc_Stopped)
+		if (interruptPlayback || state == libvlc_Error || state == libvlc_Stopping || state == libvlc_Stopped)
 		{
 			Stop();
 			ClearAction(In::Pause); // HACK: Otherwise pause key won't work after video ends.
