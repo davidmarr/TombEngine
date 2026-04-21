@@ -142,9 +142,6 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.active = false
     stopwatchEntry.paused = true
     stopwatchEntry.stop = false
-    stopwatchEntry.realtime = stopwatchEntry.startTime
-    stopwatchEntry.skipFirstTick = true
-    stopwatchEntry.hasTicked = true
 
     return setmetatable(self, Stopwatch)
 end
@@ -323,8 +320,6 @@ function Stopwatch:SetCurrentTime(newTime)
         end
         local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
         stopwatchEntry.currentTime = TEN.Time((math.floor(newTime * 10) / 10)  * 30)
-        stopwatchEntry.realtime = stopwatchEntry.currentTime
-        stopwatchEntry.hasTicked = true
     end
 end
 
@@ -371,25 +366,18 @@ end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.MySequenceOfEvents)
 function Stopwatch:IfCurrentTimeIs(operator, seconds)
-    if self.error then
-        TEN.Util.PrintLog("Error in Stopwatch:IfCurrentTimeIs(): invalid Stopwatch object.", TEN.Util.LogLevel.ERROR)
+    local op = CheckOperator(operator)
+    if not op then
+        TEN.Util.PrintLog("Error in Stopwatch:IfCurrentTimeIs(): invalid operator for '" .. self.name .. "' stopwatch", TEN.Util.LogLevel.ERROR)
         return false
-    else
-        if not Type.IsNumber(operator) or operator < 0 or operator > 5 then
-            TEN.Util.PrintLog("Error in Stopwatch:IfCurrentTimeIs(): operator must be a number between 0 and 5.", TEN.Util.LogLevel.ERROR)
-            return false
-        end
-        if not Type.IsNumber(seconds) or seconds < 0 then
-            TEN.Util.PrintLog("Error in Stopwatch:IfCurrentTimeIs(): seconds must be a positive number.", TEN.Util.LogLevel.ERROR)
-            return false
-        end
-        local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-        local secondsRounded = math.floor(seconds * 10) / 10
-        local time = TEN.Time(secondsRounded * 30)
-        if stopwatchEntry.hasTicked then
-            return Util.CompareValues(stopwatchEntry.currentTime, time, operator)
-        end
     end
+    if not Type.IsNumber(seconds) or seconds < 0 then
+        TEN.Util.PrintLog("Error in Stopwatch:IfCurrentTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", TEN.Util.LogLevel.ERROR)
+        return false
+    end
+    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    local time = TEN.Time(Round2Decimal(seconds) * FPS)
+    return op(stopwatch.currentTime, time)
 end
 
 --- Get the position of the stopwatch on screen.
@@ -609,15 +597,7 @@ end
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
     for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
         if s.active and not s.paused then
-            if s.skipFirstTick then
-                s.skipFirstTick = false
-            else
-                s.realtime = s.realtime + 1
-                s.hasTicked = (s.realtime.c % 10 == 0)
-                if s.hasTicked then
-                    s.currentTime = s.currentTime + 3
-                end
-            end
+            s.currentTime = s.currentTime + 1
         end
     end
 end
@@ -633,7 +613,6 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                 if s.stop then
                     s.active = false
                     s.paused = true
-                    s.skipFirstTick = true
                 end
             end
         end
