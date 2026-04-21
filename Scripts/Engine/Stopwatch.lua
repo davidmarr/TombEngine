@@ -23,11 +23,40 @@
 local Type = require("Engine.Type")
 local Util = require("Engine.Util")
 
-local zero = TEN.Time()
 local Stopwatch = {}
 Stopwatch.__index = Stopwatch
 LevelFuncs.Engine.Stopwatch = {}
 LevelVars.Engine.Stopwatch = { stopwatches = {} }
+
+local ZERO = TEN.Time()
+local DEFAULT_TEXT_OPTIONS = {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW, TEN.Strings.DisplayStringOption.VERTICAL_CENTER}
+local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, centiseconds = true}
+local FPS = 30
+local FRAME_TIME = 1 / FPS
+local COMPARISON_OPS =
+{
+    function(a, b) return a == b end,   -- 0: equal
+    function(a, b) return a ~= b end,   -- 1: not equal
+    function(a, b) return a < b end,    -- 2: less than
+    function(a, b) return a <= b end,   -- 3: less than or equal
+    function(a, b) return a > b end,    -- 4: greater than
+    function(a, b) return a >= b end,   -- 5: greater than or equal
+}
+local floor = math.floor
+local pairs = pairs
+local unpack = table.unpack
+
+local function Round2Decimal(second)
+	return floor(second * 100 + 0.5) / 100
+end
+
+local CheckOperator = function(operator)
+	if not Type.IsNumber(operator) then
+		return nil
+	end
+    local op = COMPARISON_OPS[operator + 1]
+    return Type.IsFunction(op) and op or nil
+end
 
 --- Create (but do not start) a new stopwatch.
 -- @tparam StopwatchData stopwatchData A table containing the parameters for the stopwatch.
