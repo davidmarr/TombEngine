@@ -188,8 +188,6 @@ namespace TEN::Scripting::Types
 	/// Methods for Color type.
 	// @type Color
 
-	// Method not registered due to normalization issues.
-
 	/// Get the perceived brightness of this Color using Rec.709 luminance formula.
 	// @function Color:GetBrightness
 	// @treturn float The brightness value in the range [0.0, 1.0].
