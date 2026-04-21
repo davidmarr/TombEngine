@@ -275,8 +275,9 @@ function Stopwatch:GetCurrentTimeFormatted(timerFormat)
     return Util.GenerateTimeFormattedString(stopwatch.currentTime, timerFormat)
 end
 
---- Set the current time of the stopwatch. Values with only 1 tenth of a second (0.1) are accepted, example: 1.5 - 6.0 - 9.9 - 123.6. No negative values allowed!
--- @tparam float newTime The new time to set (in seconds).
+--- Set the current time of the stopwatch.
+-- @tparam float newTime The new time for the stopwatch in seconds with 2 decimal places<br>
+-- No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetCurrentTime(30.5) -- Set time to 30.5 seconds
 function Stopwatch:SetCurrentTime(newTime)
@@ -288,9 +289,9 @@ function Stopwatch:SetCurrentTime(newTime)
     end
 end
 
---- Check if the current time of the stopwatch meets a specific condition. <br> It's recommended to use the IfCurrentTimeIs method to have error-free comparisons.
--- Values with only 1 tenth of a second (0.1) are accepted, example: 1.5 - 6.0 - 9.9 - 123.6. No negative values allowed!<br>
--- Please note: to have continuous control, the remaining time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
+--- Check if the current time of the stopwatch meets a specific condition.
+--
+-- It's recommended to use the IfCurrentTimeIs method to have error-free comparisons.
 -- @tparam int operator The type of comparison.<br>
 -- 0 : If the remaining time is equal to the value<br>
 -- 1 : If the remaining time is different from the value<br>
@@ -299,6 +300,8 @@ end
 -- 4 : If the remaining time is greater the value<br>
 -- 5 : If the remaining time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
+-- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
+-- Please note: to have continuous control, the remaining time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
 -- @treturn bool True if the condition is met, false otherwise.
 -- @usage
 -- -- Example1: Alternative method to create a sequence of events based on stopwatch time
