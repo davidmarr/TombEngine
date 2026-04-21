@@ -135,7 +135,7 @@ Stopwatch.Create = function(stopwatchData)
 
     stopwatchEntry.currentTime = 0
     stopwatchEntry.active = false
-    stopwatchEntry.paused = true
+    stopwatchEntry.paused = false
     stopwatchEntry.stop = false
 
     return setmetatable(self, Stopwatch)
@@ -241,6 +241,8 @@ end
 function Stopwatch:Stop()
     local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
     stopwatch.stop = true
+    stopwatch.active = false
+    stopwatch.paused = false
 end
 
 --- Get the current time of the stopwatch.
