@@ -27,7 +27,6 @@ local zero = TEN.Time()
 local Stopwatch = {}
 Stopwatch.__index = Stopwatch
 LevelFuncs.Engine.Stopwatch = {}
-LevelVars.Engine.Stopwatch = {}
 LevelVars.Engine.Stopwatch = { stopwatches = {} }
 
 --- Create (but do not start) a new stopwatch.
@@ -70,7 +69,6 @@ Stopwatch.Create = function(stopwatchData)
     end
     LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name] = {}
     local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name]
-    -- stopwatchEntry.name = stopwatchData.name
 
     -- check timerFormat
     local timerFormat = stopwatchData.timerFormat or false
