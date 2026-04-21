@@ -41,13 +41,10 @@ namespace TEN::Scripting::Types
 			"a", sol::property(&ScriptColor::GetA, &ScriptColor::SetA),
 
 			// Register methods.
-			
-			// Methods awaiting normalization fix [2.0 -> 1.0]
-			//"GetBrightness", & ScriptColor::GetBrightness,
-			//"GetSaturation", & ScriptColor::GetSaturation,
-			//"ToGrayscale", & ScriptColor::ToGrayscale,
-			//"Screen", &ScriptColor::Screen,
-
+			"GetBrightness", & ScriptColor::GetBrightness,
+			"GetSaturation", & ScriptColor::GetSaturation,
+			"ToGrayscale", & ScriptColor::ToGrayscale,
+			"Screen", &ScriptColor::Screen,
 			"Invert", & ScriptColor::Invert,
 			"GetHue", & ScriptColor::GetHue,
 			"Lerp", &ScriptColor::Lerp
@@ -194,9 +191,9 @@ namespace TEN::Scripting::Types
 	// Method not registered due to normalization issues.
 
 	/// Get the perceived brightness of this Color using Rec.709 luminance formula.
-	// @ function Color:GetBrightness
-	// @ treturn float The brightness value in the range [0.0, 1.0].
-	// @ usage
+	// @function Color:GetBrightness
+	// @treturn float The brightness value in the range [0.0, 1.0].
+	// @usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local brightness = color:GetBrightness()
 	// print(brightness) -- Output: 0.2126
@@ -208,9 +205,9 @@ namespace TEN::Scripting::Types
 	// Method not registered due to normalization issues.
 
 	/// Get the saturation of this Color using the HSV color model.
-	// @ function Color:GetSaturation
-	// @ treturn float The saturation value in the range [0.0, 1.0].
-	// @ usage
+	// @function Color:GetSaturation
+	// @treturn float The saturation value in the range [0.0, 1.0].
+	// @usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local saturation = color:GetSaturation()
 	// print(saturation) -- Output: 1.0
@@ -222,9 +219,9 @@ namespace TEN::Scripting::Types
 	// Method not registered due to normalization issues.
 
 	/// Convert this Color to grayscale using perceived luminance (ITU-R BT.709).
-	// @ function Color:ToGrayscale
-	// @ treturn Color A grayscale version of this Color with RGB components set to the luminance value. Alpha remains unchanged.
-	// @ usage
+	// @function Color:ToGrayscale
+	// @treturn Color A grayscale version of this Color with RGB components set to the luminance value. Alpha remains unchanged.
+	// @usage
 	// local color = TEN.Color(255, 0, 0) -- Red color
 	// local grayscaleColor = color:ToGrayscale()
 	// print(tostring(grayscaleColor)) -- Output: {54, 54, 54, 255}
@@ -237,10 +234,10 @@ namespace TEN::Scripting::Types
 	// Method not registered due to normalization issues.
 
 	/// Blend this Color with another Color using the Screen blend mode.
-	// @ function Color:Screen
-	// @ tparam Color other The other Color to blend with.
-	// @ treturn Color The resulting blended Color.
-	// @ usage
+	// @function Color:Screen
+	// @tparam Color other The other Color to blend with.
+	// @treturn Color The resulting blended Color.
+	// @usage
 	// local color1 = TEN.Color(255, 0, 0) -- Red color
 	// local color2 = TEN.Color(0, 0, 255) -- Blue color
 	// local blendedColor = color1:Screen(color2) -- Screen blend of red and blue
