@@ -239,9 +239,9 @@ namespace TEN::Scripting::Types
 	// local color1 = TEN.Color(255, 0, 0) -- Red color
 	// local color2 = TEN.Color(0, 0, 255) -- Blue color
 	// local blendedColor = color1:Screen(color2) -- Screen blend of red and blue
-	ScriptColor ScriptColor::Screen(const ScriptColor& other) const
+	ScriptColor ScriptColor::Screen(const ScriptColor& color) const
 	{
-		const Color result = Math::Screen(static_cast<Color>(_color), static_cast<Color>(other._color));
+		const Color result = Math::Screen(static_cast<Color>(_color), static_cast<Color>(color._color));
 		return ScriptColor(result);
 	}
 
