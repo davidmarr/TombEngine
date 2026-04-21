@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/event.h"
 #include "Game/items.h"
 #include "Game/itemdata/creature_info.h"
 #include "Game/room.h"
+#include "Game/spotcam.h"
 #include "Renderer/RendererEnums.h"
 #include "Sound/sound.h"
 #include "Specific/IO/ChunkId.h"
@@ -14,7 +15,9 @@
 #include "Specific/LevelCameraInfo.h"
 #include "Specific/newtypes.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Control::Volumes;
+using namespace TEN::SpotCam;
 
 struct ChunkId;
 struct LEB128;
@@ -29,7 +32,7 @@ struct TEXTURE
 	int height;
 	std::vector<byte> colorMapData;
 	std::vector<byte> normalMapData;
-	std::vector<byte> occlusionRoughnessSpecularMapData;
+	std::vector<byte> ORSHMapData;
 	std::vector<byte> emissiveMapData;
 };
 
@@ -89,6 +92,7 @@ struct MaterialData
 	Vector4 Parameters2;
 	Vector4 Parameters3;
 	bool HasNormalMap;
+	bool HasHeightMap;
 	bool HasAmbientOcclusionMap;
 	bool HasRoughnessMap;
 	bool HasSpecularMap;
@@ -123,8 +127,7 @@ struct MirrorData
 	bool ReflectSprites	  = false;
 };
 
-// LevelData
-struct LEVEL
+struct LevelData
 {
 	// Object
 
@@ -132,14 +135,6 @@ struct LEVEL
 	std::vector<ItemInfo> Items	   = {};
 	std::vector<MESH>	  Meshes   = {};
 	std::vector<int>	  Bones	   = {};
-
-	// Animation
-
-	std::vector<AnimData>				Anims	 = {};
-	std::vector<AnimFrame>				Frames	 = {};
-	std::vector<StateDispatchData>		Changes	 = {};
-	std::vector<StateDispatchRangeData> Ranges	 = {};
-	std::vector<int>					Commands = {};
 
 	// Collision
 
@@ -162,6 +157,7 @@ struct LEVEL
 	// Misc.
 
 	std::vector<LevelCameraInfo> Cameras   = {};
+	std::vector<SpotCamInfo>	 SpotCams  = {};
 	std::vector<EventSet>		 GlobalEventSets = {};
 	std::vector<EventSet>		 VolumeEventSets = {};
 	std::vector<int>			 LoopedEventSetIndices = {};
@@ -185,7 +181,7 @@ extern const std::vector<GAME_OBJECT_ID> BRIDGE_OBJECT_IDS;
 
 extern std::vector<int> MoveablesIds;
 extern std::vector<int> SpriteSequencesIds;
-extern LEVEL g_Level;
+extern LevelData g_Level;
 extern int SystemNameHash;
 extern int LastLevelHash;
 
@@ -194,7 +190,7 @@ inline std::future<bool> LevelLoadTask;
 size_t ReadFileEx(void* ptr, size_t size, size_t count, FILE* stream);
 FILE* FileOpen(const char* fileName);
 void FileClose(FILE* ptr);
-bool Decompress(byte* dest, byte* src, unsigned long compressedSize, unsigned long uncompressedSize);
+bool Decompress(char* dest, char* compressedRegion, unsigned int totalUncompressedSize);
 
 bool LoadLevelFile(int levelIndex);
 void FreeLevel(bool partial);

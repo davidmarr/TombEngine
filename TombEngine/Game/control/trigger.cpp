@@ -25,10 +25,14 @@
 #include "Objects/TR3/Vehicles/kayak.h"
 #include "Sound/sound.h"
 #include "Specific/clock.h"
+#include "Specific/level.h"
+#include "Specific/trutils.h"
 
 using namespace TEN::Collision::Point;
 using namespace TEN::Effects::Items;
 using namespace TEN::Entities::Switches;
+using namespace TEN::SpotCam;
+using namespace TEN::Utils;
 
 int TriggerTimer;
 int KeyTriggerActive;
@@ -215,8 +219,8 @@ bool SwitchTrigger(short itemNumber, short timer)
 	else if (item.Status != ITEM_NOT_ACTIVE)
 	{
 		if (item.ObjectNumber == ID_AIRLOCK_SWITCH &&
-			item.Animation.AnimNumber == GetAnimIndex(item, 2) &&
-			item.Animation.FrameNumber == GetFrameIndex(&item, 0))
+			item.Animation.AnimNumber == 2 &&
+			item.Animation.FrameNumber == 0)
 		{
 			return true;
 		}
@@ -413,11 +417,10 @@ void Trigger(short const value, short const flags)
 			AddActiveItem(value);
 		}
 
+		item->Status = ITEM_ACTIVE;
 		item->TouchBits = NO_JOINT_BITS;
 		item->DisableInterpolation = true;
 	}
-
-	item->Status = ITEM_ACTIVE;
 }
 
 void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bool heavy, int heavyFlags)
@@ -430,7 +433,6 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 	int flip = NO_VALUE;
 	int newEffect = NO_VALUE;
 	int keyResult = 0;
-	int spotCamIndex = 0;
 
 	auto data = GetTriggerIndex(floor, x, y, z);
 
@@ -443,7 +445,7 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 
 	short triggerType = (*(data++) >> 8) & TRIGGER_BITS;
 	short flags = *(data++);
-	short timer = flags & TIMER_BITS;
+	short timer = (char)(flags & TIMER_BITS);
 
 	if (Camera.type != CameraType::Heavy)
 		RefreshCamera(triggerType, data);
@@ -695,28 +697,24 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 			if (triggerType == TRIGGER_TYPES::ANTIPAD ||
 				triggerType == TRIGGER_TYPES::ANTITRIGGER ||
 				triggerType == TRIGGER_TYPES::HEAVYANTITRIGGER)
-				UseSpotCam = false;
-			else
 			{
-				spotCamIndex = 0;
-				if (SpotCamRemap[value] != 0)
-				{
-					for (int i = 0; i < SpotCamRemap[value]; i++)
-					{
-						spotCamIndex += CameraCnt[i];
-					}
-				}
+				UseSpotCam = false;
+			}
+			else if (HasSpotCamSequence(value))
+			{
+				int spotCamIndex = GetSequenceFirstCameraIndex(value);
 
-				if (!(SpotCam[spotCamIndex].flags & SCF_CAMERA_ONE_SHOT))
+				if (spotCamIndex != NO_VALUE && !(g_Level.SpotCams[spotCamIndex].Flags & SCF_CAMERA_ONE_SHOT))
 				{
 					if (trigger & ONESHOT)
-						SpotCam[spotCamIndex].flags |= SCF_CAMERA_ONE_SHOT;
+						g_Level.SpotCams[spotCamIndex].Flags |= SCF_CAMERA_ONE_SHOT;
 
 					if (!UseSpotCam || CurrentLevel == 0)
 					{
 						UseSpotCam = true;
 						if (LastSpotCamSequence != value)
 							TrackCameraInit = false;
+
 						InitializeSpotCam(value);
 					}
 				}
@@ -831,7 +829,7 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 				int eventType = trigger & TIMER_BITS;
 				if (eventType >= (int)EventType::Count)
 				{
-					TENLog("Unknown volume event type encountered for legacy trigger " + std::to_string(eventType), LogLevel::Warning);
+					TENLog(fmt::format("Unknown volume event type encountered for legacy trigger {}.", eventType), LogLevel::Warning);
 					continue;
 				}
 

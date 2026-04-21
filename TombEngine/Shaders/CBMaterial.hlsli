@@ -11,7 +11,7 @@ cbuffer CBMaterial : register(b2)
     //--
     float4 MaterialParameters3;
     //--
-    unsigned int MaterialType;
+    unsigned int MaterialTypeAndFlags;
 };
 
 #endif

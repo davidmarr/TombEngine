@@ -11,7 +11,9 @@ namespace TEN::Scripting::Types
 {
 	void ScriptColor::Register(sol::table& parent)
 	{
-		using ctors = sol::constructors<ScriptColor(byte, byte, byte), ScriptColor(byte, byte, byte, byte)>;
+		using ctors = sol::constructors<ScriptColor(), 
+			ScriptColor(unsigned char, unsigned char, unsigned char),
+			ScriptColor(unsigned char, unsigned char, unsigned char, unsigned char)>;
 
 		// Register type.
 		parent.new_usertype<ScriptColor>(
@@ -39,17 +41,25 @@ namespace TEN::Scripting::Types
 
 	/// Create a Color object.
 	// @function Color
-	// @int R Red component.
-	// @int G Green component.
-	// @int B Blue component.
+	// @int[opt=128] R Red component.
+	// @int[opt=128] G Green component.
+	// @int[opt=128] B Blue component.
 	// @int[opt=255] A Alpha (transparency) component.
 	// @treturn Color A new Color object.
-	ScriptColor::ScriptColor(byte r, byte g, byte b) :
+	// @usage
+	// local color1 = TEN.Color()               -- Default gray color (128, 128, 128, 255)
+	// local color2 = TEN.Color(255, 0, 0)      -- Red color with full opacity (255, 0, 0, 255)
+	// local color3 = TEN.Color(0, 255, 0, 128) -- Green color with 50% opacity
+	ScriptColor::ScriptColor() :
+		_color(128, 128, 128, 255)
+	{
+	}
+	ScriptColor::ScriptColor(unsigned char r, unsigned char g, unsigned char b) :
 		_color(r, g, b)
 	{
 	}
 
-	ScriptColor::ScriptColor(byte r, byte g, byte b, byte a) :
+	ScriptColor::ScriptColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) :
 		ScriptColor(r, g, b)
 	{
 		SetA(a);
@@ -70,42 +80,42 @@ namespace TEN::Scripting::Types
 	{
 	}
 
-	byte ScriptColor::GetR() const
+	unsigned char ScriptColor::GetR() const
 	{
 		return _color.GetR();
 	}
 
-	byte ScriptColor::GetG() const
+	unsigned char ScriptColor::GetG() const
 	{
 		return _color.GetG();
 	}
 
-	byte ScriptColor::GetB() const
+	unsigned char ScriptColor::GetB() const
 	{
 		return _color.GetB();
 	}
 
-	byte ScriptColor::GetA() const
+	unsigned char ScriptColor::GetA() const
 	{
 		return _color.GetA();
 	}
 
-	void ScriptColor::SetR(byte value)
+	void ScriptColor::SetR(unsigned char value)
 	{
 		_color.SetR(value);
 	}
 
-	void ScriptColor::SetG(byte value)
+	void ScriptColor::SetG(unsigned char value)
 	{
 		_color.SetG(value);
 	}
 
-	void ScriptColor::SetB(byte value)
+	void ScriptColor::SetB(unsigned char value)
 	{
 		_color.SetB(value);
 	}
 
-	void ScriptColor::SetA(byte value)
+	void ScriptColor::SetA(unsigned char value)
 	{
 		_color.SetA(value);
 	}
@@ -120,7 +130,9 @@ namespace TEN::Scripting::Types
 
 	ScriptColor ScriptColor::PremultiplyAlpha()
 	{
+		auto alpha = _color.GetA();
 		_color = Vector3(_color) * ((float)_color.GetA() / (float)UCHAR_MAX);
+		_color.SetA(alpha);
 		return *this;
 	}
 

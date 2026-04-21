@@ -4,6 +4,18 @@
 #include "./CBCamera.hlsli"
 #include "./Math.hlsli"
 
+#define COLOR_MODULATION_SCALE 2.0f
+
+float3 ModulateColor(float3 color)
+{
+    return (color * COLOR_MODULATION_SCALE);
+}
+
+float3 GammaCorrection(float3 color)
+{
+	return saturate(pow(color, 1.0f / Gamma));
+}
+
 static float RoughnessToExpMul(float roughness)
 {
     float r = saturate(roughness);
@@ -43,7 +55,7 @@ float3 DoSpecularPoint(float3 pos, float3 n, ShaderLight light, float strength, 
 float3 DoSpecularSun(float3 n, ShaderLight light, float strength, float specularIntensity, float roughness)
 {
     float m = saturate(sign(strength));
-	
+
     float3 lightDir = -normalize(light.Direction);
     float3 reflectDir = reflect(lightDir, n);
 
@@ -65,56 +77,33 @@ float3 DoSpecularSun(float3 n, ShaderLight light, float strength, float specular
 float3 DoSpecularSpot(float3 pos, float3 n, ShaderLight light, float strength, float specularIntensity, float roughness)
 {
     float m = saturate(sign(strength));
-	
+
     float3 lightPos = light.Position.xyz;
-    float3 direction = light.Direction.xyz;
-    float innerRange = light.In;
-    float outerRange = light.Out;
-    float coneIn = light.InRange;
-    float coneOut = light.OutRange;
+    float radius = light.Out;
 
-    float3 lightVec = pos - lightPos;
-    float distance = length(lightVec);
-    lightVec = normalize(lightVec);
+    float dist = distance(lightPos, pos);
+    float attenuation = saturate((radius - dist) / max(radius, EPSILON));
 
-    if (distance > outerRange)
-        return float3(0, 0, 0);
-    else
-    {
-        float cosine = dot(lightVec, direction);
+    float3 lightDir = normalize(lightPos - pos);
+    float3 reflectDir = reflect(lightDir, n);
 
-        float minCosineIn = cos(coneIn * (PI / 180.0f));
-        float attenuationIn = max((cosine - minCosineIn), 0.0f) / (1.0f - minCosineIn);
-
-        float minCosineOut = cos(coneOut * (PI / 180.0f));
-        float attenuationOut = max((cosine - minCosineOut), 0.0f) / (1.0f - minCosineOut);
-
-        float attenuation = saturate(attenuationIn * 2.0f + attenuationOut);
-
-        if (attenuation > 0.0f)
-        {
-            float3 lightDir = -lightVec;
-            float3 reflectDir = reflect(lightDir, n);
-
-            float3 color = light.Color.xyz;
-            float intenSpec = lerp(saturate(specularIntensity), 1.0, m) * light.Intensity;
-
-            float expBase = RoughnessToExpMul(roughness);
-            float expMul = lerp(expBase, 1.0, m);
+    float3 color = light.Color.xyz;
+    float intenSpec = lerp(saturate(specularIntensity), 1.0, m) * light.Intensity;
+			
+    float expBase = RoughnessToExpMul(roughness);
+    float expMul = lerp(expBase, 1.0, m);
 	
-            float strengthUsed = lerp(1.0, strength, m);
-            float expVal = max((strengthUsed * SPEC_FACTOR) * expMul, 1.0);
+    float strengthUsed = lerp(1.0, strength, m);
+    float expVal = max((strengthUsed * SPEC_FACTOR) * expMul, 1.0);
+	
+    float vr = saturate(dot(CamDirectionWS.xyz, reflectDir));
+    float spec = pow(vr, max(expVal, 1.0));
+	
+    float cosine = dot(-lightDir, light.Direction.xyz);
+    float angleAttenuation = saturate((cosine - light.OutRange) / (light.InRange - light.OutRange));
+    float distanceAttenuation = saturate((light.Out - dist) / (light.Out - light.In));
 
-            float vr = saturate(dot(CamDirectionWS.xyz, reflectDir));
-            float spec = pow(vr, max(expVal, 1.0));
-
-            float falloff = saturate((outerRange - distance) / (outerRange - innerRange + 1.0f));
-
-            return attenuation * spec * color * intenSpec * falloff;
-        }
-        else
-            return float3(0, 0, 0);
-    }
+    return angleAttenuation * distanceAttenuation * spec * color * intenSpec;
 }
 
 float3 DoPointLight(float3 pos, float3 normal, ShaderLight light)
@@ -122,10 +111,10 @@ float3 DoPointLight(float3 pos, float3 normal, ShaderLight light)
     float3 lightVec = light.Position.xyz - pos;
     float  distance = length(lightVec);
     float3 lightDir = normalize(lightVec);
-    
+
     float attenuation = saturate((light.Out - distance) / (light.Out - light.In));
     float d = saturate(dot(normal, lightDir));
-    
+
     return saturate(light.Color.xyz * light.Intensity * attenuation * d);
 }
 
@@ -134,7 +123,7 @@ float3 DoShadowLight(float3 pos, float3 normal, ShaderLight light)
     float3 lightVec = light.Position.xyz - pos;
     float distance = length(lightVec);
     float3 lightDir = normalize(lightVec);
-    
+
     float attenuation = saturate((light.Out - distance) / (light.Out - light.In));
     float d = saturate(dot(normal, lightDir));
 
@@ -163,7 +152,7 @@ void DoPointAndSpotLight(float3 pos, float3 normal, ShaderLight light, float spe
     float3 lightVec = light.Position.xyz - pos;
     float  distance = length(lightVec);
     float3 lightDir = normalize(lightVec);
-	
+
     float cosine = dot(-lightDir, light.Direction.xyz);
     float distanceAttenuation = saturate((light.Out - distance) / (light.Out - light.In));
     float angleAttenuation = saturate((cosine - light.OutRange) / (light.InRange - light.OutRange));
@@ -171,7 +160,7 @@ void DoPointAndSpotLight(float3 pos, float3 normal, ShaderLight light, float spe
     float d = saturate(dot(normal, lightDir));
     pointOutput = saturate(light.Color.xyz * light.Intensity * distanceAttenuation * d);
     spotOutput  = saturate(light.Color.xyz * light.Intensity * angleAttenuation * distanceAttenuation * d);
-	
+
     pointOutput += DoSpecularSpot(pos, normal, light, 0.0f, specularIntensity, roughness);
     spotOutput += DoSpecularSpot(pos, normal, light, 0.0f, specularIntensity, roughness);
 }
@@ -360,7 +349,7 @@ float4 DoFogBulbsForVertex(float3 pos)
 	for (int i = 0; i < NumFogBulbs; i++)
 	{
 		float fogFactor = DoFogBulb(pos, FogBulbs[i]);
-		float3 fogColor = FogBulbs[i].Color.xyz * fogFactor;
+		float3 fogColor = ModulateColor(FogBulbs[i].Color.xyz) * fogFactor;
 
 		fog.xyz += fogColor;
 		fog.w += fogFactor;
@@ -378,7 +367,7 @@ float4 DoFogBulbsForSky(float3 pos)
 	for (int i = 0; i < NumFogBulbs; i++)
 	{
 		float fogFactor = DoFogBulbForSky(pos, FogBulbs[i]);
-		float3 fogColor = FogBulbs[i].Color.xyz * fogFactor;
+		float3 fogColor = ModulateColor(FogBulbs[i].Color.xyz) * fogFactor;
 
 		fog.xyz += fogColor;
 		fog.w += fogFactor;
@@ -389,7 +378,7 @@ float4 DoFogBulbsForSky(float3 pos)
 	return fog;
 }
 
-float3 CombineLights(float3 ambient, float3 vertex, float3 tex, float3 pos, float3 normal, float sheen, 
+float3 CombineLights(float3 ambient, float3 vertex, float3 tex, float3 pos, float3 normal, float sheen,
 	const ShaderLight lights[MAX_LIGHTS_PER_ITEM], int numLights, float fogBulbsDensity, float3 emissive, float specular, float roughness)
 {
 	float3 diffuse = 0;
@@ -398,34 +387,34 @@ float3 CombineLights(float3 ambient, float3 vertex, float3 tex, float3 pos, floa
 
 	int lightTypeMask = (numLights & ~LT_MASK);
 	numLights = numLights & LT_MASK;
-	
+
 	for (int i = 0; i < numLights; i++)
 	{
 		if (lightTypeMask & LT_MASK_SUN)
 		{
 			float isSun = step(0.5f, float(lights[i].Type == LT_SUN));
-			diffuse += isSun * DoDirectionalLight(pos, normal, lights[i]);
-            spec += isSun * DoSpecularSun(normal, lights[i], sheen, specular, roughness);
-        }
+			diffuse += isSun * ModulateColor(DoDirectionalLight(pos, normal, lights[i]));
+			spec += isSun * ModulateColor(DoSpecularSun(normal, lights[i], sheen, specular, roughness));
+		}
 
 		if (lightTypeMask & LT_MASK_POINT)
 		{
 			float isPoint = step(0.5f, float(lights[i].Type == LT_POINT));
-			diffuse += isPoint * DoPointLight(pos, normal, lights[i]);
-            spec += isPoint * DoSpecularPoint(pos, normal, lights[i], sheen, specular, roughness);
-        }
+			diffuse += isPoint * ModulateColor(DoPointLight(pos, normal, lights[i]));
+			spec += isPoint * ModulateColor(DoSpecularPoint(pos, normal, lights[i], sheen, specular, roughness));
+		}
 
 		if (lightTypeMask & LT_MASK_SPOT)
 		{
 			float isSpot = step(0.5f, float(lights[i].Type == LT_SPOT));
-			diffuse += isSpot * DoSpotLight(pos, normal, lights[i]);
-            spec += isSpot * DoSpecularSpot(pos, normal, lights[i], sheen, specular, roughness);
-        }
-		
+			diffuse += isSpot * ModulateColor(DoSpotLight(pos, normal, lights[i]));
+			spec += isSpot * ModulateColor(DoSpecularSpot(pos, normal, lights[i], sheen, specular, roughness));
+		}
+
 		if (lightTypeMask & LT_MASK_SHADOW)
 		{
 			float isShadow = step(0.5f, float(lights[i].Type == LT_SHADOW));
-			shadow += isShadow * DoShadowLight(pos, normal, lights[i]);
+			shadow += isShadow * ModulateColor(DoShadowLight(pos, normal, lights[i]));
 		}
 	}
 
@@ -433,7 +422,7 @@ float3 CombineLights(float3 ambient, float3 vertex, float3 tex, float3 pos, floa
 	diffuse *= tex;
 
 	float3 ambTex = (ambient - shadow) * tex;
-    float3 combined = ambTex + diffuse + spec + emissive;
+	float3 combined = ambTex + diffuse + spec + emissive;
 
 	combined -= float3(fogBulbsDensity, fogBulbsDensity, fogBulbsDensity);
 	

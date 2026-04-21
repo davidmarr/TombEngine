@@ -52,7 +52,7 @@ namespace TEN::Renderer
 		_effects = std::vector<RendererEffect>(allocatedItemSize, effect);
 		
 		auto emptyNormalMap = std::vector<unsigned char>{ 128, 128, 255, 255 };
-		auto emptyOcclusionRoughnessSpecularMap = std::vector<unsigned char>{ 255, 255, 0, 255 };
+		auto emptyORSHMap = std::vector<unsigned char>{ 255, 255, 0, 255 };
 		auto emptyEmissiveMap = std::vector<unsigned char>{ 0, 0, 0, 0 };
 
 		TENLog("Allocated renderer object memory.", LogLevel::Info);
@@ -71,14 +71,14 @@ namespace TEN::Renderer
 				normal = Texture2D(_device.Get(), texture->normalMapData.data(), (int)texture->normalMapData.size());
 			}
 
-			Texture2D occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			Texture2D ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = Texture2D(_device.Get(), texture->occlusionRoughnessSpecularMapData.data(), (int)texture->occlusionRoughnessSpecularMapData.size());
+				ORSH = Texture2D(_device.Get(), texture->ORSHMapData.data(), (int)texture->ORSHMapData.size());
 			}
 
 			Texture2D emissive;
@@ -92,13 +92,13 @@ namespace TEN::Renderer
 				emissive = Texture2D(_device.Get(), texture->emissiveMapData.data(), (int)texture->emissiveMapData.size());
 			}
 
-			AtlasTexturesSet tex = std::make_tuple(
+			_animatedTextures[i] = std::make_tuple(
 				Texture2D(_device.Get(), texture->colorMapData.data(), (int)texture->colorMapData.size()),
-				normal,
-				occlusionRoughnessSpecular,
-				emissive);
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
 
-			_animatedTextures[i] = tex;
+			_context->Flush();
 		}
 
 		std::transform(g_Level.AnimatedTexturesSequences.begin(), g_Level.AnimatedTexturesSequences.end(), std::back_inserter(_animatedTextureSets), [](ANIMATED_TEXTURES_SEQUENCE& sequence)
@@ -159,14 +159,14 @@ namespace TEN::Renderer
 				normal = Texture2D(_device.Get(), texture->normalMapData.data(), (int)texture->normalMapData.size());
 			}
 
-			Texture2D occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			Texture2D ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = Texture2D(_device.Get(), texture->occlusionRoughnessSpecularMapData.data(), (int)texture->occlusionRoughnessSpecularMapData.size());
+				ORSH = Texture2D(_device.Get(), texture->ORSHMapData.data(), (int)texture->ORSHMapData.size());
 			}
 
 			Texture2D emissive;
@@ -179,13 +179,13 @@ namespace TEN::Renderer
 				emissive = Texture2D(_device.Get(), texture->emissiveMapData.data(), (int)texture->emissiveMapData.size());
 			}
 
-			AtlasTexturesSet tex = std::make_tuple(
+			_roomTextures[i] = std::make_tuple(
 				Texture2D(_device.Get(), texture->colorMapData.data(), (int)texture->colorMapData.size()),
-				normal,
-				occlusionRoughnessSpecular,
-				emissive); 
-			
-			_roomTextures[i] = tex;
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
+
+			_context->Flush();
 
 #ifdef DUMP_TEXTURES
 			char filename[255];
@@ -214,14 +214,14 @@ namespace TEN::Renderer
 				normal = Texture2D(_device.Get(), texture->normalMapData.data(), (int)texture->normalMapData.size());
 			}
 
-			Texture2D occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			Texture2D ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = Texture2D(_device.Get(), texture->occlusionRoughnessSpecularMapData.data(), (int)texture->occlusionRoughnessSpecularMapData.size());
+				ORSH = Texture2D(_device.Get(), texture->ORSHMapData.data(), (int)texture->ORSHMapData.size());
 			}
 
 			Texture2D emissive;
@@ -234,13 +234,13 @@ namespace TEN::Renderer
 				emissive = Texture2D(_device.Get(), texture->emissiveMapData.data(), (int)texture->emissiveMapData.size());
 			}
 
-			AtlasTexturesSet tex = std::make_tuple(
+			_moveablesTextures[i] = std::make_tuple(
 				Texture2D(_device.Get(), texture->colorMapData.data(), (int)texture->colorMapData.size()),
-				normal,
-				occlusionRoughnessSpecular,
-				emissive); 
-			
-			_moveablesTextures[i] = tex;
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
+
+			_context->Flush();
 
 #ifdef DUMP_TEXTURES
 			char filename[255];
@@ -269,14 +269,14 @@ namespace TEN::Renderer
 				normal = Texture2D(_device.Get(), texture->normalMapData.data(), (int)texture->normalMapData.size());
 			}
 
-			Texture2D occlusionRoughnessSpecular;
-			if (texture->occlusionRoughnessSpecularMapData.size() < 1)
+			Texture2D ORSH;
+			if (texture->ORSHMapData.size() < 1)
 			{
-				occlusionRoughnessSpecular = CreateDefaultTexture(emptyOcclusionRoughnessSpecularMap);
+				ORSH = CreateDefaultTexture(emptyORSHMap);
 			}
 			else
 			{
-				occlusionRoughnessSpecular = Texture2D(_device.Get(), texture->occlusionRoughnessSpecularMapData.data(), (int)texture->occlusionRoughnessSpecularMapData.size());
+				ORSH = Texture2D(_device.Get(), texture->ORSHMapData.data(), (int)texture->ORSHMapData.size());
 			}
 
 			Texture2D emissive;
@@ -289,13 +289,13 @@ namespace TEN::Renderer
 				emissive = Texture2D(_device.Get(), texture->emissiveMapData.data(), (int)texture->emissiveMapData.size());
 			}
 
-			AtlasTexturesSet tex = std::make_tuple(
+			_staticTextures[i] = std::make_tuple(
 				Texture2D(_device.Get(), texture->colorMapData.data(), (int)texture->colorMapData.size()),
-				normal,
-				occlusionRoughnessSpecular,
-				emissive); 
-			
-			_staticTextures[i] = tex;
+				std::move(normal),
+				std::move(ORSH),
+				std::move(emissive));
+
+			_context->Flush();
 
 #ifdef DUMP_TEXTURES
 			char filename[255];
@@ -314,6 +314,7 @@ namespace TEN::Renderer
 		{
 			auto& texture = g_Level.SpritesTextures[i];
 			_spritesTextures[i] = Texture2D(_device.Get(), texture.colorMapData.data(), (int)texture.colorMapData.size());
+			_context->Flush();
 		}
 
 		if (_spritesTextures.size() > 0)
@@ -444,6 +445,8 @@ namespace TEN::Renderer
 						room.positions[poly.indices[1]] +
 						room.positions[poly.indices[2]]) / 3.0f;
 
+					newPoly.Centre += room.Position.ToVector3();
+
 					Vector3 p1 = room.positions[poly.indices[0]];
 					Vector3 p2 = room.positions[poly.indices[1]];
 					Vector3 p3 = room.positions[poly.indices[2]];
@@ -467,7 +470,7 @@ namespace TEN::Renderer
 
 						vertex->Normal = PackVector3(poly.normals[k]);
 						vertex->UV = poly.textureCoordinates[k];
-						vertex->Color = VectorColorToRGBA_TempToVector4(Vector4(room.colors[index].x, room.colors[index].y, room.colors[index].z, 1.0f));
+						vertex->Color = VectorColorToRGBA(Vector4(room.colors[index].x, room.colors[index].y, room.colors[index].z, 1.0f));
 						vertex->Tangent = PackVector3(poly.tangents[k]);
 						vertex->FaceNormal = PackVector3(poly.normal);
 
@@ -650,7 +653,7 @@ namespace TEN::Renderer
 				_moveableObjects[MoveablesIds[i]] = RendererObject();
 				RendererObject &moveable = *_moveableObjects[MoveablesIds[i]];
 				moveable.Id = MoveablesIds[i];
-				moveable.DoNotDraw = (obj->drawRoutine == nullptr);
+				moveable.Hidden = obj->Hidden;
 				moveable.ShadowType = obj->shadowType;
 													   
 				for (int j = 0; j < obj->nmeshes; j++)
@@ -1127,7 +1130,7 @@ namespace TEN::Renderer
 					vertex.UV.x = poly->textureCoordinates[k].x;
 					vertex.UV.y = poly->textureCoordinates[k].y;
 					
-					vertex.Color = VectorColorToRGBA_TempToVector4(Vector4(meshPtr->colors[v].x, meshPtr->colors[v].y, meshPtr->colors[v].z, 1.0f));
+					vertex.Color = VectorColorToRGBA(Vector4(meshPtr->colors[v].x, meshPtr->colors[v].y, meshPtr->colors[v].z, 1.0f));
 					
 					vertex.BoneIndex  = meshPtr->boneIndices[v];
 					vertex.BoneWeight = meshPtr->boneWeights[v];

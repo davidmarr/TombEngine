@@ -33,7 +33,7 @@ enum RoomEnvFlags
 	ENV_FLAG_NOT_NEAR_SKYBOX = 1 << 6,
 	ENV_FLAG_NO_LENSFLARE	 = 1 << 7,
 	ENV_FLAG_MIST			 = 1 << 8,
-	ENV_FLAG_CAUSTICS		 = 1 << 9,
+	ENV_FLAG_NOCAUSTICS		 = 1 << 9,
 	ENV_FLAG_UNKNOWN3		 = 1 << 10,
 	ENV_FLAG_DAMAGE			 = 1 << 11,
 	ENV_FLAG_COLD			 = 1 << 12
@@ -112,7 +112,6 @@ public:
 // TODO: Make class?
 struct RoomData
 {
-	int						 RoomNumber = 0;
 	std::string				 Name		= {};
 	std::vector<std::string> Tags		= {};
 
@@ -123,17 +122,19 @@ struct RoomData
 	int			XSize		 = 0;
 	int			ZSize		 = 0;
 
+	std::vector<int> NeighborRoomNumbers = {};
+
 	Vector3 ambient;
 	int flags;
 	int meshEffect;
 	ReverbType reverbType;
+
+	int originalRoom;
 	int flippedRoom;
 	int flipNumber;
+
 	short itemNumber;
 	short fxNumber;
-	bool boundActive;
-
-	std::vector<int> NeighborRoomNumbers = {};
 
 	//RoomObjectHandler Moveables = RoomObjectHandler(); // TODO: Refactor linked list of items in room to use a BVH instead.
 	//RoomObjectHandler Statics	= RoomObjectHandler(); // TODO: Refactor to use BVH.

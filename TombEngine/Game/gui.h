@@ -133,6 +133,7 @@ namespace TEN::Gui
 		int SelectedSaveSlot;
 
 		int TimeInMenu = NO_VALUE;
+		float BackupGamma = 1.0f;
 		SettingsData CurrentSettings;
 
 		// Inventory variables
@@ -181,7 +182,7 @@ namespace TEN::Gui
 		void DrawCompass(ItemInfo* item);
 		void CancelInventorySelection();
 		void UseItem(ItemInfo& item, int objectNumber);
-
+		void UseBinoculars(ItemInfo& item);
 		// Getters
 
 		const InventoryRing& GetRing(RingTypes ringType);

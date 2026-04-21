@@ -1,4 +1,4 @@
------
+-----<style>table.function_list td.name {min-width: 335px;}</style>
 --- This molule contains functions that allow to check the data type of a variable. It also contains functions that allow to check if the variable is a TEN primitive class or a LevelFuncs.
 --
 --
@@ -26,12 +26,17 @@
 --	end
 -- @luautil Type
 
-local color = TEN.Color(0,0,0)
-local rotation = TEN.Rotation(0, 0, 0)
-local time = TEN.Time()
-local vec2 = TEN.Vec2(0,0)
-local vec3 = TEN.Vec3(0,0,0)
-LevelFuncs.TypeControlLevelFunc = function () end
+-- Constants for primitive TEN types
+local COLOR = TEN.Color(0,0,0)
+local ROTATION = TEN.Rotation(0, 0, 0)
+local TIME = TEN.Time()
+local VEC2 = TEN.Vec2(0,0)
+local VEC3 = TEN.Vec3(0,0,0)
+
+-- Internal sentinel: Created within LevelFuncs.Engine to reduce exposure to end users.
+-- Used only for metatable comparisons in Type.IsLevelFunc;
+-- do not modify or use directly.
+LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC = function () end
 
 local Type = {}
 
@@ -135,7 +140,7 @@ end
 --      end
 --  end
 Type.IsColor = function (variable)
-    return getmetatable(variable) == getmetatable(color)
+    return getmetatable(variable) == getmetatable(COLOR)
 end
 
 --- Check if the variable is a @{Rotation}.
@@ -149,7 +154,7 @@ end
 --      end
 --  end
 Type.IsRotation = function (variable)
-    return getmetatable(variable) == getmetatable(rotation)
+    return getmetatable(variable) == getmetatable(ROTATION)
 end
 
 --- Check if the variable is a @{Vec2}.
@@ -163,12 +168,12 @@ end
 --      end
 --  end
 Type.IsVec2 = function (variable)
-    return getmetatable(variable) == getmetatable(vec2)
+    return getmetatable(variable) == getmetatable(VEC2)
 end
 
 --- Check if the variable is a @{Vec3}.
 -- @tparam variable variable Variable to be checked.
--- @treturn bool `rue` if the variable is a Vec3, `false` otherwise.
+-- @treturn bool `true` if the variable is a Vec3, `false` otherwise.
 -- @usage
 -- --example of use
 --	LevelFuncs.SetLaraPos = function (pos)
@@ -177,7 +182,7 @@ end
 --      end
 --	end
 Type.IsVec3 = function (variable)
-    return getmetatable(variable) == getmetatable(vec3)
+    return getmetatable(variable) == getmetatable(VEC3)
 end
 
 --- Check if the variable is a @{Time} object.
@@ -191,7 +196,7 @@ end
 --      end
 --	end
 Type.IsTime = function (variable)
-    return getmetatable(variable) == getmetatable(time)
+    return getmetatable(variable) == getmetatable(TIME)
 end
 
 --- Check if the variable is a LevelFunc.
@@ -200,12 +205,51 @@ end
 -- @usage
 -- --example of use
 --  LevelFuncs.SetCallback = function (func)
---      if Type.IsFunction(func) then
+--      if Type.IsLevelFunc(func) then
 --          TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, func)
 --      end
 --  end
 Type.IsLevelFunc = function (variable)
-    return getmetatable(variable) == getmetatable(LevelFuncs.TypeControlLevelFunc)
+    return getmetatable(variable) == getmetatable(LevelFuncs.Engine.TYPE_CONTROL_LEVELFUNC)
+end
+
+--- Check if the variable is an enum value.
+-- @tparam variable variable Variable to be checked.
+-- @tparam table enumTable Enum table to be checked against.
+-- @tparam[opt=true] bool showError (optional) If `true`, an error message will be printed in console if the parameters are invalid.
+-- @treturn bool `true` if the variable is a value of the enum, `false` otherwise.
+-- @usage
+-- -- Example: set flags for DisplayString in a module script
+-- local string = TEN.Strings.DisplayString("Example", TEN.Vec2(50, 50))
+-- LevelFuncs.SetDisplayStringFlags = function (flags)
+--     for _, flag in ipairs(flags) do
+--         -- Set showError to false to disable the internal error messages,
+--         -- since the function already has its own error handling
+--         if not Type.IsEnumValue(flag, TEN.Strings.DisplayStringOption, false) then
+--             TEN.Util.PrintLog("Invalid flag for DisplayStringOption enum.", TEN.Util.LogLevel.ERROR)
+--             return
+--         end
+--     end
+--     string:SetFlags(flags)
+-- end
+Type.IsEnumValue = function (variable, enumTable, showError)
+    if Type.IsBoolean(showError) then
+        showError = showError
+    else
+        showError = true
+    end
+    if not Type.IsTable(enumTable) or type(variable) ~= "number" or debug.getmetatable(enumTable).__type ~= "readonly" then
+        if showError then
+            TEN.Util.PrintLog("Error in Type.IsEnumValue(): enumTable must be a Enum and variable must be a number.", TEN.Util.LogLevel.ERROR)
+        end
+        return false
+    end
+    for _, value in pairs(enumTable) do
+        if variable == value then
+            return true
+        end
+    end
+    return false
 end
 
 return Type

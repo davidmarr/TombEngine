@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/camera.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Point.h"
 #include "Game/control/los.h"
@@ -25,11 +25,13 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Point;
 using namespace TEN::Effects::Environment;
 using namespace TEN::Entities::Generic;
 using namespace TEN::Input;
 using namespace TEN::Math;
+using namespace TEN::SpotCam;
 using TEN::Renderer::g_Renderer;
 
 constexpr auto PARTICLE_FADE_THRESHOLD = BLOCK(14);
@@ -448,7 +450,7 @@ void ObjCamera(ItemInfo* camSlotId, int camMeshId, ItemInfo* targetItem, int tar
 	UpdateCameraElevation();
 
 	//get mesh 0 coordinates.	
-	auto pos = GetJointPosition(camSlotId, 0, Vector3i::Zero);
+	auto pos = GetJointPosition(camSlotId, camMeshId, Vector3i::Zero);
 	auto dest = Vector3(pos.x, pos.y, pos.z);
 
 	GameVector from = GameVector(dest, camSlotId->RoomNumber);
@@ -1411,7 +1413,7 @@ bool CheckItemCollideCamera(ItemInfo* item)
 {
 	bool isCloseEnough = Vector3i::Distance(item->Pose.Position, Camera.pos.ToVector3i()) <= COLL_CHECK_THRESHOLD;
 
-	if (!isCloseEnough || !item->Collidable || !Objects[item->ObjectNumber].usingDrawAnimatingItem)
+	if (!isCloseEnough || !item->Collidable || item->IsLara() || Objects[item->ObjectNumber].Hidden)
 		return false;
 
 	// TODO: Find a better way to define objects which are collidable with camera.
@@ -1590,7 +1592,7 @@ void UpdateCamera()
 	if (UseSpotCam)
 	{
 		// Draw flyby cameras.
-		CalculateSpotCameras();
+		CalculateSpotCam();
 	}
 	else
 	{
@@ -1687,8 +1689,8 @@ void SetScreenFadeIn(float speed, bool force)
 
 void SetCinematicBars(float height, float speed)
 {
+	CinematicBarsSpeed = std::abs(CinematicBarsHeight - height) * (speed / (float)FPS);
 	CinematicBarsDestinationHeight = height;
-	CinematicBarsSpeed = speed;
 }
 
 void ClearCinematicBars()
@@ -1700,17 +1702,29 @@ void ClearCinematicBars()
 
 void UpdateFadeScreenAndCinematicBars()
 {
-	if (CinematicBarsDestinationHeight < CinematicBarsHeight)
+	constexpr float EASEOUT_DISTANCE = 0.05f;
+
+	float delta = CinematicBarsDestinationHeight - CinematicBarsHeight;
+	float absDelta = std::abs(delta);
+
+	if (absDelta > EPSILON)
 	{
-		CinematicBarsHeight -= CinematicBarsSpeed;
-		if (CinematicBarsDestinationHeight > CinematicBarsHeight)
+		float step = CinematicBarsSpeed;
+
+		if (absDelta < EASEOUT_DISTANCE)
+			step *= absDelta / EASEOUT_DISTANCE;
+
+		// keep direction
+		step = (delta > 0.0f ? step : -step);
+
+		CinematicBarsHeight += step;
+
+		// final clamp (prevents overshoot)
+		if ((delta > 0.0f && CinematicBarsHeight > CinematicBarsDestinationHeight) ||
+			(delta < 0.0f && CinematicBarsHeight < CinematicBarsDestinationHeight))
+		{
 			CinematicBarsHeight = CinematicBarsDestinationHeight;
-	}
-	else if (CinematicBarsDestinationHeight > CinematicBarsHeight)
-	{
-		CinematicBarsHeight += CinematicBarsSpeed;
-		if (CinematicBarsDestinationHeight < CinematicBarsHeight)
-			CinematicBarsHeight = CinematicBarsDestinationHeight;
+		}
 	}
 
 	int prevScreenFadeCurrent = ScreenFadeCurrent;
