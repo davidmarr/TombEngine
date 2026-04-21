@@ -52,9 +52,6 @@ namespace TEN::Scripting::Types
 		ScriptColor ToGrayscale() const;
 		ScriptColor Invert(TypeOrNil<bool> endDrift) const;
 		ScriptColor Screen(const ScriptColor& other) const;
-
-		// Utilities
-
 		ScriptColor Lerp(const ScriptColor& color, float alpha) const;
 
 		// Converters
