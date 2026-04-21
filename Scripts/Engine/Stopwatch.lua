@@ -75,7 +75,6 @@ end
 -- }
 -- local myStopwatch = Stopwatch.Create({
 --     name = "RaceTimer",
---     startTime = 10
 --     timerFormat = { seconds = true, deciseconds = true },
 --     position = TEN.Vec2(90, 10),
 --     scale = 1.5,
@@ -134,7 +133,7 @@ Stopwatch.Create = function(stopwatchData)
     local warning2Message = warningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
     stopwatchEntry.stringOption = LevelFuncs.Engine.Stopwatch.CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
 
-    stopwatchEntry.currentTime = stopwatchEntry.startTime
+    stopwatchEntry.currentTime = 0
     stopwatchEntry.active = false
     stopwatchEntry.paused = true
     stopwatchEntry.stop = false
@@ -192,7 +191,6 @@ end
 -- Table setup for creating Stopwatch.
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
--- @tfield[opt=0] float startTime The time (in seconds) from which the stopwatch will start counting up.
 -- @tfield[opt=false] table|bool timerFormat Sets the time display. See <a href="Timer.html#timerFormat">Timer format</a> for details.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display.
@@ -212,15 +210,18 @@ end
 
 
 --- Start or resume the stopwatch.
--- @tparam[opt=false] bool reset If true, resets the stopwatch to startTime value.
+-- @tparam[opt=false] bool reset If true, resets the stopwatch to zero before starting. If false or not provided, the stopwatch will continue from its current time.
 -- @usage
 -- -- Example 1: Start the stopwatch
 -- Stopwatch.Get("MyStopwatch"):Start()
 --
--- -- Example 2: Start the stopwatch and reset its time to the starting time
+-- -- Example 2: Start the stopwatch and reset its time to zero
 -- Stopwatch.Get("MyStopwatch"):Start(true)
 function Stopwatch:Start(reset)
     local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    if reset then
+        stopwatch.currentTime = 0
+    end
     stopwatch.active = true
     stopwatch.paused = false
     stopwatch.stop = false
