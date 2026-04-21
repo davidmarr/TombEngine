@@ -42,6 +42,8 @@ local COMPARISON_OPS =
     function(a, b) return a > b end,    -- 4: greater than
     function(a, b) return a >= b end,   -- 5: greater than or equal
 }
+local errorPrefix = "Error in Stopwatch.Create(): "
+local warningPrefix = "Warning in Stopwatch.Create(): "
 local floor = math.floor
 local pairs = pairs
 local unpack = table.unpack
@@ -83,8 +85,6 @@ end
 --     stringOption = options,
 -- })
 Stopwatch.Create = function(stopwatchData)
-    local errorPrefix = "Error in Stopwatch.Create(): "
-    local warningPrefix = "Warning in Stopwatch.Create(): "
     if not Type.IsTable(stopwatchData) then
         TEN.Util.PrintLog(errorPrefix .. "stopwatchData must be a table.", LogLevel.ERROR)
         return nil
@@ -103,6 +103,19 @@ Stopwatch.Create = function(stopwatchData)
     -- check timerFormat
     local timerFormat = stopwatchData.timerFormat or false
     stopwatchEntry.timerFormat = Util.CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. stopwatchData.name .."' timer will be set to false")
+
+
+    -- check maxTime
+    if stopwatchData.maxTime then
+        if not Type.IsNumber(stopwatchData.maxTime) or stopwatchData.maxTime < 0 then
+            TEN.Util.PrintLog(warningPrefix .. "wrong value for maxTime, it must be a non-negative number. maxTime for '".. stopwatchData.name .."' timer will be set to nil.", TEN.Util.LogLevel.WARNING)
+            stopwatchEntry.maxTime = nil
+        else
+            stopwatchEntry.maxTime = Time(Round2Decimal(stopwatchData.maxTime) * FPS)
+        end
+    else
+        stopwatchEntry.maxTime = nil
+    end
 
     -- check position
     stopwatchEntry.position = Type.IsVec2(stopwatchData.position) and TEN.Vec2(TEN.Util.PercentToScreen(stopwatchData.position.x, stopwatchData.position.y)) or TEN.Vec2(TEN.Util.PercentToScreen(50, 90))
@@ -192,6 +205,7 @@ end
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
 -- @tfield[opt=false] table|bool timerFormat Sets the time display. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @tfield[opt=nil] maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
@@ -332,7 +346,7 @@ end
 --         end
 --     end
 -- end
--- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.MySequenceOfEvents)
+-- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.MySequenceOfEvents)
 function Stopwatch:IfCurrentTimeIs(operator, seconds)
     local op = CheckOperator(operator)
     if not op then
@@ -517,9 +531,12 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
         if s.active then
             if s.timerFormat then
                 local textTimer = Util.GenerateTimeFormattedString(s.currentTime, s.timerFormat)
-                local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, s.color, false, s.stringOption)
-                displayTime:SetColor((not s.paused or s.stop) and s.color or s.pausedColor)
-                TEN.Strings.ShowString(displayTime, s.stop and 1 or 1/30)
+                local color = s.paused and s.pausedColor or s.color
+                local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
+                TEN.Strings.ShowString(displayTime, s.stop and 1 or FRAME_TIME)
+                if s.maxTime and s.currentTime == s.maxTime then
+                    s.stop = true
+                end
                 if s.stop then
                     s.active = false
                     s.paused = true
