@@ -323,7 +323,8 @@ end
 -- local currentTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetCurrentTimeInSeconds()
 function Stopwatch:GetCurrentTimeInSeconds()
     local currentTime = LevelVars.Engine.Stopwatch.stopwatches[self.name].currentTime
-    local seconds = floor(currentTime / FPS * 100) / 100
+    local frames = currentTime:GetFrameCount()
+    local seconds = floor(frames / FPS * 100) / 100
     return seconds
 end
 
@@ -560,14 +561,14 @@ end
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
         if s.active then
+            if s.maxTime and s.currentTime == s.maxTime then
+                s.stop = true
+            end
             if s.timerFormat then
                 local textTimer = GenerateTimeFormattedString(s.currentTime, s.timerFormat)
                 local color = s.paused and s.pausedColor or s.color
                 local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
                 TEN.Strings.ShowString(displayTime, s.stop and 1 or FRAME_TIME)
-            end
-            if s.maxTime and s.currentTime == s.maxTime then
-                s.stop = true
             end
             if s.stop then
                 s.active = false
