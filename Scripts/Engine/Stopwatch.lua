@@ -124,7 +124,8 @@ end
 
 --- Create (but do not start) a new stopwatch.
 -- @tparam StopwatchData stopwatchData A table containing the parameters for the stopwatch.
--- @treturn Stopwatch|nil The created stopwatch object, or nil on failure.
+-- @treturn[1] Stopwatch The created stopwatch in its idle state, not yet started.
+-- @treturn[2] nil If the stopwatch creation failed due to invalid parameters, with an error message logged to the console.
 -- @usage
 -- -- Example 1: simple creation of a stopwatch
 -- local myStopwatch = Stopwatch.Create({ name = "MyStopwatch" })
@@ -196,10 +197,11 @@ Stopwatch.Create = function(stopwatchData)
     local warning2Message = CreateWarningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. name .."' will use default stringOption."
     stopwatchEntry.stringOption = CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
 
-    stopwatchEntry.currentTime = ZERO
+    stopwatchEntry.elapsedTime = ZERO
     stopwatchEntry.active = false
     stopwatchEntry.paused = false
-    stopwatchEntry.stop = false
+    stopwatchEntry.stoppedByUser = false
+    stopwatchEntry.stoppedByMaxTime = false
 
     return setmetatable(self, Stopwatch)
 end
@@ -284,11 +286,12 @@ end
 function Stopwatch:Start(reset)
     local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
     if reset then
-        stopwatch.currentTime = ZERO
+        stopwatch.elapsedTime = ZERO
     end
     stopwatch.active = true
     stopwatch.paused = false
-    stopwatch.stop = false
+    stopwatch.stoppedByUser = false
+    stopwatch.stoppedByMaxTime = false
 end
 
 --- Pause the stopwatch.
@@ -304,82 +307,83 @@ end
 -- Stopwatch.Get("MyStopwatch"):Stop()
 function Stopwatch:Stop()
     local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-    stopwatch.stop = true
+    stopwatch.stoppedByUser = true
+    stopwatch.stoppedByMaxTime = false
     stopwatch.active = false
     stopwatch.paused = false
 end
 
---- Get the current time of the stopwatch.
--- @treturn Time The current time of the stopwatch.
+--- Get the elapsed time of the stopwatch.
+-- @treturn elapsedTime The elapsed time of the stopwatch.
 -- @usage
--- local currentTime = Stopwatch.Get("MyStopwatch"):GetCurrentTime()
-function Stopwatch:GetCurrentTime()
-    return LevelVars.Engine.Stopwatch.stopwatches[self.name].currentTime
+-- local elapsedTime = Stopwatch.Get("MyStopwatch"):GetElapsedTime()
+function Stopwatch:GetElapsedTime()
+    return LevelVars.Engine.Stopwatch.stopwatches[self.name].elapsedTime
 end
 
---- Get the current time of the stopwatch in seconds.
--- @treturn float The current time of the stopwatch in seconds.
+--- Get the elapsed time of the stopwatch in seconds.
+-- @treturn float The elapsed time of the stopwatch in seconds.
 -- @usage
--- local currentTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetCurrentTimeInSeconds()
-function Stopwatch:GetCurrentTimeInSeconds()
-    local currentTime = LevelVars.Engine.Stopwatch.stopwatches[self.name].currentTime
-    local frames = currentTime:GetFrameCount()
+-- local elapsedTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetElapsedTimeInSeconds()
+function Stopwatch:GetElapsedTimeInSeconds()
+    local elapsedTime = LevelVars.Engine.Stopwatch.stopwatches[self.name].elapsedTime
+    local frames = elapsedTime:GetFrameCount()
     local seconds = floor(frames / FPS * 100) / 100
     return seconds
 end
 
---- Get the current time of the stopwatch formatted as a string.
+--- Get the elapsed time of the stopwatch formatted as a string.
 -- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn string The formatted time string.
-function Stopwatch:GetCurrentTimeFormatted(timerFormat)
+function Stopwatch:GetElapsedTimeFormatted(timerFormat)
     timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
     if timerFormat ~= DEFAULT_TIMER_FORMAT then
-        timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch:GetCurrentTimeFormatted(): wrong value for timerFormat, default format will be used.")
+        timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch:GetElapsedTimeFormatted(): wrong value for timerFormat, default format will be used.")
     end
     local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-    return GenerateTimeFormattedString(stopwatch.currentTime, timerFormat)
+    return GenerateTimeFormattedString(stopwatch.elapsedTime, timerFormat)
 end
 
---- Set the current time of the stopwatch.
+--- Set the elapsed time of the stopwatch.
 -- @tparam float newTime The new time for the stopwatch in seconds with 2 decimal places<br>
 -- No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @usage
--- Stopwatch.Get("MyStopwatch"):SetCurrentTime(30.5) -- Set time to 30.5 seconds
-function Stopwatch:SetCurrentTime(newTime)
+-- Stopwatch.Get("MyStopwatch"):SetElapsedTime(30.5) -- Set time to 30.5 seconds
+function Stopwatch:SetElapsedTime(newTime)
     if not Type.IsNumber(newTime) or newTime < 0 then
-        LogMessage("Error in Stopwatch:SetCurrentTime(): wrong value (" .. tostring(newTime) .. ") for newTime, it must be a non-negative number.", logLevelError)
+        LogMessage("Error in Stopwatch:SetElapsedTime(): wrong value (" .. tostring(newTime) .. ") for newTime, it must be a non-negative number.", logLevelError)
     else
         local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-        stopwatch.currentTime = Time(Round2Decimal(newTime) * FPS)
+        stopwatch.elapsedTime = Time(Round2Decimal(newTime) * FPS)
     end
 end
 
---- Check if the current time of the stopwatch meets a specific condition.
+--- Check if the elapsed time of the stopwatch meets a specific condition.
 --
--- It's recommended to use the IfCurrentTimeIs method to have error-free comparisons.
+-- It's recommended to use the IfElapsedTimeIs method to have error-free comparisons.
 -- @tparam int operator The type of comparison.<br>
--- 0 : If the remaining time is equal to the value<br>
--- 1 : If the remaining time is different from the value<br>
--- 2 : If the remaining time is less the value<br>
--- 3 : If the remaining time is less or equal to the value<br>
--- 4 : If the remaining time is greater the value<br>
--- 5 : If the remaining time is greater or equal to the value
+-- 0 : If the elapsed time is equal to the value<br>
+-- 1 : If the elapsed time is different from the value<br>
+-- 2 : If the elapsed time is less the value<br>
+-- 3 : If the elapsed time is less or equal to the value<br>
+-- 4 : If the elapsed time is greater the value<br>
+-- 5 : If the elapsed time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
--- Please note: to have continuous control, the remaining time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
+-- Please note: to have continuous control, the elapsed time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
 -- @treturn bool True if the condition is met, false otherwise.
 -- @usage
 -- -- Example1: Alternative method to create a sequence of events based on stopwatch time
 -- LevelFuncs.OnLoop = function() -- this LevelFuncs is already present in your level script
 --     local stopwatch = Stopwatch.Get("MyStopwatch")
 --     if stopwatch:IsActive() then
---         if stopwatch:IfCurrentTimeIs(0, 2.0) then -- If current time is equal to 2.0 seconds
+--         if stopwatch:IfElapsedTimeIs(0, 2.0) then -- If elapsed time is equal to 2.0 seconds
 --             -- Do something
 --         end
---         if stopwatch:IfCurrentTimeIs(0, 4.0) then -- If current time is equal to 4.0 seconds
+--         if stopwatch:IfElapsedTimeIs(0, 4.0) then -- If elapsed time is equal to 4.0 seconds
 --             -- Do something else
 --         end
---         if stopwatch:IfCurrentTimeIs(0, 6.0) then -- If current time is equal to 6.0 seconds
+--         if stopwatch:IfElapsedTimeIs(0, 6.0) then -- If elapsed time is equal to 6.0 seconds
 --             -- Do another thing
 --         end
 --     end
@@ -389,28 +393,28 @@ end
 -- LevelFuncs.MySequenceOfEvents = function()
 --     local stopwatch = Stopwatch.Get("MyStopwatch")
 --     if stopwatch:IsActive() then
---         if stopwatch:IfCurrentTimeIs(0, 3.0) then -- If current time is equal to 3.0 seconds
+--         if stopwatch:IfElapsedTimeIs(0, 3.0) then -- If elapsed time is equal to 3.0 seconds
 --             -- Do something
 --         end
---         if stopwatch:IfCurrentTimeIs(0, 5.0) then -- If current time is equal to 5.0 seconds
+--         if stopwatch:IfElapsedTimeIs(0, 5.0) then -- If elapsed time is equal to 5.0 seconds
 --             -- Do something else
 --         end
 --     end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.MySequenceOfEvents)
-function Stopwatch:IfCurrentTimeIs(operator, seconds)
+function Stopwatch:IfElapsedTimeIs(operator, seconds)
     local op = CheckOperator(operator)
     if not op then
-        LogMessage("Error in Stopwatch:IfCurrentTimeIs(): invalid operator for '" .. self.name .. "' stopwatch", logLevelError)
+        LogMessage("Error in Stopwatch:IfElapsedTimeIs(): invalid operator for '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
     if not Type.IsNumber(seconds) or seconds < 0 then
-        LogMessage("Error in Stopwatch:IfCurrentTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
+        LogMessage("Error in Stopwatch:IfElapsedTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
     local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
     local time = TEN.Time(Round2Decimal(seconds) * FPS)
-    return op(stopwatch.currentTime, time)
+    return op(stopwatch.elapsedTime, time)
 end
 
 --- Get the position of the stopwatch on screen.
@@ -553,7 +557,7 @@ end
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
     for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
         if s.active and not s.paused then
-            s.currentTime = s.currentTime + 1
+            s.elapsedTime = s.elapsedTime + 1
         end
     end
 end
@@ -561,18 +565,18 @@ end
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
         if s.active then
-            if s.maxTime and s.currentTime == s.maxTime then
-                s.stop = true
+            if s.maxTime and s.elapsedTime == s.maxTime then
+                s.stoppedByMaxTime = true
             end
             if s.timerFormat then
-                local textTimer = GenerateTimeFormattedString(s.currentTime, s.timerFormat)
+                local textTimer = GenerateTimeFormattedString(s.elapsedTime, s.timerFormat)
                 local color = s.paused and s.pausedColor or s.color
                 local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
-                TEN.Strings.ShowString(displayTime, s.stop and 1 or FRAME_TIME)
+                TEN.Strings.ShowString(displayTime, s.stoppedByUser or s.stoppedByMaxTime and 1 or FRAME_TIME)
             end
-            if s.stop then
+            if s.stoppedByUser or s.stoppedByMaxTime then
                 s.active = false
-                s.paused = true
+                s.paused = false
             end
         end
     end
