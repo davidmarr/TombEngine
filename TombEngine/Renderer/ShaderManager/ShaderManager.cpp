@@ -186,7 +186,7 @@ namespace TEN::Renderer::Utils
 	void ShaderManager::Load(Shader shader, const std::string& fileName, const std::string& funcName, ShaderType type, std::map<std::string, std::string> defines, bool forceRecompile)
 	{
 		Destroy(shader);
-		_shaders[(int)shader] = std::move(LoadOrCompile(fileName, funcName, type, defines, forceRecompile));
+		_shaders[(int)shader] = LoadOrCompile(fileName, funcName, type, defines, forceRecompile);
 	}
 
 	void ShaderManager::Destroy(Shader shader)
