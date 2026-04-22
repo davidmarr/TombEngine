@@ -38,7 +38,6 @@ local ScreenToPercent	  = TEN.Util.ScreenToPercent
 local DisplayString		  = TEN.Strings.DisplayString
 local ShowString		  = TEN.Strings.ShowString
 local DisplayStringOption = TEN.Strings.DisplayStringOption
-local HideString		  = TEN.Strings.HideString
 local Time				  = TEN.Time
 local Vec2				  = TEN.Vec2
 local Color				  = TEN.Color
@@ -64,7 +63,6 @@ local CreateErrorPrefix = "Error in Stopwatch.Create(): "
 local CreateWarningPrefix = "Warning in Stopwatch.Create(): "
 local floor = math.floor
 local pairs = pairs
-local unpack = table.unpack
 
 -- Utility functions from Engine.Util that are used in this module
 local CheckTimeFormat 			  = Utility.CheckTimeFormat
@@ -200,8 +198,6 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.elapsedTime = ZERO
     stopwatchEntry.active = false
     stopwatchEntry.paused = false
-    stopwatchEntry.stoppedByUser = false
-    stopwatchEntry.stoppedByMaxTime = false
 
     return setmetatable(self, Stopwatch)
 end
@@ -298,8 +294,6 @@ function Stopwatch:Start(reset)
     end
     stopwatch.active = true
     stopwatch.paused = false
-    stopwatch.stoppedByUser = false
-    stopwatch.stoppedByMaxTime = false
 end
 
 --- Pause the stopwatch.
@@ -315,8 +309,8 @@ end
 -- Stopwatch.Get("MyStopwatch"):Stop()
 function Stopwatch:Stop()
     local stopwatch = stopwatches[self.name]
-    stopwatch.stoppedByUser = true
-    stopwatch.stoppedByMaxTime = false
+    stopwatch.active = false
+    stopwatch.paused = false
 end
 
 --- Get the elapsed time of the stopwatch.
@@ -571,16 +565,14 @@ end
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     for _, s in pairs(stopwatches) do
         if s.active then
-            if s.maxTime and s.elapsedTime == s.maxTime then
-                s.stoppedByMaxTime = true
-            end
+            local reachedMaxTime = s.maxTime and s.elapsedTime >= s.maxTime
             if s.timerFormat then
                 local textTimer = GenerateTimeFormattedString(s.elapsedTime, s.timerFormat)
                 local color = s.paused and s.pausedColor or s.color
                 local displayTime = DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
-                ShowString(displayTime, (s.stoppedByUser or s.stoppedByMaxTime) and 1 or FRAME_TIME)
+                ShowString(displayTime, reachedMaxTime and 1 or FRAME_TIME)
             end
-            if s.stoppedByUser or s.stoppedByMaxTime then
+            if reachedMaxTime then
                 s.active = false
                 s.paused = false
             end
