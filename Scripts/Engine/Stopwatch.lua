@@ -62,6 +62,33 @@ local CheckOperator = function(operator)
     return Type.IsFunction(op) and op or nil
 end
 
+local CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
+    optionsTable = optionsTable or DEFAULT_TEXT_OPTIONS
+    if optionsTable ~= DEFAULT_TEXT_OPTIONS then
+        if Type.IsTable(optionsTable) then
+            for i, option in pairs(optionsTable) do
+                if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
+                    TEN.Util.PrintLog(warning2Message, TEN.Util.LogLevel.WARNING)
+                    return DEFAULT_TEXT_OPTIONS
+                end
+                -- Remove vertical bottom option if present, as it is not compatible with stopwatch display
+                if option == TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM then
+                    table.remove(optionsTable, i)
+                end
+            end
+            -- Ensure VERTICAL_CENTER is always present
+            if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
+                table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
+            end
+            return optionsTable
+        else
+            TEN.Util.PrintLog(warning1Message, TEN.Util.LogLevel.WARNING)
+            return DEFAULT_TEXT_OPTIONS
+        end
+    end
+    return optionsTable
+end
+
 --- Create (but do not start) a new stopwatch.
 -- @tparam StopwatchData stopwatchData A table containing the parameters for the stopwatch.
 -- @treturn Stopwatch|nil The created stopwatch object, or nil on failure.
@@ -144,9 +171,9 @@ Stopwatch.Create = function(stopwatchData)
     -- check stringOption
     local warning1Message = warningPrefix .. "stringOption must be a table. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
     local warning2Message = warningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
-    stopwatchEntry.stringOption = LevelFuncs.Engine.Stopwatch.CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
+    stopwatchEntry.stringOption = CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
 
-    stopwatchEntry.currentTime = 0
+    stopwatchEntry.currentTime = ZERO
     stopwatchEntry.active = false
     stopwatchEntry.paused = false
     stopwatchEntry.stop = false
@@ -444,12 +471,12 @@ end
 -- @tparam[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color color The new color for the stopwatch display when paused.
 -- @usage
 -- -- Example: Set paused color to blue
--- Stopwatch.Get("MyStopwatch"):SetPausedColor(TEN.Color(0, 0, 255, 255))
+-- Stopwatch.Get("MyStopwatch"):SetPausedColor(TEN.Color(0, 0, 255, 128))
 --
 -- -- Example: Set paused color to default (yellow)
 -- Stopwatch.Get("MyStopwatch"):SetPausedColor()
 function Stopwatch:SetPausedColor(color)
-    color = color or TEN.Color(255, 255, 255, 255)
+    color = color or TEN.Color(255, 255, 0)
     if not Type.IsColor(color) then
         TEN.Util.PrintLog("Error in Stopwatch:SetPausedColor(): color must be a Color object.", TEN.Util.LogLevel.ERROR)
         return
@@ -467,28 +494,9 @@ end
 -- -- Example: Set text options to default (center, shadow, vertical center)
 -- Stopwatch.Get("MyStopwatch"):SetTextOptions()
 function Stopwatch:SetTextOptions(optionsTable)
-    optionsTable = optionsTable or DEFAULT_TEXT_OPTIONS
-    if not Type.IsTable(optionsTable) then
-        TEN.Util.PrintLog("Error in Stopwatch:SetTextOptions(): optionsTable must be a table.", TEN.Util.LogLevel.ERROR)
-        return
-    else
-        for i, option in pairs(optionsTable) do
-            -- Remove vertical bottom option if present, as it is not compatible with stopwatch display
-            if option == TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM then
-                table.remove(optionsTable, i)
-            end
-            if not Type.IsEnumValue(option, TEN.Strings.DisplayStringOption, false) then
-                TEN.Util.PrintLog("Error in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption.", TEN.Util.LogLevel.ERROR)
-                return
-            end
-        end
-        -- Ensure VERTICAL_CENTER is always present
-        if not Util.TableHasValue(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER) then
-            table.insert(optionsTable, TEN.Strings.DisplayStringOption.VERTICAL_CENTER)
-        end
-        -- Set the options
-        LevelVars.Engine.Stopwatch.stopwatches[self.name].stringOption = optionsTable
-    end
+    local warning1Message = "Error in Stopwatch:SetTextOption(): optionsTable must be a table."
+    local warning2Message = "Error in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption."
+    LevelVars.Engine.Stopwatch.stopwatches[self.name].stringOption = CheckTextOptions(optionsTable, warning1Message, warning2Message)
 end
 
 --- Check if the stopwatch is in paused state.
@@ -534,19 +542,19 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                 local color = s.paused and s.pausedColor or s.color
                 local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
                 TEN.Strings.ShowString(displayTime, s.stop and 1 or FRAME_TIME)
-                if s.maxTime and s.currentTime == s.maxTime then
-                    s.stop = true
-                end
-                if s.stop then
-                    s.active = false
-                    s.paused = true
-                end
+            end
+            if s.maxTime and s.currentTime == s.maxTime then
+                s.stop = true
+            end
+            if s.stop then
+                s.active = false
+                s.paused = true
             end
         end
     end
 end
 
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTLOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
 
 return Stopwatch
