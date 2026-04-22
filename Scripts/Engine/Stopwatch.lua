@@ -27,12 +27,14 @@ local Stopwatch = {}
 Stopwatch.__index = Stopwatch
 LevelFuncs.Engine.Stopwatch = {}
 LevelVars.Engine.Stopwatch = { stopwatches = {} }
+local stopwatches = LevelVars.Engine.Stopwatch.stopwatches
 
 -- Utility functions and enums from TEN 
 local LogMessage		  = TEN.Util.PrintLog
 local logLevelError		  = TEN.Util.LogLevel.ERROR
 local logLevelWarning	  = TEN.Util.LogLevel.WARNING
 local PercentToScreen	  = TEN.Util.PercentToScreen
+local ScreenToPercent	  = TEN.Util.ScreenToPercent
 local DisplayString		  = TEN.Strings.DisplayString
 local ShowString		  = TEN.Strings.ShowString
 local DisplayStringOption = TEN.Strings.DisplayStringOption
@@ -68,8 +70,6 @@ local unpack = table.unpack
 local CheckTimeFormat 			  = Utility.CheckTimeFormat
 local GenerateTimeFormattedString = Utility.GenerateTimeFormattedString
 local TableHasValue			      = Utility.TableHasValue
-
-local Time = TEN.Time
 
 local function Round2Decimal(second)
 	return floor(second * 100 + 0.5) / 100
@@ -155,11 +155,11 @@ Stopwatch.Create = function(stopwatchData)
         return nil
     end
     local self = { name = stopwatchData.name }
-    if LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name] then
+    if stopwatches[stopwatchData.name] then
         LogMessage(CreateWarningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", logLevelWarning)
     end
-    LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name] = {}
-    local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name]
+    stopwatches[stopwatchData.name] = {}
+    local stopwatchEntry = stopwatches[stopwatchData.name]
     local name = stopwatchData.name
 
     -- check timerFormat
@@ -211,7 +211,15 @@ end
 -- @usage
 -- Stopwatch.Delete("MyStopwatch")
 Stopwatch.Delete = function(name)
-    LevelVars.Engine.Stopwatch.stopwatches[name] = nil
+    if not Type.IsString(name) then
+        LogMessage("Error in Stopwatch.Delete(): name must be a string.", logLevelError)
+    else
+        if stopwatches[name] then
+            stopwatches[name] = nil
+        else
+            LogMessage("Warning in Stopwatch.Delete(): no stopwatch found with name '" .. tostring(name) .. "'.", logLevelWarning)
+        end
+    end
 end
 
 --- Get a stopwatch by name.
@@ -225,7 +233,7 @@ Stopwatch.Get = function(name)
     if not Type.IsString(name) then
         return LogMessage("Error " .. errorPrefix .. "name must be a string.", logLevelError)
     end
-    if not LevelVars.Engine.Stopwatch.stopwatches[name] then
+    if not stopwatches[name] then
         return LogMessage("Warning " .. errorPrefix .. "no stopwatch found with name '" .. tostring(name) .. "'.", logLevelWarning)
     end
     return setmetatable({ name = name }, Stopwatch)
@@ -249,7 +257,7 @@ Stopwatch.IfExists = function(name)
         LogMessage("Error in Stopwatch.IfExists(): name must be a string.", logLevelError)
         return false
     end
-    return LevelVars.Engine.Stopwatch.stopwatches[name] and true or false
+    return stopwatches[name] and true or false
 end
 
 ---
@@ -284,7 +292,7 @@ end
 -- -- Example 2: Start the stopwatch and reset its time to zero
 -- Stopwatch.Get("MyStopwatch"):Start(true)
 function Stopwatch:Start(reset)
-    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    local stopwatch = stopwatches[self.name]
     if reset then
         stopwatch.elapsedTime = ZERO
     end
@@ -298,7 +306,7 @@ end
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):Pause()
 function Stopwatch:Pause()
-    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    local stopwatch = stopwatches[self.name]
     stopwatch.paused = true
 end
 
@@ -306,19 +314,17 @@ end
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):Stop()
 function Stopwatch:Stop()
-    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    local stopwatch = stopwatches[self.name]
     stopwatch.stoppedByUser = true
     stopwatch.stoppedByMaxTime = false
-    stopwatch.active = false
-    stopwatch.paused = false
 end
 
 --- Get the elapsed time of the stopwatch.
--- @treturn elapsedTime The elapsed time of the stopwatch.
+-- @treturn Time The elapsed time of the stopwatch in game frames.
 -- @usage
 -- local elapsedTime = Stopwatch.Get("MyStopwatch"):GetElapsedTime()
 function Stopwatch:GetElapsedTime()
-    return LevelVars.Engine.Stopwatch.stopwatches[self.name].elapsedTime
+    return stopwatches[self.name].elapsedTime
 end
 
 --- Get the elapsed time of the stopwatch in seconds.
@@ -326,7 +332,7 @@ end
 -- @usage
 -- local elapsedTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetElapsedTimeInSeconds()
 function Stopwatch:GetElapsedTimeInSeconds()
-    local elapsedTime = LevelVars.Engine.Stopwatch.stopwatches[self.name].elapsedTime
+    local elapsedTime = stopwatches[self.name].elapsedTime
     local frames = elapsedTime:GetFrameCount()
     local seconds = floor(frames / FPS * 100) / 100
     return seconds
@@ -340,7 +346,7 @@ function Stopwatch:GetElapsedTimeFormatted(timerFormat)
     if timerFormat ~= DEFAULT_TIMER_FORMAT then
         timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch:GetElapsedTimeFormatted(): wrong value for timerFormat, default format will be used.")
     end
-    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    local stopwatch = stopwatches[self.name]
     return GenerateTimeFormattedString(stopwatch.elapsedTime, timerFormat)
 end
 
@@ -353,7 +359,7 @@ function Stopwatch:SetElapsedTime(newTime)
     if not Type.IsNumber(newTime) or newTime < 0 then
         LogMessage("Error in Stopwatch:SetElapsedTime(): wrong value (" .. tostring(newTime) .. ") for newTime, it must be a non-negative number.", logLevelError)
     else
-        local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+        local stopwatch = stopwatches[self.name]
         stopwatch.elapsedTime = Time(Round2Decimal(newTime) * FPS)
     end
 end
@@ -412,8 +418,8 @@ function Stopwatch:IfElapsedTimeIs(operator, seconds)
         LogMessage("Error in Stopwatch:IfElapsedTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
-    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
-    local time = TEN.Time(Round2Decimal(seconds) * FPS)
+    local stopwatch = stopwatches[self.name]
+    local time = Time(Round2Decimal(seconds) * FPS)
     return op(stopwatch.elapsedTime, time)
 end
 
@@ -422,8 +428,8 @@ end
 -- @usage
 -- local position = Stopwatch.Get("MyStopwatch"):GetPosition()
 function Stopwatch:GetPosition()
-    local position = LevelVars.Engine.Stopwatch.stopwatches[self.name].position
-    return TEN.Vec2(TEN.Util.ScreenToPercent(position.x, position.y))
+    local position = stopwatches[self.name].position
+    return Vec2(ScreenToPercent(position.x, position.y))
 end
 
 --- Sets the position of the stopwatch on screen.
@@ -441,7 +447,7 @@ function Stopwatch:SetPosition(x, y)
     if not Type.IsNumber(x) or not Type.IsNumber(y) then
         LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
     else
-        LevelVars.Engine.Stopwatch.stopwatches[self.name].position = TEN.Vec2(TEN.Util.PercentToScreen(x, y))
+        stopwatches[self.name].position = Vec2(PercentToScreen(x, y))
     end
 end
 
@@ -450,7 +456,7 @@ end
 -- @usage
 -- local scale = Stopwatch.Get("MyStopwatch"):GetScale()
 function Stopwatch:GetScale()
-    return LevelVars.Engine.Stopwatch.stopwatches[self.name].scale
+    return stopwatches[self.name].scale
 end
 
 --- Sets the scale of the stopwatch display.
@@ -466,7 +472,7 @@ function Stopwatch:SetScale(scale)
     if not Type.IsNumber(scale) or scale <= 0 then
         LogMessage("Error in Stopwatch:SetScale(): scale must be a positive number.", logLevelError)
     else
-        LevelVars.Engine.Stopwatch.stopwatches[self.name].scale = scale
+        stopwatches[self.name].scale = scale
     end
 end
 
@@ -475,7 +481,7 @@ end
 -- @usage
 -- local color = Stopwatch.Get("MyStopwatch"):GetColor()
 function Stopwatch:GetColor()
-    return LevelVars.Engine.Stopwatch.stopwatches[self.name].color
+    return stopwatches[self.name].color
 end
 
 --- Sets the color of the stopwatch display.
@@ -487,11 +493,11 @@ end
 -- -- Example: Set color to default (white)
 -- Stopwatch.Get("MyStopwatch"):SetColor()
 function Stopwatch:SetColor(color)
-    color = color or TEN.Color(255, 255, 255, 255)
+    color = color or DEFAULT_COLOR
     if not Type.IsColor(color) then
         LogMessage("Error in Stopwatch:SetColor(): color must be a Color object.", logLevelError)
     else
-        LevelVars.Engine.Stopwatch.stopwatches[self.name].color = color
+        stopwatches[self.name].color = color
     end
 end
 
@@ -504,12 +510,12 @@ end
 -- -- Example: Set paused color to default (yellow)
 -- Stopwatch.Get("MyStopwatch"):SetPausedColor()
 function Stopwatch:SetPausedColor(color)
-    color = color or TEN.Color(255, 255, 0)
+    color = color or DEFAULT_PAUSED_COLOR
     if not Type.IsColor(color) then
         LogMessage("Error in Stopwatch:SetPausedColor(): color must be a Color object.", logLevelError)
         return
     end
-    LevelVars.Engine.Stopwatch.stopwatches[self.name].pausedColor = color
+    stopwatches[self.name].pausedColor = color
 end
 
 --- Sets the text options for the stopwatch display. Vertical center option is always added automatically if not present.
@@ -522,9 +528,9 @@ end
 -- -- Example: Set text options to default (center, shadow, vertical center)
 -- Stopwatch.Get("MyStopwatch"):SetTextOptions()
 function Stopwatch:SetTextOptions(optionsTable)
-    local warning1Message = "Error in Stopwatch:SetTextOption(): optionsTable must be a table."
-    local warning2Message = "Error in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption."
-    LevelVars.Engine.Stopwatch.stopwatches[self.name].stringOption = CheckTextOptions(optionsTable, warning1Message, warning2Message)
+    local warning1Message = "Warning in Stopwatch:SetTextOption(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default stringOption."
+    local warning2Message = "Warning in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default stringOption."
+    stopwatches[self.name].stringOption = CheckTextOptions(optionsTable, warning1Message, warning2Message)
 end
 
 --- Check if the stopwatch is in paused state.
@@ -532,7 +538,7 @@ end
 -- @usage
 -- local isPaused = Stopwatch.Get("MyStopwatch"):IsPaused()
 function Stopwatch:IsPaused()
-    return LevelVars.Engine.Stopwatch.stopwatches[self.name].paused
+    return stopwatches[self.name].paused
 end
 
 --- Check if the stopwatch is active.
@@ -543,19 +549,19 @@ end
 --     TEN.View.SetPostProcessMode(TEN.View.PostProcessMode.EXCLUSION)
 -- end
 function Stopwatch:IsActive()
-    return LevelVars.Engine.Stopwatch.stopwatches[self.name].active
+    return stopwatches[self.name].active
 end
 
 --- Check if the stopwatch is active.
 -- Returns `true` only if the stopwatch is ticking, i.e., it is active and not paused.
 -- @treturn bool True if the stopwatch is ticking, false otherwise.
 function Stopwatch:IsTicking()
-    local stopwatch = LevelVars.Engine.Stopwatch.stopwatches[self.name]
+    local stopwatch = stopwatches[self.name]
     return stopwatch.active and not stopwatch.paused
 end
 
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
-    for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
+    for _, s in pairs(stopwatches) do
         if s.active and not s.paused then
             s.elapsedTime = s.elapsedTime + 1
         end
@@ -563,7 +569,7 @@ LevelFuncs.Engine.Stopwatch.IncrementTime = function()
 end
 
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
-    for _, s in pairs(LevelVars.Engine.Stopwatch.stopwatches) do
+    for _, s in pairs(stopwatches) do
         if s.active then
             if s.maxTime and s.elapsedTime == s.maxTime then
                 s.stoppedByMaxTime = true
@@ -571,8 +577,8 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             if s.timerFormat then
                 local textTimer = GenerateTimeFormattedString(s.elapsedTime, s.timerFormat)
                 local color = s.paused and s.pausedColor or s.color
-                local displayTime = TEN.Strings.DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
-                TEN.Strings.ShowString(displayTime, s.stoppedByUser or s.stoppedByMaxTime and 1 or FRAME_TIME)
+                local displayTime = DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
+                ShowString(displayTime, (s.stoppedByUser or s.stoppedByMaxTime) and 1 or FRAME_TIME)
             end
             if s.stoppedByUser or s.stoppedByMaxTime then
                 s.active = false
@@ -582,7 +588,12 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     end
 end
 
+LevelFuncs.Engine.Stopwatch.Reload = function()
+    stopwatches = LevelVars.Engine.Stopwatch.stopwatches
+end
+
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOAD, LevelFuncs.Engine.Stopwatch.Reload)
 
 return Stopwatch
