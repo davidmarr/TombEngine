@@ -45,8 +45,8 @@ local COMPARISON_OPS =
     function(a, b) return a > b end,    -- 4: greater than
     function(a, b) return a >= b end,   -- 5: greater than or equal
 }
-local errorPrefix = "Error in Stopwatch.Create(): "
-local warningPrefix = "Warning in Stopwatch.Create(): "
+local CreateErrorPrefix = "Error in Stopwatch.Create(): "
+local CreateWarningPrefix = "Warning in Stopwatch.Create(): "
 local floor = math.floor
 local pairs = pairs
 local unpack = table.unpack
@@ -68,6 +68,18 @@ local CheckOperator = function(operator)
 	end
     local op = COMPARISON_OPS[operator + 1]
     return Type.IsFunction(op) and op or nil
+end
+
+local function validate(value, isValid, defaultValue, warningMsg)
+    if value == nil then
+        return defaultValue
+    end
+    if isValid then
+        return value
+    end
+
+    TEN.Util.PrintLog(CreateWarningPrefix .. warningMsg, TEN.Util.LogLevel.WARNING)
+    return defaultValue
 end
 
 local CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
@@ -121,93 +133,54 @@ end
 -- })
 Stopwatch.Create = function(stopwatchData)
     if not Type.IsTable(stopwatchData) then
-        TEN.Util.PrintLog(errorPrefix .. "stopwatchData must be a table.", LogLevel.ERROR)
+        TEN.Util.PrintLog(CreateErrorPrefix .. "stopwatchData must be a table.", LogLevel.ERROR)
         return nil
     end
     if not Type.IsString(stopwatchData.name) then
-        TEN.Util.PrintLog(errorPrefix .. "stopwatchData.name must be a string.", LogLevel.ERROR)
+        TEN.Util.PrintLog(CreateErrorPrefix .. "stopwatchData.name must be a string.", LogLevel.ERROR)
         return nil
     end
     local self = { name = stopwatchData.name }
     if LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name] then
-        TEN.Util.PrintLog(warningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", TEN.Util.LogLevel.WARNING)
+        TEN.Util.PrintLog(CreateWarningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", TEN.Util.LogLevel.WARNING)
     end
     LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name] = {}
     local stopwatchEntry = LevelVars.Engine.Stopwatch.stopwatches[stopwatchData.name]
+    local name = stopwatchData.name
 
     -- check timerFormat
     local timerFormat = stopwatchData.timerFormat or false
-    stopwatchEntry.timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. stopwatchData.name .."' timer will be set to false")
+    stopwatchEntry.timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. name .."' timer will be set to false")
 
 
     -- check maxTime
-    if stopwatchData.maxTime then
-        if not Type.IsNumber(stopwatchData.maxTime) or stopwatchData.maxTime < 0 then
-            TEN.Util.PrintLog(warningPrefix .. "wrong value for maxTime, it must be a non-negative number. maxTime for '".. stopwatchData.name .."' timer will be set to nil.", TEN.Util.LogLevel.WARNING)
-            stopwatchEntry.maxTime = nil
-        else
-            stopwatchEntry.maxTime = Time(Round2Decimal(stopwatchData.maxTime) * FPS)
-        end
+    if Type.IsNumber(stopwatchData.maxTime) and stopwatchData.maxTime >= 0 then
+        stopwatchEntry.maxTime = Time(Round2Decimal(stopwatchData.maxTime) * FPS)
     else
+        if stopwatchData.maxTime ~= nil then
+            TEN.Util.PrintLog(CreateWarningPrefix .. "wrong value for maxTime for '".. name .."'", TEN.Util.LogLevel.WARNING)
+        end
         stopwatchEntry.maxTime = nil
     end
 
     -- check position
-    if stopwatchEntry.position then
-        if Type.IsVec2(stopwatchEntry.position) then
-            stopwatchEntry.position = TEN.Vec2(TEN.Util.PercentToScreen(stopwatchData.position.x, stopwatchData.position.y))
-        else
-            TEN.Util.PrintLog(warningPrefix .. "wrong value for position, position for '".. stopwatchData.name .."' timer will be set to default Vec2(50, 90)", TEN.Util.LogLevel.WARNING)
-            stopwatchEntry.position = DEFAULT_POSITION
-        end
-    else
-        stopwatchEntry.position = DEFAULT_POSITION
+    stopwatchEntry.position = validate(stopwatchData.position, Type.IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '".. name .."', set to default")
+    if stopwatchEntry.position ~= DEFAULT_POSITION then
+        stopwatchEntry.position = TEN.Vec2(TEN.Util.PercentToScreen(stopwatchData.position.x, stopwatchData.position.y))
     end
 
     -- check scale
-    if stopwatchEntry.scale then
-        if Type.IsNumber(stopwatchEntry.scale) then
-            if stopwatchEntry.scale <= 0 then
-                TEN.Util.PrintLog(warningPrefix .. "scale must be a positive number, scale for '".. stopwatchData.name .."' timer will be set to 1", TEN.Util.LogLevel.WARNING)
-                stopwatchEntry.scale = 1
-            else
-                stopwatchEntry.scale = stopwatchData.scale
-            end
-        else
-            TEN.Util.PrintLog(warningPrefix .. "wrong value for scale, scale for '".. stopwatchData.name .."' timer will be set to 1", TEN.Util.LogLevel.WARNING)
-            stopwatchEntry.scale = 1
-        end
-    else
-        stopwatchEntry.scale = 1
-    end
+    stopwatchEntry.scale = validate(stopwatchData.scale, Type.IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '".. name .."', set to 1")
 
     -- check color
-    if stopwatchEntry.color then
-        if not Type.IsColor(stopwatchEntry.color) then
-            TEN.Util.PrintLog(warningPrefix .. "wrong value for color, color for '".. stopwatchData.name .."' timer will be set to Color(255, 255, 255)", TEN.Util.LogLevel.WARNING)
-            stopwatchEntry.color = DEFAULT_COLOR
-        else
-            stopwatchEntry.color = stopwatchData.color
-        end
-    else
-        stopwatchEntry.color = DEFAULT_COLOR
-    end
+    stopwatchEntry.color = validate(stopwatchData.color, Type.IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '".. name .."', set to default")
 
     -- check pausedColor
-    if stopwatchEntry.pausedColor then
-        if not Type.IsColor(stopwatchEntry.pausedColor) then
-            TEN.Util.PrintLog(warningPrefix .. "wrong value for pausedColor, pausedColor for '".. stopwatchData.name .."' timer will be set to Color(255, 255, 0)", TEN.Util.LogLevel.WARNING)
-            stopwatchEntry.pausedColor = DEFAULT_PAUSED_COLOR
-        else
-            stopwatchEntry.pausedColor = stopwatchData.pausedColor
-        end
-    else
-        stopwatchEntry.pausedColor = DEFAULT_PAUSED_COLOR
-    end
+    stopwatchEntry.pausedColor = validate(stopwatchData.pausedColor, Type.IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '".. name .."', set to default")
 
     -- check stringOption
-    local warning1Message = warningPrefix .. "stringOption must be a table. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
-    local warning2Message = warningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. stopwatchData.name .."' will use default stringOption."
+    local warning1Message = CreateWarningPrefix .. "stringOption must be a table. Stopwatch '".. name .."' will use default stringOption."
+    local warning2Message = CreateWarningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. name .."' will use default stringOption."
     stopwatchEntry.stringOption = CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
 
     stopwatchEntry.currentTime = ZERO
