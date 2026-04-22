@@ -25,13 +25,13 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::UpdateVertexBuffer(IVertexBuffer* vertexBuffer, int startVertex, int count, void* data)
 	{
-		auto nativeVertexBuffer = static_cast<DX11VertexBuffer*>(vertexBuffer);
+		auto nativeVertexBuffer = (DX11VertexBuffer*)vertexBuffer;
 		nativeVertexBuffer->Update(_context.Get(), data, startVertex, count);
 	}
 
 	void DX11GraphicsDevice::BindVertexBuffer(IVertexBuffer* vertexBuffer)
 	{
-		auto nativeVertexBuffer = static_cast<DX11VertexBuffer*>(vertexBuffer);
+		auto nativeVertexBuffer = (DX11VertexBuffer*)vertexBuffer;
 
 		unsigned int stride = nativeVertexBuffer->GetStride();
 		unsigned int offset = 0;
@@ -48,13 +48,13 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::UpdateIndexBuffer(IIndexBuffer* indexBuffer, int numIndices, int startIndex, int* data)
 	{
-		auto nativeIndexBuffer = static_cast<DX11IndexBuffer*>(indexBuffer);
+		auto nativeIndexBuffer = (DX11VertexBuffer*)indexBuffer;
 		nativeIndexBuffer->Update(_context.Get(), data, startIndex, numIndices);
 	}
 
 	void DX11GraphicsDevice::BindIndexBuffer(IIndexBuffer* indexBuffer)
 	{
-		auto nativeIndexBuffer = static_cast<DX11IndexBuffer*>(indexBuffer);
+		auto nativeIndexBuffer = (DX11VertexBuffer*)indexBuffer;
 		auto d3dBuffer = nativeIndexBuffer->GetD3D11Buffer();
 
 		_context->IASetIndexBuffer(d3dBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -93,7 +93,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	std::unique_ptr<IRenderSurface2D> DX11GraphicsDevice::CreateRenderSurface2D(IRenderSurface2D* parentRenderTarget, SurfaceFormat colorFormat)
 	{
-		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(parentRenderTarget->GetRenderTarget());
+		auto nativeRenderTarget = (DX11RenderTarget2D*)parentRenderTarget->GetRenderTarget();
 
 		auto result = std::make_unique<IRenderSurface2D>(
 			std::move(std::make_unique<DX11RenderTarget2D>(_device.Get(), nativeRenderTarget->GetD3D11Texture(), GetDXGIFormat(colorFormat))),
@@ -229,7 +229,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
 	{
-		ID3D11ShaderResourceView* d3dShaderResourceView = GetD3D11ShaderResourceView(texture);
+		auto* d3dShaderResourceView = GetD3D11ShaderResourceView(texture);
 
 		_context->PSSetShaderResources((unsigned int)registerType, 1, &d3dShaderResourceView);
 
@@ -269,33 +269,33 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindConstantBuffer(ShaderStage shaderStage, ConstantBufferRegister constantBufferType, IConstantBuffer* buffer)
 	{
-		auto nativeConstantBuffer = static_cast<DX11ConstantBuffer*>(buffer);
+		auto nativeConstantBuffer = (DX11ConstantBuffer*)buffer;
 		auto d3dBuffer = nativeConstantBuffer->GetD3D11Buffer();
 
 		switch (shaderStage)
 		{
 		case ShaderStage::VertexShader:
-			_context->VSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			_context->VSSetConstantBuffers((unsigned int)constantBufferType, 1, &d3dBuffer);
 			break;
 
 		case ShaderStage::GeometryShader:
-			_context->GSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			_context->GSSetConstantBuffers((unsigned int)constantBufferType, 1, &d3dBuffer);
 			break;
 
 		case ShaderStage::PixelShader:
-			_context->PSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			_context->PSSetConstantBuffers((unsigned int)constantBufferType, 1, &d3dBuffer);
 			break;
 
 		case ShaderStage::ComputeShader:
-			_context->CSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			_context->CSSetConstantBuffers((unsigned int)constantBufferType, 1, &d3dBuffer);
 			break;
 
 		case ShaderStage::HullShader:
-			_context->HSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			_context->HSSetConstantBuffers((unsigned int)constantBufferType, 1, &d3dBuffer);
 			break;
 
 		case ShaderStage::DomainShader:
-			_context->DSSetConstantBuffers(static_cast<unsigned int>(constantBufferType), 1, &d3dBuffer);
+			_context->DSSetConstantBuffers((unsigned int)constantBufferType, 1, &d3dBuffer);
 			break;
 
 		default:
@@ -310,7 +310,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::UpdateConstantBuffer(IConstantBuffer* constantBuffer, void* data)
 	{
-		auto nativeConstantBuffer = static_cast<DX11ConstantBuffer*>(constantBuffer);
+		auto nativeConstantBuffer = (DX11ConstantBuffer*)constantBuffer;
 		nativeConstantBuffer->UpdateData(data, _context.Get());
 	}
 
@@ -336,37 +336,37 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::ClearRenderTarget2D(IRenderTarget2D* renderTarget, XMVECTORF32 clearColor)
 	{
-		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+		auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget;
 		_context->ClearRenderTargetView(nativeRenderTarget->GetD3D11RenderTargetView(), clearColor);
 	}
 
 	void DX11GraphicsDevice::ClearRenderTarget2D(IRenderTarget2D* renderTarget, int arrayIndex, XMVECTORF32 clearColor)
 	{
-		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+		auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget;
 		_context->ClearRenderTargetView(nativeRenderTarget->GetD3D11RenderTargetView(arrayIndex), clearColor);
 	}
 
 	void DX11GraphicsDevice::ClearDepthStencil(IDepthTarget* renderTarget, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil)
 	{
-		auto nativeRenderTarget = static_cast<DX11DepthTarget*>(renderTarget);
+		auto nativeRenderTarget = (DX11DepthTarget*)renderTarget;
 		_context->ClearDepthStencilView(nativeRenderTarget->GetD3D11DepthStencilView(), GetClearFlags(clearFlags), depth, stencil);
 	}
 
 	void DX11GraphicsDevice::ClearDepthStencil(IDepthTarget* renderTarget, int arrayIndex, DepthStencilClearFlags clearFlags, float depth, unsigned char stencil)
 	{
-		auto nativeRenderTarget = static_cast<DX11DepthTarget*>(renderTarget);
+		auto nativeRenderTarget = (DX11DepthTarget*)renderTarget;
 		_context->ClearDepthStencilView(nativeRenderTarget->GetD3D11DepthStencilView(arrayIndex), GetClearFlags(clearFlags), depth, stencil);
 	}
 
 	void DX11GraphicsDevice::BindRenderTarget(IRenderTarget2D* renderTarget, IDepthTarget* depthTarget)
 	{
-		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+		auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget;
 		auto d3dRenderTargetView = nativeRenderTarget->GetD3D11RenderTargetView();
 
 		ID3D11DepthStencilView* d3dDepthStencilView = nullptr;
 		if (depthTarget != nullptr)
 		{
-			auto nativeDepthTarget = static_cast<DX11DepthTarget*>(depthTarget);
+			auto nativeDepthTarget = (DX11DepthTarget*)depthTarget;
 			d3dDepthStencilView = nativeDepthTarget->GetD3D11DepthStencilView();
 		}
 				
@@ -375,13 +375,13 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindRenderTarget(IRenderTargetBinding renderTarget, IDepthTargetBinding depthTarget)
 	{
-		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget.RenderTarget);
+		auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget.RenderTarget;
 		auto d3dRenderTargetView = nativeRenderTarget->GetD3D11RenderTargetView(renderTarget.ArrayIndex);
 
 		ID3D11DepthStencilView* d3dDepthStencilView = nullptr;
 		if (depthTarget.DepthTarget != nullptr)
 		{
-			auto nativeDepthTarget = static_cast<DX11DepthTarget*>(depthTarget.DepthTarget);
+			auto nativeDepthTarget = (DX11DepthTarget*)depthTarget.DepthTarget;
 			d3dDepthStencilView = nativeDepthTarget->GetD3D11DepthStencilView(depthTarget.ArrayIndex);
 		}
 
@@ -394,7 +394,7 @@ namespace TEN::Renderer::Native::DirectX11
 		for (int i = 0; i < renderTargets.size(); i++)
 		{
 			auto renderTarget = renderTargets[i];
-			auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+			auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget;
 			auto d3dRenderTargetView = nativeRenderTarget->GetD3D11RenderTargetView(0);
 			d3dRenderTargetViews.push_back(d3dRenderTargetView);
 		}
@@ -402,7 +402,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11DepthStencilView* d3dDepthStencilView = nullptr;
 		if (depthTarget != nullptr)
 		{
-			auto nativeDepthTarget = static_cast<DX11DepthTarget*>(depthTarget);
+			auto nativeDepthTarget = (DX11DepthTarget*)depthTarget;
 			d3dDepthStencilView = nativeDepthTarget->GetD3D11DepthStencilView();
 		}
 
@@ -415,7 +415,7 @@ namespace TEN::Renderer::Native::DirectX11
 		for (int i = 0; i < renderTargets.size(); i++)
 		{
 			auto renderTarget = renderTargets[i].RenderTarget;
-			auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+			auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget;
 			auto d3dRenderTargetView = nativeRenderTarget->GetD3D11RenderTargetView(renderTargets[i].ArrayIndex);
 			d3dRenderTargetViews.push_back(d3dRenderTargetView);
 		}
@@ -423,7 +423,7 @@ namespace TEN::Renderer::Native::DirectX11
 		ID3D11DepthStencilView* d3dDepthStencilView = nullptr;
 		if (depthTarget.DepthTarget != nullptr)
 		{
-			auto nativeDepthTarget = static_cast<DX11DepthTarget*>(depthTarget.DepthTarget);
+			auto nativeDepthTarget = (DX11DepthTarget*)depthTarget.DepthTarget;
 			d3dDepthStencilView = nativeDepthTarget->GetD3D11DepthStencilView(depthTarget.ArrayIndex);
 		}
 
@@ -456,13 +456,13 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::SetInputLayout(IInputLayout* inputLayout)
 	{
-		auto nativeInputLayout = static_cast<DX11InputLayout*>(inputLayout);
+		auto nativeInputLayout = (DX11InputLayout*)inputLayout;
 		_context->IASetInputLayout(nativeInputLayout->GetD3D11InputLayout());
 	}
 
 	std::unique_ptr<IInputLayout> DX11GraphicsDevice::CreateInputLayout(std::vector<RendererInputLayoutField> fields, IShader* shader)
 	{
-		auto nativeShader = static_cast<DX11Shader*>(shader);
+		auto nativeShader = (DX11Shader*)shader;
 		return std::make_unique<DX11InputLayout>(_device.Get(), fields, nativeShader);
 	}
 
@@ -920,7 +920,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::BindShader(ShaderStage shaderStage, IShader* shader, bool forceNull)
 	{
-		auto* nativeShader = static_cast<DX11Shader*>(shader);
+		auto* nativeShader = (DX11Shader*)shader;
 
 		if (!nativeShader)
 		{
@@ -988,7 +988,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::SaveScreenshot(IRenderTarget2D* renderTarget, std::wstring path)
 	{
-		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
+		auto nativeRenderTarget = (DX11RenderTarget2D*)renderTarget;
 		SaveWICTextureToFile(_context.Get(), nativeRenderTarget->GetD3D11Texture(), GUID_ContainerFormatPng, path.c_str(), 
 			&GUID_WICPixelFormat24bppBGR, nullptr, true);
 	}
@@ -1011,7 +1011,7 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11GraphicsDevice::UpdateTexture2D(ITexture2D* texture, std::vector<char> data)
 	{
-		auto nativeTexture = static_cast<DX11Texture2D*>(texture);
+		auto nativeTexture = (DX11Texture2D*)texture;
 		auto d3dTexture = nativeTexture->GetD3D11Texture();
 		
 		int width = texture->GetWidth();
