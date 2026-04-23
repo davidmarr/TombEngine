@@ -407,11 +407,12 @@ end
 -- Stopwatch.Get("MyStopwatch"):Stop(2.0)
 function Stopwatch:Stop(displayTime)
     local stopwatch = stopwatches[self.name]
-    if stopwatch.active then
-        FireCallback(stopwatch, "OnStop", setmetatable({name = self.name}, Stopwatch))
-    end
+    local wasActive = stopwatch.active
     stopwatch.active = false
     stopwatch.paused = false
+    if wasActive then
+        FireCallback(stopwatch, "OnStop", setmetatable({name = self.name}, Stopwatch))
+    end
     local ds = stopwatchStrings[self.name]
     if ds then
         if displayTime ~= nil then
@@ -1152,9 +1153,9 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                 ShowString(ds, reachedMaxTime and 1 or FRAME_TIME, false)
             end
             if reachedMaxTime then
-                FireCallback(s, "OnMaxTime", setmetatable({name = name}, Stopwatch))
                 s.active = false
                 s.paused = false
+                FireCallback(s, "OnMaxTime", setmetatable({name = name}, Stopwatch))
             end
         end
     end
