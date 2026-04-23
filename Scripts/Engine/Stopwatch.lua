@@ -136,7 +136,7 @@ end
 -- }
 -- local myStopwatch = Stopwatch.Create({
 --     name = "RaceTimer",
---     timerFormat = { seconds = true, deciseconds = true },
+--     timerFormat = { seconds = true, centiseconds = true },
 --     position = TEN.Vec2(90, 10),
 --     scale = 1.5,
 --     color = TEN.Color(0, 255, 0, 255),
@@ -343,7 +343,7 @@ function Stopwatch:GetElapsedTimeInSeconds()
 end
 
 --- Get the elapsed time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn string The formatted time string.
 -- @usage
 -- local timeFormat = { minutes = true, seconds = true}
@@ -455,7 +455,7 @@ function Stopwatch:GetMaxTimeInSeconds()
 end
 
 --- Get the maximum time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn[1] string The formatted maximum time string.
 -- @treturn[2] nil If no maximum time is set.
 -- @usage
