@@ -61,6 +61,16 @@ local COMPARISON_OPS =
     function(a, b) return a > b end,    -- 4: greater than
     function(a, b) return a >= b end,   -- 5: greater than or equal
 }
+local CALLBACKFIELDS = {
+    { field = "onStart",    key = "OnStart"    },
+    { field = "onResume",   key = "OnResume"   },
+    { field = "onPause",    key = "OnPause"    },
+    { field = "onStop",     key = "OnStop"     },
+    { field = "onReset",    key = "OnReset"    },
+    { field = "onLap",      key = "OnLap"      },
+    { field = "onMaxTime",  key = "OnMaxTime"  },
+    { field = "onInterval", key = "OnInterval" },
+}
 local CreateErrorPrefix = "Error in Stopwatch.Create(): "
 local CreateWarningPrefix = "Warning in Stopwatch.Create(): "
 local floor = math.floor
@@ -175,6 +185,21 @@ end
 --     pausedColor = TEN.Color(255, 0, 0, 255),
 --     stringOption = options,
 -- })
+--
+-- -- Example 3: creation of a stopwatch with callbacks assigned at creation time
+-- LevelFuncs.OnLapRecorded = function(sw)
+--     TEN.Util.PrintLog("Lap " .. sw:GetLapCount(), TEN.Util.LogLevel.INFO)
+-- end
+-- LevelFuncs.OnTick = function(sw)
+--     TEN.Util.PrintLog("Elapsed: " .. sw:GetElapsedTimeInSeconds() .. "s", TEN.Util.LogLevel.INFO)
+-- end
+-- Stopwatch.Create({
+--     name         = "RaceTimer",
+--     timeFormat   = { minutes = true, seconds = true, centiseconds = true },
+--     onLap        = LevelFuncs.OnLapRecorded,
+--     onInterval   = LevelFuncs.OnTick,
+--     intervalTime = 1.0,
+-- })
 Stopwatch.Create = function(stopwatchData)
     if not IsTable(stopwatchData) then
         LogMessage(CreateErrorPrefix .. "stopwatchData must be a table.", logLevelError)
@@ -235,6 +260,30 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.callbacks = {}
     stopwatchEntry.intervalFrames = nil
     stopwatchEntry.lastIntervalCount = 0
+
+    -- assign callbacks from stopwatchData fields
+    for _, cb in ipairs(CALLBACKFIELDS) do
+        local fn = stopwatchData[cb.field]
+        if not IsNull(fn) then
+            if IsLevelFunc(fn) then
+                stopwatchEntry.callbacks[cb.key] = fn
+            else
+                LogMessage(CreateWarningPrefix .. "wrong value for " .. cb.field .. " in '" .. name .. "', it must be a LevelFunc. Callback will be ignored.", logLevelWarning)
+            end
+        end
+    end
+    if not IsNull(stopwatchData.intervalTime) then
+        if not IsNumber(stopwatchData.intervalTime) or stopwatchData.intervalTime <= 0 then
+            LogMessage(CreateWarningPrefix .. "wrong value for intervalTime in '" .. name .. "', it must be a positive number.", logLevelWarning)
+        else
+            local frames = floor(Round2Decimal(stopwatchData.intervalTime) * FPS + 0.5)
+            if frames < 1 then
+                LogMessage(CreateWarningPrefix .. "intervalTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS).", logLevelWarning)
+            else
+                stopwatchEntry.intervalFrames = frames
+            end
+        end
+    end
 
     if stopwatchEntry.timeFormat then
         local initText = GenerateTimeFormattedString(ZERO, stopwatchEntry.timeFormat)
@@ -1138,6 +1187,15 @@ end
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is not active.
 -- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table stringOption A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
+-- @tfield[opt=nil] function onStart Callback fired when the stopwatch is started. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_START after creation.
+-- @tfield[opt=nil] function onResume Callback fired when the stopwatch is resumed after a pause. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESUME after creation.
+-- @tfield[opt=nil] function onPause Callback fired when the stopwatch is paused. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_PAUSE after creation.
+-- @tfield[opt=nil] function onStop Callback fired when the stopwatch is stopped. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_STOP after creation.
+-- @tfield[opt=nil] function onReset Callback fired when the stopwatch is reset. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESET after creation.
+-- @tfield[opt=nil] function onLap Callback fired when a lap is recorded. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_LAP after creation.
+-- @tfield[opt=nil] function onMaxTime Callback fired when the stopwatch reaches its configured maxTime. Must be a LevelFuncs function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_MAX_TIME after creation.
+-- @tfield[opt=nil] function onInterval Callback fired repeatedly at a fixed interval while the stopwatch is ticking (not paused). Must be a LevelFuncs function reference. Requires `intervalTime` to also be set; without it the callback is stored but never fires until an interval is configured via @{Stopwatch:SetIntervalTime}.
+-- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Must be a positive number; the minimum effective value is one frame (~0.03s at 30 FPS). Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.
 
 ---
 -- Time format configuration for displaying the stopwatch time.
