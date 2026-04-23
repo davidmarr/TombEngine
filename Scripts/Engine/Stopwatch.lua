@@ -63,26 +63,41 @@ local CreateErrorPrefix = "Error in Stopwatch.Create(): "
 local CreateWarningPrefix = "Warning in Stopwatch.Create(): "
 local floor = math.floor
 local pairs = pairs
+local remove = table.remove
+local insert = table.insert
+
 
 -- Utility functions from Engine.Util that are used in this module
 local CheckTimeFormat 			  = Utility.CheckTimeFormat
 local GenerateTimeFormattedString = Utility.GenerateTimeFormattedString
 local TableHasValue			      = Utility.TableHasValue
 
+-- Type checking functions from Engine.Type that are used in this module
+local IsVec2 = Type.IsVec2
+local IsNumber = Type.IsNumber
+local IsColor = Type.IsColor
+local IsEnumValue = Type.IsEnumValue
+local IsBoolean = Type.IsBoolean
+local IsString = Type.IsString
+local IsTable = Type.IsTable
+local IsNull = Type.IsNull
+local IsLevelFunc = Type.IsLevelFunc
+local IsFunction = Type.IsFunction
+
 local function Round2Decimal(second)
 	return floor(second * 100 + 0.5) / 100
 end
 
 local CheckOperator = function(operator)
-	if not Type.IsNumber(operator) then
+	if not IsNumber(operator) then
 		return nil
 	end
     local op = COMPARISON_OPS[operator + 1]
-    return Type.IsFunction(op) and op or nil
+    return IsFunction(op) and op or nil
 end
 
 local function validate(value, isValid, defaultValue, warningMsg)
-    if value == nil then
+    if IsNull(value) then
         return defaultValue
     end
     if isValid then
@@ -96,20 +111,20 @@ end
 local CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
     optionsTable = optionsTable or DEFAULT_TEXT_OPTIONS
     if optionsTable ~= DEFAULT_TEXT_OPTIONS then
-        if Type.IsTable(optionsTable) then
+        if IsTable(optionsTable) then
             for i, option in pairs(optionsTable) do
-                if not Type.IsEnumValue(option, DisplayStringOption, false) then
+                if not IsEnumValue(option, DisplayStringOption, false) then
                     LogMessage(warning2Message, logLevelWarning)
                     return DEFAULT_TEXT_OPTIONS
                 end
                 -- Remove vertical bottom option if present, as it is not compatible with stopwatch display
                 if option == DisplayStringOption.VERTICAL_BOTTOM then
-                    table.remove(optionsTable, i)
+                    remove(optionsTable, i)
                 end
             end
             -- Ensure VERTICAL_CENTER is always present
             if not TableHasValue(optionsTable, DisplayStringOption.VERTICAL_CENTER) then
-                table.insert(optionsTable, DisplayStringOption.VERTICAL_CENTER)
+                insert(optionsTable, DisplayStringOption.VERTICAL_CENTER)
             end
             return optionsTable
         else
@@ -144,11 +159,11 @@ end
 --     stringOption = options,
 -- })
 Stopwatch.Create = function(stopwatchData)
-    if not Type.IsTable(stopwatchData) then
+    if not IsTable(stopwatchData) then
         LogMessage(CreateErrorPrefix .. "stopwatchData must be a table.", logLevelError)
         return nil
     end
-    if not Type.IsString(stopwatchData.name) then
+    if not IsString(stopwatchData.name) then
         LogMessage(CreateErrorPrefix .. "stopwatchData.name must be a string.", logLevelError)
         return nil
     end
@@ -166,7 +181,7 @@ Stopwatch.Create = function(stopwatchData)
 
 
     -- check maxTime
-    if Type.IsNumber(stopwatchData.maxTime) and stopwatchData.maxTime >= 0 then
+    if IsNumber(stopwatchData.maxTime) and stopwatchData.maxTime >= 0 then
         stopwatchEntry.maxTime = Time(Round2Decimal(stopwatchData.maxTime) * FPS)
     else
         if stopwatchData.maxTime ~= nil then
@@ -176,19 +191,19 @@ Stopwatch.Create = function(stopwatchData)
     end
 
     -- check position
-    stopwatchEntry.position = validate(stopwatchData.position, Type.IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '".. name .."', set to default")
+    stopwatchEntry.position = validate(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '".. name .."', set to default")
     if stopwatchEntry.position ~= DEFAULT_POSITION then
         stopwatchEntry.position = Vec2(PercentToScreen(stopwatchData.position.x, stopwatchData.position.y))
     end
 
     -- check scale
-    stopwatchEntry.scale = validate(stopwatchData.scale, Type.IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '".. name .."', set to 1")
+    stopwatchEntry.scale = validate(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '".. name .."', set to 1")
 
     -- check color
-    stopwatchEntry.color = validate(stopwatchData.color, Type.IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '".. name .."', set to default")
+    stopwatchEntry.color = validate(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '".. name .."', set to default")
 
     -- check pausedColor
-    stopwatchEntry.pausedColor = validate(stopwatchData.pausedColor, Type.IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '".. name .."', set to default")
+    stopwatchEntry.pausedColor = validate(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '".. name .."', set to default")
 
     -- check stringOption
     local warning1Message = CreateWarningPrefix .. "stringOption must be a table. Stopwatch '".. name .."' will use default stringOption."
@@ -207,7 +222,7 @@ end
 -- @usage
 -- Stopwatch.Delete("MyStopwatch")
 Stopwatch.Delete = function(name)
-    if not Type.IsString(name) then
+    if not IsString(name) then
         LogMessage("Error in Stopwatch.Delete(): name must be a string.", logLevelError)
     else
         if stopwatches[name] then
@@ -226,7 +241,7 @@ end
 Stopwatch.Get = function(name)
     local errorPrefix = "in Stopwatch.Get(): "
     local self = {}
-    if not Type.IsString(name) then
+    if not IsString(name) then
         return LogMessage("Error " .. errorPrefix .. "name must be a string.", logLevelError)
     end
     if not stopwatches[name] then
@@ -249,7 +264,7 @@ end
 --     local myStopwatch = Stopwatch.Create({ name = "MyStopwatch" })
 -- end
 Stopwatch.IfExists = function(name)
-    if not Type.IsString(name) then
+    if not IsString(name) then
         LogMessage("Error in Stopwatch.IfExists(): name must be a string.", logLevelError)
         return false
     end
@@ -363,7 +378,7 @@ end
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetElapsedTime(30.5) -- Set time to 30.5 seconds
 function Stopwatch:SetElapsedTime(newTime)
-    if not Type.IsNumber(newTime) or newTime < 0 then
+    if not IsNumber(newTime) or newTime < 0 then
         LogMessage("Error in Stopwatch:SetElapsedTime(): wrong value (" .. tostring(newTime) .. ") for newTime, it must be a non-negative number.", logLevelError)
     else
         local stopwatch = stopwatches[self.name]
@@ -421,7 +436,7 @@ function Stopwatch:IfElapsedTimeIs(operator, seconds)
         LogMessage("Error in Stopwatch:IfElapsedTimeIs(): invalid operator for '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
-    if not Type.IsNumber(seconds) or seconds < 0 then
+    if not IsNumber(seconds) or seconds < 0 then
         LogMessage("Error in Stopwatch:IfElapsedTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
@@ -481,10 +496,10 @@ end
 -- -- Example: Remove max time limit
 -- Stopwatch.Get("MyStopwatch"):SetMaxTime()
 function Stopwatch:SetMaxTime(maxTime)
-    if maxTime == nil then
+    if IsNull(maxTime) then
         stopwatches[self.name].maxTime = nil
     else
-        if not Type.IsNumber(maxTime) or maxTime < 0 then
+        if not IsNumber(maxTime) or maxTime < 0 then
             LogMessage("Error in Stopwatch:SetMaxTime(): wrong value (" .. tostring(maxTime) .. ") for maxTime, it must be a non-negative number.", logLevelError)
         else
             stopwatches[self.name].maxTime = Time(Round2Decimal(maxTime) * FPS)
@@ -528,7 +543,7 @@ function Stopwatch:IfMaxTimeIs(operator, seconds)
         LogMessage("Error in Stopwatch:IfMaxTimeIs(): invalid operator for '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
-    if not Type.IsNumber(seconds) or seconds < 0 then
+    if not IsNumber(seconds) or seconds < 0 then
         LogMessage("Error in Stopwatch:IfMaxTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
@@ -562,7 +577,7 @@ end
 function Stopwatch:SetPosition(x, y)
     x = x or 50
     y = y or 90
-    if not Type.IsNumber(x) or not Type.IsNumber(y) then
+    if not IsNumber(x) or not IsNumber(y) then
         LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
     else
         stopwatches[self.name].position = Vec2(PercentToScreen(x, y))
@@ -587,7 +602,7 @@ end
 -- Stopwatch.Get("MyStopwatch"):SetScale()
 function Stopwatch:SetScale(scale)
     scale = scale or 1
-    if not Type.IsNumber(scale) or scale <= 0 then
+    if not IsNumber(scale) or scale <= 0 then
         LogMessage("Error in Stopwatch:SetScale(): scale must be a positive number.", logLevelError)
     else
         stopwatches[self.name].scale = scale
@@ -612,7 +627,7 @@ end
 -- Stopwatch.Get("MyStopwatch"):SetColor()
 function Stopwatch:SetColor(color)
     color = color or DEFAULT_COLOR
-    if not Type.IsColor(color) then
+    if not IsColor(color) then
         LogMessage("Error in Stopwatch:SetColor(): color must be a Color object.", logLevelError)
     else
         stopwatches[self.name].color = color
@@ -629,7 +644,7 @@ end
 -- Stopwatch.Get("MyStopwatch"):SetPausedColor()
 function Stopwatch:SetPausedColor(color)
     color = color or DEFAULT_PAUSED_COLOR
-    if not Type.IsColor(color) then
+    if not IsColor(color) then
         LogMessage("Error in Stopwatch:SetPausedColor(): color must be a Color object.", logLevelError)
         return
     end
