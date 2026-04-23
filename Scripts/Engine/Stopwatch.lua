@@ -396,7 +396,7 @@ function Stopwatch:GetElapsedTimeInSeconds()
 end
 
 --- Get the elapsed time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for the time string. See `timeFormat` for details.<br>
 -- @treturn string The formatted time string.
 -- @usage
 -- local timeFormat = { minutes = true, seconds = true}
@@ -508,7 +508,7 @@ function Stopwatch:GetMaxTimeInSeconds()
 end
 
 --- Get the maximum time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timeFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timeFormat The format to use for the time string. See `timeFormat` for details.<br>
 -- @treturn[1] string The formatted maximum time string.
 -- @treturn[2] nil If no maximum time is set.
 -- @usage
@@ -817,7 +817,7 @@ end
 
 --- Get the delta time of a specific lap formatted as a string.
 -- @tparam int index The 1-based lap index.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See `timeFormat` for details.
 -- @treturn[1] string The formatted delta time of the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
 -- @usage
@@ -871,7 +871,7 @@ end
 
 --- Get the cumulative split time at a specific lap formatted as a string.
 -- @tparam int index The 1-based lap index.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See `timeFormat` for details.
 -- @treturn[1] string The formatted cumulative split time at the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
 -- @usage
@@ -924,7 +924,7 @@ function Stopwatch:GetAllLapTimesInSeconds()
 end
 
 --- Get all lap delta times as an array of formatted strings.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for each string. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for each string. See `timeFormat` for details.
 -- @treturn table An array of strings, one per recorded lap. Returns an empty table if no laps have been recorded.
 -- @usage
 -- local fmt        = { seconds = true, centiseconds = true }
