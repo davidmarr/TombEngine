@@ -313,6 +313,16 @@ function Stopwatch:Stop()
     stopwatch.paused = false
 end
 
+--- Reset the stopwatch to zero and stop it.
+-- @usage
+-- Stopwatch.Get("MyStopwatch"):Reset()
+function Stopwatch:Reset()
+    local stopwatch = stopwatches[self.name]
+    stopwatch.elapsedTime = ZERO
+    stopwatch.active = false
+    stopwatch.paused = false
+end
+
 --- Get the elapsed time of the stopwatch.
 -- @treturn Time The elapsed time of the stopwatch in game frames.
 -- @usage
@@ -333,8 +343,11 @@ function Stopwatch:GetElapsedTimeInSeconds()
 end
 
 --- Get the elapsed time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = true}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn string The formatted time string.
+-- @usage
+-- local timeFormat = { minutes = true, seconds = true}
+-- local elapsedTimeFormatted = Stopwatch.Get("MyStopwatch"):GetElapsedTimeFormatted(timeFormat)
 function Stopwatch:GetElapsedTimeFormatted(timerFormat)
     timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
     if timerFormat ~= DEFAULT_TIMER_FORMAT then
@@ -415,6 +428,117 @@ function Stopwatch:IfElapsedTimeIs(operator, seconds)
     local stopwatch = stopwatches[self.name]
     local time = Time(Round2Decimal(seconds) * FPS)
     return op(stopwatch.elapsedTime, time)
+end
+
+--- Get the maximum time of the stopwatch.
+-- @treturn[1] Time The maximum time of the stopwatch in game frames
+-- @treturn[2] nil If no maximum time is set.
+-- @usage
+-- local maxTime = Stopwatch.Get("MyStopwatch"):GetMaxTime()
+function Stopwatch:GetMaxTime()
+    return stopwatches[self.name].maxTime
+end
+
+--- Get the maximum time of the stopwatch in seconds.
+-- @treturn[1] float The maximum time of the stopwatch in seconds.
+-- @treturn[2] nil If no maximum time is set.
+-- @usage
+-- local maxTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetMaxTimeInSeconds()
+function Stopwatch:GetMaxTimeInSeconds()
+    local maxTime = stopwatches[self.name].maxTime
+    if maxTime then
+        local frames = maxTime:GetFrameCount()
+        local seconds = floor(frames / FPS * 100) / 100
+        return seconds
+    end
+    return nil
+end
+
+--- Get the maximum time of the stopwatch formatted as a string.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; deciseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @treturn[1] string The formatted maximum time string.
+-- @treturn[2] nil If no maximum time is set.
+-- @usage
+-- local timeFormat = { minutes = true, seconds = true}
+-- local maxTimeFormatted = Stopwatch.Get("MyStopwatch"):GetMaxTimeFormatted(timeFormat)
+function Stopwatch:GetMaxTimeFormatted(timerFormat)
+    timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
+    if timerFormat ~= DEFAULT_TIMER_FORMAT then
+        timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch:GetMaxTimeFormatted(): wrong value for timerFormat, default format will be used.")
+    end
+    local maxTime = stopwatches[self.name].maxTime
+    if maxTime then
+        return GenerateTimeFormattedString(maxTime, timerFormat)
+    end
+    return nil
+end
+
+--- Set the maximum time for the stopwatch.
+-- @tparam float maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
+-- @usage
+-- Stopwatch.Get("MyStopwatch"):SetMaxTime(60) -- Set max time to 60 seconds
+--
+-- -- Example: Remove max time limit
+-- Stopwatch.Get("MyStopwatch"):SetMaxTime()
+function Stopwatch:SetMaxTime(maxTime)
+    if maxTime == nil then
+        stopwatches[self.name].maxTime = nil
+    else
+        if not Type.IsNumber(maxTime) or maxTime < 0 then
+            LogMessage("Error in Stopwatch:SetMaxTime(): wrong value (" .. tostring(maxTime) .. ") for maxTime, it must be a non-negative number.", logLevelError)
+        else
+            stopwatches[self.name].maxTime = Time(Round2Decimal(maxTime) * FPS)
+        end
+    end
+end
+
+--- Check if the stopwatch has a maximum time set.
+-- @treturn bool True if the stopwatch has a maximum time set, false otherwise.
+-- @usage
+-- if Stopwatch.Get("MyStopwatch"):HasMaxTime() then
+--     -- Do something if max time is set
+-- else
+--     -- Do something else if no max time is set
+-- end
+function Stopwatch:HasMaxTime()
+    return stopwatches[self.name].maxTime ~= nil
+end
+
+--- Check if the elapsed time of the stopwatch meets a specific condition in relation to the maximum time.
+-- It's recommended to use the IfMaxTimeIs method to have error-free comparisons.
+-- @tparam int operator The type of comparison.<br>
+-- 0 : If the max time is equal to the value<br>
+-- 1 : If the max time is different from the value<br>
+-- 2 : If the max time is less the value<br>
+-- 3 : If the max time is less or equal to the value<br>
+-- 4 : If the max time is greater the value<br>
+-- 5 : If the max time is greater or equal to the value
+-- @tparam float seconds The value in seconds to compare.<br>
+-- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
+-- Please note: Use the @{Stopwatch.HasMaxTime} method to check if a max time is set before using this method to prevent errors.
+-- @treturn bool True if the condition is met, false otherwise.
+-- @usage
+-- -- Check if the max time is less than 60 seconds
+-- if Stopwatch.Get("MyStopwatch"):HasMaxTime() and Stopwatch.Get("MyStopwatch"):IfMaxTimeIs(2, 60) then
+--     -- Do something if max time is less than 60 seconds
+-- end
+function Stopwatch:IfMaxTimeIs(operator, seconds)
+    local op = CheckOperator(operator)
+    if not op then
+        LogMessage("Error in Stopwatch:IfMaxTimeIs(): invalid operator for '" .. self.name .. "' stopwatch", logLevelError)
+        return false
+    end
+    if not Type.IsNumber(seconds) or seconds < 0 then
+        LogMessage("Error in Stopwatch:IfMaxTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
+        return false
+    end
+    local stopwatch = stopwatches[self.name]
+    if not stopwatch.maxTime then
+        LogMessage("Warning in Stopwatch:IfMaxTimeIs(): no maxTime set for '" .. self.name .. "' stopwatch", logLevelWarning)
+        return false
+    end
+    local time = Time(Round2Decimal(seconds) * FPS)
+    return op(stopwatch.maxTime, time)
 end
 
 --- Get the position of the stopwatch on screen.
@@ -510,6 +634,14 @@ function Stopwatch:SetPausedColor(color)
         return
     end
     stopwatches[self.name].pausedColor = color
+end
+
+--- Get the color of the stopwatch display when paused.
+-- @treturn Color The color of the stopwatch display when paused.
+-- @usage
+-- local pausedColor = Stopwatch.Get("MyStopwatch"):GetPausedColor()
+function Stopwatch:GetPausedColor()
+    return stopwatches[self.name].pausedColor
 end
 
 --- Sets the text options for the stopwatch display. Vertical center option is always added automatically if not present.
