@@ -68,7 +68,6 @@ local pairs = pairs
 local remove = table.remove
 local insert = table.insert
 
-
 -- Utility functions from Engine.Util that are used in this module
 local CheckTimeFormat 			  = Utility.CheckTimeFormat
 local GenerateTimeFormattedString = Utility.GenerateTimeFormattedString
