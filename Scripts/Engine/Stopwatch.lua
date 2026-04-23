@@ -44,7 +44,7 @@ local Color				  = TEN.Color
 
 local ZERO = Time()
 local DEFAULT_TEXT_OPTIONS = {DisplayStringOption.CENTER, DisplayStringOption.SHADOW, DisplayStringOption.VERTICAL_CENTER}
-local DEFAULT_TIMER_FORMAT = {minutes = true, seconds = true, centiseconds = true}
+local DEFAULT_TIME_FORMAT = {minutes = true, seconds = true, centiseconds = true}
 local FPS = 30
 local FRAME_TIME = 1 / FPS
 local DEFAULT_COLOR = Color(255, 255, 255, 255)
@@ -160,9 +160,9 @@ Stopwatch.Create = function(stopwatchData)
     local stopwatchEntry = stopwatches[stopwatchData.name]
     local name = stopwatchData.name
 
-    -- check timerFormat
-    local timerFormat = stopwatchData.timerFormat or false
-    stopwatchEntry.timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch.Create(): wrong value for timerFormat, timerFormat for '".. name .."' timer will be set to false")
+    -- check timeFormat
+    local timeFormat = stopwatchData.timeFormat or false
+    stopwatchEntry.timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch.Create(): wrong value for timeFormat, timeFormat for '".. name .."' stopwatch will be set to false")
 
 
     -- check maxTime
@@ -260,7 +260,7 @@ end
 -- Table setup for creating Stopwatch.
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
--- @tfield[opt=false] table|bool timerFormat Sets the time display. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @tfield[opt=false] table|bool timeFormat Sets the time display. See `timeFormat` for details.
 -- @tfield[opt=nil] maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display. Must be a positive number.
@@ -343,18 +343,18 @@ function Stopwatch:GetElapsedTimeInSeconds()
 end
 
 --- Get the elapsed time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn string The formatted time string.
 -- @usage
 -- local timeFormat = { minutes = true, seconds = true}
 -- local elapsedTimeFormatted = Stopwatch.Get("MyStopwatch"):GetElapsedTimeFormatted(timeFormat)
-function Stopwatch:GetElapsedTimeFormatted(timerFormat)
-    timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
-    if timerFormat ~= DEFAULT_TIMER_FORMAT then
-        timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch:GetElapsedTimeFormatted(): wrong value for timerFormat, default format will be used.")
+function Stopwatch:GetElapsedTimeFormatted(timeFormat)
+    timeFormat = timeFormat or DEFAULT_TIME_FORMAT
+    if timeFormat ~= DEFAULT_TIME_FORMAT then
+        timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch:GetElapsedTimeFormatted(): wrong value for timeFormat, default format will be used.")
     end
     local stopwatch = stopwatches[self.name]
-    return GenerateTimeFormattedString(stopwatch.elapsedTime, timerFormat)
+    return GenerateTimeFormattedString(stopwatch.elapsedTime, timeFormat)
 end
 
 --- Set the elapsed time of the stopwatch.
@@ -455,20 +455,20 @@ function Stopwatch:GetMaxTimeInSeconds()
 end
 
 --- Get the maximum time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timerFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timeFormat The format to use for the time string. See <a href="Timer.html#timerFormat">Timer format</a> for details.<br>
 -- @treturn[1] string The formatted maximum time string.
 -- @treturn[2] nil If no maximum time is set.
 -- @usage
 -- local timeFormat = { minutes = true, seconds = true}
 -- local maxTimeFormatted = Stopwatch.Get("MyStopwatch"):GetMaxTimeFormatted(timeFormat)
-function Stopwatch:GetMaxTimeFormatted(timerFormat)
-    timerFormat = timerFormat or DEFAULT_TIMER_FORMAT
-    if timerFormat ~= DEFAULT_TIMER_FORMAT then
-        timerFormat = CheckTimeFormat(timerFormat, "Warning in Stopwatch:GetMaxTimeFormatted(): wrong value for timerFormat, default format will be used.")
+function Stopwatch:GetMaxTimeFormatted(timeFormat)
+    timeFormat = timeFormat or DEFAULT_TIME_FORMAT
+    if timeFormat ~= DEFAULT_TIME_FORMAT then
+        timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch:GetMaxTimeFormatted(): wrong value for timeFormat, default format will be used.")
     end
     local maxTime = stopwatches[self.name].maxTime
     if maxTime then
-        return GenerateTimeFormattedString(maxTime, timerFormat)
+        return GenerateTimeFormattedString(maxTime, timeFormat)
     end
     return nil
 end
@@ -698,8 +698,8 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     for _, s in pairs(stopwatches) do
         if s.active then
             local reachedMaxTime = s.maxTime and s.elapsedTime >= s.maxTime
-            if s.timerFormat then
-                local textTimer = GenerateTimeFormattedString(s.elapsedTime, s.timerFormat)
+            if s.timeFormat then
+                local textTimer = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
                 local color = s.paused and s.pausedColor or s.color
                 local displayTime = DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
                 ShowString(displayTime, reachedMaxTime and 1 or FRAME_TIME)
@@ -715,6 +715,21 @@ end
 LevelFuncs.Engine.Stopwatch.Reload = function()
     stopwatches = LevelVars.Engine.Stopwatch.stopwatches
 end
+
+----
+-- Time format
+-- @section timeformat
+
+---
+-- @table timeFormat
+-- You can display hours, minutes, seconds, and centiseconds; the format can be a table or a Boolean, just like in Timer.
+--
+-- For more information see the <a href="Timer.html#timerFormat">Time format</a> section in the Timer documentation.
+-- <h3>Timer format examples:</h3>
+-- <pre><span class="comment">-- hours:mins:secs.centisecond</span>
+-- <span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, centiseconds = <span class="keyword">true</span>}
+-- <br><span class="comment">-- mins:secs</span>
+-- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>}</pre>
 
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
