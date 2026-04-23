@@ -28,6 +28,7 @@ Stopwatch.__index = Stopwatch
 LevelFuncs.Engine.Stopwatch = {}
 LevelVars.Engine.Stopwatch = { stopwatches = {} }
 local stopwatches = LevelVars.Engine.Stopwatch.stopwatches
+local stopwatchStrings = {} -- DisplayString objects, not serializable in LevelVars
 
 -- Utility functions and enums from TEN 
 local LogMessage		  = TEN.Util.PrintLog
@@ -37,6 +38,7 @@ local PercentToScreen	  = TEN.Util.PercentToScreen
 local ScreenToPercent	  = TEN.Util.ScreenToPercent
 local DisplayString		  = TEN.Strings.DisplayString
 local ShowString		  = TEN.Strings.ShowString
+local HideString		  = TEN.Strings.HideString
 local DisplayStringOption = TEN.Strings.DisplayStringOption
 local Time				  = TEN.Time
 local Vec2				  = TEN.Vec2
@@ -170,6 +172,7 @@ Stopwatch.Create = function(stopwatchData)
     local self = { name = stopwatchData.name }
     if stopwatches[stopwatchData.name] then
         LogMessage(CreateWarningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", logLevelWarning)
+        stopwatchStrings[stopwatchData.name] = nil
     end
     stopwatches[stopwatchData.name] = {}
     local stopwatchEntry = stopwatches[stopwatchData.name]
@@ -213,6 +216,12 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.elapsedTime = ZERO
     stopwatchEntry.active = false
     stopwatchEntry.paused = false
+    stopwatchEntry.laps = {}
+
+    if stopwatchEntry.timeFormat then
+        local initText = GenerateTimeFormattedString(ZERO, stopwatchEntry.timeFormat)
+        stopwatchStrings[name] = DisplayString(initText, stopwatchEntry.position, stopwatchEntry.scale, DEFAULT_COLOR, false, stopwatchEntry.stringOption)
+    end
 
     return setmetatable(self, Stopwatch)
 end
@@ -227,6 +236,9 @@ Stopwatch.Delete = function(name)
     else
         if stopwatches[name] then
             stopwatches[name] = nil
+            local ds = stopwatchStrings[name]
+            if ds then HideString(ds) end
+            stopwatchStrings[name] = nil
         else
             LogMessage("Warning in Stopwatch.Delete(): no stopwatch found with name '" .. tostring(name) .. "'.", logLevelWarning)
         end
@@ -306,6 +318,7 @@ function Stopwatch:Start(reset)
     local stopwatch = stopwatches[self.name]
     if reset then
         stopwatch.elapsedTime = ZERO
+        stopwatch.laps = {}
     end
     stopwatch.active = true
     stopwatch.paused = false
@@ -320,12 +333,35 @@ function Stopwatch:Pause()
 end
 
 --- Stop the stopwatch.
+-- @tparam[opt=nil] float displayTime If provided, the stopwatch display will remain visible for this many seconds after stopping. Must be a positive number. If not provided or nil, the display is hidden immediately.
 -- @usage
+-- -- Example 1: Stop the stopwatch and hide the display immediately
 -- Stopwatch.Get("MyStopwatch"):Stop()
-function Stopwatch:Stop()
+--
+-- -- Example 2: Stop the stopwatch and keep the display visible for 2 seconds
+-- Stopwatch.Get("MyStopwatch"):Stop(2.0)
+function Stopwatch:Stop(displayTime)
     local stopwatch = stopwatches[self.name]
     stopwatch.active = false
     stopwatch.paused = false
+    local ds = stopwatchStrings[self.name]
+    if ds then
+        if displayTime ~= nil then
+            if not IsNumber(displayTime) or displayTime <= 0 then
+                LogMessage("Warning in Stopwatch:Stop(): wrong value (" .. tostring(displayTime) .. ") for displayTime, the stopwatch display will be hidden immediately.", logLevelWarning)
+                HideString(ds)
+            else
+                local s = stopwatches[self.name]
+                if s.timeFormat then
+                    ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
+                    ds:SetColor(s.color)
+                end
+                ShowString(ds, displayTime, false)
+            end
+        else
+            HideString(ds)
+        end
+    end
 end
 
 --- Reset the stopwatch to zero and stop it.
@@ -336,6 +372,9 @@ function Stopwatch:Reset()
     stopwatch.elapsedTime = ZERO
     stopwatch.active = false
     stopwatch.paused = false
+    stopwatch.laps = {}
+    local ds = stopwatchStrings[self.name]
+    if ds then HideString(ds) end
 end
 
 --- Get the elapsed time of the stopwatch.
@@ -580,7 +619,10 @@ function Stopwatch:SetPosition(x, y)
     if not IsNumber(x) or not IsNumber(y) then
         LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
     else
-        stopwatches[self.name].position = Vec2(PercentToScreen(x, y))
+        local newPos = Vec2(PercentToScreen(x, y))
+        stopwatches[self.name].position = newPos
+        local ds = stopwatchStrings[self.name]
+        if ds then ds:SetPosition(newPos) end
     end
 end
 
@@ -606,6 +648,8 @@ function Stopwatch:SetScale(scale)
         LogMessage("Error in Stopwatch:SetScale(): scale must be a positive number.", logLevelError)
     else
         stopwatches[self.name].scale = scale
+        local ds = stopwatchStrings[self.name]
+        if ds then ds:SetScale(scale) end
     end
 end
 
@@ -671,7 +715,10 @@ end
 function Stopwatch:SetTextOptions(optionsTable)
     local warning1Message = "Warning in Stopwatch:SetTextOption(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default stringOption."
     local warning2Message = "Warning in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default stringOption."
-    stopwatches[self.name].stringOption = CheckTextOptions(optionsTable, warning1Message, warning2Message)
+    local newOptions = CheckTextOptions(optionsTable, warning1Message, warning2Message)
+    stopwatches[self.name].stringOption = newOptions
+    local ds = stopwatchStrings[self.name]
+    if ds then ds:SetFlags(newOptions) end
 end
 
 --- Check if the stopwatch is in paused state.
@@ -701,6 +748,212 @@ function Stopwatch:IsTicking()
     return stopwatch.active and not stopwatch.paused
 end
 
+--- Record a lap and return the delta time of the completed segment.
+-- Stores the current elapsed time as a split internally. The returned delta is the time elapsed since
+-- the previous @{Stopwatch:Lap} call, or since @{Stopwatch:Start} if this is the first lap.
+-- Can be called while the stopwatch is active, even if paused.
+-- @treturn[1] Time The delta time of the completed lap segment.
+-- @treturn[2] nil If the stopwatch is not active, with a warning logged to the console.
+-- @usage
+-- -- Record a lap at each checkpoint and immediately print the segment time
+-- LevelFuncs.OnCheckpoint = function()
+--     local sw       = Stopwatch.Get("RaceTimer")
+--     local lapIndex = sw:GetLapCount() + 1
+--     sw:Lap()
+--     local fmt = { seconds = true, centiseconds = true }
+--     TEN.Util.PrintLog("Checkpoint " .. lapIndex .. ": " .. sw:GetLapTimeFormatted(lapIndex, fmt), TEN.Util.LogLevel.INFO)
+-- end
+function Stopwatch:Lap()
+    local stopwatch = stopwatches[self.name]
+    if not stopwatch.active then
+        LogMessage("Warning in Stopwatch:Lap(): stopwatch '" .. self.name .. "' is not active.", logLevelWarning)
+        return nil
+    end
+    insert(stopwatch.laps, stopwatch.elapsedTime)
+    local lapIndex   = #stopwatch.laps
+    local prevFrames = lapIndex > 1 and stopwatch.laps[lapIndex - 1]:GetFrameCount() or 0
+    return Time(stopwatch.elapsedTime:GetFrameCount() - prevFrames)
+end
+
+--- Get the number of recorded laps.
+-- @treturn int The number of laps recorded so far.
+-- @usage
+-- local count = Stopwatch.Get("RaceTimer"):GetLapCount()
+function Stopwatch:GetLapCount()
+    return #stopwatches[self.name].laps
+end
+
+--- Get the delta time of a specific lap as a Time object.
+-- The delta is the time elapsed during that lap segment (from the previous lap to this one, or from start for lap 1).
+-- @tparam int index The 1-based lap index.
+-- @treturn[1] Time The delta time of the specified lap.
+-- @treturn[2] nil If the index is invalid, with an error logged to the console.
+-- @usage
+-- local lapTime = Stopwatch.Get("RaceTimer"):GetLapTime(2)
+function Stopwatch:GetLapTime(index)
+    local laps = stopwatches[self.name].laps
+    if not IsNumber(index) or index < 1 or index ~= floor(index) or index > #laps then
+        LogMessage("Error in Stopwatch:GetLapTime(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError)
+        return nil
+    end
+    local prevFrames = index > 1 and laps[index - 1]:GetFrameCount() or 0
+    return Time(laps[index]:GetFrameCount() - prevFrames)
+end
+
+--- Get the delta time of a specific lap in seconds.
+-- @tparam int index The 1-based lap index.
+-- @treturn[1] float The delta time of the specified lap in seconds.
+-- @treturn[2] nil If the index is invalid, with an error logged to the console.
+-- @usage
+-- local lapSec = Stopwatch.Get("RaceTimer"):GetLapTimeInSeconds(2)
+function Stopwatch:GetLapTimeInSeconds(index)
+    local laps = stopwatches[self.name].laps
+    if not IsNumber(index) or index < 1 or index ~= floor(index) or index > #laps then
+        LogMessage("Error in Stopwatch:GetLapTimeInSeconds(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError)
+        return nil
+    end
+    local prevFrames = index > 1 and laps[index - 1]:GetFrameCount() or 0
+    return floor((laps[index]:GetFrameCount() - prevFrames) / FPS * 100) / 100
+end
+
+--- Get the delta time of a specific lap formatted as a string.
+-- @tparam int index The 1-based lap index.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @treturn[1] string The formatted delta time of the specified lap.
+-- @treturn[2] nil If the index is invalid, with an error logged to the console.
+-- @usage
+-- local fmt    = { seconds = true, centiseconds = true }
+-- local lapStr = Stopwatch.Get("RaceTimer"):GetLapTimeFormatted(2, fmt)
+function Stopwatch:GetLapTimeFormatted(index, timeFormat)
+    local laps = stopwatches[self.name].laps
+    if not IsNumber(index) or index < 1 or index ~= floor(index) or index > #laps then
+        LogMessage("Error in Stopwatch:GetLapTimeFormatted(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError)
+        return nil
+    end
+    timeFormat = timeFormat or DEFAULT_TIME_FORMAT
+    if timeFormat ~= DEFAULT_TIME_FORMAT then
+        timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch:GetLapTimeFormatted(): wrong value for timeFormat, default format will be used.")
+    end
+    local prevFrames = index > 1 and laps[index - 1]:GetFrameCount() or 0
+    return GenerateTimeFormattedString(Time(laps[index]:GetFrameCount() - prevFrames), timeFormat)
+end
+
+--- Get the cumulative split time at a specific lap as a Time object.
+-- The split time is the total elapsed time from the start of the stopwatch to the moment @{Stopwatch:Lap} was called for that lap.
+-- Use @{Stopwatch:GetLapTime} for the segment duration, and this method when you need the absolute time at a given checkpoint.
+-- @tparam int index The 1-based lap index.
+-- @treturn[1] Time The cumulative split time at the specified lap.
+-- @treturn[2] nil If the index is invalid, with an error logged to the console.
+-- @usage
+-- local split = Stopwatch.Get("RaceTimer"):GetSplitTime(2)
+function Stopwatch:GetSplitTime(index)
+    local laps = stopwatches[self.name].laps
+    if not IsNumber(index) or index < 1 or index ~= floor(index) or index > #laps then
+        LogMessage("Error in Stopwatch:GetSplitTime(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError)
+        return nil
+    end
+    return laps[index]
+end
+
+--- Get the cumulative split time at a specific lap in seconds.
+-- @tparam int index The 1-based lap index.
+-- @treturn[1] float The cumulative split time at the specified lap in seconds.
+-- @treturn[2] nil If the index is invalid, with an error logged to the console.
+-- @usage
+-- local splitSec = Stopwatch.Get("RaceTimer"):GetSplitTimeInSeconds(2)
+function Stopwatch:GetSplitTimeInSeconds(index)
+    local laps = stopwatches[self.name].laps
+    if not IsNumber(index) or index < 1 or index ~= floor(index) or index > #laps then
+        LogMessage("Error in Stopwatch:GetSplitTimeInSeconds(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError)
+        return nil
+    end
+    return floor(laps[index]:GetFrameCount() / FPS * 100) / 100
+end
+
+--- Get the cumulative split time at a specific lap formatted as a string.
+-- @tparam int index The 1-based lap index.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @treturn[1] string The formatted cumulative split time at the specified lap.
+-- @treturn[2] nil If the index is invalid, with an error logged to the console.
+-- @usage
+-- local splitStr = Stopwatch.Get("RaceTimer"):GetSplitTimeFormatted(2)
+function Stopwatch:GetSplitTimeFormatted(index, timeFormat)
+    local laps = stopwatches[self.name].laps
+    if not IsNumber(index) or index < 1 or index ~= floor(index) or index > #laps then
+        LogMessage("Error in Stopwatch:GetSplitTimeFormatted(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError)
+        return nil
+    end
+    timeFormat = timeFormat or DEFAULT_TIME_FORMAT
+    if timeFormat ~= DEFAULT_TIME_FORMAT then
+        timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch:GetSplitTimeFormatted(): wrong value for timeFormat, default format will be used.")
+    end
+    return GenerateTimeFormattedString(laps[index], timeFormat)
+end
+
+--- Get all lap delta times as an array of Time objects.
+-- @treturn table An array of @{Time} objects, one per recorded lap (delta per segment). Returns an empty table if no laps have been recorded.
+-- @usage
+-- local lapTimes = Stopwatch.Get("RaceTimer"):GetAllLapTimes()
+-- for i, t in ipairs(lapTimes) do
+--     TEN.Util.PrintLog("Lap " .. i .. ": " .. t:GetFrameCount() .. " frames", TEN.Util.LogLevel.INFO)
+-- end
+function Stopwatch:GetAllLapTimes()
+    local laps   = stopwatches[self.name].laps
+    local result = {}
+    for i = 1, #laps do
+        local prevFrames = i > 1 and laps[i - 1]:GetFrameCount() or 0
+        result[i] = Time(laps[i]:GetFrameCount() - prevFrames)
+    end
+    return result
+end
+
+--- Get all lap delta times as an array of floats in seconds.
+-- @treturn table An array of floats (seconds), one per recorded lap. Returns an empty table if no laps have been recorded.
+-- @usage
+-- local lapSeconds = Stopwatch.Get("RaceTimer"):GetAllLapTimesInSeconds()
+-- for i, s in ipairs(lapSeconds) do
+--     TEN.Util.PrintLog("Lap " .. i .. ": " .. s .. "s", TEN.Util.LogLevel.INFO)
+-- end
+function Stopwatch:GetAllLapTimesInSeconds()
+    local laps   = stopwatches[self.name].laps
+    local result = {}
+    for i = 1, #laps do
+        local prevFrames = i > 1 and laps[i - 1]:GetFrameCount() or 0
+        result[i] = floor((laps[i]:GetFrameCount() - prevFrames) / FPS * 100) / 100
+    end
+    return result
+end
+
+--- Get all lap delta times as an array of formatted strings.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for each string. See <a href="Timer.html#timerFormat">Timer format</a> for details.
+-- @treturn table An array of strings, one per recorded lap. Returns an empty table if no laps have been recorded.
+-- @usage
+-- local fmt        = { seconds = true, centiseconds = true }
+-- local lapStrings = Stopwatch.Get("RaceTimer"):GetAllLapTimesFormatted(fmt)
+-- for i, s in ipairs(lapStrings) do
+--     TEN.Util.PrintLog("Lap " .. i .. ": " .. s, TEN.Util.LogLevel.INFO)
+-- end
+function Stopwatch:GetAllLapTimesFormatted(timeFormat)
+    timeFormat = timeFormat or DEFAULT_TIME_FORMAT
+    if timeFormat ~= DEFAULT_TIME_FORMAT then
+        timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch:GetAllLapTimesFormatted(): wrong value for timeFormat, default format will be used.")
+    end
+    local laps   = stopwatches[self.name].laps
+    local result = {}
+    for i = 1, #laps do
+        local prevFrames = i > 1 and laps[i - 1]:GetFrameCount() or 0
+        result[i] = GenerateTimeFormattedString(Time(laps[i]:GetFrameCount() - prevFrames), timeFormat)
+    end
+    return result
+end
+
+--- Clear all recorded laps. Does not affect the elapsed time or the active state of the stopwatch.
+-- @usage
+-- Stopwatch.Get("RaceTimer"):ClearLaps()
+function Stopwatch:ClearLaps()
+    stopwatches[self.name].laps = {}
+end
+
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
     for _, s in pairs(stopwatches) do
         if s.active and not s.paused then
@@ -710,14 +963,14 @@ LevelFuncs.Engine.Stopwatch.IncrementTime = function()
 end
 
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
-    for _, s in pairs(stopwatches) do
+    for name, s in pairs(stopwatches) do
         if s.active then
             local reachedMaxTime = s.maxTime and s.elapsedTime >= s.maxTime
             if s.timeFormat then
-                local textTimer = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
-                local color = s.paused and s.pausedColor or s.color
-                local displayTime = DisplayString(textTimer, s.position, s.scale, color, false, s.stringOption)
-                ShowString(displayTime, reachedMaxTime and 1 or FRAME_TIME)
+                local ds = stopwatchStrings[name]
+                ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
+                ds:SetColor(s.paused and s.pausedColor or s.color)
+                ShowString(ds, reachedMaxTime and 1 or FRAME_TIME, false)
             end
             if reachedMaxTime then
                 s.active = false
@@ -729,10 +982,18 @@ end
 
 LevelFuncs.Engine.Stopwatch.Reload = function()
     stopwatches = LevelVars.Engine.Stopwatch.stopwatches
+    stopwatchStrings = {}
+    for name, s in pairs(stopwatches) do
+        if s.timeFormat then
+            local text = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
+            local color = s.paused and s.pausedColor or s.color
+            stopwatchStrings[name] = DisplayString(text, s.position, s.scale, color, false, s.stringOption)
+        end
+    end
 end
 
 ----
--- Time format
+-- Tables
 -- @section timeformat
 
 ---
@@ -746,6 +1007,106 @@ end
 -- <br><span class="comment">-- mins:secs</span>
 -- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>}</pre>
 
+----
+-- Advanced usage
+-- @section examples
+-- Advanced usage examples showing how to combine multiple Stopwatch features in real scenarios.
+
+---
+-- @table Scenario1
+-- **Race with checkpoints.** Record a lap at each checkpoint; at the finish line
+-- display the segment time (delta) and the cumulative split for each checkpoint, plus the total.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({
+--     name       = "RaceTimer",
+--     timeFormat = { minutes = true, seconds = true, centiseconds = true },
+--     position   = TEN.Vec2(50, 5),
+-- })
+--
+-- LevelFuncs.OnRaceStart = function()
+--     Stopwatch.Get("RaceTimer"):Start(true)
+-- end
+--
+-- -- Trigger this via a volume or flipeffect at each checkpoint
+-- LevelFuncs.OnCheckpoint = function()
+--     Stopwatch.Get("RaceTimer"):Lap()
+-- end
+--
+-- LevelFuncs.OnFinish = function()
+--     local sw  = Stopwatch.Get("RaceTimer")
+--     local fmt = { seconds = true, centiseconds = true }
+--     sw:Stop(5.0)
+--     for i = 1, sw:GetLapCount() do
+--         local seg   = sw:GetLapTimeFormatted(i, fmt)
+--         local split = sw:GetSplitTimeFormatted(i, fmt)
+--         TEN.Util.PrintLog("Checkpoint " .. i .. " — segment: " .. seg .. "  split: " .. split, TEN.Util.LogLevel.INFO)
+--     end
+--     TEN.Util.PrintLog("Total: " .. sw:GetElapsedTimeFormatted(fmt), TEN.Util.LogLevel.INFO)
+-- end
+
+---
+-- @table Scenario2
+-- **Timed puzzle with best-time record.** The player can retry a puzzle;
+-- each attempt is timed and compared to the personal best stored in LevelVars.
+-- A maxTime of 60 seconds automatically stops the stopwatch if the player runs out of time.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- LevelVars.puzzleBestTime = nil
+-- Stopwatch.Create({ name = "PuzzleTimer", maxTime = 60.0 })
+--
+-- LevelFuncs.OnPuzzleStart = function()
+--     Stopwatch.Get("PuzzleTimer"):Start(true)
+-- end
+--
+-- LevelFuncs.OnPuzzleSolved = function()
+--     local sw      = Stopwatch.Get("PuzzleTimer")
+--     local elapsed = sw:GetElapsedTimeInSeconds()
+--     sw:Stop(3.0)
+--     if not LevelVars.puzzleBestTime or elapsed < LevelVars.puzzleBestTime then
+--         LevelVars.puzzleBestTime = elapsed
+--         TEN.Util.PrintLog("New best: " .. elapsed .. "s!", TEN.Util.LogLevel.INFO)
+--     else
+--         TEN.Util.PrintLog("Time: " .. elapsed .. "s  (best: " .. LevelVars.puzzleBestTime .. "s)", TEN.Util.LogLevel.INFO)
+--     end
+-- end
+
+---
+-- @table Scenario3
+-- **Speedrun with gold splits.** Compare each segment against known reference
+-- (gold) times to tell the player whether they are ahead or behind on each segment.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- -- Reference gold times in seconds, one per segment
+-- local goldSplits = { 12.50, 8.20, 15.00, 6.80 }
+--
+-- Stopwatch.Create({
+--     name       = "SpeedrunTimer",
+--     timeFormat = { minutes = true, seconds = true, centiseconds = true },
+-- })
+--
+-- LevelFuncs.OnRunStart = function()
+--     Stopwatch.Get("SpeedrunTimer"):Start(true)
+-- end
+--
+-- LevelFuncs.OnSegmentEnd = function()
+--     local sw   = Stopwatch.Get("SpeedrunTimer")
+--     sw:Lap()
+--     local i    = sw:GetLapCount()
+--     local lap  = sw:GetLapTimeInSeconds(i)
+--     local gold = goldSplits[i]
+--     if gold then
+--         if lap <= gold then
+--             TEN.Util.PrintLog("Segment " .. i .. ": " .. lap .. "s  GOLD! (ref: " .. gold .. "s)", TEN.Util.LogLevel.INFO)
+--         else
+--             local behind = string.format("%.2f", lap - gold)
+--             TEN.Util.PrintLog("Segment " .. i .. ": " .. lap .. "s  (+" .. behind .. "s behind gold)", TEN.Util.LogLevel.INFO)
+--         end
+--     end
+-- end
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOAD, LevelFuncs.Engine.Stopwatch.Reload)
