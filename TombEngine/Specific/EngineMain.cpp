@@ -286,6 +286,7 @@ int main(int argc, char* argv[])
 		auto error = std::string("Failed to initialize SDL: ") + SDL_GetError();
 		TENLog(error, LogLevel::Error);
 		g_Platform->ShowErrorMessage(error);
+		ShutdownTENLog();
 		return 1;
 	}
 
