@@ -58,25 +58,25 @@ namespace TEN::Renderer::Native::DirectX11
 
 	void DX11SpriteFont::DrawString(ISpriteBatch* spriteBatch, std::wstring text, Vector2 position, Vector4 color, float rotation, Vector2 origin, float scale)
 	{
-		auto dxSpriteBatch = (DX11SpriteBatch*)spriteBatch;
+		auto dxSpriteBatch = static_cast<DX11SpriteBatch*>(spriteBatch);
 		_gameFont->DrawString(dxSpriteBatch->GetNativeSpriteBatch(), text.c_str(), position, color, rotation, origin, scale);
 	}
 
 	void DX11SpriteFont::DrawString(ISpriteBatch* spriteBatch, wchar_t* text, Vector2 position, Vector4 color, float rotation, Vector2 origin, float scale)
 	{
-		auto dxSpriteBatch = (DX11SpriteBatch*)spriteBatch;
+		auto dxSpriteBatch = static_cast<DX11SpriteBatch*>(spriteBatch);
 		_gameFont->DrawString(dxSpriteBatch->GetNativeSpriteBatch(), text, position, color, rotation, origin, scale);
 	}
 
 	void DX11SpriteFont::DrawString(ISpriteBatch* spriteBatch, std::string text, Vector2 position, Vector4 color, float rotation, Vector2 origin, float scale)
 	{
-		auto dxSpriteBatch = (DX11SpriteBatch*)spriteBatch;
+		auto dxSpriteBatch = static_cast<DX11SpriteBatch*>(spriteBatch);
 		_gameFont->DrawString(dxSpriteBatch->GetNativeSpriteBatch(), text.c_str(), position, color, rotation, origin, scale);
 	}
 
 	void DX11SpriteFont::DrawString(ISpriteBatch* spriteBatch, char* text, Vector2 position, Vector4 color, float rotation, Vector2 origin, float scale)
 	{
-		auto dxSpriteBatch = (DX11SpriteBatch*)spriteBatch;
+		auto dxSpriteBatch = static_cast<DX11SpriteBatch*>(spriteBatch);
 		_gameFont->DrawString(dxSpriteBatch->GetNativeSpriteBatch(), text, position, color, rotation, origin, scale);
 	}
 }
