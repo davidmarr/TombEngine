@@ -3,7 +3,7 @@
 #include "Specific/RGBAColor8Byte.h"
 #include "Scripting/Internal/ScriptUtil.h"
 
-typedef DWORD D3DCOLOR;
+typedef unsigned int D3DCOLOR;
 
 namespace sol { class state; }
 namespace sol { template <typename T> struct as_table_t; }
