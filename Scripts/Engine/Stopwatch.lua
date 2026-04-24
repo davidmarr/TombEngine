@@ -1218,7 +1218,7 @@ end
 -- @tfield "OnPause" ON_PAUSE Called when the stopwatch is paused via @{Stopwatch:Pause}.
 -- @tfield "OnResume" ON_RESUME Called when the stopwatch is resumed via @{Stopwatch:Start} after being paused.
 -- @tfield "OnReset" ON_RESET Called when the stopwatch is reset via @{Stopwatch:Reset}.
--- @tfield "OnStop" ON_STOP Called when the stopwatch is stopped via @{Stopwatch:Stop} or automatically when maxTime is reached (if configured). The stopwatch is already stopped when the callback is fired, so you don't need to stop it manually inside the callback.
+-- @tfield "OnStop" ON_STOP Called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is fired, so you don't need to stop it manually inside the callback.
 -- @tfield "OnMaxTime" ON_MAX_TIME Called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is fired, so you don't need to stop it manually inside the callback.
 -- @tfield "OnInterval" ON_INTERVAL Called repeatedly at a specified interval while the stopwatch is active and ticking (not paused). The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}.
 -- 
