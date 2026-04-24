@@ -103,15 +103,20 @@ ConversionUtils.FramesToSeconds = function(frames, fps)
 end
 
 --- Convert a hexadecimal color string to a TEN.Color object.
--- @tparam string hex The hexadecimal color string (formats: "#RRGGBB", "RRGGBB", "#RRGGBBAA", "RRGGBBAA").
+--
+-- Allowed formats: "#RRGGBB", "RRGGBB", "#RRGGBBAA", "RRGGBBAA" (case-insensitive).
+-- @tparam string hex The hexadecimal color string
 -- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If the input string is invalid.
 -- @usage
 -- -- Example with 6-digit hex (RGB):
 -- local color = ConversionUtils.HexToColor("#FF5733") -- Result: TEN.Color(255, 87, 51, 255)
 --
 -- -- Example without hash:
 -- local color = ConversionUtils.HexToColor("00FF00") -- Result: TEN.Color(0, 255, 0, 255)
+--
+-- -- Example with lowercase hex:
+-- local color = ConversionUtils.HexToColor("#0000ff") -- Result: TEN.Color(0, 0, 255, 255)
 --
 -- -- Example with 8-digit hex (RGBA):
 -- local color = ConversionUtils.HexToColor("#FF573380") -- Result: TEN.Color(255, 87, 51, 128)
@@ -160,13 +165,13 @@ ConversionUtils.HexToColor = function(hex)
     return Color(r, g, b, a)
 end
 
---- Convert HSL (Hue, Saturation, Lightness) values to a TEN.Color object.
+--- Convert HSL (Hue, Saturation, Lightness) values to a TEN.Color object. All values are clamped to valid ranges.
 -- @tparam float h Hue value (0.0 to 360.0 degrees).
 -- @tparam float s Saturation value (0.0 to 1.0).
 -- @tparam float l Lightness value (0.0 to 1.0).
 -- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
 -- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If parameters are invalid.
 -- @usage
 -- -- Example: Pure red
 -- local color = ConversionUtils.HSLtoColor(0, 1, 0.5) -- Result: TEN.Color(255, 0, 0, 255)
@@ -192,17 +197,19 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.HSLtoColor(hue, saturation, lightness, alpha) or TEN.Color(255, 255, 255, 255)
 ConversionUtils.HSLtoColor = function(h, s, l, a)
+    -- Validate parameters
     if not (IsNumber(h) and IsNumber(s) and IsNumber(l)) then
         LogMessage("Error in ConversionUtils.HSLtoColor: h, s, and l must be numbers.", logLevelError)
         return nil
     end
 
-    if a and not IsNumber(a) then
-        LogMessage("Error in ConversionUtils.HSLtoColor: a must be a number.", logLevelError)
-        return nil
-    end
-
+    -- Default alpha to 1.0 if not provided
     a = a or 1.0
+
+    if not IsNumber(a) then
+        LogMessage("Warning in ConversionUtils.HSLtoColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
+        a = 1.0
+    end
 
     -- Clamp values to valid ranges
     h = h % 360
@@ -217,7 +224,7 @@ end
 -- Uses the Color:GetHue() method for accurate hue extraction.
 -- @tparam Color color The TEN.Color object to convert.
 -- @treturn[1] table A table with h, s, l, a values { h = float, s = float, l = float, a = float }.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If the parameter is not a valid TEN Color.
 -- @usage
 -- -- Example: Get HSL values from a color
 -- local color = TEN.Color(255, 87, 51, 255)
@@ -269,7 +276,7 @@ end
 -- - Rainbow gradients with consistent perceived brightness
 -- @tparam Color color The TEN.Color object to convert.
 -- @treturn[1] table A table with l, c, h, a values { l = float (0-1), c = float (0-0.4), h = float (0-360), a = float (0-1) }.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If the parameter is not a valid TEN Color.
 -- @usage
 -- -- Example: Get OKLch values from a color
 -- local color = TEN.Color(255, 87, 51, 255)
@@ -328,13 +335,25 @@ ConversionUtils.ColorToOKLch = function(color)
 end
 
 --- Convert OKLch (Lightness, Chroma, Hue) values to a TEN.Color object.
--- OKLch is a perceptually uniform color space, ideal for smooth color transitions.
+-- OKLch is a perceptually uniform color space, ideal for smooth color transitions. All values are clamped to valid ranges.
+--
+-- Important: **Not all combinations of l, c, h can be displayed on a standard monitor (sRGB)**.
+-- High chroma values may be silently adjusted (colors become less vivid or shift slightly).
+-- This is most noticeable with blues at high brightness. To avoid this:
+--
+-- - Use lower chroma (c ≤ 0.15) for full hue cycles — all colors will display correctly
+--
+-- - Use higher chroma (up to 0.4) only for specific hues like red or orange
+--
+-- - When in doubt, start with c = 0.15 and increase until the result looks right
+--
+-- <p style = "margin: 10px 0 0 0px;">For full-spectrum color cycling (e.g. rainbow effects), prefer `HSLtoColor` which always produces displayable colors, at the cost of non-uniform perceived brightness.</p>
 -- @tparam float l Lightness value (0.0 to 1.0, where 0 = black, 1 = white).
 -- @tparam float c Chroma value (0.0 to ~0.4, where 0 = gray, higher = more saturated).
 -- @tparam float h Hue angle in degrees (0 to 360).
 -- @tparam[opt=1.0] float a Alpha value (0.0 to 1.0).
 -- @treturn[1] Color The TEN.Color object.
--- @treturn[2] nil If an error occurs.
+-- @treturn[2] nil If parameters are invalid.
 -- @usage
 -- -- Example: Create pure red in OKLch
 -- local red = ConversionUtils.OKLchToColor(0.63, 0.26, 29, 1.0)
@@ -377,7 +396,7 @@ end
 -- -- Example: Lava pulse (brightness variation) - Complete working example
 -- -- Demonstrates OKLch advantage: changing lightness without color shift
 -- local lavaObj = TEN.Objects.GetMoveableByName("LavaGlow")
--- local baseLava = ConversionUtils.ColorToOKLch(TEN.Color(200, 60, 20, 255))  -- Dark red-orange
+-- local baseLava = ConversionUtils.ColorToOKLch(TEN.Color(200, 60, 20))  -- Dark red-orange
 -- local pulseTime = 0
 -- local pulseSpeed = 1 / ConversionUtils.SecondsToFrames(2)  -- 2 second pulse cycle
 -- LevelFuncs.OnLoop = function()
@@ -400,19 +419,25 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.OKLchToColor(l, c, h, a) or TEN.Color(128, 128, 128, 255)
 ConversionUtils.OKLchToColor = function(l, c, h, a)
-    -- Default alpha
-    a = a or 1.0
-
     -- Validate parameters
     if not (IsNumber(l) and IsNumber(c) and IsNumber(h)) then
         LogMessage("Error in ConversionUtils.OKLchToColor: l, c, h must be numbers.", logLevelError)
         return nil
     end
 
-    if a and not IsNumber(a) then
-        LogMessage("Error in ConversionUtils.OKLchToColor: a must be a number.", logLevelError)
-        return nil
+    -- Default alpha to 1.0 if not provided
+    a = a or 1.0
+
+    if not IsNumber(a) then
+        LogMessage("Warning in ConversionUtils.OKLchToColor: a should be a number. Defaulting to 1.0.", logLevelWarning)
+        a = 1.0
     end
+
+    -- Clamp values to valid ranges
+    l = max(0, min(1, l))
+    c = max(0, min(0.4, c))
+    h = h % 360
+    a = max(0, min(1, a))
 
     return OKLchToColorRaw(l, c, h, a)
 end

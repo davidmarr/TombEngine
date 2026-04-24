@@ -595,7 +595,7 @@ Transform3DUtils.TransformLocalToWorld = function(parentPos, parentRot, localOff
 end
 
 --- Calculate local offset from child to parent in parent's local space.
--- This helper function computes the offset needed for AttachToObject.
+-- This helper function computes the offset needed for `AttachToObject`.
 -- Call this ONCE during setup, then use the returned offset in your loop.
 -- Works with both Moveable and Static objects.
 -- @tparam Objects.Moveable|Objects.Static parent Parent object.
@@ -680,7 +680,7 @@ end
 --- Attach child object to parent object with automatic transform updates.
 -- High-level convenience function that applies position and optionally rotation.
 -- Call this EVERY FRAME in your loop. The localOffset should be calculated ONCE
--- using CalculateLocalOffset() before the loop.
+-- using `CalculateLocalOffset` before the loop.
 -- Works with both Moveable and Static objects.
 -- @tparam Objects.Moveable|Objects.Static parent Parent object.
 -- @tparam Objects.Moveable|Objects.Static child Child object to attach.

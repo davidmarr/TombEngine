@@ -25,6 +25,7 @@ local Type = require("Engine.Type")
 local Util = require("Engine.Util")
 
 local logLevelError  = TEN.Util.LogLevel.ERROR
+local logLevelWarning  = TEN.Util.LogLevel.WARNING
 local Round = Util.Round
 local WrapAngleRaw = Util.WrapAngleRaw
 local IsNumber = Type.IsNumber
@@ -44,6 +45,10 @@ local Rotation = TEN.Rotation
 local Color = TEN.Color
 local Time = TEN.Time
 local LogMessage  = TEN.Util.PrintLog
+local errorMessageMax = "Error in MathUtils.Max: all arguments must be the same type."
+local errorMessageMin = "Error in MathUtils.Min: all arguments must be the same type."
+local errorMessageRandom = "Error in MathUtils.Random: minValue and maxValue must be the same type."
+local errorMessageBase = "Error in MathUtils.Clamp: value, minValue, and maxValue must be the same type."
 
 --- Checks if a value is an integer (a number without fractional part).
 -- @tparam number n The value to check
@@ -98,14 +103,14 @@ MathUtils.Min = function(a, b, ...)
 
     if IsNumber(a) then
         if not IsNumber(b) then
-            LogMessage("Error in MathUtils.Min: all arguments must be the same type.", logLevelError)
+            LogMessage(errorMessageMin, logLevelError)
             return a
         end
         local minVal = a < b and a or b
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsNumber(v) then
-                LogMessage("Error in MathUtils.Min: all arguments must be numbers.", logLevelError)
+                LogMessage(errorMessageMin, logLevelError)
                 return a
             end
             if v < minVal then minVal = v end
@@ -114,14 +119,14 @@ MathUtils.Min = function(a, b, ...)
 
     elseif IsVec2(a) then
         if not IsVec2(b) then
-            LogMessage("Error in MathUtils.Min: all arguments must be the same type.", logLevelError)
+            LogMessage(errorMessageMin, logLevelError)
             return a
         end
         local rx, ry = min(a.x, b.x), min(a.y, b.y)
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsVec2(v) then
-                LogMessage("Error in MathUtils.Min: all arguments must be Vec2.", logLevelError)
+                LogMessage(errorMessageMin, logLevelError)
                 return a
             end
             rx = min(rx, v.x)
@@ -131,14 +136,14 @@ MathUtils.Min = function(a, b, ...)
 
     elseif IsVec3(a) then
         if not IsVec3(b) then
-            LogMessage("Error in MathUtils.Min: all arguments must be the same type.", logLevelError)
+            LogMessage(errorMessageMin, logLevelError)
             return a
         end
         local rx, ry, rz = min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsVec3(v) then
-                LogMessage("Error in MathUtils.Min: all arguments must be Vec3.", logLevelError)
+                LogMessage(errorMessageMin, logLevelError)
                 return a
             end
             rx = min(rx, v.x)
@@ -149,14 +154,14 @@ MathUtils.Min = function(a, b, ...)
 
     elseif IsTime(a) then
         if not IsTime(b) then
-            LogMessage("Error in MathUtils.Min: all arguments must be the same type.", logLevelError)
+            LogMessage(errorMessageMin, logLevelError)
             return a
         end
         local minTime = a:GetFrameCount() < b:GetFrameCount() and a or b
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsTime(v) then
-                LogMessage("Error in MathUtils.Min: all arguments must be Time.", logLevelError)
+                LogMessage(errorMessageMin, logLevelError)
                 return a
             end
             if v:GetFrameCount() < minTime:GetFrameCount() then minTime = v end
@@ -174,7 +179,7 @@ end
 -- @tparam number|Vec2|Vec3|Time b (same type as a)
 -- @tparam number|Vec2|Vec3|Time ... (same type as a and b)
 -- @treturn[1] number|Vec2|Vec3|Time The maximum value.
--- @treturn[2] number|Vec2|Vec3|Time the value of the first argument if an error occurs (type mismatch or unsupported type), with an error message.
+-- @treturn[2] number|Vec2|Vec3|Time the value of `*a*` if an error occurs (type mismatch or unsupported type), with an error message
 -- @usage
 -- local max = MathUtils.Max(5, 10, 3) -- Result: 10
 -- local maxVec = MathUtils.Max(TEN.Vec3(1, 5, 3), TEN.Vec3(2, 4, 6)) -- Result: Vec3(2, 5, 6)
@@ -198,18 +203,17 @@ end
 MathUtils.Max = function(a, b, ...)
     -- Fast path: exactly 2 arguments (most common case)
     local extraCount = select("#", ...)
-    local errorMessageBase = "Error in MathUtils.Max: all arguments must be the same type."
 
     if IsNumber(a) then
         if not IsNumber(b) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageMax, logLevelError)
             return a
         end
         local maxVal = a > b and a or b
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsNumber(v) then
-                LogMessage(errorMessageBase, logLevelError)
+                LogMessage(errorMessageMax, logLevelError)
                 return a
             end
             if v > maxVal then maxVal = v end
@@ -218,14 +222,14 @@ MathUtils.Max = function(a, b, ...)
 
     elseif IsVec2(a) then
         if not IsVec2(b) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageMax, logLevelError)
             return a
         end
         local rx, ry = max(a.x, b.x), max(a.y, b.y)
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsVec2(v) then
-                LogMessage(errorMessageBase, logLevelError)
+                LogMessage(errorMessageMax, logLevelError)
                 return a
             end
             rx = max(rx, v.x)
@@ -235,14 +239,14 @@ MathUtils.Max = function(a, b, ...)
 
     elseif IsVec3(a) then
         if not IsVec3(b) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageMax, logLevelError)
             return a
         end
         local rx, ry, rz = max(a.x, b.x), max(a.y, b.y), max(a.z, b.z)
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsVec3(v) then
-                LogMessage(errorMessageBase, logLevelError)
+                LogMessage(errorMessageMax, logLevelError)
                 return a
             end
             rx = max(rx, v.x)
@@ -253,14 +257,14 @@ MathUtils.Max = function(a, b, ...)
 
     elseif IsTime(a) then
         if not IsTime(b) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageMax, logLevelError)
             return a
         end
         local maxTime = a:GetFrameCount() > b:GetFrameCount() and a or b
         for i = 1, extraCount do
             local v = select(i, ...)
             if not IsTime(v) then
-                LogMessage(errorMessageBase, logLevelError)
+                LogMessage(errorMessageMax, logLevelError)
                 return a
             end
             if v:GetFrameCount() > maxTime:GetFrameCount() then maxTime = v end
@@ -323,16 +327,23 @@ MathUtils.Truncate = function(num, decimals)
 end
 
 --- Generate a random number or vector/color/time with optional seed.
+-- The function uses the current game time in frames as seed for randomness if the seed parameter is not provided, ensuring different random values each time the game is played.
+-- For reproducible randomness, a specific seed can be provided.
 -- @tparam float|Vec2|Vec3|Rotation|Color|Time minValue Minimum value.
 -- @tparam float|Vec2|Vec3|Rotation|Color|Time maxValue Maximum value (same type as minValue).
 -- @tparam[opt] float seed Seed for reproducible randomness.
 -- @treturn[1] float|Vec2|Vec3|Rotation|Color|Time Random value between minValue and maxValue.
 -- @treturn[2] nil If an error occurs.
 -- @usage
--- local rand1 = MathUtils.Random(1, 10)          -- Random number between 1 and 10
--- local rand2 = MathUtils.Random(0.0, 1.0)       -- Random float between 0.0 and 1.0
--- local rand3 = MathUtils.Random(1, 100, 42)     -- Random number with seed 42
--- 
+-- -- Random number between 1 and 10
+-- local rand1 = MathUtils.Random(1, 10)
+--
+-- -- Random float between 0.0 and 1.0
+-- local rand2 = MathUtils.Random(0.0, 1.0)
+--
+-- -- Random number with seed 42
+-- local rand3 = MathUtils.Random(1, 100, 42)
+--
 -- -- Random position in a rectangle:
 -- local randomPos = MathUtils.Random(
 --     TEN.Vec2(0, 0), 
@@ -375,26 +386,25 @@ end
 -- local randomColor = MathUtils.Random(color1, color2) or TEN.Color(255, 255, 255, 255)
 -- sprite:SetColor(randomColor)
 MathUtils.Random = function(minValue, maxValue, seed)
-
-    if seed and not IsNumber(seed) then
-        LogMessage("Error in MathUtils.Random: seed must be a number.", logLevelError)
-        return nil
-    end
-
     if seed then
-        randomseed(seed)
+        if not IsNumber(seed) then
+            LogMessage("Warning: seed must be a number. Will be used current game time in frames", logLevelWarning)
+        else
+            randomseed(seed)
+            -- Discard first few values to improve randomness of initial seed (common practice with some RNG implementations)
+            for i = 1, 3 do random() end
+        end
     end
-    local errorMessageBase = "Error in MathUtils.Random: minValue and maxValue must be the same type."
 
     if IsNumber(minValue) then
         if not IsNumber(maxValue) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageRandom, logLevelError)
             return nil
         end
         return minValue + random() * (maxValue - minValue)
     elseif IsVec2(minValue) then
         if not IsVec2(maxValue) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageRandom, logLevelError)
             return nil
         end
         return Vec2(
@@ -403,7 +413,7 @@ MathUtils.Random = function(minValue, maxValue, seed)
         )
     elseif IsVec3(minValue) then
         if not IsVec3(maxValue) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageRandom, logLevelError)
             return nil
         end
         return Vec3(
@@ -413,7 +423,7 @@ MathUtils.Random = function(minValue, maxValue, seed)
         )
     elseif IsColor(minValue) then
         if not IsColor(maxValue) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageRandom, logLevelError)
             return nil
         end
         return Color(
@@ -424,7 +434,7 @@ MathUtils.Random = function(minValue, maxValue, seed)
         )
     elseif IsTime(minValue) then
         if not IsTime(maxValue) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageRandom, logLevelError)
             return nil
         end
         -- Generate random frames between minValue and maxValue (Time objects work with gameFrames)
@@ -434,7 +444,7 @@ MathUtils.Random = function(minValue, maxValue, seed)
         return Time(randomFrames)
     elseif IsRotation(minValue) then
         if not IsRotation(maxValue) then
-            LogMessage(errorMessageBase, logLevelError)
+            LogMessage(errorMessageRandom, logLevelError)
             return nil
         end
         return Rotation(
@@ -443,7 +453,7 @@ MathUtils.Random = function(minValue, maxValue, seed)
             minValue.z + random() * (maxValue.z - minValue.z)
         )
     end
-    LogMessage("Error in MathUtils.Random: minValue and maxValue must be same type (number, Vec2, Vec3, Color, Time, or Rotation).", logLevelError)
+    LogMessage("Error in MathUtils.Random: unsupported type", logLevelError)
     return nil
 end
 
@@ -511,7 +521,6 @@ end
 -- local clampedValue = MathUtils.Clamp(value, minValue, maxValue) or defaultValue
 MathUtils.Clamp = function(value, minValue, maxValue)
     -- Lazy type checking: check only what's needed
-    local errorMessageBase = "Error in MathUtils.Clamp: value, minValue, and maxValue must be the same type."
     if IsNumber(value) then
         if not (IsNumber(minValue) and IsNumber(maxValue)) then
             LogMessage(errorMessageBase, logLevelError)
@@ -670,5 +679,15 @@ MathUtils.WrapAngle = function(angle, minValue, maxValue)
     -- return angle - range * floor((angle - minValue) / range)
     return WrapAngleRaw(angle, minValue, range)
 end
+
+LevelFuncs.StartRandomSeed = function()
+    -- Use current game time in frames as seed for randomness
+    local seed = TEN.Flow.GetGlobalGameTime():GetFrameCount()
+    randomseed(seed)
+    -- Discard first few values to improve randomness of initial seed (common practice with some RNG implementations)
+    for i = 1, 3 do random() end
+end
+
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_START, LevelFuncs.StartRandomSeed)
 
 return MathUtils

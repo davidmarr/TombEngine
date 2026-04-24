@@ -2,22 +2,79 @@
 
 -- Internal functions specific to modules. These are not intended for end users. These functions are not documented in the API reference.
 
-local Util = {}
 local Type = require("Engine.Type")
--- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
-local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
+local Util = {}
+
 local LogMessage  = TEN.Util.PrintLog
 local logLevelWarning = TEN.Util.LogLevel.WARNING
+local Color = TEN.Color
 local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsBoolean = Type.IsBoolean
-
-Util.ShortenTENCalls = function()
-	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
-end
+local floor = math.floor
+local max = math.max
+local min = math.min
+local abs = math.abs
+local sin = math.sin
+local cos = math.cos
+local asin = math.asin
+local atan = math.atan
+local deg = math.deg
+local sqrt = math.sqrt
+local rad = math.rad
+local pi = math.pi
+local IsNumber = Type.IsNumber
+local IsVec2 = Type.IsVec2
+local IsVec3 = Type.IsVec3
+local IsColor = Type.IsColor
+local IsRotation = Type.IsRotation
+-- For backward compatibility, deciseconds is still accepted, but centiseconds is preferred. Both keys will work, but if both are present, centiseconds will be used.
+local VALID_KEYS = { hours = true, minutes = true, seconds = true, deciseconds = true, centiseconds = true }
 
 local function pad2(n)
     return (n < 10) and ("0" .. n) or tostring(n)
+end
+
+-- HSL to RGB conversion
+local function HueToRgb(p, q, t)
+    if t < 0 then
+        t = t + 1
+    end
+    if t > 1 then
+        t = t - 1
+    end
+    if t < 1 / 6 then
+        return p + (q - p) * 6 * t
+    end
+    if t < 1 / 2 then
+        return q
+    end
+    if t < 2 / 3 then
+        return p + (q - p) * (2 / 3 - t) * 6
+    end
+    return p
+end
+
+-- sRGB and Linear color space conversion
+local function SrgbToLinear(c)
+    if c <= 0.04045 then
+        return c / 12.92
+    else
+        return ((c + 0.055) / 1.055) ^ 2.4
+    end
+end
+
+-- Linear to sRGB color space conversion
+local function LinearToSrgb(c)
+    if c <= 0.0031308 then
+        return c * 12.92
+    else
+        return 1.055 * (c ^ (1 / 2.4)) - 0.055
+    end
+end
+
+Util.ShortenTENCalls = function()
+	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
 end
 
 -- Check if the time format is correct.
@@ -96,67 +153,6 @@ Util.TableHasValue = function(tbl, val)
 	return false
 end
 
--------------------------------------------------------------------------------
-
-local floor = math.floor
-local max = math.max
-local min = math.min
-local abs = math.abs
-local sin = math.sin
-local cos = math.cos
-local asin = math.asin
-local atan = math.atan
-local deg = math.deg
-local sqrt = math.sqrt
-local rad = math.rad
-local pi = math.pi
-local Color = TEN.Color
-
-local IsNumber = Type.IsNumber
-local IsVec2 = Type.IsVec2
-local IsVec3 = Type.IsVec3
-local IsColor = Type.IsColor
-local IsRotation = Type.IsRotation
-
-
--- HSL to RGB conversion
-local function HueToRgb(p, q, t)
-    if t < 0 then
-        t = t + 1
-    end
-    if t > 1 then
-        t = t - 1
-    end
-    if t < 1 / 6 then
-        return p + (q - p) * 6 * t
-    end
-    if t < 1 / 2 then
-        return q
-    end
-    if t < 2 / 3 then
-        return p + (q - p) * (2 / 3 - t) * 6
-    end
-    return p
-end
-
--- sRGB and Linear color space conversion
-local function SrgbToLinear(c)
-    if c <= 0.04045 then
-        return c / 12.92
-    else
-        return ((c + 0.055) / 1.055) ^ 2.4
-    end
-end
-
--- Linear to sRGB color space conversion
-local function LinearToSrgb(c)
-    if c <= 0.0031308 then
-        return c * 12.92
-    else
-        return 1.055 * (c ^ (1 / 2.4)) - 0.055
-    end
-end
-
 -- Get the maximum positive integer index in a table.
 -- Used by array-like operations that must work with sparse tables.
 -- Used by: StringUtils.lua,
@@ -181,7 +177,6 @@ end
 -- Returns a Color object directly
 Util.HSLtoColorRaw = function(h, s, l, a)
     local r, g, b
-    a = a or 1  -- Default alpha to 1 if not provided
 
     if s == 0 then
         r, g, b = l, l, l  -- Achromatic (gray)
@@ -264,7 +259,6 @@ Util.OKLchToColorRaw = function(L, C, h, a)
     local hRad = rad(h)
     local A = C * cos(hRad)
     local B = C * sin(hRad)
-    a = a or 1  -- Default alpha to 1 if not provided
 
     -- OKLab to LMS (inverse matrix)
     local l_cbrt = L + 0.3963377774 * A + 0.2158037573 * B
@@ -320,8 +314,7 @@ end
 
 -- Linear interpolation (no type checking, used internally)
 Util.LerpRaw = function (a, b, t)
-    local clampedT = max(0, min(1, t))
-    return InterpolateValuesRaw(a, b, clampedT)
+    return InterpolateValuesRaw(a, b, t)
 end
 
 -- Smoothstep interpolation (no type checking, used internally)
@@ -353,9 +346,6 @@ end
 -- Ease-in-out interpolation (no type checking, used internally)
 -- Uses the easeInOutQuad formula, which provides a smooth acceleration and deceleration.
 Util.EaseInOutRaw  = function(a, b, t)
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
     -- EaseInOutQuad formula
     local easedT
     if t < 0.5 then
@@ -370,9 +360,6 @@ end
 -- This function creates an elastic easing effect, where the value overshoots and oscillates before settling at the target.
 -- The amplitude controls the height of the overshoot, while the period controls the frequency of the oscillations.
 Util.ElasticRaw  = function(a, b, t, amplitude, period)
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
     -- Handle edge cases (no oscillation at start/end)
     if t == 0 then
         return a
@@ -406,9 +393,6 @@ end
 -- This function creates a bouncing effect, where the value bounces towards the target before settling.
 -- The bounces parameter controls how many times it bounces, while the damping parameter controls how quickly the bounces decrease in amplitude.
 Util.BounceRaw = function(a, b, t, bounces, damping)
-    -- Clamp t to [0, 1]
-    t = max(0, min(1, t))
-
     -- Handle edge cases
     if t == 0 then
         return a
