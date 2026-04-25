@@ -818,6 +818,14 @@ function Stopwatch:SetColor(color)
     end
 end
 
+--- Get the color of the stopwatch display when paused.
+-- @treturn Color The color of the stopwatch display when paused.
+-- @usage
+-- local pausedColor = Stopwatch.Get("MyStopwatch"):GetPausedColor()
+function Stopwatch:GetPausedColor()
+    return stopwatches[self.name].pausedColor
+end
+
 --- Sets the color of the stopwatch display when paused.
 -- @tparam[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color color The new color for the stopwatch display when paused.
 -- @usage
@@ -833,14 +841,6 @@ function Stopwatch:SetPausedColor(color)
         return
     end
     stopwatches[self.name].pausedColor = color
-end
-
---- Get the color of the stopwatch display when paused.
--- @treturn Color The color of the stopwatch display when paused.
--- @usage
--- local pausedColor = Stopwatch.Get("MyStopwatch"):GetPausedColor()
-function Stopwatch:GetPausedColor()
-    return stopwatches[self.name].pausedColor
 end
 
 --- Get the text options used by the stopwatch display.
@@ -1133,6 +1133,19 @@ function Stopwatch:RemoveCallback(callbackType)
     stopwatch.callbacks[callbackType] = nil
 end
 
+--- Get the current interval time for the @{Stopwatch.CallbackTypes}.ON_INTERVAL callback.
+-- @treturn[1] float The interval time in seconds.
+-- @treturn[2] nil If no interval is configured.
+-- @usage
+-- local interval = Stopwatch.Get("RaceTimer"):GetIntervalTime()
+function Stopwatch:GetIntervalTime()
+    local frames = stopwatches[self.name].intervalFrames
+    if frames then
+        return floor(frames / FPS * 100) / 100
+    end
+    return nil
+end
+
 --- Set the interval time for the @{Stopwatch.CallbackTypes}.ON_INTERVAL callback.
 -- Call with no arguments (or nil) to remove the interval time and the ON_INTERVAL callback together.
 -- Changing the interval recalculates the next callback from the current elapsed time. Interval callbacks that would have happened in the past are not replayed.
@@ -1160,19 +1173,6 @@ function Stopwatch:SetIntervalTime(seconds)
         stopwatch.intervalFrames = frames
         RealignIntervalCount(stopwatch)
     end
-end
-
---- Get the current interval time for the @{Stopwatch.CallbackTypes}.ON_INTERVAL callback.
--- @treturn[1] float The interval time in seconds.
--- @treturn[2] nil If no interval is configured.
--- @usage
--- local interval = Stopwatch.Get("RaceTimer"):GetIntervalTime()
-function Stopwatch:GetIntervalTime()
-    local frames = stopwatches[self.name].intervalFrames
-    if frames then
-        return floor(frames / FPS * 100) / 100
-    end
-    return nil
 end
 
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
