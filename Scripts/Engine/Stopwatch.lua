@@ -1,8 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Basic frame-based stopwatch that perform countup. It updates at 30 FPS (one tick per frame), so time is quantized to 1/30s (0.03s) precision. Stopwatches are updated automatically at every frame.<br>To use Stopwatch inside scripts you need to call the module:
---	local Stopwatch = require("Engine.Stopwatch")
---
--- Example usage:
+--- Basic frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.<br>To use Stopwatch in a script, require the module:
 --	local Stopwatch = require("Engine.Stopwatch")
 --
 --	-- Create simple stopwatch
@@ -196,7 +193,7 @@ end
 -- }
 -- local myStopwatch = Stopwatch.Create({
 --     name = "RaceTimer",
---     timerFormat = { seconds = true, centiseconds = true },
+--     timeFormat = { seconds = true, centiseconds = true },
 --     position = TEN.Vec2(90, 10),
 --     scale = 1.5,
 --     color = TEN.Color(0, 255, 0, 255),
@@ -374,7 +371,7 @@ Stopwatch.IfExists = function(name)
 end
 
 ----
--- The list of all methods for Stopwatch objects. We suggest that you always use the @{Stopwatch.Get} function to use the methods of the Timer object to prevent errors or unexpected behavior
+-- The list of all methods for Stopwatch objects. We recommend using @{Stopwatch.Get} before calling methods on a stopwatch to help avoid errors and unexpected behavior.
 -- @type Stopwatch
 -- @usage
 --	-- Examples of some methods
@@ -514,8 +511,8 @@ end
 
 --- Set the elapsed time of the stopwatch.
 -- @tparam float newTime The new time for the stopwatch in seconds with 2 decimal places<br>
--- No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
--- If an ON_INTERVAL cadence is configured, the next interval trigger is recalculated from the new elapsed time.
+-- Negative values are not allowed. The value is rounded to 2 decimal places, converted to 30 FPS game frames, and then rounded to the nearest frame.
+-- If an @{Stopwatch.CallbackTypes}.ON_INTERVAL callback is configured, the next interval callback is recalculated from the new elapsed time.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetElapsedTime(30.5) -- Set time to 30.5 seconds
 function Stopwatch:SetElapsedTime(newTime)
@@ -819,8 +816,8 @@ end
 -- -- Example: Set text options to default (center, shadow, vertical center)
 -- Stopwatch.Get("MyStopwatch"):SetTextOptions()
 function Stopwatch:SetTextOptions(optionsTable)
-    local warning1Message = "Warning in Stopwatch:SetTextOption(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default stringOption."
-    local warning2Message = "Warning in Stopwatch:SetTextOption(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default stringOption."
+    local warning1Message = "Warning in Stopwatch:SetTextOptions(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default stringOption."
+    local warning2Message = "Warning in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default stringOption."
     local newOptions = CheckTextOptions(optionsTable, warning1Message, warning2Message)
     stopwatches[self.name].stringOption = newOptions
     local ds = stopwatchStrings[self.name]
@@ -846,7 +843,7 @@ function Stopwatch:IsActive()
     return stopwatches[self.name].active
 end
 
---- Check if the stopwatch is active.
+--- Check if the stopwatch is active and not paused.
 -- Returns `true` only if the stopwatch is ticking, i.e., it is active and not paused.
 -- @treturn bool True if the stopwatch is ticking, false otherwise.
 function Stopwatch:IsTicking()
@@ -1063,24 +1060,25 @@ function Stopwatch:ClearLaps()
 end
 
 --- Set a callback function for a specific event.
--- The callback must be defined inside the LevelFuncs hierarchy. All callbacks receive the stopwatch proxy as the first argument, allowing full access to all Get methods and state manipulation.
--- For @{Stopwatch.CallbackTypes}.ON_INTERVAL an optional interval time in seconds can be specified as the third argument; if omitted, the currently configured interval is preserved.
--- @tparam CallbackTypes callbackType The event type.
--- @tparam function func A function defined in the `LevelFuncs` hierarchy. Signature: `function(stopwatch)`.
--- @tparam[opt=nil] float intervalTime Only for ON_INTERVAL: the firing interval in seconds (minimum ~0.03s = 1 frame). Ignored for all other callback types.
+-- The callback must be a function defined in `LevelFuncs`.
+-- Each callback receives the stopwatch as its first argument, so it can use the public Stopwatch methods.
+-- For @{Stopwatch.CallbackTypes}.ON_INTERVAL you can optionally pass the interval time in seconds as the third argument. If you omit it, the current interval is kept.
+-- @tparam CallbackTypes callbackType The callback type.
+-- @tparam function func A function defined in `LevelFuncs`. Signature: `function(stopwatch)`.
+-- @tparam[opt=nil] float intervalTime Only for ON_INTERVAL: the interval in seconds (minimum ~0.03s = 1 frame). Ignored for all other callback types.
 -- @usage
 -- LevelFuncs.OnLapRecorded = function(sw)
 --     TEN.Util.PrintLog("Lap " .. sw:GetLapCount() .. ": " .. sw:GetLapTimeFormatted(sw:GetLapCount()), TEN.Util.LogLevel.INFO)
 -- end
 -- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnLapRecorded)
 --
--- -- ON_INTERVAL: fires every second
+-- -- ON_INTERVAL: callback called every second
 -- LevelFuncs.OnTick = function(sw)
 --     TEN.Util.PrintLog("Elapsed: " .. sw:GetElapsedTimeInSeconds() .. "s", TEN.Util.LogLevel.INFO)
 -- end
 -- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_INTERVAL, LevelFuncs.OnTick, 1.0)
 --
--- -- ON_INTERVAL: fires every frame (~0.03s)
+-- -- ON_INTERVAL: callback called every frame (~0.03s)
 -- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_INTERVAL, LevelFuncs.OnTick, 0.03)
 function Stopwatch:SetCallback(callbackType, func, intervalTime)
     if not TableHasValue(Stopwatch.CallbackTypes, callbackType) then
@@ -1099,9 +1097,9 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
 end
 
 --- Remove a callback function for a specific event.
--- For @{Stopwatch.CallbackTypes}.ON_INTERVAL only the function is removed; the interval time is preserved.
--- Use @{Stopwatch:SetIntervalTime} with no arguments to remove the interval time and its callback together.
--- @tparam CallbackTypes callbackType The event type.
+-- For @{Stopwatch.CallbackTypes}.ON_INTERVAL only the callback function is removed; the interval time is kept.
+-- Use @{Stopwatch:SetIntervalTime} with no arguments to remove both the interval time and the callback.
+-- @tparam CallbackTypes callbackType The callback type.
 -- @usage
 -- Stopwatch.Get("RaceTimer"):RemoveCallback(Stopwatch.CallbackTypes.ON_LAP)
 function Stopwatch:RemoveCallback(callbackType)
@@ -1115,10 +1113,10 @@ end
 
 --- Set the interval time for the @{Stopwatch.CallbackTypes}.ON_INTERVAL callback.
 -- Call with no arguments (or nil) to remove the interval time and the ON_INTERVAL callback together.
--- Changing the interval realigns the next trigger from the current elapsed time; no retroactive callbacks are fired.
+-- Changing the interval recalculates the next callback from the current elapsed time. Interval callbacks that would have happened in the past are not replayed.
 -- @tparam[opt] float seconds The interval in seconds. Must be positive. The minimum effective value is one frame (~0.03s at 30 FPS); smaller values are rejected with a warning.
 -- @usage
--- -- Fire every 5 seconds
+-- -- Callback called every 5 seconds
 -- Stopwatch.Get("RaceTimer"):SetIntervalTime(5.0)
 --
 -- -- Remove interval and its callback
@@ -1167,7 +1165,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     for name, s in pairs(stopwatches) do
         if s.active then
             local reachedMaxTime = s.maxTime and s.elapsedTime >= s.maxTime
-            -- fire OnInterval (only when ticking, not paused)
+            -- call OnInterval (only when ticking, not paused)
             if s.intervalFrames and not s.paused then
                 local frames = s.elapsedTime:GetFrameCount()
                 local currentCount = floor(frames / s.intervalFrames)
@@ -1223,27 +1221,27 @@ end
 -- Table setup for creating Stopwatch.
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
--- @tfield[opt=false] table|bool timeFormat Sets the time display. See `timeFormat` for details.
+-- @tfield[opt=false] table|bool timeFormat Controls the on-screen time display. Set to false to disable the display. See `timeFormat` for details.
 -- @tfield[opt=nil] maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display. Must be a positive number.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is paused.
 -- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table stringOption A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
--- @tfield[opt=nil] function onStart Callback fired when the stopwatch is started. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_START after creation.
--- @tfield[opt=nil] function onResume Callback fired when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESUME after creation.
--- @tfield[opt=nil] function onPause Callback fired when the stopwatch is paused. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_PAUSE after creation.
--- @tfield[opt=nil] function onStop Callback fired when the stopwatch is stopped. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_STOP after creation.
--- @tfield[opt=nil] function onReset Callback fired when the stopwatch is reset. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESET after creation.
--- @tfield[opt=nil] function onLap Callback fired when a lap is recorded. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_LAP after creation.
--- @tfield[opt=nil] function onMaxTime Callback fired when the stopwatch reaches its configured maxTime. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_MAX_TIME after creation.
--- @tfield[opt=nil] function onInterval Callback fired repeatedly at a fixed interval while the stopwatch is ticking (not paused). Must be a `LevelFuncs` function reference. Requires `intervalTime` to also be set; without it the callback is stored but never fires until an interval is configured via @{Stopwatch:SetIntervalTime}.
--- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Must be a positive number; the minimum effective value is one frame (~0.03s at 30 FPS). Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.
+-- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_START after creation.<br>
+-- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESUME after creation.<br>
+-- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_PAUSE after creation.<br>
+-- @tfield[opt=nil] function onStop Callback called when the stopwatch is stopped. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_STOP after creation.<br>
+-- @tfield[opt=nil] function onReset Callback called when the stopwatch is reset. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESET after creation.<br>
+-- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_LAP after creation.<br>
+-- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_MAX_TIME after creation.<br>
+-- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. Requires `intervalTime` to also be set; if `intervalTime` is not set, the callback is stored but is not called until an interval is configured via @{Stopwatch:SetIntervalTime}.<br>
+-- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Must be a positive number; the minimum effective value is one frame (~0.03s at 30 FPS). Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.<br>
 
 ---
 -- Time format configuration for displaying the stopwatch time.
 -- @table timeFormat
--- You can display hours, minutes, seconds, and centiseconds; the format can be a table or a Boolean, just like in Timer.
+-- You can display hours, minutes, seconds, and centiseconds. Like in Timer, the format can be a table or a boolean.
 --
 -- For more information see the <a href="Timer.html#timerFormat">Time format</a> section in the Timer documentation.
 -- <h3>Timer format examples:</h3>
@@ -1253,16 +1251,16 @@ end
 -- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>}</pre>
 
 ---
--- Costants for the available callback types in @{Stopwatch:SetCallback}.
+-- Constants for the available callback types in @{Stopwatch:SetCallback}.
 -- @table CallbackTypes
--- @tfield "OnLap" ON_LAP Called when a lap is recorded via @{Stopwatch:Lap}.
--- @tfield "OnStart" ON_START Called when the stopwatch is started via @{Stopwatch:Start}.
--- @tfield "OnPause" ON_PAUSE Called when the stopwatch is paused via @{Stopwatch:Pause}.
--- @tfield "OnResume" ON_RESUME Called when the stopwatch is resumed via @{Stopwatch:Start} after being paused.
--- @tfield "OnReset" ON_RESET Called when the stopwatch is reset via @{Stopwatch:Reset}.
--- @tfield "OnStop" ON_STOP Called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is fired, so you don't need to stop it manually inside the callback.
--- @tfield "OnMaxTime" ON_MAX_TIME Called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is fired, so you don't need to stop it manually inside the callback.
--- @tfield "OnInterval" ON_INTERVAL Called repeatedly at a specified interval while the stopwatch is active and ticking (not paused). The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}.
+-- @tfield "OnLap" ON_LAP Callback called when a lap is recorded via @{Stopwatch:Lap}.
+-- @tfield "OnStart" ON_START Callback called when the stopwatch is started via @{Stopwatch:Start}.
+-- @tfield "OnPause" ON_PAUSE Callback called when the stopwatch is paused via @{Stopwatch:Pause}.
+-- @tfield "OnResume" ON_RESUME Callback called when the stopwatch is resumed via @{Stopwatch:Start} after being paused.
+-- @tfield "OnReset" ON_RESET Callback called when the stopwatch is reset via @{Stopwatch:Reset}.
+-- @tfield "OnStop" ON_STOP Callback called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback.
+-- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback.
+-- @tfield "OnInterval" ON_INTERVAL Callback called repeatedly at the configured interval while the stopwatch is ticking. The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}.
 -- 
 
 ----
