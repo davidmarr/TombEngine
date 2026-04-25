@@ -116,6 +116,14 @@ local CheckOperator = function(operator)
     return IsFunction(op) and op or nil
 end
 
+local function CloneArray(values)
+    local clone = {}
+    for i = 1, #values do
+        clone[i] = values[i]
+    end
+    return clone
+end
+
 local function validate(value, isValid, defaultValue, warningMsg)
     if IsNull(value) then
         return defaultValue
@@ -129,30 +137,31 @@ local function validate(value, isValid, defaultValue, warningMsg)
 end
 
 local CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
-    optionsTable = optionsTable or DEFAULT_TEXT_OPTIONS
-    if optionsTable ~= DEFAULT_TEXT_OPTIONS then
-        if IsTable(optionsTable) then
-            for i, option in pairs(optionsTable) do
-                if not IsEnumValue(option, DisplayStringOption, false) then
-                    LogMessage(warning2Message, logLevelWarning)
-                    return DEFAULT_TEXT_OPTIONS
-                end
-                -- Remove vertical bottom option if present, as it is not compatible with stopwatch display
-                if option == DisplayStringOption.VERTICAL_BOTTOM then
-                    remove(optionsTable, i)
-                end
-            end
-            -- Ensure VERTICAL_CENTER is always present
-            if not TableHasValue(optionsTable, DisplayStringOption.VERTICAL_CENTER) then
-                insert(optionsTable, DisplayStringOption.VERTICAL_CENTER)
-            end
-            return optionsTable
-        else
-            LogMessage(warning1Message, logLevelWarning)
-            return DEFAULT_TEXT_OPTIONS
+    if IsNull(optionsTable) then
+        return CloneArray(DEFAULT_TEXT_OPTIONS)
+    end
+    if not IsTable(optionsTable) then
+        LogMessage(warning1Message, logLevelWarning)
+        return CloneArray(DEFAULT_TEXT_OPTIONS)
+    end
+
+    local normalizedOptions = CloneArray(optionsTable)
+    for i = #normalizedOptions, 1, -1 do
+        local option = normalizedOptions[i]
+        if not IsEnumValue(option, DisplayStringOption, false) then
+            LogMessage(warning2Message, logLevelWarning)
+            return CloneArray(DEFAULT_TEXT_OPTIONS)
+        end
+        -- Remove vertical bottom option if present, as it is not compatible with stopwatch display
+        if option == DisplayStringOption.VERTICAL_BOTTOM then
+            remove(normalizedOptions, i)
         end
     end
-    return optionsTable
+    -- Ensure VERTICAL_CENTER is always present
+    if not TableHasValue(normalizedOptions, DisplayStringOption.VERTICAL_CENTER) then
+        insert(normalizedOptions, DisplayStringOption.VERTICAL_CENTER)
+    end
+    return normalizedOptions
 end
 
 local function FireCallback(s, callbackType, proxy)
@@ -198,7 +207,7 @@ end
 --     scale = 1.5,
 --     color = TEN.Color(0, 255, 0, 255),
 --     pausedColor = TEN.Color(255, 0, 0, 255),
---     stringOption = options,
+--     textOptions = options,
 -- })
 --
 -- -- Example 3: creation of a stopwatch with callbacks assigned at creation time
@@ -265,10 +274,11 @@ Stopwatch.Create = function(stopwatchData)
     -- check pausedColor
     stopwatchEntry.pausedColor = validate(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '".. name .."', set to default")
 
-    -- check stringOption
-    local warning1Message = CreateWarningPrefix .. "stringOption must be a table. Stopwatch '".. name .."' will use default stringOption."
-    local warning2Message = CreateWarningPrefix .. "all values in stringOption must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. name .."' will use default stringOption."
-    stopwatchEntry.stringOption = CheckTextOptions(stopwatchData.stringOption, warning1Message, warning2Message)
+    -- check textOptions
+    local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '".. name .."' will use default textOptions."
+    local warning2Message = CreateWarningPrefix .. "all values in textOptions must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. name .."' will use default textOptions."
+    local textOptions = CheckTextOptions(stopwatchData.textOptions, warning1Message, warning2Message)
+    stopwatchEntry.textOptions = textOptions
 
     stopwatchEntry.elapsedTime = ZERO
     stopwatchEntry.active = false
@@ -305,7 +315,7 @@ Stopwatch.Create = function(stopwatchData)
 
     if stopwatchEntry.timeFormat then
         local initText = GenerateTimeFormattedString(ZERO, stopwatchEntry.timeFormat)
-        stopwatchStrings[name] = DisplayString(initText, stopwatchEntry.position, stopwatchEntry.scale, DEFAULT_COLOR, false, stopwatchEntry.stringOption)
+        stopwatchStrings[name] = DisplayString(initText, stopwatchEntry.position, stopwatchEntry.scale, DEFAULT_COLOR, false, stopwatchEntry.textOptions)
         stopwatchEntry.lastRenderedFrameCount = ZERO:GetFrameCount()
     end
 
@@ -473,6 +483,33 @@ function Stopwatch:Reset()
     stopwatch.lastRenderedFrameCount = ZERO:GetFrameCount()
     local ds = stopwatchStrings[self.name]
     if ds then HideString(ds) end
+end
+
+--- Check if the stopwatch is active.
+-- @treturn bool True if the stopwatch is active, false otherwise.
+-- @usage
+-- Example: Activate a post-process effect only if the stopwatch is active
+-- if Stopwatch.Get("MyStopwatch"):IsActive() then
+--     TEN.View.SetPostProcessMode(TEN.View.PostProcessMode.EXCLUSION)
+-- end
+function Stopwatch:IsActive()
+    return stopwatches[self.name].active
+end
+
+--- Check if the stopwatch is in paused state.
+-- @treturn bool True if the stopwatch is paused, false otherwise.
+-- @usage
+-- local isPaused = Stopwatch.Get("MyStopwatch"):IsPaused()
+function Stopwatch:IsPaused()
+    return stopwatches[self.name].paused
+end
+
+--- Check if the stopwatch is active and not paused.
+-- Returns `true` only if the stopwatch is ticking, i.e., it is active and not paused.
+-- @treturn bool True if the stopwatch is ticking, false otherwise.
+function Stopwatch:IsTicking()
+    local stopwatch = stopwatches[self.name]
+    return stopwatch.active and not stopwatch.paused
 end
 
 --- Get the elapsed time of the stopwatch.
@@ -806,6 +843,17 @@ function Stopwatch:GetPausedColor()
     return stopwatches[self.name].pausedColor
 end
 
+--- Get the text options used by the stopwatch display.
+-- Returns a copy of the current options table, so changing it does not affect the stopwatch until you pass it to @{Stopwatch:SetTextOptions}.
+-- @treturn table A table containing values from @{Strings.DisplayStringOption}.
+-- @usage
+-- local textOptions = Stopwatch.Get("MyStopwatch"):GetTextOptions()
+function Stopwatch:GetTextOptions()
+    local stopwatch = stopwatches[self.name]
+    local textOptions = stopwatch.textOptions or DEFAULT_TEXT_OPTIONS
+    return CloneArray(textOptions)
+end
+
 --- Sets the text options for the stopwatch display. Vertical center option is always added automatically if not present.
 -- @tparam[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table optionsTable A table containing values from @{Strings.DisplayStringOption} to set the text options.<br>
 -- @usage
@@ -816,39 +864,13 @@ end
 -- -- Example: Set text options to default (center, shadow, vertical center)
 -- Stopwatch.Get("MyStopwatch"):SetTextOptions()
 function Stopwatch:SetTextOptions(optionsTable)
-    local warning1Message = "Warning in Stopwatch:SetTextOptions(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default stringOption."
-    local warning2Message = "Warning in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default stringOption."
+    local warning1Message = "Warning in Stopwatch:SetTextOptions(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default textOptions."
+    local warning2Message = "Warning in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default textOptions."
     local newOptions = CheckTextOptions(optionsTable, warning1Message, warning2Message)
-    stopwatches[self.name].stringOption = newOptions
+    local stopwatch = stopwatches[self.name]
+    stopwatch.textOptions = newOptions
     local ds = stopwatchStrings[self.name]
     if ds then ds:SetFlags(newOptions) end
-end
-
---- Check if the stopwatch is in paused state.
--- @treturn bool True if the stopwatch is paused, false otherwise.
--- @usage
--- local isPaused = Stopwatch.Get("MyStopwatch"):IsPaused()
-function Stopwatch:IsPaused()
-    return stopwatches[self.name].paused
-end
-
---- Check if the stopwatch is active.
--- @treturn bool True if the stopwatch is active, false otherwise.
--- @usage
--- Example: Activate a post-process effect only if the stopwatch is active
--- if Stopwatch.Get("MyStopwatch"):IsActive() then
---     TEN.View.SetPostProcessMode(TEN.View.PostProcessMode.EXCLUSION)
--- end
-function Stopwatch:IsActive()
-    return stopwatches[self.name].active
-end
-
---- Check if the stopwatch is active and not paused.
--- Returns `true` only if the stopwatch is ticking, i.e., it is active and not paused.
--- @treturn bool True if the stopwatch is ticking, false otherwise.
-function Stopwatch:IsTicking()
-    local stopwatch = stopwatches[self.name]
-    return stopwatch.active and not stopwatch.paused
 end
 
 --- Record a lap and return the delta time of the completed segment.
@@ -1204,10 +1226,14 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
     stopwatches = LevelVars.Engine.Stopwatch.stopwatches
     stopwatchStrings = {}
     for name, s in pairs(stopwatches) do
+        local warning1Message = "Warning in Stopwatch.Reload(): textOptions for '" .. name .. "' must be a table. Default textOptions will be used."
+        local warning2Message = "Warning in Stopwatch.Reload(): all values in textOptions for '" .. name .. "' must be of type TEN.Strings.DisplayStringOption. Default textOptions will be used."
+        local textOptions = CheckTextOptions(s.textOptions, warning1Message, warning2Message)
+        s.textOptions = textOptions
         if s.timeFormat then
             local text = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
             local color = s.paused and s.pausedColor or s.color
-            stopwatchStrings[name] = DisplayString(text, s.position, s.scale, color, false, s.stringOption)
+            stopwatchStrings[name] = DisplayString(text, s.position, s.scale, color, false, s.textOptions)
             s.lastRenderedFrameCount = s.elapsedTime:GetFrameCount()
         end
     end
@@ -1227,7 +1253,7 @@ end
 -- @tfield[opt=1] float scale The scale of the stopwatch display. Must be a positive number.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is paused.
--- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table stringOption A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
+-- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table textOptions A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
 -- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_START after creation.<br>
 -- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESUME after creation.<br>
 -- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_PAUSE after creation.<br>
