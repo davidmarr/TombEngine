@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Basic frame-based stopwatch that perform countup. It updates at 30 FPS (one tick per frame), so time is quantized to 1/30s (0.03s) precision. Stopwatches are updated automatically at every frame before OnLoop event.<br>To use Stopwatch inside scripts you need to call the module:
+--- Basic frame-based stopwatch that perform countup. It updates at 30 FPS (one tick per frame), so time is quantized to 1/30s (0.03s) precision. Stopwatches are updated automatically at every frame.<br>To use Stopwatch inside scripts you need to call the module:
 --	local Stopwatch = require("Engine.Stopwatch")
 --
 -- Example usage:
@@ -77,6 +77,7 @@ local floor = math.floor
 local pairs = pairs
 local remove = table.remove
 local insert = table.insert
+local setmetatable = setmetatable
 
 -- Utility functions from Engine.Util that are used in this module
 local CheckTimeFormat 			  = Utility.CheckTimeFormat
@@ -162,6 +163,23 @@ local function FireCallback(s, callbackType, proxy)
     if fn then fn(proxy) end
 end
 
+local function RealignIntervalCount(stopwatch)
+    if stopwatch.intervalFrames then
+        local frames = stopwatch.elapsedTime:GetFrameCount()
+        stopwatch.lastIntervalCount = floor(frames / stopwatch.intervalFrames)
+    else
+        stopwatch.lastIntervalCount = 0
+    end
+end
+
+local function SyncDisplayText(stopwatch, name)
+    local ds = stopwatchStrings[name]
+    if ds then
+        ds:SetKey(GenerateTimeFormattedString(stopwatch.elapsedTime, stopwatch.timeFormat))
+        stopwatch.lastRenderedFrameCount = stopwatch.elapsedTime:GetFrameCount()
+    end
+end
+
 --- Create (but do not start) a new stopwatch.
 -- @tparam StopwatchData stopwatchData A table containing the parameters for the stopwatch.
 -- @treturn[1] Stopwatch The created stopwatch in its idle state, not yet started.
@@ -212,6 +230,8 @@ Stopwatch.Create = function(stopwatchData)
     local self = { name = stopwatchData.name }
     if stopwatches[stopwatchData.name] then
         LogMessage(CreateWarningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", logLevelWarning)
+        local ds = stopwatchStrings[stopwatchData.name]
+        if ds then HideString(ds) end
         stopwatchStrings[stopwatchData.name] = nil
     end
     stopwatches[stopwatchData.name] = {}
@@ -260,6 +280,7 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.callbacks = {}
     stopwatchEntry.intervalFrames = nil
     stopwatchEntry.lastIntervalCount = 0
+    stopwatchEntry.lastRenderedFrameCount = nil
 
     -- assign callbacks from stopwatchData fields
     for _, cb in ipairs(CALLBACKFIELDS) do
@@ -288,6 +309,7 @@ Stopwatch.Create = function(stopwatchData)
     if stopwatchEntry.timeFormat then
         local initText = GenerateTimeFormattedString(ZERO, stopwatchEntry.timeFormat)
         stopwatchStrings[name] = DisplayString(initText, stopwatchEntry.position, stopwatchEntry.scale, DEFAULT_COLOR, false, stopwatchEntry.stringOption)
+        stopwatchEntry.lastRenderedFrameCount = ZERO:GetFrameCount()
     end
 
     return setmetatable(self, Stopwatch)
@@ -314,7 +336,8 @@ end
 
 --- Get a stopwatch by name.
 -- @tparam string name The name of the stopwatch to retrieve.
--- @treturn Stopwatch The stopwatch object if found, or stopwatch object with an error field set to true if not found.
+-- @treturn[1] Stopwatch The stopwatch object if found
+-- @treturn[2] nil If no stopwatch with the given name exists, with a warning message logged to the console.
 -- @usage
 -- local myStopwatch = Stopwatch.Get("MyStopwatch")
 Stopwatch.Get = function(name)
@@ -371,6 +394,12 @@ function Stopwatch:Start(reset)
     local stopwatch = stopwatches[self.name]
     local wasActive = stopwatch.active
     local wasPaused = stopwatch.paused
+    if IsNull(reset) then
+        reset = false
+    elseif not IsBoolean(reset) then
+        LogMessage("Warning in Stopwatch:Start(): wrong value (" .. tostring(reset) .. ") for reset parameter, it should be a boolean. Defaulting to false.", logLevelWarning)
+        reset = false
+    end
     if reset then
         stopwatch.elapsedTime = ZERO
         stopwatch.laps = {}
@@ -386,12 +415,13 @@ function Stopwatch:Start(reset)
     end
 end
 
---- Pause the stopwatch.
+--- Pause the stopwatch if it is active.
+-- Calling this on an inactive or already paused stopwatch has no effect.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):Pause()
 function Stopwatch:Pause()
     local stopwatch = stopwatches[self.name]
-    if not stopwatch.paused then
+    if stopwatch.active and not stopwatch.paused then
         stopwatch.paused = true
         FireCallback(stopwatch, "OnPause", setmetatable({name = self.name}, Stopwatch))
     end
@@ -420,10 +450,9 @@ function Stopwatch:Stop(displayTime)
                 LogMessage("Warning in Stopwatch:Stop(): wrong value (" .. tostring(displayTime) .. ") for displayTime, the stopwatch display will be hidden immediately.", logLevelWarning)
                 HideString(ds)
             else
-                local s = stopwatches[self.name]
-                if s.timeFormat then
-                    ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
-                    ds:SetColor(s.color)
+                if stopwatch.timeFormat then
+                    SyncDisplayText(stopwatch, self.name)
+                    ds:SetColor(stopwatch.color)
                 end
                 ShowString(ds, displayTime, false)
             end
@@ -444,6 +473,7 @@ function Stopwatch:Reset()
     stopwatch.paused = false
     stopwatch.laps = {}
     stopwatch.lastIntervalCount = 0
+    stopwatch.lastRenderedFrameCount = ZERO:GetFrameCount()
     local ds = stopwatchStrings[self.name]
     if ds then HideString(ds) end
 end
@@ -485,6 +515,7 @@ end
 --- Set the elapsed time of the stopwatch.
 -- @tparam float newTime The new time for the stopwatch in seconds with 2 decimal places<br>
 -- No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
+-- If an ON_INTERVAL cadence is configured, the next interval trigger is recalculated from the new elapsed time.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetElapsedTime(30.5) -- Set time to 30.5 seconds
 function Stopwatch:SetElapsedTime(newTime)
@@ -493,6 +524,10 @@ function Stopwatch:SetElapsedTime(newTime)
     else
         local stopwatch = stopwatches[self.name]
         stopwatch.elapsedTime = Time(Round2Decimal(newTime) * FPS)
+        RealignIntervalCount(stopwatch)
+        if stopwatch.timeFormat then
+            SyncDisplayText(stopwatch, self.name)
+        end
     end
 end
 
@@ -1080,6 +1115,7 @@ end
 
 --- Set the interval time for the @{Stopwatch.CallbackTypes}.ON_INTERVAL callback.
 -- Call with no arguments (or nil) to remove the interval time and the ON_INTERVAL callback together.
+-- Changing the interval realigns the next trigger from the current elapsed time; no retroactive callbacks are fired.
 -- @tparam[opt] float seconds The interval in seconds. Must be positive. The minimum effective value is one frame (~0.03s at 30 FPS); smaller values are rejected with a warning.
 -- @usage
 -- -- Fire every 5 seconds
@@ -1102,6 +1138,7 @@ function Stopwatch:SetIntervalTime(seconds)
             return
         end
         stopwatch.intervalFrames = frames
+        RealignIntervalCount(stopwatch)
     end
 end
 
@@ -1148,7 +1185,11 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             end
             if s.timeFormat then
                 local ds = stopwatchStrings[name]
-                ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
+                local frameCount = s.elapsedTime:GetFrameCount()
+                if s.lastRenderedFrameCount ~= frameCount then
+                    ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
+                    s.lastRenderedFrameCount = frameCount
+                end
                 ds:SetColor(s.paused and s.pausedColor or s.color)
                 ShowString(ds, reachedMaxTime and 1 or FRAME_TIME, false)
             end
@@ -1169,6 +1210,7 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
             local text = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
             local color = s.paused and s.pausedColor or s.color
             stopwatchStrings[name] = DisplayString(text, s.position, s.scale, color, false, s.stringOption)
+            s.lastRenderedFrameCount = s.elapsedTime:GetFrameCount()
         end
     end
 end
@@ -1186,7 +1228,7 @@ end
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display. Must be a positive number.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
--- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is not active.
+-- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is paused.
 -- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table stringOption A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
 -- @tfield[opt=nil] function onStart Callback fired when the stopwatch is started. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_START after creation.
 -- @tfield[opt=nil] function onResume Callback fired when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESUME after creation.
