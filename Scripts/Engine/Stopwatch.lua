@@ -124,6 +124,21 @@ local function CloneArray(values)
     return clone
 end
 
+local function ValidateIntervalTime(seconds, invalidValueMessage, tooSmallMessage)
+    if not IsNumber(seconds) or seconds <= 0 then
+        LogMessage(invalidValueMessage, logLevelWarning)
+        return nil
+    end
+
+    local frames = floor(Round2Decimal(seconds) * FPS + 0.5)
+    if frames < 1 then
+        LogMessage(tooSmallMessage, logLevelWarning)
+        return nil
+    end
+
+    return frames
+end
+
 local function validate(value, isValid, defaultValue, warningMsg)
     if IsNull(value) then
         return defaultValue
@@ -176,6 +191,11 @@ local function RealignIntervalCount(stopwatch)
     else
         stopwatch.lastIntervalCount = 0
     end
+end
+
+local function ApplyIntervalFrames(stopwatch, frames)
+    stopwatch.intervalFrames = frames
+    RealignIntervalCount(stopwatch)
 end
 
 local function SyncDisplayText(stopwatch, name)
@@ -301,15 +321,11 @@ Stopwatch.Create = function(stopwatchData)
         end
     end
     if not IsNull(stopwatchData.intervalTime) then
-        if not IsNumber(stopwatchData.intervalTime) or stopwatchData.intervalTime <= 0 then
-            LogMessage(CreateWarningPrefix .. "wrong value for intervalTime in '" .. name .. "', it must be a positive number.", logLevelWarning)
-        else
-            local frames = floor(Round2Decimal(stopwatchData.intervalTime) * FPS + 0.5)
-            if frames < 1 then
-                LogMessage(CreateWarningPrefix .. "intervalTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS).", logLevelWarning)
-            else
-                stopwatchEntry.intervalFrames = frames
-            end
+        local invalidValueMessage = CreateWarningPrefix .. "wrong value for intervalTime in '" .. name .. "', it must be a positive number."
+        local tooSmallMessage = CreateWarningPrefix .. "intervalTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS)."
+        local frames = ValidateIntervalTime(stopwatchData.intervalTime, invalidValueMessage, tooSmallMessage)
+        if frames then
+            ApplyIntervalFrames(stopwatchEntry, frames)
         end
     end
 
@@ -435,6 +451,8 @@ function Stopwatch:Pause()
 end
 
 --- Stop the stopwatch.
+-- If the stopwatch is active, this calls @{Stopwatch.CallbackTypes}.ON_STOP after the stopwatch has already been marked as stopped.
+-- Stop() does not force a final @{Stopwatch.CallbackTypes}.ON_INTERVAL callback. If a stop happens on the same frame as an interval threshold, the interval callback only runs if the module update has already processed that frame before Stop() is called.
 -- @tparam[opt=nil] float displayTime If provided, the stopwatch display will remain visible for this many seconds after stopping. Must be a positive number. If not provided or nil, the display is hidden immediately.
 -- @usage
 -- -- Example 1: Stop the stopwatch and hide the display immediately
@@ -1084,10 +1102,16 @@ end
 --- Set a callback function for a specific event.
 -- The callback must be a function defined in `LevelFuncs`.
 -- Each callback receives the stopwatch as its first argument, so it can use the public Stopwatch methods.
--- For @{Stopwatch.CallbackTypes}.ON_INTERVAL you can optionally pass the interval time in seconds as the third argument. If you omit it, the current interval is kept.
+-- For @{Stopwatch.CallbackTypes}.ON_INTERVAL you can optionally pass the interval time in seconds as the third argument. If you omit it, the current interval is kept. If no interval is currently configured, the callback is stored but remains inactive until you set one with @{Stopwatch:SetIntervalTime}. If you pass `intervalTime`, it must be a positive number that rounds to at least 1 frame; otherwise the ON_INTERVAL callback is not changed.
+-- Ordering notes for combined callbacks:<br>
+-- - @{Stopwatch.CallbackTypes}.ON_INTERVAL is checked during the module's frame update while the stopwatch is active and not paused.<br>
+-- - @{Stopwatch:Stop} does not force a final @{Stopwatch.CallbackTypes}.ON_INTERVAL callback.<br>
+-- - If the stopwatch is stopped on the same frame as an interval threshold, the interval callback only runs if the module update has already processed that frame.<br>
+-- - If @{Stopwatch:Stop} is called inside @{Stopwatch.CallbackTypes}.ON_INTERVAL, the interval callback finishes first and then @{Stopwatch.CallbackTypes}.ON_STOP is called.<br>
+-- - If @{Stopwatch.CallbackTypes}.ON_INTERVAL and @{Stopwatch.CallbackTypes}.ON_MAX_TIME happen on the same frame, @{Stopwatch.CallbackTypes}.ON_INTERVAL is called before @{Stopwatch.CallbackTypes}.ON_MAX_TIME.
 -- @tparam CallbackTypes callbackType The callback type.
 -- @tparam function func A function defined in `LevelFuncs`. Signature: `function(stopwatch)`.
--- @tparam[opt=nil] float intervalTime Only for ON_INTERVAL: the interval in seconds (minimum ~0.03s = 1 frame). Ignored for all other callback types.
+-- @tparam[opt=nil] float intervalTime Only for ON_INTERVAL: the interval in seconds (minimum ~0.03s = 1 frame). If provided with an invalid value, the ON_INTERVAL callback is not changed. Ignored for all other callback types.
 -- @usage
 -- LevelFuncs.OnLapRecorded = function(sw)
 --     TEN.Util.PrintLog("Lap " .. sw:GetLapCount() .. ": " .. sw:GetLapTimeFormatted(sw:GetLapCount()), TEN.Util.LogLevel.INFO)
@@ -1112,9 +1136,18 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
         return
     end
     local stopwatch = stopwatches[self.name]
-    stopwatch.callbacks[callbackType] = func
+    local intervalFrames = nil
     if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and not IsNull(intervalTime) then
-        self:SetIntervalTime(intervalTime)
+        local invalidValueMessage = "Warning in Stopwatch:SetCallback(): wrong value (" .. tostring(intervalTime) .. ") for intervalTime in '" .. self.name .. "', it must be a positive number. ON_INTERVAL callback will not be changed."
+        local tooSmallMessage = "Warning in Stopwatch:SetCallback(): intervalTime too small for '" .. self.name .. "' (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS). ON_INTERVAL callback will not be changed."
+        intervalFrames = ValidateIntervalTime(intervalTime, invalidValueMessage, tooSmallMessage)
+        if not intervalFrames then
+            return
+        end
+    end
+    stopwatch.callbacks[callbackType] = func
+    if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and intervalFrames then
+        ApplyIntervalFrames(stopwatch, intervalFrames)
     end
 end
 
@@ -1162,16 +1195,13 @@ function Stopwatch:SetIntervalTime(seconds)
         stopwatch.intervalFrames = nil
         stopwatch.lastIntervalCount = 0
         stopwatch.callbacks["OnInterval"] = nil
-    elseif not IsNumber(seconds) or seconds <= 0 then
-        LogMessage("Warning in Stopwatch:SetIntervalTime(): wrong value (" .. tostring(seconds) .. ") for seconds, it must be a positive number.", logLevelWarning)
     else
-        local frames = floor(Round2Decimal(seconds) * FPS + 0.5)
-        if frames < 1 then
-            LogMessage("Warning in Stopwatch:SetIntervalTime(): interval too small (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS).", logLevelWarning)
-            return
+        local invalidValueMessage = "Warning in Stopwatch:SetIntervalTime(): wrong value (" .. tostring(seconds) .. ") for seconds, it must be a positive number."
+        local tooSmallMessage = "Warning in Stopwatch:SetIntervalTime(): interval too small (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS)."
+        local frames = ValidateIntervalTime(seconds, invalidValueMessage, tooSmallMessage)
+        if frames then
+            ApplyIntervalFrames(stopwatch, frames)
         end
-        stopwatch.intervalFrames = frames
-        RealignIntervalCount(stopwatch)
     end
 end
 
@@ -1257,11 +1287,11 @@ end
 -- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_START after creation.<br>
 -- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESUME after creation.<br>
 -- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_PAUSE after creation.<br>
--- @tfield[opt=nil] function onStop Callback called when the stopwatch is stopped. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_STOP after creation.<br>
+-- @tfield[opt=nil] function onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_STOP after creation. This callback is not called automatically when the stopwatch reaches maxTime.<br>
 -- @tfield[opt=nil] function onReset Callback called when the stopwatch is reset. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_RESET after creation.<br>
 -- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_LAP after creation.<br>
--- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_MAX_TIME after creation.<br>
--- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. Requires `intervalTime` to also be set; if `intervalTime` is not set, the callback is stored but is not called until an interval is configured via @{Stopwatch:SetIntervalTime}.<br>
+-- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with @{Stopwatch.CallbackTypes}.ON_MAX_TIME after creation. If @{Stopwatch.CallbackTypes}.ON_INTERVAL also falls on that frame, the interval callback is called first. This callback does not automatically call onStop.<br>
+-- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. @{Stopwatch:Stop} does not force a final onInterval call. If the stopwatch is stopped on the same frame as an interval threshold, onInterval only runs if the module update has already processed that frame. If @{Stopwatch:Stop} is called inside onInterval, onInterval finishes first and then onStop is called.<br>
 -- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Must be a positive number; the minimum effective value is one frame (~0.03s at 30 FPS). Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.<br>
 
 ---
@@ -1284,9 +1314,9 @@ end
 -- @tfield "OnPause" ON_PAUSE Callback called when the stopwatch is paused via @{Stopwatch:Pause}.
 -- @tfield "OnResume" ON_RESUME Callback called when the stopwatch is resumed via @{Stopwatch:Start} after being paused.
 -- @tfield "OnReset" ON_RESET Callback called when the stopwatch is reset via @{Stopwatch:Reset}.
--- @tfield "OnStop" ON_STOP Callback called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback.
--- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback.
--- @tfield "OnInterval" ON_INTERVAL Callback called repeatedly at the configured interval while the stopwatch is ticking. The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}.
+-- @tfield "OnStop" ON_STOP Callback called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. This callback is not called automatically when the stopwatch reaches maxTime.
+-- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. If @{Stopwatch.CallbackTypes}.ON_INTERVAL also falls on the same frame, @{Stopwatch.CallbackTypes}.ON_INTERVAL is called first. This callback does not automatically call @{Stopwatch.CallbackTypes}.ON_STOP.
+-- @tfield "OnInterval" ON_INTERVAL Callback called repeatedly at the configured interval while the stopwatch is ticking. The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}. @{Stopwatch:Stop} does not force a final ON_INTERVAL call. If the stopwatch is stopped on the same frame as an interval threshold, ON_INTERVAL only runs if the module update has already processed that frame. If @{Stopwatch:Stop} is called inside ON_INTERVAL, ON_INTERVAL finishes first and then @{Stopwatch.CallbackTypes}.ON_STOP is called.
 -- 
 
 ----
