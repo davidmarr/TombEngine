@@ -46,6 +46,7 @@ local DEFAULT_TEXT_OPTIONS = {DisplayStringOption.CENTER, DisplayStringOption.SH
 local DEFAULT_TIME_FORMAT = {minutes = true, seconds = true, centiseconds = true}
 local FPS = 30
 local FRAME_TIME = 1 / FPS
+local MIN_FRAME_TIME_TEXT = string.format("%.2f", FRAME_TIME)
 local DEFAULT_COLOR = Color(255, 255, 255, 255)
 local DEFAULT_PAUSED_COLOR = Color(255, 255, 0, 255)
 local DEFAULT_POSITION = Vec2(PercentToScreen(50, 90))
@@ -124,15 +125,15 @@ local function CloneArray(values)
     return clone
 end
 
-local function ValidateIntervalTime(seconds, invalidValueMessage, tooSmallMessage)
+local function ValidateFrameSeconds(seconds, invalidValueMessage, tooSmallMessage, logLevel)
     if not IsNumber(seconds) or seconds <= 0 then
-        LogMessage(invalidValueMessage, logLevelWarning)
+        LogMessage(invalidValueMessage, logLevel)
         return nil
     end
 
     local frames = floor(Round2Decimal(seconds) * FPS + 0.5)
     if frames < 1 then
-        LogMessage(tooSmallMessage, logLevelWarning)
+        LogMessage(tooSmallMessage, logLevel)
         return nil
     end
 
@@ -270,13 +271,17 @@ Stopwatch.Create = function(stopwatchData)
 
 
     -- check maxTime
-    if IsNumber(stopwatchData.maxTime) and stopwatchData.maxTime >= 0 then
-        stopwatchEntry.maxTime = Time(Round2Decimal(stopwatchData.maxTime) * FPS)
-    else
-        if stopwatchData.maxTime ~= nil then
-            LogMessage(CreateWarningPrefix .. "wrong value for maxTime for '".. name .."'", logLevelWarning)
-        end
+    if IsNull(stopwatchData.maxTime) then
         stopwatchEntry.maxTime = nil
+    else
+        local invalidValueMessage = CreateWarningPrefix .. "wrong value for maxTime for '" .. name .. "', it must be a positive number."
+        local tooSmallMessage = CreateWarningPrefix .. "maxTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_TIME_TEXT .. "s (1 frame at 30 FPS)."
+        local frames = ValidateFrameSeconds(stopwatchData.maxTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
+        if frames then
+            stopwatchEntry.maxTime = Time(frames)
+        else
+            stopwatchEntry.maxTime = nil
+        end
     end
 
     -- check position
@@ -322,8 +327,8 @@ Stopwatch.Create = function(stopwatchData)
     end
     if not IsNull(stopwatchData.intervalTime) then
         local invalidValueMessage = CreateWarningPrefix .. "wrong value for intervalTime in '" .. name .. "', it must be a positive number."
-        local tooSmallMessage = CreateWarningPrefix .. "intervalTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS)."
-        local frames = ValidateIntervalTime(stopwatchData.intervalTime, invalidValueMessage, tooSmallMessage)
+        local tooSmallMessage = CreateWarningPrefix .. "intervalTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_TIME_TEXT .. "s (1 frame at 30 FPS)."
+        local frames = ValidateFrameSeconds(stopwatchData.intervalTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if frames then
             ApplyIntervalFrames(stopwatchEntry, frames)
         end
@@ -686,7 +691,7 @@ function Stopwatch:GetMaxTimeFormatted(timeFormat)
 end
 
 --- Set the maximum time for the stopwatch.
--- @tparam float maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
+-- @tparam[opt=nil] float maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. Call with nil to remove the limit. Values must be positive and must round to at least 1 frame (~0.03s at 30 FPS). Values are rounded to 2 decimal places, converted to 30 FPS game frames, and then rounded to the nearest frame.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetMaxTime(60) -- Set max time to 60 seconds
 --
@@ -696,10 +701,11 @@ function Stopwatch:SetMaxTime(maxTime)
     if IsNull(maxTime) then
         stopwatches[self.name].maxTime = nil
     else
-        if not IsNumber(maxTime) or maxTime < 0 then
-            LogMessage("Error in Stopwatch:SetMaxTime(): wrong value (" .. tostring(maxTime) .. ") for maxTime, it must be a non-negative number.", logLevelError)
-        else
-            stopwatches[self.name].maxTime = Time(Round2Decimal(maxTime) * FPS)
+        local invalidValueMessage = "Error in Stopwatch:SetMaxTime(): wrong value (" .. tostring(maxTime) .. ") for maxTime, it must be a positive number or nil."
+        local tooSmallMessage = "Error in Stopwatch:SetMaxTime(): maxTime too small for '" .. self.name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_TIME_TEXT .. "s (1 frame at 30 FPS)."
+        local frames = ValidateFrameSeconds(maxTime, invalidValueMessage, tooSmallMessage, logLevelError)
+        if frames then
+            stopwatches[self.name].maxTime = Time(frames)
         end
     end
 end
@@ -1139,8 +1145,8 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
     local intervalFrames = nil
     if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and not IsNull(intervalTime) then
         local invalidValueMessage = "Warning in Stopwatch:SetCallback(): wrong value (" .. tostring(intervalTime) .. ") for intervalTime in '" .. self.name .. "', it must be a positive number. ON_INTERVAL callback will not be changed."
-        local tooSmallMessage = "Warning in Stopwatch:SetCallback(): intervalTime too small for '" .. self.name .. "' (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS). ON_INTERVAL callback will not be changed."
-        intervalFrames = ValidateIntervalTime(intervalTime, invalidValueMessage, tooSmallMessage)
+        local tooSmallMessage = "Warning in Stopwatch:SetCallback(): intervalTime too small for '" .. self.name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_TIME_TEXT .. "s (1 frame at 30 FPS). ON_INTERVAL callback will not be changed."
+        intervalFrames = ValidateFrameSeconds(intervalTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if not intervalFrames then
             return
         end
@@ -1197,8 +1203,8 @@ function Stopwatch:SetIntervalTime(seconds)
         stopwatch.callbacks["OnInterval"] = nil
     else
         local invalidValueMessage = "Warning in Stopwatch:SetIntervalTime(): wrong value (" .. tostring(seconds) .. ") for seconds, it must be a positive number."
-        local tooSmallMessage = "Warning in Stopwatch:SetIntervalTime(): interval too small (rounds to 0 frames). Minimum is " .. FRAME_TIME .. "s (1 frame at 30 FPS)."
-        local frames = ValidateIntervalTime(seconds, invalidValueMessage, tooSmallMessage)
+        local tooSmallMessage = "Warning in Stopwatch:SetIntervalTime(): interval too small (rounds to 0 frames). Minimum is " .. MIN_FRAME_TIME_TEXT .. "s (1 frame at 30 FPS)."
+        local frames = ValidateFrameSeconds(seconds, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if frames then
             ApplyIntervalFrames(stopwatch, frames)
         end
@@ -1278,7 +1284,7 @@ end
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
 -- @tfield[opt=false] table|bool timeFormat Controls the on-screen time display. Set to false to disable the display. See `timeFormat` for details.
--- @tfield[opt=nil] maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. No negative values allowed. Values ​​are rounded to 2 decimal places and converted to 30 FPS game frames and rounded to the nearest frame.
+-- @tfield[opt=nil] maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. Must be a positive number that rounds to at least 1 frame (~0.03s at 30 FPS). Values are rounded to 2 decimal places, converted to 30 FPS game frames, and rounded to the nearest frame.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display. Must be a positive number.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
