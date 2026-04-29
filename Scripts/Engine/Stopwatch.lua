@@ -1563,7 +1563,7 @@ end
 --     Stopwatch.Get("RaceTimer"):Start(true)
 -- end
 --
--- -- Trigger this via a volume or flipeffect at each checkpoint
+-- -- Trigger this via a volume at each checkpoint
 -- LevelFuncs.OnCheckpoint = function()
 --     Stopwatch.Get("RaceTimer"):Lap()
 -- end
