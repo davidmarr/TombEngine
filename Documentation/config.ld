@@ -1,5 +1,8 @@
 file = {"../TombEngine/Scripting/Internal", "../Scripts/Engine"}
 new_type("mem", "Members", false)
+-- Dedicated module-level kind for documentation examples.
+-- Keep it separate from the historical @example tag; if the team prefers a different keyword, rename it here and in the source docs.
+new_type("moduleexample", "Examples", false)
 new_type("files", "Script Files", true)
 new_type("entityclass", "Entity classes", true)
 new_type("pregameclass", "Pre-game script classes", true)

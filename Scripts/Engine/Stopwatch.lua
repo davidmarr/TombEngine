@@ -1441,13 +1441,113 @@ end
 -- 
 
 ----
--- Advanced usage
+-- Basic examples
+-- @section basicExamples
+-- Short examples showing common Stopwatch tasks with minimal setup.
+
+---
+-- Simple start and stop.
+-- @moduleexample BasicStartStop
+-- Create a stopwatch, start it from a LevelFunc, and stop it later.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({ name = "MyStopwatch" })
+--
+-- LevelFuncs.StartMyStopwatch = function()
+--     Stopwatch.Get("MyStopwatch"):Start(true)
+-- end
+--
+-- LevelFuncs.StopMyStopwatch = function()
+--     Stopwatch.Get("MyStopwatch"):Stop()
+-- end
+
+---
+-- Pause, resume, and reset.
+-- @moduleexample BasicPauseResume
+-- Pause the stopwatch without losing elapsed time, resume it later, or reset it to zero.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({ name = "SessionTimer" })
+--
+-- LevelFuncs.StartSessionTimer = function()
+--     Stopwatch.Get("SessionTimer"):Start()
+-- end
+--
+-- LevelFuncs.PauseSessionTimer = function()
+--     Stopwatch.Get("SessionTimer"):Pause()
+-- end
+--
+-- LevelFuncs.ResumeSessionTimer = function()
+--     Stopwatch.Get("SessionTimer"):Start()
+-- end
+--
+-- LevelFuncs.ResetSessionTimer = function()
+--     Stopwatch.Get("SessionTimer"):Reset()
+-- end
+
+---
+-- Read elapsed time.
+-- @moduleexample BasicReadTime
+-- Read the current elapsed time in seconds or as a formatted string.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({
+--     name       = "DisplayTimer",
+--     timeFormat = { minutes = true, seconds = true, centiseconds = true },
+-- })
+--
+-- LevelFuncs.PrintDisplayTimer = function()
+--     local sw = Stopwatch.Get("DisplayTimer")
+--     TEN.Util.PrintLog("Seconds: " .. sw:GetElapsedTimeInSeconds(), TEN.Util.LogLevel.INFO)
+--     TEN.Util.PrintLog("Formatted: " .. sw:GetElapsedTimeFormatted(), TEN.Util.LogLevel.INFO)
+-- end
+
+---
+-- Record laps and splits.
+-- @moduleexample BasicLaps
+-- Record laps at checkpoints and read both segment times and cumulative split times.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({ name = "RaceTimer" })
+--
+-- LevelFuncs.OnCheckpoint = function()
+--     local sw = Stopwatch.Get("RaceTimer")
+--     sw:Lap()
+--     local i = sw:GetLapCount()
+--     TEN.Util.PrintLog("Lap " .. i .. ": " .. sw:GetLapTimeFormatted(i), TEN.Util.LogLevel.INFO)
+--     TEN.Util.PrintLog("Split " .. i .. ": " .. sw:GetSplitTimeFormatted(i), TEN.Util.LogLevel.INFO)
+-- end
+
+---
+-- Use maxTime for a timed challenge.
+-- @moduleexample BasicMaxTime
+-- Stop the stopwatch automatically after a fixed time limit.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({
+--     name       = "ChallengeTimer",
+--     maxTime    = 30.0,
+--     timeFormat = { seconds = true, centiseconds = true },
+-- })
+--
+-- LevelFuncs.StartChallenge = function()
+--     Stopwatch.Get("ChallengeTimer"):Start(true)
+-- end
+
+----
+-- Advanced examples
 -- @section examples
--- Advanced usage examples showing how to combine multiple Stopwatch features in real scenarios.
+-- Gameplay-oriented examples showing only a few of the patterns possible with Stopwatch.
+-- Use them as starting points for custom scripting, callbacks, and other frame-based behaviors.
 
 ---
 -- Race with checkpoints.
--- @table Scenario1
+-- @moduleexample Scenario1
 -- Record a lap at each checkpoint; at the finish line
 -- display the segment time (delta) and the cumulative split for each checkpoint, plus the total.
 -- @usage
@@ -1482,14 +1582,13 @@ end
 
 ---
 -- Timed puzzle with best-time record.
--- @table Scenario2
+-- @moduleexample Scenario2
 -- The player can retry a puzzle;
 -- each attempt is timed and compared to the personal best stored in LevelVars.
 -- A maxTime of 60 seconds automatically stops the stopwatch if the player runs out of time.
 -- @usage
 -- local Stopwatch = require("Engine.Stopwatch")
 --
--- LevelVars.puzzleBestTime = nil
 -- Stopwatch.Create({ name = "PuzzleTimer", maxTime = 60.0 })
 --
 -- LevelFuncs.OnPuzzleStart = function()
@@ -1510,7 +1609,7 @@ end
 
 ---
 -- Speedrun with gold splits.
--- @table Scenario3
+-- @moduleexample Scenario3
 -- Compare each segment against known reference
 -- (gold) times to tell the player whether they are ahead or behind on each segment.
 -- @usage
@@ -1542,6 +1641,65 @@ end
 --             TEN.Util.PrintLog("Segment " .. i .. ": " .. lap .. "s  (+" .. behind .. "s behind gold)", TEN.Util.LogLevel.INFO)
 --         end
 --     end
+-- end
+
+---
+-- Callback-driven timed challenge.
+-- @moduleexample Scenario4
+-- Assign callbacks directly in @{Stopwatch.Create} when the stopwatch behavior is known up front.
+-- Use interval and maxTime callbacks to drive announcements and failure conditions without polling in OnLoop.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- LevelFuncs.OnChallengeInterval = function(sw)
+--     TEN.Util.PrintLog("Time: " .. sw:GetElapsedTimeFormatted({ seconds = true, centiseconds = true }), TEN.Util.LogLevel.INFO)
+-- end
+--
+-- LevelFuncs.OnChallengeTimeOver = function(sw)
+--     TEN.Util.PrintLog("Time over at " .. sw:GetElapsedTimeFormatted({ seconds = true, centiseconds = true }), TEN.Util.LogLevel.INFO)
+-- end
+--
+-- Stopwatch.Create({
+--     name         = "ChallengeTimer",
+--     timeFormat   = { seconds = true, centiseconds = true },
+--     maxTime      = 30.0,
+--     onInterval   = LevelFuncs.OnChallengeInterval,
+--     intervalTime = 5.0,
+--     onMaxTime    = LevelFuncs.OnChallengeTimeOver,
+-- })
+--
+-- LevelFuncs.StartChallenge = function()
+--     Stopwatch.Get("ChallengeTimer"):Start(true)
+-- end
+
+---
+-- Hold a camera for a fixed duration.
+-- @moduleexample Scenario5
+-- @{Objects.Camera:Play|Camera:Play} only affects the current frame.
+-- Use @{Stopwatch:SetCallback} when the stopwatch already exists and you want to attach or replace behavior later.
+-- Here, `ON_INTERVAL` runs every `0.03` seconds (1 frame at 30 FPS) to keep replaying the camera for a fixed duration.
+-- This pattern also works for other frame-based effects that must be refreshed continuously for a short time.
+-- @usage
+-- local Stopwatch = require("Engine.Stopwatch")
+--
+-- Stopwatch.Create({
+--     name    = "CameraHoldTimer",
+--     maxTime = 3.0,
+-- })
+--
+-- LevelFuncs.PlayCamera1Frame = function(stopwatch)
+--     TEN.Objects.GetCameraByName("camera1"):Play()
+-- end
+--
+-- LevelFuncs.OnCameraSequenceFinished = function(stopwatch)
+--     TEN.Util.PrintLog("Camera sequence finished.", TEN.Util.LogLevel.INFO)
+-- end
+--
+-- LevelFuncs.PlayCamera1ForThreeSeconds = function()
+--     local sw = Stopwatch.Get("CameraHoldTimer")
+--     sw:SetCallback(Stopwatch.CallbackTypes.ON_INTERVAL, LevelFuncs.PlayCamera1Frame, 0.03)
+--     sw:SetCallback(Stopwatch.CallbackTypes.ON_MAX_TIME, LevelFuncs.OnCameraSequenceFinished)
+--     sw:Start(true)
 -- end
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
