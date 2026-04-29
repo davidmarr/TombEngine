@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Basic frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.<br>To use Stopwatch in a script, require the module:
+--- Basic frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.<br>Require the module before using Stopwatch in a script:
 --	local Stopwatch = require("Engine.Stopwatch")
 --
 --	-- Create simple stopwatch
@@ -474,7 +474,7 @@ end
 --
 -- - Callbacks and interval configuration.
 --
--- We recommend using @{Stopwatch.Get} before calling methods on a stopwatch to help avoid errors and unexpected behavior.
+-- Use @{Stopwatch.Get} before calling methods when the stopwatch may not exist.
 -- @usage
 --	-- Examples of some methods
 -- Stopwatch.Get("MyStopwatch"):Start()
@@ -674,7 +674,7 @@ end
 
 --- Check if the elapsed time of the stopwatch meets a specific condition.
 --
--- It's recommended to use the IfElapsedTimeIs method to have error-free comparisons.
+-- Use this method instead of manual elapsed-time comparisons to avoid rounding and frame-conversion errors.
 -- @tparam int operator The type of comparison.<br>
 -- 0 : If the elapsed time is equal to the value<br>
 -- 1 : If the elapsed time is different from the value<br>
@@ -684,7 +684,7 @@ end
 -- 5 : If the elapsed time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
--- Please note: to have continuous control, the elapsed time must be controlled within the *OnLoop* event and only when the stopwatch is active @{Stopwatch.IsActive}.
+-- For continuous checks, call this from the *OnLoop* event and only while the stopwatch is active @{Stopwatch.IsActive}.
 -- @treturn bool True if the condition is met, false otherwise.
 -- @usage
 -- -- Example1: Alternative method to create a sequence of events based on stopwatch time
@@ -775,7 +775,7 @@ function Stopwatch:GetMaxTimeFormatted(timeFormat)
 end
 
 --- Set the maximum time for the stopwatch.
--- @tparam[opt=nil] float maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. Call with nil to remove the limit. Values must be positive and must round to at least 1 frame (~0.03s at 30 FPS). Values are rounded to 2 decimal places, converted to 30 FPS game frames, and then rounded to the nearest frame.
+-- @tparam[opt=nil] float maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. Pass nil to remove the limit. Values must be positive and must round to at least 1 frame (~0.03s at 30 FPS). Values are rounded to 2 decimal places, converted to 30 FPS game frames, and then rounded to the nearest frame.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetMaxTime(60) -- Set max time to 60 seconds
 --
@@ -807,7 +807,7 @@ function Stopwatch:HasMaxTime()
 end
 
 --- Check if the elapsed time of the stopwatch meets a specific condition in relation to the maximum time.
--- It's recommended to use the IfMaxTimeIs method to have error-free comparisons.
+-- Use this method instead of manual maxTime comparisons to avoid rounding and frame-conversion errors.
 -- @tparam int operator The type of comparison.<br>
 -- 0 : If the max time is equal to the value<br>
 -- 1 : If the max time is different from the value<br>
@@ -817,7 +817,7 @@ end
 -- 5 : If the max time is greater or equal to the value
 -- @tparam float seconds The value in seconds to compare.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
--- Please note: Use the @{Stopwatch.HasMaxTime} method to check if a max time is set before using this method to prevent errors.
+-- Check @{Stopwatch.HasMaxTime} before calling this method if the stopwatch may not have a maxTime.
 -- @treturn bool True if the condition is met, false otherwise.
 -- @usage
 -- -- Check if the max time is less than 60 seconds
@@ -1267,7 +1267,7 @@ function Stopwatch:GetIntervalTime()
 end
 
 --- Set the interval time for `ON_INTERVAL` in @{Stopwatch.CallbackTypes}.
--- Call with no arguments (or nil) to remove the interval time and the `ON_INTERVAL` callback together.
+-- Omit the argument or pass nil to remove the interval time and the `ON_INTERVAL` callback together.
 -- Changing the interval recalculates the next callback from the current elapsed time. Interval callbacks that would have happened in the past are not replayed.
 -- @tparam[opt] float seconds The interval in seconds. Must be positive. The minimum effective value is one frame (~0.03s at 30 FPS); smaller values are rejected with a warning.
 -- @usage
