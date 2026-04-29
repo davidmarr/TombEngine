@@ -24,7 +24,7 @@ local Stopwatch = {}
 Stopwatch.__index = Stopwatch
 LevelFuncs.Engine.Stopwatch = {}
 LevelVars.Engine.Stopwatch = { stopwatches = {} }
--- Stopwatch data lives in LevelVars so it survives save/load. This local alias is
+-- Stopwatch state lives in LevelVars for save/load persistence. This alias is
 -- rebound in Reload() because the module is evaluated again after loading a save.
 local stopwatches = LevelVars.Engine.Stopwatch.stopwatches
 local stopwatchStrings = {} -- DisplayString objects, not serializable in LevelVars
@@ -276,8 +276,8 @@ Stopwatch.Create = function(stopwatchData)
         if ds then HideString(ds) end
         stopwatchStrings[stopwatchData.name] = nil
     end
-    -- Stopwatch objects are lightweight name proxies, so replacing the stored table is
-    -- safer than mutating an old one in place when Create() is used as overwrite-by-name.
+    -- Stopwatch objects are name-only proxies, so overwriting by name replaces the
+    -- stored table instead of mutating the previous one in place.
     stopwatches[stopwatchData.name] = {}
     local stopwatchEntry = stopwatches[stopwatchData.name]
     local name = stopwatchData.name
@@ -330,8 +330,7 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.intervalFrames = nil
     stopwatchEntry.lastIntervalCount = 0
     stopwatchEntry.lastRenderedFrameCount = nil
-    -- These fields are internal bookkeeping, not public stopwatch state. They support
-    -- display refresh and deferred callback ordering inside UpdateAll().
+    -- Runtime-only bookkeeping for display refresh and deferred callback ordering.
     stopwatchEntry.pendingStopCallback = false
     stopwatchEntry.intervalCallbackDepth = 0
 
@@ -505,8 +504,7 @@ function Stopwatch:Start(reset)
         stopwatch.laps = {}
         stopwatch.lastIntervalCount = 0
     end
-    -- A new start cancels any deferred OnStop left behind by a Stop() that happened
-    -- inside an interval callback during the previous frame.
+    -- Starting again clears any deferred OnStop left behind by Stop() inside OnInterval.
     stopwatch.pendingStopCallback = false
     stopwatch.active = true
     stopwatch.paused = false
@@ -665,8 +663,8 @@ function Stopwatch:SetElapsedTime(newTime)
     else
         local stopwatch = stopwatches[self.name]
         stopwatch.elapsedTime = Time(Round2Decimal(newTime) * FPS)
-        -- Manual jumps in time should affect the next interval threshold immediately,
-        -- and the display should reflect the new value even before the next frame tick.
+        -- Manual time jumps must immediately rebase interval scheduling and, if shown,
+        -- refresh the display without waiting for the next frame.
         RealignIntervalCount(stopwatch)
         if stopwatch.timeFormat then
             SyncDisplayText(stopwatch, self.name)
@@ -1232,8 +1230,8 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
             return
         end
     end
-    -- ON_INTERVAL updates are intentionally atomic: if a new interval is invalid, the
-    -- previous callback and schedule stay untouched instead of ending up half-updated.
+    -- ON_INTERVAL updates are atomic: an invalid new interval leaves the previous
+    -- callback and schedule untouched instead of half-updating them.
     stopwatch.callbacks[callbackType] = func
     if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and intervalFrames then
         ApplyIntervalFrames(stopwatch, intervalFrames)
@@ -1281,8 +1279,8 @@ end
 function Stopwatch:SetIntervalTime(seconds)
     local stopwatch = stopwatches[self.name]
     if IsNull(seconds) then
-        -- Removing the schedule also removes OnInterval itself. Keeping a dormant
-        -- interval callback without a schedule tends to be misleading during debugging.
+        -- Removing the schedule also removes OnInterval; a dormant interval callback
+        -- without a schedule tends to be misleading during debugging.
         stopwatch.intervalFrames = nil
         stopwatch.lastIntervalCount = 0
         stopwatch.callbacks["OnInterval"] = nil
@@ -1297,8 +1295,8 @@ function Stopwatch:SetIntervalTime(seconds)
 end
 
 LevelFuncs.Engine.Stopwatch.IncrementTime = function()
-    -- Raw time advancement is split from UpdateAll() so callbacks and display logic can
-    -- observe the final frame state once per loop, in a single well-defined place.
+    -- Time advancement stays separate so UpdateAll() can derive callbacks and display
+    -- effects once per loop from a stable frame state.
     for _, s in pairs(stopwatches) do
         if s.active and not s.paused then
             s.elapsedTime = s.elapsedTime + 1
@@ -1307,9 +1305,8 @@ LevelFuncs.Engine.Stopwatch.IncrementTime = function()
 end
 
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
-    -- This is the per-frame reconciliation step. IncrementTime() already advanced the
-    -- raw counters, so here we only derive side effects from the current frame state:
-    -- interval callbacks, display refresh, and maxTime termination.
+    -- Per-frame reconciliation: derive interval callbacks, display refresh, and
+    -- maxTime termination from the current frame state.
     for name, s in pairs(stopwatches) do
         if s.active then
             local reachedMaxTime = s.maxTime and s.elapsedTime >= s.maxTime
@@ -1324,10 +1321,9 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                     local proxy = setmetatable({name = name}, Stopwatch)
                     local fn = s.callbacks["OnInterval"]
                     if fn then
-                        -- Depth tracking is only needed to defer OnStop when Stop() is
-                        -- called from inside OnInterval. The stopwatch is already
-                        -- inactive at that point, but OnStop is flushed only after the
-                        -- outermost interval callback has fully returned.
+                        -- Depth tracking defers OnStop when Stop() is called from
+                        -- inside OnInterval, and flushes it after the outermost
+                        -- interval callback has fully returned.
                         s.intervalCallbackDepth = (s.intervalCallbackDepth or 0) + 1
                         for _ = lastCount + 1, currentCount do
                             fn(proxy)
@@ -1350,9 +1346,8 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             end
             if s.timeFormat then
                 local ds = stopwatchStrings[name]
-                -- The display is refreshed from the current frame state before maxTime
-                -- shutdown happens, so the user can still see the terminal value on the
-                -- frame that reaches the limit.
+                -- Refresh before maxTime shutdown so the terminal value is visible on
+                -- the frame that reaches the limit.
                 local frameCount = s.elapsedTime:GetFrameCount()
                 if s.lastRenderedFrameCount ~= frameCount then
                     ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
@@ -1376,8 +1371,8 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
     stopwatches = LevelVars.Engine.Stopwatch.stopwatches
     stopwatchStrings = {}
     for name, s in pairs(stopwatches) do
-        -- These flags are runtime bookkeeping only. They should never survive across
-        -- loads because resuming inside a half-finished callback would be invalid.
+        -- These flags are runtime-only bookkeeping. They must not survive loads,
+        -- because resuming inside a half-finished callback would be invalid.
         s.pendingStopCallback = false
         s.intervalCallbackDepth = 0
         local warning1Message = "Warning in Stopwatch.Reload(): textOptions for '" .. name .. "' must be a table. Default textOptions will be used."
@@ -1385,7 +1380,7 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
         local textOptions = CheckTextOptions(s.textOptions, warning1Message, warning2Message)
         s.textOptions = textOptions
         if s.timeFormat then
-            -- DisplayString handles cannot be serialized, so each load recreates them
+            -- DisplayString handles are not serializable, so Reload() recreates them
             -- from the persisted stopwatch state.
             local text = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
             local color = s.paused and s.pausedColor or s.color
