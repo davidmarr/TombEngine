@@ -1,5 +1,5 @@
 -----<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
---- Basic frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.<br>Require the module before using Stopwatch in a script:
+--- Frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.<br>Require the module before using Stopwatch in a script:
 --	local Stopwatch = require("Engine.Stopwatch")
 --
 --	-- Create simple stopwatch
@@ -609,8 +609,8 @@ function Stopwatch:IsPaused()
     return stopwatches[self.name].paused
 end
 
---- Check if the stopwatch is active and not paused.
--- Returns `true` only if the stopwatch is ticking, i.e., it is active and not paused.
+--- Check if the stopwatch is currently ticking.
+-- Returns `true` if the stopwatch is active and not paused.
 -- @treturn bool True if the stopwatch is ticking, false otherwise.
 function Stopwatch:IsTicking()
     local stopwatch = stopwatches[self.name]
