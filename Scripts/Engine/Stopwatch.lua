@@ -990,7 +990,7 @@ end
 -- @usage
 -- -- Record a lap at each checkpoint and immediately print the segment time
 -- LevelFuncs.OnCheckpoint = function()
---     local sw       = Stopwatch.Get("RaceTimer")
+--     local sw = Stopwatch.Get("RaceTimer")
 --     local lapIndex = sw:GetLapCount() + 1
 --     sw:Lap()
 --     local fmt = { seconds = true, centiseconds = true }
@@ -1399,7 +1399,7 @@ end
 -- @table StopwatchData
 -- @tfield string name The name of the stopwatch.
 -- @tfield[opt=false] table|bool timeFormat Controls the on-screen time display. Set to false to disable the display. See `timeFormat` for details.
--- @tfield[opt=nil] maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. Must be a positive number that rounds to at least 1 frame (~0.03s at 30 FPS). Values are rounded to 2 decimal places, converted to 30 FPS game frames, and rounded to the nearest frame.
+-- @tfield[opt=nil] float maxTime The maximum time for the stopwatch in seconds with 2 decimal places. If set, the stopwatch will automatically stop when this time is reached. Must be a positive number that rounds to at least 1 frame (~0.03s at 30 FPS). Values are rounded to 2 decimal places, converted to 30 FPS game frames, and rounded to the nearest frame.
 -- @tfield[opt=Vec2(50&#44; 90)] Vec2 position The position in percentage on screen where the stopwatch will be displayed.
 -- @tfield[opt=1] float scale The scale of the stopwatch display. Must be a positive number.
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
