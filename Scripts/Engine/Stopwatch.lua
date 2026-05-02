@@ -2025,7 +2025,7 @@ end
 --     for i = 1, sw:GetLapCount() do
 --         local seg   = sw:GetLapTimeFormatted(i, fmt)
 --         local split = sw:GetSplitTimeFormatted(i, fmt)
---         TEN.Util.PrintLog("Checkpoint " .. i .. " — segment: " .. seg .. "  split: " .. split, TEN.Util.LogLevel.INFO)
+--         TEN.Util.PrintLog("Checkpoint " .. i .. " - segment: " .. seg .. "  split: " .. split, TEN.Util.LogLevel.INFO)
 --     end
 --     TEN.Util.PrintLog("Total: " .. sw:GetElapsedTimeFormatted(fmt), TEN.Util.LogLevel.INFO)
 -- end
