@@ -689,7 +689,7 @@ end
 
 ---
 -- Callbacks overview.
--- @table Callbacks
+-- @note Callbacks
 --
 -- A callback in this module is a LevelFunc assigned to a stopwatch event. When that event happens, the module calls the function and passes the stopwatch as its first argument.
 --
@@ -721,7 +721,7 @@ end
 
 ---
 -- Time triggers overview.
--- @table TimeTriggers
+-- @note TimeTriggers
 -- 
 -- A time trigger is an absolute one-shot cue point on the stopwatch timeline. Each trigger stores an `at` time, a `LevelFuncs` callback, and optional positional extra arguments passed after the stopwatch parameter. When present, these extra arguments are stored as an array table with consecutive numeric indices starting at 1 and they must not contain `nil` values.
 -- 
