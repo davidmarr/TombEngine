@@ -96,7 +96,6 @@ local IsString = Type.IsString
 local IsTable = Type.IsTable
 local IsNull = Type.IsNull
 local IsLevelFunc = Type.IsLevelFunc
-local IsFunction = Type.IsFunction
 
 Stopwatch.CallbackTypes = {
     ON_LAP      = "OnLap",
@@ -107,6 +106,15 @@ Stopwatch.CallbackTypes = {
     ON_STOP     = "OnStop",
     ON_MAX_TIME = "OnMaxTime",
     ON_INTERVAL = "OnInterval",
+}
+
+Stopwatch.Operators = {
+    EQUAL = 0,
+    NOT_EQUAL = 1,
+    LESS = 2,
+    LESS_EQUAL = 3,
+    GREATER = 4,
+    GREATER_EQUAL = 5,
 }
 
 local function Round2Decimal(second)
@@ -126,11 +134,10 @@ local function FramesToSeconds(frames)
 end
 
 local CheckOperator = function(operator)
-	if not IsNumber(operator) then
+	if not TableHasValue(Stopwatch.Operators, operator) then
 		return nil
 	end
-    local op = COMPARISON_OPS[operator + 1]
-    return IsFunction(op) and op or nil
+    return COMPARISON_OPS[operator + 1]
 end
 
 local function CloneArray(values)
@@ -955,13 +962,9 @@ end
 --- Check if the elapsed time of the stopwatch meets a specific condition.
 --
 -- Use this method instead of manual elapsed-time comparisons to avoid rounding and frame-conversion errors.
--- @tparam int operator The type of comparison.<br>
--- 0 : If the elapsed time is equal to the value<br>
--- 1 : If the elapsed time is different from the value<br>
--- 2 : If the elapsed time is less the value<br>
--- 3 : If the elapsed time is less or equal to the value<br>
--- 4 : If the elapsed time is greater the value<br>
--- 5 : If the elapsed time is greater or equal to the value
+-- @tparam Operators operator The comparison operator to use.
+--
+-- Use one of the values from `Stopwatch.Operators`, for example `Stopwatch.Operators.EQUAL` or `Stopwatch.Operators.GREATER_EQUAL`.
 -- @tparam float seconds The value in seconds to compare.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
 -- For continuous checks, call this from the *OnLoop* event and only while the stopwatch is active @{Stopwatch.IsActive}.
@@ -971,13 +974,13 @@ end
 -- LevelFuncs.OnLoop = function() -- this LevelFuncs is already present in your level script
 --     local stopwatch = Stopwatch.Get("MyStopwatch")
 --     if stopwatch:IsActive() then
---         if stopwatch:IfElapsedTimeIs(0, 2.0) then -- If elapsed time is equal to 2.0 seconds
+--         if stopwatch:IfElapsedTimeIs(Stopwatch.Operators.EQUAL, 2.0) then -- If elapsed time is equal to 2.0 seconds
 --             -- Do something
 --         end
---         if stopwatch:IfElapsedTimeIs(0, 4.0) then -- If elapsed time is equal to 4.0 seconds
+--         if stopwatch:IfElapsedTimeIs(Stopwatch.Operators.EQUAL, 4.0) then -- If elapsed time is equal to 4.0 seconds
 --             -- Do something else
 --         end
---         if stopwatch:IfElapsedTimeIs(0, 6.0) then -- If elapsed time is equal to 6.0 seconds
+--         if stopwatch:IfElapsedTimeIs(Stopwatch.Operators.EQUAL, 6.0) then -- If elapsed time is equal to 6.0 seconds
 --             -- Do another thing
 --         end
 --     end
@@ -987,10 +990,10 @@ end
 -- LevelFuncs.MySequenceOfEvents = function()
 --     local stopwatch = Stopwatch.Get("MyStopwatch")
 --     if stopwatch:IsActive() then
---         if stopwatch:IfElapsedTimeIs(0, 3.0) then -- If elapsed time is equal to 3.0 seconds
+--         if stopwatch:IfElapsedTimeIs(Stopwatch.Operators.EQUAL, 3.0) then -- If elapsed time is equal to 3.0 seconds
 --             -- Do something
 --         end
---         if stopwatch:IfElapsedTimeIs(0, 5.0) then -- If elapsed time is equal to 5.0 seconds
+--         if stopwatch:IfElapsedTimeIs(Stopwatch.Operators.EQUAL, 5.0) then -- If elapsed time is equal to 5.0 seconds
 --             -- Do something else
 --         end
 --     end
@@ -1084,22 +1087,18 @@ function Stopwatch:HasMaxTime()
     return stopwatches[self.name].maxTime ~= nil
 end
 
---- Check if the elapsed time of the stopwatch meets a specific condition in relation to the maximum time.
+--- Check if the stopwatch maximum time meets a specific condition.
 -- Use this method instead of manual maxTime comparisons to avoid rounding and frame-conversion errors.
--- @tparam int operator The type of comparison.<br>
--- 0 : If the max time is equal to the value<br>
--- 1 : If the max time is different from the value<br>
--- 2 : If the max time is less the value<br>
--- 3 : If the max time is less or equal to the value<br>
--- 4 : If the max time is greater the value<br>
--- 5 : If the max time is greater or equal to the value
+-- @tparam Operators operator The type of comparison.
+--
+-- Use one of the values from `Stopwatch.Operators`, for example `Stopwatch.Operators.LESS` or `Stopwatch.Operators.GREATER_EQUAL`.
 -- @tparam float seconds The value in seconds to compare.<br>
 -- No negative values allowed. Values are converted to 30 FPS game frames and rounded to the nearest frame.<br>
 -- Check @{Stopwatch.HasMaxTime} before calling this method if the stopwatch may not have a maxTime.
 -- @treturn bool True if the condition is met, false otherwise.
 -- @usage
 -- -- Check if the max time is less than 60 seconds
--- if Stopwatch.Get("MyStopwatch"):HasMaxTime() and Stopwatch.Get("MyStopwatch"):IfMaxTimeIs(2, 60) then
+-- if Stopwatch.Get("MyStopwatch"):HasMaxTime() and Stopwatch.Get("MyStopwatch"):IfMaxTimeIs(Stopwatch.Operators.LESS, 60) then
 --     -- Do something if max time is less than 60 seconds
 -- end
 function Stopwatch:IfMaxTimeIs(operator, seconds)
@@ -1859,6 +1858,18 @@ end
 -- <span class="keyword">local</span> myTimeFormat = {hours = <span class="keyword">true</span>, minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>, centiseconds = <span class="keyword">true</span>}
 -- <br><span class="comment">-- mins:secs</span>
 -- <span class="keyword">local</span> myTimeFormat1 = {minutes = <span class="keyword">true</span>, seconds = <span class="keyword">true</span>}</pre>
+
+---
+-- Constants for operators in @{Stopwatch:IfElapsedTimeIs} or @{Stopwatch:IfMaxTimeIs}.
+--
+-- Use them as `Stopwatch.Operators.EQUAL`, `Stopwatch.Operators.LESS`, etc.
+-- @table Operators
+-- @tfield 0 EQUAL Equal operator.
+-- @tfield 1 NOT_EQUAL Not equal operator.
+-- @tfield 2 LESS Less than operator.
+-- @tfield 3 LESS_EQUAL Less than or equal operator.
+-- @tfield 4 GREATER Greater than operator.
+-- @tfield 5 GREATER_EQUAL Greater than or equal operator.
 
 ---
 -- Constants for the available callback types in @{Stopwatch:SetCallback}.
