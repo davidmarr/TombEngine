@@ -704,6 +704,7 @@ end
 -- - `ON_INTERVAL` is checked during the module's automatic frame update while the stopwatch is active and not paused.
 -- - `ON_MAX_TIME` is checked during that same update after all due scheduled work for the frame. For full ordering with time triggers, see @{TimeTriggers|Time triggers overview}.
 --
+-- - When `ON_RESET` is called, elapsed time is already zero, laps are already cleared, and the stopwatch is inactive and unpaused.
 -- - When `ON_STOP` or `ON_MAX_TIME` is called, the stopwatch has already been marked inactive and unpaused.
 --
 -- <br>Same-frame overlap rules:
@@ -862,12 +863,13 @@ function Stopwatch:Stop(displayTime)
 end
 
 --- Reset the stopwatch to zero and stop it.
+--
+-- If `ON_RESET` is configured, it is called after elapsed time, laps, active state, and display state have been reset.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):Reset()
 function Stopwatch:Reset()
     local stopwatch = stopwatches[self.name]
     InvalidateScheduledState(stopwatch)
-    FireCallback(stopwatch, "OnReset", CreateStopwatchProxy(self.name))
     stopwatch.elapsedTime = ZERO
     stopwatch.active = false
     stopwatch.paused = false
@@ -878,6 +880,7 @@ function Stopwatch:Reset()
     stopwatch.pendingStopCallback = false
     local ds = stopwatchStrings[self.name]
     if ds then HideString(ds) end
+    FireCallback(stopwatch, "OnReset", CreateStopwatchProxy(self.name))
 end
 
 --- Check if the stopwatch is active.
@@ -1840,7 +1843,7 @@ end
 -- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESUME` from @{Stopwatch.CallbackTypes} after creation.<br>
 -- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_PAUSE` from @{Stopwatch.CallbackTypes} after creation.<br>
 -- @tfield[opt=nil] function onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_STOP` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] function onReset Callback called when the stopwatch is reset. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` from @{Stopwatch.CallbackTypes} after creation.<br>
+-- @tfield[opt=nil] function onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` from @{Stopwatch.CallbackTypes} after creation.<br>
 -- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_LAP` from @{Stopwatch.CallbackTypes} after creation.<br>
 -- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
 -- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. For same-frame interactions with onStop and onMaxTime, see @{Callbacks|Callbacks overview}.<br>
@@ -1878,7 +1881,7 @@ end
 -- @tfield "OnStart" ON_START Callback called when the stopwatch is started via @{Stopwatch:Start}.
 -- @tfield "OnPause" ON_PAUSE Callback called when the stopwatch is paused via @{Stopwatch:Pause}.
 -- @tfield "OnResume" ON_RESUME Callback called when the stopwatch is resumed via @{Stopwatch:Start} after being paused.
--- @tfield "OnReset" ON_RESET Callback called when the stopwatch is reset via @{Stopwatch:Reset}.
+-- @tfield "OnReset" ON_RESET Callback called after @{Stopwatch:Reset} resets elapsed time to zero, clears laps, and stops the stopwatch.
 -- @tfield "OnStop" ON_STOP Callback called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.
 -- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with `ON_INTERVAL` and `ON_STOP`, see @{Callbacks|Callbacks overview}.
 -- @tfield "OnInterval" ON_INTERVAL Callback called repeatedly at the configured interval while the stopwatch is ticking. The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}. For same-frame interactions with `ON_STOP` and `ON_MAX_TIME`, see @{Callbacks|Callbacks overview}.
