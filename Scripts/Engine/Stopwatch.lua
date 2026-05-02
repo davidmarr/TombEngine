@@ -54,12 +54,12 @@ local DEFAULT_PAUSED_COLOR = Color(255, 255, 0, 255)
 local DEFAULT_POSITION = Vec2(PercentToScreen(50, 90))
 local COMPARISON_OPS =
 {
-    function(a, b) return a == b end,   -- 0: equal
-    function(a, b) return a ~= b end,   -- 1: not equal
-    function(a, b) return a < b end,    -- 2: less than
-    function(a, b) return a <= b end,   -- 3: less than or equal
-    function(a, b) return a > b end,    -- 4: greater than
-    function(a, b) return a >= b end,   -- 5: greater than or equal
+    [0] = function(a, b) return a == b end,   -- 0: equal
+    [1] = function(a, b) return a ~= b end,   -- 1: not equal
+    [2] = function(a, b) return a < b end,    -- 2: less than
+    [3] = function(a, b) return a <= b end,   -- 3: less than or equal
+    [4] = function(a, b) return a > b end,    -- 4: greater than
+    [5] = function(a, b) return a >= b end,   -- 5: greater than or equal
 }
 local CALLBACKFIELDS = {
     { field = "onStart",    key = "OnStart"    },
@@ -137,7 +137,7 @@ local CheckOperator = function(operator)
 	if not TableHasValue(Stopwatch.Operators, operator) then
 		return nil
 	end
-    return COMPARISON_OPS[operator + 1]
+    return COMPARISON_OPS[operator]
 end
 
 local function CloneArray(values)
