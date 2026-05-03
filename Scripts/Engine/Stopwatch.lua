@@ -494,7 +494,8 @@ end
 
 ---
 -- Time values and frame precision.
--- @note FramePrecision
+-- @summaryonly
+-- @note "Frame precision"
 --
 -- Stopwatch is frame-based and updates at 30 FPS. Time arguments are written in seconds.
 -- Values are rounded to 2 decimal places before validation and conversion to game frames.
