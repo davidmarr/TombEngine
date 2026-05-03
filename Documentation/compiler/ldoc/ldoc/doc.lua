@@ -555,7 +555,7 @@ function Item.check_tag(tags,tag, value, modifiers)
          local identifier, rest = tools.extract_identifier(value)
          if identifier then
             local display_name, trailing_rest = tools.extract_quoted_name(rest)
-            if display_name then
+            if display_name and display_name ~= '' then
                tags:add('__ten_ldoc_display_name', display_name)
                value = identifier .. trailing_rest
             end
