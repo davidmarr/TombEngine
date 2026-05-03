@@ -179,11 +179,15 @@ local function CloneTimeTriggers(timeTriggers)
 end
 
 local function NormalizeTimeFormat(timeFormat, warningMessage)
-    timeFormat = timeFormat or DEFAULT_TIME_FORMAT
-    if timeFormat ~= DEFAULT_TIME_FORMAT then
-        timeFormat = CheckTimeFormat(timeFormat, warningMessage)
+    if IsNull(timeFormat) then
+        return DEFAULT_TIME_FORMAT
     end
-    return timeFormat
+
+    local normalizedTimeFormat = CheckTimeFormat(timeFormat, warningMessage)
+    if normalizedTimeFormat == false and timeFormat ~= false then
+        return DEFAULT_TIME_FORMAT
+    end
+    return normalizedTimeFormat
 end
 
 local function ValidatePositiveIndex(index, itemCount, invalidIndexMessage, logLevel)
@@ -306,6 +310,13 @@ local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, itemMe
         normalizedTriggers[i] = normalizedTrigger
     end
     return normalizedTriggers
+end
+
+local function DefaultIfNil(value, defaultValue)
+    if IsNull(value) then
+        return defaultValue
+    end
+    return value
 end
 
 local function validate(value, isValid, defaultValue, warningMsg)
@@ -988,7 +999,7 @@ function Stopwatch:GetElapsedTimeInSeconds()
 end
 
 --- Get the elapsed time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for the time string. See `timeFormat` for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for the time string. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.<br>
 -- @treturn string The formatted time string.
 -- @usage
 -- local timeFormat = { minutes = true, seconds = true}
@@ -1101,7 +1112,7 @@ function Stopwatch:GetMaxTimeInSeconds()
 end
 
 --- Get the maximum time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timeFormat The format to use for the time string. See `timeFormat` for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timeFormat The format to use for the time string. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.<br>
 -- @treturn[1] string The formatted maximum time string.
 -- @treturn[2] nil If no maximum time is set.
 -- @usage
@@ -1203,8 +1214,8 @@ end
 -- -- Example: Set position to default (50%, 90%)
 -- Stopwatch.Get("MyStopwatch"):SetPosition()
 function Stopwatch:SetPosition(x, y)
-    x = x or 50
-    y = y or 90
+    x = DefaultIfNil(x, 50)
+    y = DefaultIfNil(y, 90)
     if not IsNumber(x) or not IsNumber(y) then
         LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
     else
@@ -1232,7 +1243,7 @@ end
 -- -- Example: Set scale to default (1.0)
 -- Stopwatch.Get("MyStopwatch"):SetScale()
 function Stopwatch:SetScale(scale)
-    scale = scale or 1
+    scale = DefaultIfNil(scale, 1)
     if not IsNumber(scale) or scale <= 0 then
         LogMessage("Error in Stopwatch:SetScale(): scale must be a positive number.", logLevelError)
     else
@@ -1259,7 +1270,7 @@ end
 -- -- Example: Set color to default (white)
 -- Stopwatch.Get("MyStopwatch"):SetColor()
 function Stopwatch:SetColor(color)
-    color = color or DEFAULT_COLOR
+    color = DefaultIfNil(color, DEFAULT_COLOR)
     if not IsColor(color) then
         LogMessage("Error in Stopwatch:SetColor(): color must be a Color object.", logLevelError)
     else
@@ -1284,7 +1295,7 @@ end
 -- -- Example: Set paused color to default (yellow)
 -- Stopwatch.Get("MyStopwatch"):SetPausedColor()
 function Stopwatch:SetPausedColor(color)
-    color = color or DEFAULT_PAUSED_COLOR
+    color = DefaultIfNil(color, DEFAULT_PAUSED_COLOR)
     if not IsColor(color) then
         LogMessage("Error in Stopwatch:SetPausedColor(): color must be a Color object.", logLevelError)
         return
@@ -1389,7 +1400,7 @@ end
 
 --- Get the delta time of a specific lap formatted as a string.
 -- @tparam int index The 1-based lap index.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See `timeFormat` for details.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.
 -- @treturn[1] string The formatted delta time of the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
 -- @usage
@@ -1436,7 +1447,7 @@ end
 
 --- Get the cumulative split time at a specific lap formatted as a string.
 -- @tparam int index The 1-based lap index.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. See `timeFormat` for details.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.
 -- @treturn[1] string The formatted cumulative split time at the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
 -- @usage
@@ -1483,7 +1494,7 @@ function Stopwatch:GetAllLapTimesInSeconds()
 end
 
 --- Get all lap delta times as an array of formatted strings.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for each string. See `timeFormat` for details.
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for each string. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string for each lap. Invalid values log a warning and also use the default format. See `timeFormat` for details.
 -- @treturn table An array of strings, one per recorded lap. Returns an empty table if no laps have been recorded.
 -- @usage
 -- local fmt        = { seconds = true, centiseconds = true }
@@ -1916,6 +1927,7 @@ end
 -- @table timeFormat
 --
 -- You can display hours, minutes, seconds, and centiseconds. Like in Timer, the format can be a table or a boolean.
+-- In formatted getter methods, omitting the argument or passing `nil` uses that method's documented default format. Passing `false` returns an empty string. Invalid values log a warning and fall back to that method's documented default format.
 -- For more information see the <a href="Timer.html#timerFormat">Time format</a> section in the Timer documentation.
 -- <h3>Timer format examples:</h3>
 -- <pre><span class="comment">-- hours:mins:secs.centisecond</span>
