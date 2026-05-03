@@ -191,21 +191,6 @@ function M.extract_quoted_name (value)
    return name, rest
 end
 
-function M.make_identifier (value)
-   if type(value) ~= 'string' then
-      return nil
-   end
-   local words = {}
-   for word in M.strip(value):gmatch('[%w]+') do
-      words[#words + 1] = word:sub(1, 1):upper() .. word:sub(2)
-   end
-   local identifier = table.concat(words)
-   if identifier == '' then
-      return nil
-   end
-   return identifier
-end
-
 function M.identifier_list (ls)
    local ns = List()
    if type(ls) == 'string' then ls = List{ns} end

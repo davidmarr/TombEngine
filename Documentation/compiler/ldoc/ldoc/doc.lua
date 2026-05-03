@@ -552,12 +552,12 @@ function Item.check_tag(tags,tag, value, modifiers)
    local ttype = known_tags[tag]
    if ttype == TAG_TYPE then
       if not doc.project_level(tag) and not doc.section_tag(tag) then
-         local display_name, rest = tools.extract_quoted_name(value)
-         if display_name then
-            local identifier = tools.make_identifier(display_name)
-            if identifier then
+         local identifier, rest = tools.extract_identifier(value)
+         if identifier then
+            local display_name, trailing_rest = tools.extract_quoted_name(rest)
+            if display_name then
                tags:add('__ten_ldoc_display_name', display_name)
-               value = identifier .. rest
+               value = identifier .. trailing_rest
             end
          end
       end
