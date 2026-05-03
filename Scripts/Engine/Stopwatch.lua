@@ -1001,7 +1001,7 @@ end
 
 --- Set the elapsed time of the stopwatch.
 -- @tparam float newTime The new time for the stopwatch in seconds with 2 decimal places<br>
--- Negative values are not allowed. Time stays frame-based: the input is rounded to 2 decimal places before conversion to game frames. See @{FramePrecision|Time values and frame precision}.
+-- Negative values are not allowed; 0 is allowed. Time stays frame-based: the input is rounded to 2 decimal places before conversion to game frames. See @{FramePrecision|Time values and frame precision}.
 -- If an `ON_INTERVAL` callback from @{Stopwatch.CallbackTypes} is configured, the next interval callback is recalculated from the new elapsed time.
 -- The next due timeTrigger is also recalculated from the new elapsed time. Past triggers are not replayed immediately; moving time backwards re-arms future triggers from the new position.
 -- @usage
@@ -1393,7 +1393,7 @@ end
 -- @treturn[1] string The formatted delta time of the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
 -- @usage
--- local fmt    = { seconds = true, centiseconds = true }
+-- local fmt = { seconds = true, centiseconds = true }
 -- local lapStr = Stopwatch.Get("RaceTimer"):GetLapTimeFormatted(2, fmt)
 function Stopwatch:GetLapTimeFormatted(index, timeFormat)
     local laps = stopwatches[self.name].laps
