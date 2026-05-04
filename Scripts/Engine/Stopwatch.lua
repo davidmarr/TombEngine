@@ -509,8 +509,61 @@ end
 -- - `0.02` is rejected because it remains below `0.03`.
 
 ---
--- LevelFuncs and callback functions.
--- @note LevelFuncs
+-- Callbacks overview.
+-- @summaryonly
+-- @note Callbacks
+--
+-- A callback in this module is a function that Stopwatch calls for you when a specific event happens. The stopwatch is passed as the first argument, so the callback can read or change it.
+--
+-- The callback names used below, such as `ON_START` and `ON_INTERVAL`, are the constants listed in @{Stopwatch.CallbackTypes}.
+--
+-- You can assign callbacks when creating a stopwatch through @{StopwatchData}, or later with @{Stopwatch:SetCallback}.
+--
+-- Most callbacks are immediate: they run when the related stopwatch method actually causes that event.
+--
+-- `ON_INTERVAL` and `ON_MAX_TIME` are the exceptions. They are checked automatically while the stopwatch is active and not paused. `ON_INTERVAL` also needs a valid interval configured through `intervalTime` or @{Stopwatch:SetIntervalTime}.
+--
+-- Time triggers are a separate feature and are documented in @{TimeTriggers|Time triggers}. For the exact same-frame order between `ON_INTERVAL`, time triggers, and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}. For rules on how callback functions must be defined, see @{LevelFuncsRules|LevelFuncs rules}.
+--
+-- <br>General rules:
+--
+-- - `ON_START`, `ON_RESUME`, `ON_PAUSE`, `ON_STOP`, `ON_RESET`, and `ON_LAP` are tied to their corresponding stopwatch methods.
+--
+-- - When `ON_RESET` is called, elapsed time is already zero, laps are already cleared, and the stopwatch is inactive and unpaused.
+-- - When `ON_STOP` or `ON_MAX_TIME` is called, the stopwatch has already been marked inactive and unpaused.
+
+---
+-- Time triggers overview.
+-- @summaryonly
+-- @note TimeTriggers "Time triggers"
+-- 
+-- A time trigger is a one-shot event that runs a callback when the stopwatch reaches a specific time.
+--
+-- Each trigger stores:
+--
+-- - an `at` time
+-- - a callback function
+-- - optional extra arguments passed after the stopwatch argument
+--
+-- If extra arguments are used, they must be stored as an array table with consecutive numeric indices starting at 1, and they must not contain `nil` values.
+-- 
+-- The `at` value is rounded to 2 decimal places and then converted to the nearest frame at 30 FPS. In other words, time triggers work on the game's frame grid, not with exact floating-point timing.
+-- 
+-- Time trigger callbacks follow the same authoring rules described in @{LevelFuncsRules|LevelFuncs rules}.
+-- 
+-- Time triggers are checked automatically while the stopwatch is active and not paused. For ordering relative to `ON_INTERVAL` and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}.
+-- 
+-- If more than one timeTrigger falls on the same frame, they are called in the same order they appear in `timeTriggers`.
+-- 
+-- Time triggers fire once on the current timeline. If elapsed time is moved backwards, or the stopwatch is restarted from zero with `Stopwatch:Start(true)` or @{Stopwatch:Reset}, future timeTriggers are armed again from that new time.
+-- 
+-- If elapsed time is moved forward, past timeTriggers are not replayed; the next future trigger is recalculated from the new time.
+-- 
+
+---
+-- LevelFuncs rules.
+-- @summaryonly
+-- @note LevelFuncsRules "LevelFuncs rules"
 --
 -- Stopwatch callbacks and time trigger functions must be functions stored in `LevelFuncs`.
 -- Do not pass a local anonymous function directly.
@@ -535,60 +588,36 @@ end
 --    Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnRaceTimerLap)
 
 ---
--- Callbacks overview.
--- @note Callbacks
+-- Callback and trigger order.
+-- @summaryonly
+-- @note CallbackTriggerOrder "Callback and trigger order"
 --
--- A callback in this module is a LevelFunc assigned to a stopwatch event. When that event happens, the module calls the function and passes the stopwatch as its first argument.
+-- While the stopwatch is active and not paused, Stopwatch checks its scheduled events automatically.
 --
--- The callback names used below, such as `ON_START` and `ON_INTERVAL`, are the constants listed in @{Stopwatch.CallbackTypes}.
+-- If everything happens on the same frame, the order is:
 --
--- You can assign callbacks when creating a stopwatch through @{StopwatchData}, or later with @{Stopwatch:SetCallback}. Most callbacks are fired immediately by their corresponding public methods. `ON_INTERVAL` and `ON_MAX_TIME` are checked during the module's automatic frame update. For `ON_INTERVAL`, a valid interval must also be configured through `intervalTime` or @{Stopwatch:SetIntervalTime}. Time triggers are documented separately in @{TimeTriggers|Time triggers overview}.
+--    time ---->
+--    [frame update] -> [ON_INTERVAL] -> [timeTrigger 1] -> [timeTrigger 2] -> [ON_MAX_TIME]
 --
--- <br>General rules:
+-- If more than one timeTrigger is due on that frame, they run in the order they appear in `timeTriggers`.
 --
--- - `ON_START`, `ON_RESUME`, `ON_PAUSE`, `ON_STOP`, `ON_RESET`, and `ON_LAP` are fired by their corresponding methods when the required conditions are met.
+-- @{Stopwatch:Stop} does not force an extra `ON_INTERVAL` callback.
 --
--- - `ON_INTERVAL` is checked during the module's automatic frame update while the stopwatch is active and not paused.
--- - `ON_MAX_TIME` is checked during that same update after all due scheduled work for the frame. For full ordering with time triggers, see @{TimeTriggers|Time triggers overview}.
+-- If @{Stopwatch:Stop} is called on a frame where an interval is also due, `ON_INTERVAL` runs only if that frame had already been checked before @{Stopwatch:Stop} was called.
 --
--- - When `ON_RESET` is called, elapsed time is already zero, laps are already cleared, and the stopwatch is inactive and unpaused.
--- - When `ON_STOP` or `ON_MAX_TIME` is called, the stopwatch has already been marked inactive and unpaused.
+-- If @{Stopwatch:Stop} is called inside `ON_INTERVAL` or inside a timeTrigger callback, the current callback finishes first. Then `ON_STOP` is called, and the rest of that frame's scheduled work is skipped.
 --
--- <br>Same-frame overlap rules:
+--    time ---->
+--    [same frame] -> [current callback finishes] -> [ON_STOP] -> [rest skipped]
 --
--- - @{Stopwatch:Stop} does not force a final `ON_INTERVAL` callback.
+-- If a scheduled callback changes elapsed time or changes the time trigger setup during that same update, the remaining scheduled callbacks for that frame are skipped.
 --
--- - If the stopwatch is stopped on the same frame as an interval threshold, `ON_INTERVAL` runs only if the module update has already processed that frame before @{Stopwatch:Stop} is called.
---
--- - If @{Stopwatch:Stop} is called inside `ON_INTERVAL` or a timeTrigger callback, the current scheduled callback finishes first and then `ON_STOP` is called.
---
--- - If a scheduled callback changes the stopwatch timeline or trigger configuration during that update, the remaining scheduled callbacks for that update are skipped.
---
--- - Reaching maxTime stops the stopwatch and calls `ON_MAX_TIME`, but does not automatically call `ON_STOP`.
+-- Reaching `maxTime` stops the stopwatch and calls `ON_MAX_TIME`, but it does not also call `ON_STOP`.
 
 ---
--- Time triggers overview.
--- @note TimeTriggers
--- 
--- A time trigger is an absolute one-shot cue point on the stopwatch timeline. Each trigger stores an `at` time, a `LevelFuncs` callback, and optional positional extra arguments passed after the stopwatch parameter. When present, these extra arguments are stored as an array table with consecutive numeric indices starting at 1 and they must not contain `nil` values.
--- 
--- The `at` value is normalized by rounding to 2 decimal places and then converting it to the nearest frame at 30 FPS. In other words, runtime scheduling is frame-based, not floating-point exact.
--- 
--- Time triggers are checked during the module's automatic frame update after `ON_INTERVAL` and before `ON_MAX_TIME`.
--- 
--- If more than one timeTrigger falls on the same frame, they are called in the public order defined in `timeTriggers`.
--- 
--- Time triggers are one-shot on the current timeline. If elapsed time is moved backwards, or the stopwatch is restarted from zero with `Stopwatch:Start(true)` or @{Stopwatch:Reset}, future timeTriggers are re-armed from that new time.
--- 
--- If elapsed time is moved forward, past timeTriggers are not replayed retroactively; the next armed trigger is recalculated from the new time.
--- 
--- If a timeTrigger callback stops the stopwatch or changes the timeline or trigger configuration, the current callback finishes first and the remaining scheduled work for that update is skipped.
--- 
--- If `ON_INTERVAL`, timeTriggers, and `ON_MAX_TIME` happen on the same frame, the order is `ON_INTERVAL`, then due timeTriggers, then `ON_MAX_TIME`.
-
----
--- Save/load persistence.
--- @note Persistence
+-- Save/load behavior.
+-- @summaryonly
+-- @note Persistence "Save/load behavior"
 --
 -- Stopwatch state is stored in `LevelVars`, so elapsed time, active state, laps, callbacks, intervals, and time triggers are preserved by save/load.
 -- Display strings are recreated automatically after loading.
@@ -1521,12 +1550,12 @@ function Stopwatch:ClearLaps()
 end
 
 --- Set a callback function for a specific event.
--- The callback must be a `LevelFuncs` function. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts.
+-- The callback must be a `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.
 -- Each callback receives the stopwatch as its first argument, so it can use the public Stopwatch methods.
 -- For `ON_INTERVAL` in @{Stopwatch.CallbackTypes}, you can optionally pass the interval time in seconds as the third argument. If you omit it, the current interval is kept. If no interval is currently configured, the callback is stored but remains inactive until you set one with @{Stopwatch:SetIntervalTime}. If you pass `intervalTime`, it is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS), otherwise the `ON_INTERVAL` callback is not changed. See @{FramePrecision|Time values and frame precision}.
 -- For callback ordering and same-frame overlap rules, see @{Callbacks|Callbacks overview}.
 -- @tparam CallbackTypes callbackType The callback type.
--- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch)`.
+-- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch)`.
 -- @tparam[opt=nil] float intervalTime Only for `ON_INTERVAL`: the interval in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). If invalid, the `ON_INTERVAL` callback is not changed. Ignored for all other callback types.
 -- @usage
 -- LevelFuncs.OnLapRecorded = function(sw)
@@ -1634,7 +1663,7 @@ end
 -- If the new trigger resolves to the current frame or a past frame, it is stored but not fired retroactively.
 -- For ordering and overlap rules, see @{TimeTriggers|Time triggers overview}.
 -- @tparam float seconds The trigger time in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
--- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
+-- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
 -- @param ... Optional positional extra arguments stored with the trigger and passed to the callback when it fires. `nil` values are not allowed.
 -- @usage
 -- Stopwatch.Get("RaceTimer"):AddTimeTrigger(5.0, LevelFuncs.OpenDoor)
@@ -1912,16 +1941,16 @@ end
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is paused.
 -- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table textOptions A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
--- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_START` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESUME` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_PAUSE` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_STOP` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] function onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_LAP` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. For same-frame interactions with onStop and onMaxTime, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_START` from @{Stopwatch.CallbackTypes} after creation.<br>
+-- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESUME` from @{Stopwatch.CallbackTypes} after creation.<br>
+-- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_PAUSE` from @{Stopwatch.CallbackTypes} after creation.<br>
+-- @tfield[opt=nil] function onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_STOP` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] function onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` from @{Stopwatch.CallbackTypes} after creation.<br>
+-- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_LAP` from @{Stopwatch.CallbackTypes} after creation.<br>
+-- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. For same-frame interactions with onStop and onMaxTime, see @{Callbacks|Callbacks overview}.<br>
 -- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Values must be positive. They are rounded to 2 decimal places first; after rounding, they must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}. Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.<br>
--- @tfield[opt=nil] table timeTriggers An array of @{TimeTriggerData} entries. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if one entry is invalid, the whole list is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts.<br>
+-- @tfield[opt=nil] table timeTriggers An array of @{TimeTriggerData} entries. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if one entry is invalid, the whole list is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
 
 ---
 -- Time format configuration for displaying the stopwatch time.
@@ -1964,7 +1993,7 @@ end
 -- Data for one stopwatch time trigger.
 -- @table TimeTriggerData
 -- @tfield float at Trigger time in seconds. The value is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
--- @tfield function func Callback function defined in `LevelFuncs`. See @{Stopwatch.LevelFuncs|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
+-- @tfield function func Callback function defined in `LevelFuncs`. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
 -- @tfield[opt=nil] table args Optional array table of extra arguments stored with the trigger and passed after the stopwatch argument when the trigger fires. It must use consecutive numeric indices starting at 1 and must not contain `nil` values.
 
 ----
