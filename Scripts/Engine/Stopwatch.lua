@@ -696,7 +696,7 @@ Stopwatch.Create = function(stopwatchData)
         stopwatchEntry.maxTime = nil
     else
         local invalidValueMessage = CreateWarningPrefix .. "wrong value for maxTime for '" .. name .. "', it must be a positive number."
-        local tooSmallMessage = CreateWarningPrefix .. "maxTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
+        local tooSmallMessage = CreateWarningPrefix .. "maxTime too small for '" .. name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
         local frames = ValidateFrameSeconds(stopwatchData.maxTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if frames then
             stopwatchEntry.maxTime = Time(frames)
@@ -756,7 +756,7 @@ Stopwatch.Create = function(stopwatchData)
     end
     if not IsNull(stopwatchData.intervalTime) then
         local invalidValueMessage = CreateWarningPrefix .. "wrong value for intervalTime in '" .. name .. "', it must be a positive number."
-        local tooSmallMessage = CreateWarningPrefix .. "intervalTime too small for '" .. name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
+        local tooSmallMessage = CreateWarningPrefix .. "intervalTime too small for '" .. name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
         local frames = ValidateFrameSeconds(stopwatchData.intervalTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if frames then
             ApplyIntervalFrames(stopwatchEntry, frames)
@@ -1171,7 +1171,7 @@ function Stopwatch:SetMaxTime(maxTime)
         stopwatch.maxTime = nil
     else
         local invalidValueMessage = "Error in Stopwatch:SetMaxTime(): wrong value (" .. tostring(maxTime) .. ") for maxTime, it must be a positive number or nil."
-        local tooSmallMessage = "Error in Stopwatch:SetMaxTime(): maxTime too small for '" .. self.name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
+        local tooSmallMessage = "Error in Stopwatch:SetMaxTime(): maxTime too small for '" .. self.name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
         local frames = ValidateFrameSeconds(maxTime, invalidValueMessage, tooSmallMessage, logLevelError)
         if frames then
             InvalidateScheduledState(stopwatch)
@@ -1584,7 +1584,7 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
     local intervalFrames = nil
     if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and not IsNull(intervalTime) then
         local invalidValueMessage = "Warning in Stopwatch:SetCallback(): wrong value (" .. tostring(intervalTime) .. ") for intervalTime in '" .. self.name .. "', it must be a positive number. ON_INTERVAL callback will not be changed."
-        local tooSmallMessage = "Warning in Stopwatch:SetCallback(): intervalTime too small for '" .. self.name .. "' (rounds to 0 frames). Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS). ON_INTERVAL callback will not be changed."
+        local tooSmallMessage = "Warning in Stopwatch:SetCallback(): intervalTime too small for '" .. self.name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS). ON_INTERVAL callback will not be changed."
         intervalFrames = ValidateFrameSeconds(intervalTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if not intervalFrames then
             return
@@ -1648,7 +1648,7 @@ function Stopwatch:SetIntervalTime(seconds)
         stopwatch.callbacks["OnInterval"] = nil
     else
         local invalidValueMessage = "Warning in Stopwatch:SetIntervalTime(): wrong value (" .. tostring(seconds) .. ") for seconds, it must be a positive number."
-        local tooSmallMessage = "Warning in Stopwatch:SetIntervalTime(): interval too small (rounds to 0 frames). Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
+        local tooSmallMessage = "Warning in Stopwatch:SetIntervalTime(): interval too small for '" .. self.name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
         local frames = ValidateFrameSeconds(seconds, invalidValueMessage, tooSmallMessage, logLevelWarning)
         if frames then
             InvalidateScheduledState(stopwatch)
