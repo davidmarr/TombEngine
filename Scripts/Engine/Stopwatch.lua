@@ -1877,13 +1877,15 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
 
             if s.timeFormat and (s.active or reachedMaxTime) then
                 local ds = stopwatchStrings[name]
-                local frameCount = s.elapsedTime:GetFrameCount()
-                if s.lastRenderedFrameCount ~= frameCount then
-                    ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
-                    s.lastRenderedFrameCount = frameCount
+                if ds then
+                    local frameCount = s.elapsedTime:GetFrameCount()
+                    if s.lastRenderedFrameCount ~= frameCount then
+                        ds:SetKey(GenerateTimeFormattedString(s.elapsedTime, s.timeFormat))
+                        s.lastRenderedFrameCount = frameCount
+                    end
+                    ds:SetColor(s.paused and s.pausedColor or s.color)
+                    ShowString(ds, reachedMaxTime and 1 or FRAME_TIME, false)
                 end
-                ds:SetColor(s.paused and s.pausedColor or s.color)
-                ShowString(ds, reachedMaxTime and 1 or FRAME_TIME, false)
             end
             if reachedMaxTime then
                 -- maxTime is a hard stop with its own callback. It intentionally does
