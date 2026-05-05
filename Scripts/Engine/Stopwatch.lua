@@ -676,6 +676,7 @@ Stopwatch.Create = function(stopwatchData)
     local self = { name = stopwatchData.name }
     if stopwatches[stopwatchData.name] then
         LogMessage(CreateWarningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", logLevelWarning)
+        InvalidateScheduledState(stopwatches[stopwatchData.name])
         local ds = stopwatchStrings[stopwatchData.name]
         if ds then HideString(ds) end
         stopwatchStrings[stopwatchData.name] = nil
@@ -793,6 +794,7 @@ Stopwatch.Delete = function(name)
         LogMessage("Error in Stopwatch.Delete(): name must be a string.", logLevelError)
     else
         if stopwatches[name] then
+            InvalidateScheduledState(stopwatches[name])
             stopwatches[name] = nil
             local ds = stopwatchStrings[name]
             if ds then HideString(ds) end
@@ -1830,7 +1832,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                         for _ = lastCount + 1, currentCount do
                             proxy = EnsureStopwatchProxy(proxy, name)
                             fn(proxy)
-                            if s.scheduledDispatchInterrupted or not s.active or s.paused then
+                            if s.scheduledDispatchInterrupted or stopwatches[name] ~= s or not s.active or s.paused then
                                 break
                             end
                         end
@@ -1865,7 +1867,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
 
                         proxy = EnsureStopwatchProxy(proxy, name)
                         FireTimeTriggerCallback(triggerData, proxy)
-                        if s.scheduledDispatchInterrupted or not s.active or s.paused then
+                        if s.scheduledDispatchInterrupted or stopwatches[name] ~= s or not s.active or s.paused then
                             break
                         end
                     end
@@ -1873,9 +1875,10 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                 end
             end
 
-            local reachedMaxTime = not s.scheduledDispatchInterrupted and s.active and s.maxTime and s.elapsedTime >= s.maxTime
+            local instanceAlive = stopwatches[name] == s
+            local reachedMaxTime = instanceAlive and not s.scheduledDispatchInterrupted and s.active and s.maxTime and s.elapsedTime >= s.maxTime
 
-            if s.timeFormat and (s.active or reachedMaxTime) then
+            if instanceAlive and s.timeFormat and (s.active or reachedMaxTime) then
                 local ds = stopwatchStrings[name]
                 if ds then
                     local frameCount = s.elapsedTime:GetFrameCount()
