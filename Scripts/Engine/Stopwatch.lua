@@ -702,7 +702,7 @@ Stopwatch.Create = function(stopwatchData)
 
     -- check timeFormat
     local timeFormat = stopwatchData.timeFormat or false
-    stopwatchEntry.timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch.Create(): wrong value for timeFormat, timeFormat for '".. name .."' stopwatch will be set to false")
+        stopwatchEntry.timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch.Create(): wrong value for timeFormat, timeFormat for '" .. name .. "' stopwatch will be set to false")
 
 
     -- check maxTime
@@ -720,23 +720,23 @@ Stopwatch.Create = function(stopwatchData)
     end
 
     -- check position
-    stopwatchEntry.position = validate(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '".. name .."', set to default")
+        stopwatchEntry.position = validate(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '" .. name .. "', set to default")
     if stopwatchEntry.position ~= DEFAULT_POSITION then
         stopwatchEntry.position = Vec2(PercentToScreen(stopwatchData.position.x, stopwatchData.position.y))
     end
 
     -- check scale
-    stopwatchEntry.scale = validate(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '".. name .."', set to 1")
+        stopwatchEntry.scale = validate(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '" .. name .. "', set to 1")
 
     -- check color
-    stopwatchEntry.color = validate(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '".. name .."', set to default")
+        stopwatchEntry.color = validate(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '" .. name .. "', set to default")
 
     -- check pausedColor
-    stopwatchEntry.pausedColor = validate(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '".. name .."', set to default")
+        stopwatchEntry.pausedColor = validate(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '" .. name .. "', set to default")
 
     -- check textOptions
-    local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '".. name .."' will use default textOptions."
-    local warning2Message = CreateWarningPrefix .. "all values in textOptions must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. name .."' will use default textOptions."
+        local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '" .. name .. "' will use default textOptions."
+        local warning2Message = CreateWarningPrefix .. "all values in textOptions must be of type TEN.Strings.DisplayStringOption. Stopwatch '" .. name .. "' will use default textOptions."
     local textOptions = CheckTextOptions(stopwatchData.textOptions, warning1Message, warning2Message)
     stopwatchEntry.textOptions = textOptions
 
@@ -1466,8 +1466,8 @@ function Stopwatch:SetTextOptions(optionsTable)
     if not stopwatch then
         return
     end
-    local warning1Message = "Warning in Stopwatch:SetTextOptions(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default textOptions."
-    local warning2Message = "Warning in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default textOptions."
+    local warning1Message = "Warning in Stopwatch:SetTextOptions(): optionsTable must be a table. Stopwatch '" .. self.name .. "' will use default textOptions."
+    local warning2Message = "Warning in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '" .. self.name .. "' will use default textOptions."
     local newOptions = CheckTextOptions(optionsTable, warning1Message, warning2Message)
     stopwatch.textOptions = newOptions
     local ds = stopwatchStrings[self.name]
