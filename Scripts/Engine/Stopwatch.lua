@@ -365,7 +365,9 @@ end
 
 local function FireCallback(s, callbackType, proxy)
     local fn = s.callbacks[callbackType]
-    if fn then fn(proxy) end
+    if fn then
+        fn(proxy)
+    end
 end
 
 local function EnsureStopwatchProxy(proxy, name)
@@ -687,7 +689,9 @@ Stopwatch.Create = function(stopwatchData)
         LogMessage(CreateWarningPrefix .. "a stopwatch with name '" .. stopwatchData.name .. "' already exists; overwriting it with a new one...", logLevelWarning)
         InvalidateScheduledState(stopwatches[stopwatchData.name])
         local ds = stopwatchStrings[stopwatchData.name]
-        if ds then HideString(ds) end
+        if ds then
+            HideString(ds)
+        end
         stopwatchStrings[stopwatchData.name] = nil
     end
     -- Stopwatch objects are name-only proxies, so overwriting by name replaces the
@@ -806,7 +810,9 @@ Stopwatch.Delete = function(name)
             InvalidateScheduledState(stopwatches[name])
             stopwatches[name] = nil
             local ds = stopwatchStrings[name]
-            if ds then HideString(ds) end
+            if ds then
+                HideString(ds)
+            end
             stopwatchStrings[name] = nil
         else
             LogMessage("Warning in Stopwatch.Delete(): no stopwatch found with name '" .. tostring(name) .. "'.", logLevelWarning)
@@ -1004,7 +1010,9 @@ function Stopwatch:Reset()
     stopwatch.lastRenderedFrameCount = ZERO:GetFrameCount()
     stopwatch.pendingStopCallback = false
     local ds = stopwatchStrings[self.name]
-    if ds then HideString(ds) end
+    if ds then
+        HideString(ds)
+    end
     FireCallback(stopwatch, "OnReset", CreateStopwatchProxy(self.name))
 end
 
@@ -1321,7 +1329,9 @@ function Stopwatch:SetPosition(x, y)
         local newPos = Vec2(PercentToScreen(x, y))
         stopwatch.position = newPos
         local ds = stopwatchStrings[self.name]
-        if ds then ds:SetPosition(newPos) end
+        if ds then
+            ds:SetPosition(newPos)
+        end
     end
 end
 
@@ -1356,7 +1366,9 @@ function Stopwatch:SetScale(scale)
     else
         stopwatch.scale = scale
         local ds = stopwatchStrings[self.name]
-        if ds then ds:SetScale(scale) end
+        if ds then
+            ds:SetScale(scale)
+        end
     end
 end
 
@@ -1459,7 +1471,9 @@ function Stopwatch:SetTextOptions(optionsTable)
     local newOptions = CheckTextOptions(optionsTable, warning1Message, warning2Message)
     stopwatch.textOptions = newOptions
     local ds = stopwatchStrings[self.name]
-    if ds then ds:SetFlags(newOptions) end
+    if ds then
+        ds:SetFlags(newOptions)
+    end
 end
 
 --- Record a lap and return the delta time of the completed segment.
