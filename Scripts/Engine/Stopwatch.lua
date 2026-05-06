@@ -1,4 +1,4 @@
------<style>table.function_list td.name {min-width: 395px;} .section-header.has-description {border-top: 1px solid #ccc; padding-top: 1em;}</style>
+-----<style>table.function_list td.name {min-width: 400px;}</style>
 --- Frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.
 --
 -- Require the module before using Stopwatch in a script:
