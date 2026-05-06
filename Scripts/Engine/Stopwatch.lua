@@ -488,7 +488,7 @@ local function SyncDisplayText(stopwatch, name)
     end
 end
 
-local function GetStopwatchForRead(name, callerName)
+local function GetStopwatchOrWarn(name, callerName)
     local stopwatch = stopwatches[name]
     if stopwatch then
         return stopwatch
@@ -888,7 +888,10 @@ end
 -- -- Example 2: Start the stopwatch and reset its time to zero
 -- Stopwatch.Get("MyStopwatch"):Start(true)
 function Stopwatch:Start(reset)
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "Start")
+    if not stopwatch then
+        return
+    end
     local wasActive = stopwatch.active
     local wasPaused = stopwatch.paused
     if IsNull(reset) then
@@ -921,7 +924,10 @@ end
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):Pause()
 function Stopwatch:Pause()
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "Pause")
+    if not stopwatch then
+        return
+    end
     if stopwatch.active and not stopwatch.paused then
         InterruptScheduledDispatch(stopwatch)
         stopwatch.paused = true
@@ -940,7 +946,10 @@ end
 -- -- Example 2: Stop the stopwatch and keep the display visible for 2 seconds
 -- Stopwatch.Get("MyStopwatch"):Stop(2.0)
 function Stopwatch:Stop(displayTime)
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "Stop")
+    if not stopwatch then
+        return
+    end
     local wasActive = stopwatch.active
     stopwatch.active = false
     stopwatch.paused = false
@@ -981,7 +990,10 @@ end
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):Reset()
 function Stopwatch:Reset()
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "Reset")
+    if not stopwatch then
+        return
+    end
     InvalidateScheduledState(stopwatch)
     stopwatch.elapsedTime = ZERO
     stopwatch.active = false
@@ -1004,7 +1016,7 @@ end
 --     TEN.View.SetPostProcessMode(TEN.View.PostProcessMode.EXCLUSION)
 -- end
 function Stopwatch:IsActive()
-    local stopwatch = GetStopwatchForRead(self.name, "IsActive")
+    local stopwatch = GetStopwatchOrWarn(self.name, "IsActive")
     return stopwatch and stopwatch.active or false
 end
 
@@ -1013,7 +1025,7 @@ end
 -- @usage
 -- local isPaused = Stopwatch.Get("MyStopwatch"):IsPaused()
 function Stopwatch:IsPaused()
-    local stopwatch = GetStopwatchForRead(self.name, "IsPaused")
+    local stopwatch = GetStopwatchOrWarn(self.name, "IsPaused")
     return stopwatch and stopwatch.paused or false
 end
 
@@ -1021,7 +1033,7 @@ end
 -- Returns `true` if the stopwatch is active and not paused.
 -- @treturn bool True if the stopwatch is ticking, false otherwise.
 function Stopwatch:IsTicking()
-    local stopwatch = GetStopwatchForRead(self.name, "IsTicking")
+    local stopwatch = GetStopwatchOrWarn(self.name, "IsTicking")
     return stopwatch and stopwatch.active and not stopwatch.paused or false
 end
 
@@ -1030,7 +1042,7 @@ end
 -- @usage
 -- local elapsedTime = Stopwatch.Get("MyStopwatch"):GetElapsedTime()
 function Stopwatch:GetElapsedTime()
-    local stopwatch = GetStopwatchForRead(self.name, "GetElapsedTime")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetElapsedTime")
     if stopwatch then
         return stopwatch.elapsedTime
     end
@@ -1042,7 +1054,7 @@ end
 -- @usage
 -- local elapsedTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetElapsedTimeInSeconds()
 function Stopwatch:GetElapsedTimeInSeconds()
-    local stopwatch = GetStopwatchForRead(self.name, "GetElapsedTimeInSeconds")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetElapsedTimeInSeconds")
     if stopwatch then
         return FramesToSeconds(stopwatch.elapsedTime:GetFrameCount())
     end
@@ -1056,7 +1068,7 @@ end
 -- local timeFormat = { minutes = true, seconds = true}
 -- local elapsedTimeFormatted = Stopwatch.Get("MyStopwatch"):GetElapsedTimeFormatted(timeFormat)
 function Stopwatch:GetElapsedTimeFormatted(timeFormat)
-    local stopwatch = GetStopwatchForRead(self.name, "GetElapsedTimeFormatted")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetElapsedTimeFormatted")
     if stopwatch then
         timeFormat = NormalizeTimeFormat(timeFormat, "Warning in Stopwatch:GetElapsedTimeFormatted(): wrong value for timeFormat, default format will be used.")
         return GenerateTimeFormattedString(stopwatch.elapsedTime, timeFormat)
@@ -1072,10 +1084,13 @@ end
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetElapsedTime(30.5) -- Set time to 30.5 seconds
 function Stopwatch:SetElapsedTime(newTime)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetElapsedTime")
+    if not stopwatch then
+        return
+    end
     if not IsNumber(newTime) or newTime < 0 then
         LogMessage("Error in Stopwatch:SetElapsedTime(): wrong value (" .. tostring(newTime) .. ") for newTime, it must be a non-negative number.", logLevelError)
     else
-        local stopwatch = stopwatches[self.name]
         InvalidateScheduledState(stopwatch)
         stopwatch.elapsedTime = SecondsToTime(newTime)
         -- Manual time jumps must immediately rebase interval scheduling and, if shown,
@@ -1138,7 +1153,7 @@ function Stopwatch:IfElapsedTimeIs(operator, seconds)
         LogMessage("Error in Stopwatch:IfElapsedTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
-    local stopwatch = GetStopwatchForRead(self.name, "IfElapsedTimeIs")
+    local stopwatch = GetStopwatchOrWarn(self.name, "IfElapsedTimeIs")
     if not stopwatch then
         return false
     end
@@ -1152,7 +1167,7 @@ end
 -- @usage
 -- local maxTime = Stopwatch.Get("MyStopwatch"):GetMaxTime()
 function Stopwatch:GetMaxTime()
-    local stopwatch = GetStopwatchForRead(self.name, "GetMaxTime")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetMaxTime")
     if stopwatch then
         return stopwatch.maxTime
     end
@@ -1165,7 +1180,7 @@ end
 -- @usage
 -- local maxTimeInSeconds = Stopwatch.Get("MyStopwatch"):GetMaxTimeInSeconds()
 function Stopwatch:GetMaxTimeInSeconds()
-    local stopwatch = GetStopwatchForRead(self.name, "GetMaxTimeInSeconds")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetMaxTimeInSeconds")
     if not stopwatch then
         return nil
     end
@@ -1184,7 +1199,7 @@ end
 -- local timeFormat = { minutes = true, seconds = true}
 -- local maxTimeFormatted = Stopwatch.Get("MyStopwatch"):GetMaxTimeFormatted(timeFormat)
 function Stopwatch:GetMaxTimeFormatted(timeFormat)
-    local stopwatch = GetStopwatchForRead(self.name, "GetMaxTimeFormatted")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetMaxTimeFormatted")
     if not stopwatch then
         return nil
     end
@@ -1204,7 +1219,10 @@ end
 -- -- Example: Remove max time limit
 -- Stopwatch.Get("MyStopwatch"):SetMaxTime()
 function Stopwatch:SetMaxTime(maxTime)
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetMaxTime")
+    if not stopwatch then
+        return
+    end
     if IsNull(maxTime) then
         InvalidateScheduledState(stopwatch)
         stopwatch.maxTime = nil
@@ -1228,7 +1246,7 @@ end
 --     -- Do something else if no max time is set
 -- end
 function Stopwatch:HasMaxTime()
-    local stopwatch = GetStopwatchForRead(self.name, "HasMaxTime")
+    local stopwatch = GetStopwatchOrWarn(self.name, "HasMaxTime")
     return stopwatch and stopwatch.maxTime ~= nil or false
 end
 
@@ -1256,7 +1274,7 @@ function Stopwatch:IfMaxTimeIs(operator, seconds)
         LogMessage("Error in Stopwatch:IfMaxTimeIs(): wrong value (" .. tostring(seconds) .. ") for seconds in '" .. self.name .. "' stopwatch", logLevelError)
         return false
     end
-    local stopwatch = GetStopwatchForRead(self.name, "IfMaxTimeIs")
+    local stopwatch = GetStopwatchOrWarn(self.name, "IfMaxTimeIs")
     if not stopwatch then
         return false
     end
@@ -1273,7 +1291,7 @@ end
 -- @usage
 -- local position = Stopwatch.Get("MyStopwatch"):GetPosition()
 function Stopwatch:GetPosition()
-    local stopwatch = GetStopwatchForRead(self.name, "GetPosition")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetPosition")
     if stopwatch then
         local position = stopwatch.position
         return Vec2(ScreenToPercent(position.x, position.y))
@@ -1293,11 +1311,15 @@ end
 function Stopwatch:SetPosition(x, y)
     x = DefaultIfNil(x, 50)
     y = DefaultIfNil(y, 90)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetPosition")
+    if not stopwatch then
+        return
+    end
     if not IsNumber(x) or not IsNumber(y) then
         LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
     else
         local newPos = Vec2(PercentToScreen(x, y))
-        stopwatches[self.name].position = newPos
+        stopwatch.position = newPos
         local ds = stopwatchStrings[self.name]
         if ds then ds:SetPosition(newPos) end
     end
@@ -1308,7 +1330,7 @@ end
 -- @usage
 -- local scale = Stopwatch.Get("MyStopwatch"):GetScale()
 function Stopwatch:GetScale()
-    local stopwatch = GetStopwatchForRead(self.name, "GetScale")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetScale")
     if stopwatch then
         return stopwatch.scale
     end
@@ -1325,10 +1347,14 @@ end
 -- Stopwatch.Get("MyStopwatch"):SetScale()
 function Stopwatch:SetScale(scale)
     scale = DefaultIfNil(scale, 1)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetScale")
+    if not stopwatch then
+        return
+    end
     if not IsNumber(scale) or scale <= 0 then
         LogMessage("Error in Stopwatch:SetScale(): scale must be a positive number.", logLevelError)
     else
-        stopwatches[self.name].scale = scale
+        stopwatch.scale = scale
         local ds = stopwatchStrings[self.name]
         if ds then ds:SetScale(scale) end
     end
@@ -1339,7 +1365,7 @@ end
 -- @usage
 -- local color = Stopwatch.Get("MyStopwatch"):GetColor()
 function Stopwatch:GetColor()
-    local stopwatch = GetStopwatchForRead(self.name, "GetColor")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetColor")
     if stopwatch then
         return stopwatch.color
     end
@@ -1356,10 +1382,14 @@ end
 -- Stopwatch.Get("MyStopwatch"):SetColor()
 function Stopwatch:SetColor(color)
     color = DefaultIfNil(color, DEFAULT_COLOR)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetColor")
+    if not stopwatch then
+        return
+    end
     if not IsColor(color) then
         LogMessage("Error in Stopwatch:SetColor(): color must be a Color object.", logLevelError)
     else
-        stopwatches[self.name].color = color
+        stopwatch.color = color
     end
 end
 
@@ -1368,7 +1398,7 @@ end
 -- @usage
 -- local pausedColor = Stopwatch.Get("MyStopwatch"):GetPausedColor()
 function Stopwatch:GetPausedColor()
-    local stopwatch = GetStopwatchForRead(self.name, "GetPausedColor")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetPausedColor")
     if stopwatch then
         return stopwatch.pausedColor
     end
@@ -1385,11 +1415,15 @@ end
 -- Stopwatch.Get("MyStopwatch"):SetPausedColor()
 function Stopwatch:SetPausedColor(color)
     color = DefaultIfNil(color, DEFAULT_PAUSED_COLOR)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetPausedColor")
+    if not stopwatch then
+        return
+    end
     if not IsColor(color) then
         LogMessage("Error in Stopwatch:SetPausedColor(): color must be a Color object.", logLevelError)
         return
     end
-    stopwatches[self.name].pausedColor = color
+    stopwatch.pausedColor = color
 end
 
 --- Get the text options used by the stopwatch display.
@@ -1398,7 +1432,7 @@ end
 -- @usage
 -- local textOptions = Stopwatch.Get("MyStopwatch"):GetTextOptions()
 function Stopwatch:GetTextOptions()
-    local stopwatch = GetStopwatchForRead(self.name, "GetTextOptions")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetTextOptions")
     if stopwatch then
         local textOptions = stopwatch.textOptions or DEFAULT_TEXT_OPTIONS
         return CloneArray(textOptions)
@@ -1416,10 +1450,13 @@ end
 -- -- Example: Set text options to default (center, shadow, vertical center)
 -- Stopwatch.Get("MyStopwatch"):SetTextOptions()
 function Stopwatch:SetTextOptions(optionsTable)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetTextOptions")
+    if not stopwatch then
+        return
+    end
     local warning1Message = "Warning in Stopwatch:SetTextOptions(): optionsTable must be a table. Stopwatch '".. self.name .."' will use default textOptions."
     local warning2Message = "Warning in Stopwatch:SetTextOptions(): all values in optionsTable must be of type TEN.Strings.DisplayStringOption. Stopwatch '".. self.name .."' will use default textOptions."
     local newOptions = CheckTextOptions(optionsTable, warning1Message, warning2Message)
-    local stopwatch = stopwatches[self.name]
     stopwatch.textOptions = newOptions
     local ds = stopwatchStrings[self.name]
     if ds then ds:SetFlags(newOptions) end
@@ -1441,7 +1478,10 @@ end
 --     TEN.Util.PrintLog("Checkpoint " .. lapIndex .. ": " .. sw:GetLapTimeFormatted(lapIndex, fmt), TEN.Util.LogLevel.INFO)
 -- end
 function Stopwatch:Lap()
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "Lap")
+    if not stopwatch then
+        return nil
+    end
     if not stopwatch.active then
         LogMessage("Warning in Stopwatch:Lap(): stopwatch '" .. self.name .. "' is not active.", logLevelWarning)
         return nil
@@ -1458,7 +1498,7 @@ end
 -- @usage
 -- local count = Stopwatch.Get("RaceTimer"):GetLapCount()
 function Stopwatch:GetLapCount()
-    local stopwatch = GetStopwatchForRead(self.name, "GetLapCount")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetLapCount")
     if stopwatch then
         return #stopwatch.laps
     end
@@ -1473,7 +1513,7 @@ end
 -- @usage
 -- local lapTime = Stopwatch.Get("RaceTimer"):GetLapTime(2)
 function Stopwatch:GetLapTime(index)
-    local stopwatch = GetStopwatchForRead(self.name, "GetLapTime")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetLapTime")
     if not stopwatch then
         return nil
     end
@@ -1491,7 +1531,7 @@ end
 -- @usage
 -- local lapSec = Stopwatch.Get("RaceTimer"):GetLapTimeInSeconds(2)
 function Stopwatch:GetLapTimeInSeconds(index)
-    local stopwatch = GetStopwatchForRead(self.name, "GetLapTimeInSeconds")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetLapTimeInSeconds")
     if not stopwatch then
         return nil
     end
@@ -1511,7 +1551,7 @@ end
 -- local fmt = { seconds = true, centiseconds = true }
 -- local lapStr = Stopwatch.Get("RaceTimer"):GetLapTimeFormatted(2, fmt)
 function Stopwatch:GetLapTimeFormatted(index, timeFormat)
-    local stopwatch = GetStopwatchForRead(self.name, "GetLapTimeFormatted")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetLapTimeFormatted")
     if not stopwatch then
         return nil
     end
@@ -1532,7 +1572,7 @@ end
 -- @usage
 -- local split = Stopwatch.Get("RaceTimer"):GetSplitTime(2)
 function Stopwatch:GetSplitTime(index)
-    local stopwatch = GetStopwatchForRead(self.name, "GetSplitTime")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetSplitTime")
     if not stopwatch then
         return nil
     end
@@ -1550,7 +1590,7 @@ end
 -- @usage
 -- local splitSec = Stopwatch.Get("RaceTimer"):GetSplitTimeInSeconds(2)
 function Stopwatch:GetSplitTimeInSeconds(index)
-    local stopwatch = GetStopwatchForRead(self.name, "GetSplitTimeInSeconds")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetSplitTimeInSeconds")
     if not stopwatch then
         return nil
     end
@@ -1569,7 +1609,7 @@ end
 -- @usage
 -- local splitStr = Stopwatch.Get("RaceTimer"):GetSplitTimeFormatted(2)
 function Stopwatch:GetSplitTimeFormatted(index, timeFormat)
-    local stopwatch = GetStopwatchForRead(self.name, "GetSplitTimeFormatted")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetSplitTimeFormatted")
     if not stopwatch then
         return nil
     end
@@ -1589,7 +1629,7 @@ end
 --     TEN.Util.PrintLog("Lap " .. i .. ": " .. t:GetFrameCount() .. " frames", TEN.Util.LogLevel.INFO)
 -- end
 function Stopwatch:GetAllLapTimes()
-    local stopwatch = GetStopwatchForRead(self.name, "GetAllLapTimes")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetAllLapTimes")
     if not stopwatch then
         return nil
     end
@@ -1609,7 +1649,7 @@ end
 --     TEN.Util.PrintLog("Lap " .. i .. ": " .. s .. "s", TEN.Util.LogLevel.INFO)
 -- end
 function Stopwatch:GetAllLapTimesInSeconds()
-    local stopwatch = GetStopwatchForRead(self.name, "GetAllLapTimesInSeconds")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetAllLapTimesInSeconds")
     if not stopwatch then
         return nil
     end
@@ -1631,7 +1671,7 @@ end
 --     TEN.Util.PrintLog("Lap " .. i .. ": " .. s, TEN.Util.LogLevel.INFO)
 -- end
 function Stopwatch:GetAllLapTimesFormatted(timeFormat)
-    local stopwatch = GetStopwatchForRead(self.name, "GetAllLapTimesFormatted")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetAllLapTimesFormatted")
     if not stopwatch then
         return nil
     end
@@ -1648,7 +1688,11 @@ end
 -- @usage
 -- Stopwatch.Get("RaceTimer"):ClearLaps()
 function Stopwatch:ClearLaps()
-    stopwatches[self.name].laps = {}
+    local stopwatch = GetStopwatchOrWarn(self.name, "ClearLaps")
+    if not stopwatch then
+        return
+    end
+    stopwatch.laps = {}
 end
 
 --- Set a callback function for a specific event.
@@ -1674,6 +1718,10 @@ end
 -- -- ON_INTERVAL: callback called every frame (~0.03s)
 -- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_INTERVAL, LevelFuncs.OnTick, 0.03)
 function Stopwatch:SetCallback(callbackType, func, intervalTime)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetCallback")
+    if not stopwatch then
+        return
+    end
     if not TableHasValue(Stopwatch.CallbackTypes, callbackType) then
         LogMessage("Error in Stopwatch:SetCallback(): invalid callbackType for '" .. self.name .. "'. Use a Stopwatch.CallbackTypes constant.", logLevelError)
         return
@@ -1682,7 +1730,6 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
         LogMessage("Error in Stopwatch:SetCallback(): func must be a LevelFunc for '" .. self.name .. "'.", logLevelError)
         return
     end
-    local stopwatch = stopwatches[self.name]
     local intervalFrames = nil
     if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and not IsNull(intervalTime) then
         local invalidValueMessage = "Warning in Stopwatch:SetCallback(): wrong value (" .. tostring(intervalTime) .. ") for intervalTime in '" .. self.name .. "', it must be a positive number. ON_INTERVAL callback will not be changed."
@@ -1708,11 +1755,14 @@ end
 -- @usage
 -- Stopwatch.Get("RaceTimer"):RemoveCallback(Stopwatch.CallbackTypes.ON_LAP)
 function Stopwatch:RemoveCallback(callbackType)
+    local stopwatch = GetStopwatchOrWarn(self.name, "RemoveCallback")
+    if not stopwatch then
+        return
+    end
     if not TableHasValue(Stopwatch.CallbackTypes, callbackType) then
         LogMessage("Error in Stopwatch:RemoveCallback(): invalid callbackType for '" .. self.name .. "'. Use a Stopwatch.CallbackTypes constant.", logLevelError)
         return
     end
-    local stopwatch = stopwatches[self.name]
     stopwatch.callbacks[callbackType] = nil
 end
 
@@ -1722,7 +1772,7 @@ end
 -- @usage
 -- local interval = Stopwatch.Get("RaceTimer"):GetIntervalTime()
 function Stopwatch:GetIntervalTime()
-    local stopwatch = GetStopwatchForRead(self.name, "GetIntervalTime")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetIntervalTime")
     if not stopwatch then
         return nil
     end
@@ -1744,7 +1794,10 @@ end
 -- -- Remove interval and its callback
 -- Stopwatch.Get("RaceTimer"):SetIntervalTime()
 function Stopwatch:SetIntervalTime(seconds)
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetIntervalTime")
+    if not stopwatch then
+        return
+    end
     if IsNull(seconds) then
         -- Removing the schedule also removes OnInterval; a dormant interval callback
         -- without a schedule tends to be misleading during debugging.
@@ -1775,6 +1828,10 @@ end
 -- Stopwatch.Get("RaceTimer"):AddTimeTrigger(5.0, LevelFuncs.OpenDoor)
 -- Stopwatch.Get("RaceTimer"):AddTimeTrigger(10.0, LevelFuncs.PlayVoiceLine, "Keep going!")
 function Stopwatch:AddTimeTrigger(seconds, func, ...)
+    local stopwatch = GetStopwatchOrWarn(self.name, "AddTimeTrigger")
+    if not stopwatch then
+        return
+    end
     local triggerData = {
         at = seconds,
         func = func,
@@ -1802,7 +1859,6 @@ function Stopwatch:AddTimeTrigger(seconds, func, ...)
         return
     end
 
-    local stopwatch = stopwatches[self.name]
     InvalidateScheduledState(stopwatch)
     insert(stopwatch.timeTriggers, normalizedTrigger)
     RebuildTimeTriggers(stopwatch)
@@ -1819,6 +1875,10 @@ end
 --     { at = 6.5, func = LevelFuncs.ShowHint, args = { "Second wave incoming" } },
 -- })
 function Stopwatch:SetTimeTriggers(triggers)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTriggers")
+    if not stopwatch then
+        return
+    end
     local normalizedTriggers = NormalizeTimeTriggerList(
         triggers,
         "Error in Stopwatch:SetTimeTriggers(): timeTriggers must be an array table for '" .. self.name .. "'.",
@@ -1830,7 +1890,6 @@ function Stopwatch:SetTimeTriggers(triggers)
         return
     end
 
-    local stopwatch = stopwatches[self.name]
     InvalidateScheduledState(stopwatch)
     stopwatch.timeTriggers = normalizedTriggers
     RebuildTimeTriggers(stopwatch)
@@ -1844,7 +1903,7 @@ end
 -- @usage
 -- local triggers = Stopwatch.Get("RaceTimer"):GetTimeTriggers()
 function Stopwatch:GetTimeTriggers()
-    local stopwatch = GetStopwatchForRead(self.name, "GetTimeTriggers")
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetTimeTriggers")
     if stopwatch then
         return CloneTimeTriggers(stopwatch.timeTriggers or {})
     end
@@ -1859,7 +1918,10 @@ end
 -- @usage
 -- Stopwatch.Get("RaceTimer"):SetTimeTrigger(2, { at = 8.0, func = LevelFuncs.PlayAlarm })
 function Stopwatch:SetTimeTrigger(index, triggerData)
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTrigger")
+    if not stopwatch then
+        return
+    end
     local triggerCount = #stopwatch.timeTriggers
     if not ValidatePositiveIndex(index, triggerCount, "Error in Stopwatch:SetTimeTrigger(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (trigger count: " .. tostring(triggerCount) .. ").", logLevelError) then
         return
@@ -1884,7 +1946,10 @@ end
 -- @usage
 -- Stopwatch.Get("RaceTimer"):RemoveTimeTrigger(1)
 function Stopwatch:RemoveTimeTrigger(index)
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "RemoveTimeTrigger")
+    if not stopwatch then
+        return
+    end
     local triggerCount = #stopwatch.timeTriggers
     if not ValidatePositiveIndex(index, triggerCount, "Error in Stopwatch:RemoveTimeTrigger(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (trigger count: " .. tostring(triggerCount) .. ").", logLevelError) then
         return
@@ -1899,7 +1964,10 @@ end
 -- @usage
 -- Stopwatch.Get("RaceTimer"):ClearTimeTriggers()
 function Stopwatch:ClearTimeTriggers()
-    local stopwatch = stopwatches[self.name]
+    local stopwatch = GetStopwatchOrWarn(self.name, "ClearTimeTriggers")
+    if not stopwatch then
+        return
+    end
     InvalidateScheduledState(stopwatch)
     stopwatch.timeTriggers = {}
     RebuildTimeTriggers(stopwatch)
