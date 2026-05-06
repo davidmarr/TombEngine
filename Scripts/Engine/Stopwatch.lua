@@ -520,6 +520,34 @@ end
 -- - `0.02` is rejected because it remains below `0.03`.
 
 ---
+-- Laps and splits.
+-- @summaryonly
+-- @note LapsAndSplits "Laps and splits"
+--
+-- A lap is a recorded checkpoint on the stopwatch timeline.
+-- From each recorded lap, Stopwatch exposes two related values:
+--
+-- - `lap time`: the duration of that segment only, measured from the previous lap, or from start for lap 1.
+-- - `split time`: the cumulative elapsed time from start to that lap.
+--
+-- Visual example:
+--
+--    Start --- 2s --- Lap1 --- 3s --- Lap2 --- 2s --- Lap3
+--    LapTime:           2s             3s             2s
+--    SplitTime:         2s             5s             7s
+--
+-- Use @{Stopwatch:Lap} to record a lap.
+--
+-- Use @{Stopwatch:GetLapTime}, @{Stopwatch:GetLapTimeInSeconds}, and @{Stopwatch:GetLapTimeFormatted}
+-- when you need per-segment values.
+--
+-- Use @{Stopwatch:GetSplitTime}, @{Stopwatch:GetSplitTimeInSeconds}, and @{Stopwatch:GetSplitTimeFormatted}
+-- when you need the cumulative time at a given checkpoint.
+--
+-- @{Stopwatch:GetLapCount} returns how many laps are currently stored.
+-- @{Stopwatch:ClearLaps} removes all recorded laps without changing elapsed time.
+
+---
 -- Callbacks overview.
 -- @summaryonly
 -- @note Callbacks
@@ -1480,6 +1508,7 @@ end
 -- Stores the current elapsed time as a split internally. The returned delta is the time elapsed since
 -- the previous @{Stopwatch:Lap} call, or since @{Stopwatch:Start} if this is the first lap.
 -- Can be called while the stopwatch is active, even if paused.
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @treturn[1] Time The delta time of the completed lap segment.
 -- @treturn[2] nil If the stopwatch is not active, with a warning logged to the console.
 -- @usage
@@ -1521,6 +1550,7 @@ end
 
 --- Get the delta time of a specific lap as a Time object.
 -- The delta is the time elapsed during that lap segment (from the previous lap to this one, or from start for lap 1).
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @tparam int index The 1-based lap index.
 -- @treturn[1] Time The delta time of the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
@@ -1539,6 +1569,7 @@ function Stopwatch:GetLapTime(index)
 end
 
 --- Get the delta time of a specific lap in seconds.
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @tparam int index The 1-based lap index.
 -- @treturn[1] float The delta time of the specified lap in seconds.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
@@ -1557,6 +1588,7 @@ function Stopwatch:GetLapTimeInSeconds(index)
 end
 
 --- Get the delta time of a specific lap formatted as a string.
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @tparam int index The 1-based lap index.
 -- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.
 -- @treturn[1] string The formatted delta time of the specified lap.
@@ -1580,6 +1612,7 @@ end
 --- Get the cumulative split time at a specific lap as a Time object.
 -- The split time is the total elapsed time from the start of the stopwatch to the moment @{Stopwatch:Lap} was called for that lap.
 -- Use @{Stopwatch:GetLapTime} for the segment duration, and this method when you need the absolute time at a given checkpoint.
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @tparam int index The 1-based lap index.
 -- @treturn[1] Time The cumulative split time at the specified lap.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
@@ -1598,6 +1631,7 @@ function Stopwatch:GetSplitTime(index)
 end
 
 --- Get the cumulative split time at a specific lap in seconds.
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @tparam int index The 1-based lap index.
 -- @treturn[1] float The cumulative split time at the specified lap in seconds.
 -- @treturn[2] nil If the index is invalid, with an error logged to the console.
@@ -1616,6 +1650,7 @@ function Stopwatch:GetSplitTimeInSeconds(index)
 end
 
 --- Get the cumulative split time at a specific lap formatted as a string.
+-- See @{Stopwatch.LapsAndSplits|Laps and splits} in Key concepts.
 -- @tparam int index The 1-based lap index.
 -- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.
 -- @treturn[1] string The formatted cumulative split time at the specified lap.
