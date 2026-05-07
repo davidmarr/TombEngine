@@ -520,6 +520,36 @@ end
 -- - `0.02` is rejected because it remains below `0.03`.
 
 ---
+-- Identity and lifetime.
+-- @summaryonly
+-- @note IdentityAndLifetime "Identity and lifetime"
+--
+-- @{Stopwatch.Create} and @{Stopwatch.Get} return a lightweight stopwatch object identified only by name.
+-- The actual stopwatch state (elapsed time, laps, callbacks, and so on) is stored separately and
+-- looked up by name every time you call a method.
+--
+-- The stopwatch object passed to callbacks and time triggers works the same way.
+--
+-- What this means in practice:
+--
+-- - Calling @{Stopwatch.Get} twice with the same name gives you two objects that both control the same stopwatch. Either one works.
+-- - Do not store your own data on the stopwatch object. Stopwatch does not use or save it.
+--
+-- If you call @{Stopwatch.Create} with a name that is already in use, the existing
+-- stopwatch is replaced by a new one. Any object you already have for that name will
+-- automatically control the new stopwatch on its next method call.
+--
+-- If you call @{Stopwatch.Delete}, any object you already have for that name becomes
+-- stale. Calling methods on that old object is safe: Stopwatch logs a warning,
+-- state-changing methods do nothing, and query methods return false or nil depending
+-- on the method.
+-- Use @{Stopwatch.IfExists} if you need to check whether a stopwatch still exists before using it.
+--
+-- If @{Stopwatch.Delete} or @{Stopwatch.Create} (overwrite) is called during a callback
+-- or time trigger, any remaining callbacks and triggers scheduled for that stopwatch on
+-- the same frame are skipped. See @{CallbackTriggerOrder|Callback and trigger order}.
+
+---
 -- Laps and splits.
 -- @summaryonly
 -- @note LapsAndSplits "Laps and splits"
