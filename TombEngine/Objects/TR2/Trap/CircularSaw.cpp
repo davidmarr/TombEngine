@@ -110,8 +110,8 @@ namespace TEN::Entities::Traps
 				continue;
 			
 				float mult = Random::GenerateFloat(0.7f, 1.0f);
-				byte r = (byte)(mult * 190.0f);
-				byte g = (byte)(mult * 100.0f);
+				auto r = (unsigned char)(mult * 190.0f);
+				auto g = (unsigned char)(mult * 100.0f);
 				SpawnDynamicLight(pos.x, pos.y, pos.z, 2, r, g, 0);			
 		}
 	}
