@@ -527,25 +527,22 @@ end
 -- A lap is a recorded checkpoint on the stopwatch timeline.
 -- From each recorded lap, Stopwatch exposes two related values:
 --
--- - `lap time`: the duration of that segment only, measured from the previous lap, or from start for lap 1.
+-- - `lap time`: the duration of that segment only, measured from the previous lap (or from start if this is the first lap).
 -- - `split time`: the cumulative elapsed time from start to that lap.
 --
--- Visual example:
+-- Timeline diagram:
 --
 --    Start --- 2s --- Lap1 --- 3s --- Lap2 --- 2s --- Lap3
---    LapTime:           2s             3s             2s
---    SplitTime:         2s             5s             7s
+--    Lap Time:         2s              3s              2s
+--    Split Time:       2s              5s              7s
 --
 -- Use @{Stopwatch:Lap} to record a lap.
 --
--- Use @{Stopwatch:GetLapTime}, @{Stopwatch:GetLapTimeInSeconds}, and @{Stopwatch:GetLapTimeFormatted}
--- when you need per-segment values.
+-- Use @{Stopwatch:GetLapTime}, @{Stopwatch:GetLapTimeInSeconds}, and @{Stopwatch:GetLapTimeFormatted} for per-segment values.
 --
--- Use @{Stopwatch:GetSplitTime}, @{Stopwatch:GetSplitTimeInSeconds}, and @{Stopwatch:GetSplitTimeFormatted}
--- when you need the cumulative time at a given checkpoint.
+-- Use @{Stopwatch:GetSplitTime}, @{Stopwatch:GetSplitTimeInSeconds}, and @{Stopwatch:GetSplitTimeFormatted} for cumulative values from start.
 --
--- @{Stopwatch:GetLapCount} returns how many laps are currently stored.
--- @{Stopwatch:ClearLaps} removes all recorded laps without changing elapsed time.
+-- Use @{Stopwatch:GetLapCount} to count recorded laps and @{Stopwatch:ClearLaps} to clear them without resetting elapsed time.
 
 ---
 -- Callbacks overview.
