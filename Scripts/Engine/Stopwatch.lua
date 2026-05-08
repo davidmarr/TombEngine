@@ -667,6 +667,10 @@ end
 --
 -- If more than one timeTrigger is due on that frame, they run in the order they appear in `timeTriggers`.
 --
+-- The order shown above applies to scheduled work inside one stopwatch.
+-- If two different stopwatches have callbacks or time triggers due on the same frame, the order in which those stopwatches are processed is not guaranteed.
+-- Do not write code that depends on one stopwatch running its events before another on the same frame.
+--
 -- @{Stopwatch:Stop} does not force an extra `ON_INTERVAL` callback.
 --
 -- If @{Stopwatch:Stop} is called on a frame where an interval is also due, `ON_INTERVAL` runs only if that frame had already been checked before @{Stopwatch:Stop} was called.
