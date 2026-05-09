@@ -37,7 +37,6 @@ local LogMessage		  = TEN.Util.PrintLog
 local logLevelError		  = TEN.Util.LogLevel.ERROR
 local logLevelWarning	  = TEN.Util.LogLevel.WARNING
 local PercentToScreen	  = TEN.Util.PercentToScreen
-local ScreenToPercent	  = TEN.Util.ScreenToPercent
 local DisplayString		  = TEN.Strings.DisplayString
 local ShowString		  = TEN.Strings.ShowString
 local HideString		  = TEN.Strings.HideString
@@ -54,7 +53,7 @@ local FRAME_TIME = 1 / FPS
 local MIN_FRAME_SECONDS = math.floor(FRAME_TIME * 100) / 100
 local DEFAULT_COLOR = Color(255, 255, 255, 255)
 local DEFAULT_PAUSED_COLOR = Color(255, 255, 0, 255)
-local DEFAULT_POSITION = Vec2(PercentToScreen(50, 90))
+local DEFAULT_POSITION = Vec2(50, 90)
 local COMPARISON_OPS =
 {
     [0] = function(a, b) return a == b end,   -- 0: equal
@@ -781,9 +780,6 @@ Stopwatch.Create = function(stopwatchData)
 
     -- check position
         stopwatchEntry.position = Validate(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '" .. name .. "', set to default")
-    if stopwatchEntry.position ~= DEFAULT_POSITION then
-        stopwatchEntry.position = Vec2(PercentToScreen(stopwatchData.position.x, stopwatchData.position.y))
-    end
 
     -- check scale
         stopwatchEntry.scale = Validate(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '" .. name .. "', set to 1")
@@ -795,8 +791,8 @@ Stopwatch.Create = function(stopwatchData)
         stopwatchEntry.pausedColor = Validate(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '" .. name .. "', set to default")
 
     -- check textOptions
-        local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '" .. name .. "' will use default textOptions."
-        local warning2Message = CreateWarningPrefix .. "all values in textOptions must be of type TEN.Strings.DisplayStringOption. Stopwatch '" .. name .. "' will use default textOptions."
+    local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '" .. name .. "' will use default textOptions."
+    local warning2Message = CreateWarningPrefix .. "all values in textOptions must be of type TEN.Strings.DisplayStringOption. Stopwatch '" .. name .. "' will use default textOptions."
     local textOptions = CheckTextOptions(stopwatchData.textOptions, warning1Message, warning2Message)
     stopwatchEntry.textOptions = textOptions
 
@@ -851,7 +847,7 @@ Stopwatch.Create = function(stopwatchData)
 
     if stopwatchEntry.timeFormat then
         local initText = GenerateTimeFormattedString(ZERO, stopwatchEntry.timeFormat)
-        stopwatchStrings[name] = DisplayString(initText, stopwatchEntry.position, stopwatchEntry.scale, DEFAULT_COLOR, false, stopwatchEntry.textOptions)
+        stopwatchStrings[name] = DisplayString(initText, PercentToScreen(stopwatchEntry.position), stopwatchEntry.scale, DEFAULT_COLOR, false, stopwatchEntry.textOptions)
         stopwatchEntry.lastRenderedFrameCount = ZERO:GetFrameCount()
     end
 
@@ -1364,7 +1360,7 @@ function Stopwatch:GetPosition()
     local stopwatch = GetStopwatchOrWarn(self.name, "GetPosition")
     if stopwatch then
         local position = stopwatch.position
-        return Vec2(ScreenToPercent(position.x, position.y))
+        return Vec2(position.x, position.y)
     end
     return nil
 end
@@ -1388,11 +1384,11 @@ function Stopwatch:SetPosition(x, y)
     if not IsNumber(x) or not IsNumber(y) then
         LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
     else
-        local newPos = Vec2(PercentToScreen(x, y))
+        local newPos = Vec2(x, y)
         stopwatch.position = newPos
         local ds = stopwatchStrings[self.name]
         if ds then
-            ds:SetPosition(newPos)
+            ds:SetPosition(PercentToScreen(newPos))
         end
     end
 end
@@ -2070,6 +2066,14 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
     -- Per-frame reconciliation: derive interval callbacks, display refresh, and
     -- maxTime termination from the current frame state.
     for name, s in pairs(stopwatches) do
+        local ds = nil
+        if s.timeFormat then
+            ds = stopwatchStrings[name]
+            if ds then
+                ds:SetPosition(PercentToScreen(s.position))
+            end
+        end
+
         if s.active then
             local proxy = nil
 
@@ -2139,7 +2143,6 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             local reachedMaxTime = instanceAlive and not s.scheduledDispatchInterrupted and s.active and s.maxTime and s.elapsedTime >= s.maxTime
 
             if instanceAlive and s.timeFormat and (s.active or reachedMaxTime) then
-                local ds = stopwatchStrings[name]
                 if ds then
                     local frameCount = s.elapsedTime:GetFrameCount()
                     if s.lastRenderedFrameCount ~= frameCount then
@@ -2185,7 +2188,7 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
             -- from the persisted stopwatch state.
             local text = GenerateTimeFormattedString(s.elapsedTime, s.timeFormat)
             local color = s.paused and s.pausedColor or s.color
-            stopwatchStrings[name] = DisplayString(text, s.position, s.scale, color, false, s.textOptions)
+            stopwatchStrings[name] = DisplayString(text, PercentToScreen(s.position), s.scale, color, false, s.textOptions)
             s.lastRenderedFrameCount = s.elapsedTime:GetFrameCount()
         end
     end
