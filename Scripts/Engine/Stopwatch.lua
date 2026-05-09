@@ -658,7 +658,7 @@ end
 -- @summaryonly
 -- @note CallbackTriggerOrder "Callback and trigger order"
 --
--- While the stopwatch is active and not paused, Stopwatch checks its scheduled events automatically.
+-- _Same-frame order:_<br>While a stopwatch is active and not paused, Stopwatch checks its scheduled events automatically.
 --
 -- If everything happens on the same frame, the order is:
 --
@@ -667,11 +667,7 @@ end
 --
 -- If more than one timeTrigger is due on that frame, they run in the order they appear in `timeTriggers`.
 --
--- The order shown above applies to scheduled work inside one stopwatch.
--- If two different stopwatches have callbacks or time triggers due on the same frame, the order in which those stopwatches are processed is not guaranteed.
--- Do not write code that depends on one stopwatch running its events before another on the same frame.
---
--- @{Stopwatch:Stop} does not force an extra `ON_INTERVAL` callback.
+-- <br>_Stop() behavior:_<br>@{Stopwatch:Stop} does not force an extra `ON_INTERVAL` callback.
 --
 -- If @{Stopwatch:Stop} is called on a frame where an interval is also due, `ON_INTERVAL` runs only if that frame had already been checked before @{Stopwatch:Stop} was called.
 --
@@ -682,7 +678,11 @@ end
 --
 -- If a scheduled callback changes elapsed time or changes the time trigger setup during that same update, the remaining scheduled callbacks for that frame are skipped.
 --
--- Reaching `maxTime` stops the stopwatch and calls `ON_MAX_TIME`, but it does not also call `ON_STOP`.
+-- <br>_More than one stopwatch:_<br>The order shown above applies to scheduled work inside one stopwatch.
+-- If two different stopwatches have callbacks or time triggers due on the same frame, the order in which those stopwatches are processed is not guaranteed.
+-- Do not write code that depends on one stopwatch running its events before another on the same frame.
+--
+-- <br>_Reaching maxTime:_<br>Reaching `maxTime` stops the stopwatch and calls `ON_MAX_TIME`, but it does not also call `ON_STOP`.
 
 ---
 -- Save/load behavior.
@@ -697,6 +697,7 @@ end
 -- @section functions
 
 --- Create (but do not start) a new stopwatch.
+-- See @{IdentityAndLifetime|Identity and lifetime} in Key concepts for details.
 -- @tparam StopwatchData stopwatchData A table containing the parameters for the stopwatch.
 -- @treturn[1] Stopwatch The created stopwatch in its idle state, not yet started.
 -- @treturn[2] nil If the stopwatch creation failed due to invalid parameters, with an error message logged to the console.
@@ -858,6 +859,7 @@ Stopwatch.Create = function(stopwatchData)
 end
 
 --- Delete a stopwatch by name.
+-- See @{IdentityAndLifetime|Identity and lifetime} in Key concepts for details.
 -- @tparam string name The name of the stopwatch to delete.
 -- @usage
 -- Stopwatch.Delete("MyStopwatch")
@@ -880,6 +882,7 @@ Stopwatch.Delete = function(name)
 end
 
 --- Get a stopwatch by name.
+-- See @{IdentityAndLifetime|Identity and lifetime} in Key concepts for details.
 -- @tparam string name The name of the stopwatch to retrieve.
 -- @treturn[1] Stopwatch The stopwatch object if found
 -- @treturn[2] nil If no stopwatch with the given name exists, with a warning message logged to the console.
