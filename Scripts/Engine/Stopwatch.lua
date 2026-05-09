@@ -667,11 +667,11 @@ end
 --
 -- If more than one timeTrigger is due on that frame, they run in the order they appear in `timeTriggers`.
 --
--- <br>_Stop() behavior:_<br>@{Stopwatch:Stop} does not force an extra `ON_INTERVAL` callback.
+-- <br>_Stop() behavior:_<br>`Stopwatch:Stop` does not force an extra `ON_INTERVAL` callback.
 --
--- If @{Stopwatch:Stop} is called on a frame where an interval is also due, `ON_INTERVAL` runs only if that frame had already been checked before @{Stopwatch:Stop} was called.
+-- If <code>Stopwatch:Stop</code> is called on a frame where an interval is also due, `ON_INTERVAL` runs only if that frame had already been checked before <code>Stopwatch:Stop</code> was called.
 --
--- If @{Stopwatch:Stop} is called inside `ON_INTERVAL` or inside a timeTrigger callback, the current callback finishes first. Then `ON_STOP` is called, and the rest of that frame's scheduled work is skipped.
+-- If <code>Stopwatch:Stop</code> is called inside `ON_INTERVAL` or inside a timeTrigger callback, the current callback finishes first. Then `ON_STOP` is called, and the rest of that frame's scheduled work is skipped.
 --
 --    time ---->
 --    [same frame] -> [current callback finishes] -> [ON_STOP] -> [rest skipped]
