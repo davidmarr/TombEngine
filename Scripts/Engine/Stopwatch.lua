@@ -230,19 +230,21 @@ local function ValidateArrayTable(values, invalidArrayMessage, nilValueMessage, 
     end
 
     local valueCount = 0
+    local maxIndex = 0
     for key in pairs(values) do
         if not IsNumber(key) or key < 1 or key ~= floor(key) then
             LogMessage(invalidArrayMessage, logLevel)
             return nil
         end
         valueCount = valueCount + 1
+        if key > maxIndex then
+            maxIndex = key
+        end
     end
 
-    for i = 1, valueCount do
-        if IsNull(values[i]) then
-            LogMessage(nilValueMessage, logLevel)
-            return nil
-        end
+    if maxIndex ~= valueCount then
+        LogMessage(nilValueMessage, logLevel)
+        return nil
     end
 
     return valueCount
@@ -318,7 +320,7 @@ local function DefaultIfNil(value, defaultValue)
     return value
 end
 
-local function Validate(value, isValid, defaultValue, warningMsg)
+local function ResolveOrDefault(value, isValid, defaultValue, warningMsg)
     if IsNull(value) then
         return defaultValue
     end
@@ -779,16 +781,16 @@ Stopwatch.Create = function(stopwatchData)
     end
 
     -- check position
-        stopwatchEntry.position = Validate(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '" .. name .. "', set to default")
+        stopwatchEntry.position = ResolveOrDefault(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '" .. name .. "', set to default")
 
     -- check scale
-        stopwatchEntry.scale = Validate(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '" .. name .. "', set to 1")
+        stopwatchEntry.scale = ResolveOrDefault(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '" .. name .. "', set to 1")
 
     -- check color
-        stopwatchEntry.color = Validate(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '" .. name .. "', set to default")
+        stopwatchEntry.color = ResolveOrDefault(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '" .. name .. "', set to default")
 
     -- check pausedColor
-        stopwatchEntry.pausedColor = Validate(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '" .. name .. "', set to default")
+        stopwatchEntry.pausedColor = ResolveOrDefault(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '" .. name .. "', set to default")
 
     -- check textOptions
     local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '" .. name .. "' will use default textOptions."
