@@ -289,11 +289,11 @@ local function NormalizeTimeTriggerData(triggerData, messagePrefix, logLevel)
     return normalizedTrigger
 end
 
-local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, itemMessagePrefix, itemMessageSuffix, logLevel)
+local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, holeListMessage, itemMessagePrefix, itemMessageSuffix, logLevel)
     if IsNull(timeTriggers) then
         return {}
     end
-    local triggerCount = ValidateArrayTable(timeTriggers, invalidListMessage, invalidListMessage, logLevel)
+    local triggerCount = ValidateArrayTable(timeTriggers, invalidListMessage, holeListMessage, logLevel)
     if not triggerCount then
         return nil
     end
@@ -838,6 +838,7 @@ Stopwatch.Create = function(stopwatchData)
     local timeTriggers = NormalizeTimeTriggerList(
         stopwatchData.timeTriggers,
         CreateWarningPrefix .. "timeTriggers for '" .. name .. "' must be an array table.",
+        CreateWarningPrefix .. "timeTriggers for '" .. name .. "' must not contain holes; indices must be consecutive starting at 1.",
         CreateWarningPrefix .. "timeTriggers",
         " for '" .. name .. "'",
         logLevelWarning
@@ -1965,6 +1966,7 @@ function Stopwatch:SetTimeTriggers(triggers)
     local normalizedTriggers = NormalizeTimeTriggerList(
         triggers,
         "Error in Stopwatch:SetTimeTriggers(): timeTriggers must be an array table for '" .. self.name .. "'.",
+        "Error in Stopwatch:SetTimeTriggers(): timeTriggers for '" .. self.name .. "' must not contain holes; indices must be consecutive starting at 1.",
         "Error in Stopwatch:SetTimeTriggers(): timeTriggers",
         " for '" .. self.name .. "'",
         logLevelError
