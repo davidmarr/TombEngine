@@ -158,23 +158,29 @@ local function CloneShallowTable(values)
     return clone
 end
 
-local function CloneTimeTrigger(triggerData)
-    local clone = {
-        at = triggerData.at,
-        func = triggerData.func,
-    }
-    if not IsNull(triggerData.args) then
-        clone.args = CloneShallowTable(triggerData.args)
+local function ExportPublicTimeTriggerCallback(triggerData)
+    if IsNull(triggerData.args) or #triggerData.args == 0 then
+        return triggerData.func
     end
-    return clone
+
+    local callbackSpec = { triggerData.func }
+    local args = triggerData.args
+    for i = 1, #args do
+        callbackSpec[i + 1] = args[i]
+    end
+    return callbackSpec
 end
 
-local function CloneTimeTriggers(timeTriggers)
-    local clone = {}
+local function ExportPublicTimeTriggerList(timeTriggers)
+    local exported = {}
+    local exportIndex = 1
     for i = 1, #timeTriggers do
-        clone[i] = CloneTimeTrigger(timeTriggers[i])
+        local triggerData = timeTriggers[i]
+        exported[exportIndex] = triggerData.at
+        exported[exportIndex + 1] = ExportPublicTimeTriggerCallback(triggerData)
+        exportIndex = exportIndex + 2
     end
-    return clone
+    return exported
 end
 
 local function NormalizeTimeFormat(timeFormat, warningMessage)
@@ -250,6 +256,41 @@ local function ValidateArrayTable(values, invalidArrayMessage, nilValueMessage, 
     return valueCount
 end
 
+local function NormalizePublicTimeTriggerCallback(callbackSpec, messagePrefix, logLevel)
+    if IsLevelFunc(callbackSpec) then
+        return callbackSpec, nil
+    end
+    if not IsTable(callbackSpec) then
+        LogMessage(messagePrefix .. "callback must be a LevelFunc or an array table whose first value is a LevelFunc.", logLevel)
+        return nil
+    end
+
+    local callbackValueCount = ValidateArrayTable(
+        callbackSpec,
+        messagePrefix .. "callback must be a LevelFunc or an array table whose first value is a LevelFunc.",
+        messagePrefix .. "callback table must not contain nil values.",
+        logLevel
+    )
+    if not callbackValueCount then
+        return nil
+    end
+    if callbackValueCount == 0 or not IsLevelFunc(callbackSpec[1]) then
+        LogMessage(messagePrefix .. "callback table must start with a LevelFunc.", logLevel)
+        return nil
+    end
+
+    local func = callbackSpec[1]
+    if callbackValueCount == 1 then
+        return func, nil
+    end
+
+    local args = {}
+    for i = 2, callbackValueCount do
+        args[i - 1] = callbackSpec[i]
+    end
+    return func, args
+end
+
 local function NormalizeTimeTriggerData(triggerData, messagePrefix, logLevel)
     if not IsTable(triggerData) then
         LogMessage(messagePrefix .. "must be a table.", logLevel)
@@ -289,20 +330,44 @@ local function NormalizeTimeTriggerData(triggerData, messagePrefix, logLevel)
     return normalizedTrigger
 end
 
-local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, holeListMessage, itemMessagePrefix, itemMessageSuffix, logLevel)
+local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, holeListMessage, incompletePairMessage, itemMessagePrefix, itemMessageSuffix, logLevel)
     if IsNull(timeTriggers) then
         return {}
     end
-    local triggerCount = ValidateArrayTable(timeTriggers, invalidListMessage, holeListMessage, logLevel)
-    if not triggerCount then
+    local valueCount = ValidateArrayTable(timeTriggers, invalidListMessage, holeListMessage, logLevel)
+    if not valueCount then
+        return nil
+    end
+    if valueCount % 2 ~= 0 then
+        LogMessage(incompletePairMessage, logLevel)
         return nil
     end
 
     local normalizedTriggers = {}
+    local triggerCount = valueCount / 2
     for i = 1, triggerCount do
+        local valueIndex = (i - 1) * 2 + 1
+        local messagePrefix = itemMessagePrefix .. "[" .. i .. "]" .. itemMessageSuffix .. " "
+        local func, args = NormalizePublicTimeTriggerCallback(
+            timeTriggers[valueIndex + 1],
+            messagePrefix,
+            logLevel
+        )
+        if not func then
+            return nil
+        end
+
+        local triggerData = {
+            at = timeTriggers[valueIndex],
+            func = func,
+        }
+        if not IsNull(args) then
+            triggerData.args = args
+        end
+
         local normalizedTrigger = NormalizeTimeTriggerData(
-            timeTriggers[i],
-            itemMessagePrefix .. "[" .. i .. "]" .. itemMessageSuffix .. " ",
+            triggerData,
+            messagePrefix,
             logLevel
         )
         if not normalizedTrigger then
@@ -880,6 +945,7 @@ Stopwatch.Create = function(stopwatchData)
         stopwatchData.timeTriggers,
         CreateWarningPrefix .. "timeTriggers for '" .. name .. "' must be an array table.",
         CreateWarningPrefix .. "timeTriggers for '" .. name .. "' must not contain holes; indices must be consecutive starting at 1.",
+        CreateWarningPrefix .. "timeTriggers for '" .. name .. "' must contain complete seconds/callback pairs.",
         CreateWarningPrefix .. "timeTriggers",
         " for '" .. name .. "'",
         logLevelWarning
@@ -2011,6 +2077,7 @@ function Stopwatch:SetTimeTriggers(triggers)
         triggers,
         "Error in Stopwatch:SetTimeTriggers(): timeTriggers must be an array table for '" .. self.name .. "'.",
         "Error in Stopwatch:SetTimeTriggers(): timeTriggers for '" .. self.name .. "' must not contain holes; indices must be consecutive starting at 1.",
+        "Error in Stopwatch:SetTimeTriggers(): timeTriggers for '" .. self.name .. "' must contain complete seconds/callback pairs.",
         "Error in Stopwatch:SetTimeTriggers(): timeTriggers",
         " for '" .. self.name .. "'",
         logLevelError
@@ -2036,7 +2103,7 @@ end
 function Stopwatch:GetTimeTriggers()
     local stopwatch = GetStopwatchOrWarn(self.name, "GetTimeTriggers")
     if stopwatch then
-        return CloneTimeTriggers(stopwatch.timeTriggers or {})
+        return ExportPublicTimeTriggerList(stopwatch.timeTriggers or {})
     end
     return nil
 end
@@ -2061,7 +2128,7 @@ end
 --
 -- -- Replaces trigger 3 with a new callback and extra arguments, but the same trigger time.
 -- Stopwatch.Get("RaceTimer"):SetTimeTrigger(3, 4.00, LevelFuncs.ShowHint, "Last lap")
-function Stopwatch:SetTimeTrigger(index, triggerData)
+function Stopwatch:SetTimeTrigger(index, seconds, func, ...)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTrigger")
     if not stopwatch then
         return
@@ -2069,6 +2136,24 @@ function Stopwatch:SetTimeTrigger(index, triggerData)
     local triggerCount = #stopwatch.timeTriggers
     if not ValidatePositiveIndex(index, triggerCount, "Error in Stopwatch:SetTimeTrigger(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (trigger count: " .. tostring(triggerCount) .. ").", logLevelError) then
         return
+    end
+
+    local triggerData = {
+        at = seconds,
+        func = func,
+    }
+    local argCount = select("#", ...)
+    if argCount > 0 then
+        local args = {}
+        for i = 1, argCount do
+            local value = select(i, ...)
+            if IsNull(value) then
+                LogMessage("Error in Stopwatch:SetTimeTrigger(): args must not contain nil values for '" .. self.name .. "'.", logLevelError)
+                return
+            end
+            args[i] = value
+        end
+        triggerData.args = args
     end
 
     local normalizedTrigger = NormalizeTimeTriggerData(
