@@ -1942,6 +1942,7 @@ end
 -- The trigger is appended to the public trigger list. The runtime ordering is rebuilt immediately from the current elapsed time.
 -- If another trigger already exists at the same normalized time, or resolves to the same frame, both triggers are kept. Due triggers on the same frame fire in public order, so the newly added trigger runs after existing ones for that frame.
 -- If the new trigger resolves to the current frame or a past frame, it is stored but not fired retroactively.
+-- The callback shape matches @{Stopwatch:SetTimeTrigger}: pass the `LevelFuncs` function first, followed by any optional positional extra arguments.
 -- For ordering and overlap rules, see @{TimeTriggers|Time triggers overview}.
 -- @tparam float seconds The trigger time in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
 -- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
@@ -1988,13 +1989,15 @@ end
 
 --- Replace the entire time trigger list.
 -- Validation is atomic: if one trigger is invalid, the existing list is left unchanged.
+-- Pass one compact public list in the same format described in @{TimeTriggers|Time triggers overview}: `seconds, callback, seconds, callback, ...`.
+-- Each callback entry can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires.
 -- If multiple entries resolve to the same frame, they are all kept and fire in list order.
--- Each trigger's `at` value is normalized as described in @{TimeTriggerData}.
--- @tparam table triggers An array of @{TimeTriggerData} entries.
+-- Passing an empty table clears the list.
+-- @tparam table triggers A compact list of `seconds, callback` pairs.
 -- @usage
 -- Stopwatch.Get("RaceTimer"):SetTimeTriggers({
---     { at = 3.0, func = LevelFuncs.SpawnWave },
---     { at = 6.5, func = LevelFuncs.ShowHint, args = { "Second wave incoming" } },
+--     3.0, LevelFuncs.SpawnWave,
+--     6.5, { LevelFuncs.ShowHint, "Second wave incoming" },
 -- })
 function Stopwatch:SetTimeTriggers(triggers)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTriggers")
@@ -2019,10 +2022,12 @@ function Stopwatch:SetTimeTriggers(triggers)
 end
 
 --- Get a copy of the current time trigger list in public order.
--- Editing the returned outer table or any top-level trigger entry does not affect the stopwatch until you pass data back through @{Stopwatch:SetTimeTriggers} or @{Stopwatch:SetTimeTrigger}.
--- Returned trigger entries and their `args` array tables are shallow copies. Nested tables inside `args` remain shared references.
--- Returned `at` values are the normalized public values stored by the stopwatch, rounded to 2 decimal places.
--- @treturn table An array of @{TimeTriggerData} entries.
+-- The returned value uses the same compact public format described in @{TimeTriggers|Time triggers overview}: `seconds, callback, seconds, callback, ...`.
+-- If a trigger has no extra arguments, its callback is returned as the bare `LevelFuncs` function. If it has extra arguments, its callback is returned as a table whose first value is the `LevelFuncs` function followed by the stored arguments.
+-- Editing the returned table or any returned callback table does not affect the stopwatch until you pass data back through @{Stopwatch:SetTimeTriggers}.
+-- Returned callback tables are shallow copies. Nested tables inside the stored extra arguments remain shared references.
+-- Returned times are the normalized public values stored by the stopwatch, rounded to 2 decimal places.
+-- @treturn table A compact list of `seconds, callback` pairs in listed order.
 -- @usage
 -- local triggers = Stopwatch.Get("RaceTimer"):GetTimeTriggers()
 function Stopwatch:GetTimeTriggers()
@@ -2035,11 +2040,16 @@ end
 
 --- Replace one time trigger by public index.
 -- Validation is atomic: on invalid input the existing trigger is left unchanged.
+-- Pass the trigger time first, then the `LevelFuncs` function, then any optional positional extra arguments.
+-- This matches @{Stopwatch:AddTimeTrigger}. To replace the whole list at once, use @{Stopwatch:SetTimeTriggers}.
 -- Replacing one entry with a time already used elsewhere is allowed; if multiple triggers resolve to the same frame, they fire in public order.
 -- @tparam int index The 1-based trigger index in the public list.
--- @tparam TimeTriggerData triggerData The new trigger data. The `at` field is normalized as described in @{TimeTriggerData}.
+-- @tparam float seconds The new trigger time in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
+-- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
+-- @tparam[opt] any ... Positional extra arguments stored with the trigger and passed to the callback when it fires. `nil` values are not allowed.
 -- @usage
--- Stopwatch.Get("RaceTimer"):SetTimeTrigger(2, { at = 8.0, func = LevelFuncs.PlayAlarm })
+-- Stopwatch.Get("RaceTimer"):SetTimeTrigger(2, 8.0, LevelFuncs.PlayAlarm)
+-- Stopwatch.Get("RaceTimer"):SetTimeTrigger(3, 12.5, LevelFuncs.ShowHint, "Last lap")
 function Stopwatch:SetTimeTrigger(index, triggerData)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTrigger")
     if not stopwatch then
@@ -2262,7 +2272,7 @@ end
 -- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
 -- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. For same-frame interactions with onStop and onMaxTime, see @{Callbacks|Callbacks overview}.<br>
 -- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Values must be positive. They are rounded to 2 decimal places first; after rounding, they must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}. Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.<br>
--- @tfield[opt=nil] table timeTriggers An array of @{TimeTriggerData} entries. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if one entry is invalid, the whole list is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
+-- @tfield[opt=nil] table timeTriggers A compact list of `seconds, callback` pairs: `seconds, callback, seconds, callback, ...`. Each callback can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if the list is invalid, the whole field is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
 
 ---
 -- Time format configuration for displaying the stopwatch time.
@@ -2300,13 +2310,6 @@ end
 -- @tfield "OnStop" ON_STOP Callback called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.
 -- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with `ON_INTERVAL` and `ON_STOP`, see @{Callbacks|Callbacks overview}.
 -- @tfield "OnInterval" ON_INTERVAL Callback called repeatedly at the configured interval while the stopwatch is ticking. The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}. For same-frame interactions with `ON_STOP` and `ON_MAX_TIME`, see @{Callbacks|Callbacks overview}.
-
----
--- Data for one stopwatch time trigger.
--- @table TimeTriggerData
--- @tfield float at Trigger time in seconds. The value is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
--- @tfield function func Callback function defined in `LevelFuncs`. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
--- @tfield[opt=nil] table args Optional array table of extra arguments stored with the trigger and passed after the stopwatch argument when the trigger fires. It must use consecutive numeric indices starting at 1 and must not contain `nil` values.
 
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
