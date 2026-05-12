@@ -606,26 +606,64 @@ end
 -- 
 -- A time trigger is a one-shot event that runs a callback when the stopwatch reaches a specific time.
 --
--- Each trigger stores:
+-- Time triggers are written as pairs inside a list:
 --
--- - an `at` time
--- - a callback function
--- - optional extra arguments passed after the stopwatch argument
+-- - `seconds, LevelFuncs.MyFunc`
+-- - `seconds, { LevelFuncs.MyFunc, arg1, arg2, ... }`
 --
--- If extra arguments are used, they must be stored as an array table with consecutive numeric indices starting at 1, and they must not contain `nil` values.
--- 
--- The `at` value is rounded to 2 decimal places and then converted to the nearest frame at 30 FPS. In other words, time triggers work on the game's frame grid, not with exact floating-point timing.
--- 
+-- In other words:
+--
+-- - if the callback needs no extra arguments, write the function directly;
+-- - if the callback needs extra arguments, write a table whose first value is the function and the following values are its arguments.
+--
+-- Write complete pairs, one after another, with no values left out.
+--
+-- Good:
+--
+--    Stopwatch.Create({
+--        name = "sequenceTimer",
+--        timeTriggers = {
+--            1.00, LevelFuncs.Step1,
+--            2.50, { LevelFuncs.Step2, "Door opened" },
+--            4.00, { LevelFuncs.Step3, "Wave", 2 }
+--        }
+--    })
+--
+-- Bad: incomplete pair.
+--
+--    Stopwatch.Create({
+--        name = "sequenceTimer",
+--        timeTriggers = {
+--            1.00, LevelFuncs.Step1,
+--            2.50
+--        }
+--    })
+--
+-- Bad: when using a table, the first value must be the callback function.
+--
+--    Stopwatch.Create({
+--        name = "sequenceTimer",
+--        timeTriggers = {
+--            1.00, { "Door opened", LevelFuncs.Step1 }
+--        }
+--    })
+--
+-- Each trigger time is rounded to 2 decimal places and then converted to the nearest frame at 30 FPS. In other words, time triggers work on the game's frame grid, not with exact floating-point timing.
+--
 -- Time trigger callbacks follow the same authoring rules described in @{LevelFuncsRules|LevelFuncs rules}.
--- 
+--
 -- Time triggers are checked automatically while the stopwatch is active and not paused. For ordering relative to `ON_INTERVAL` and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}.
--- 
--- If more than one timeTrigger falls on the same frame, they are called in the same order they appear in `timeTriggers`.
--- 
--- Time triggers fire once on the current timeline. If elapsed time is moved backwards, or the stopwatch is restarted from zero with `Stopwatch:Start(true)` or @{Stopwatch:Reset}, future timeTriggers are armed again from that new time.
--- 
--- If elapsed time is moved forward, past timeTriggers are not replayed; the next future trigger is recalculated from the new time.
--- 
+--
+-- If more than one trigger falls on the same frame, they are called in the same order they appear in the list.
+--
+-- `Stopwatch:GetTimeTriggers()` returns the current triggers in the same compact format, normalized and in listed order.
+--
+-- If a trigger is beyond the current `maxTime`, it is kept but it will not run unless that time becomes reachable.
+--
+-- Time triggers fire once on the current timeline. If elapsed time is moved backwards, or the stopwatch is restarted from zero with `Stopwatch:Start(true)` or @{Stopwatch:Reset}, future time triggers are armed again from that new time.
+--
+-- If elapsed time is moved forward, past time triggers are not replayed; the next future trigger is recalculated from the new time.
+--
 
 ---
 -- LevelFuncs rules.
