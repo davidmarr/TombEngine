@@ -2052,9 +2052,9 @@ end
 -- @tparam[opt] any ... Positional extra arguments stored with the trigger and passed to the callback when it fires. `nil` values are not allowed.
 -- @usage
 -- Stopwatch.Get("RaceTimer"):SetTimeTriggers({
---     1.00, LevelFuncs.Step1, -- trigger 1
+--     1.00, LevelFuncs.Step1,                    -- trigger 1
 --     2.50, { LevelFuncs.Step2, "Door opened" }, -- trigger 2
---     4.00, { LevelFuncs.Step3, "Wave", 2 }, -- trigger 3
+--     4.00, { LevelFuncs.Step3, "Wave", 2 },     -- trigger 3
 -- })
 -- -- Replaces trigger 2.
 -- Stopwatch.Get("RaceTimer"):SetTimeTrigger(2, 8.0, LevelFuncs.PlayAlarm)
