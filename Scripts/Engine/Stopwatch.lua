@@ -629,6 +629,9 @@ end
 --        }
 --    })
 --
+-- Each complete `seconds, callback` pair counts as one trigger in the public list.
+-- In the example above, `1.00, LevelFuncs.Step1` is trigger 1, `2.50, { LevelFuncs.Step2, "Door opened" }` is trigger 2, and `4.00, { LevelFuncs.Step3, "Wave", 2 }` is trigger 3.
+--
 -- Bad: incomplete pair.
 --
 --    Stopwatch.Create({
@@ -2043,13 +2046,21 @@ end
 -- Pass the trigger time first, then the `LevelFuncs` function, then any optional positional extra arguments.
 -- This matches @{Stopwatch:AddTimeTrigger}. To replace the whole list at once, use @{Stopwatch:SetTimeTriggers}.
 -- Replacing one entry with a time already used elsewhere is allowed; if multiple triggers resolve to the same frame, they fire in public order.
--- @tparam int index The 1-based trigger index in the public list.
+-- @tparam int index The 1-based trigger index in the public list. Each complete `seconds, callback` pair counts as one trigger.
 -- @tparam float seconds The new trigger time in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
 -- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
 -- @tparam[opt] any ... Positional extra arguments stored with the trigger and passed to the callback when it fires. `nil` values are not allowed.
 -- @usage
+-- Stopwatch.Get("RaceTimer"):SetTimeTriggers({
+--     1.00, LevelFuncs.Step1, -- trigger 1
+--     2.50, { LevelFuncs.Step2, "Door opened" }, -- trigger 2
+--     4.00, { LevelFuncs.Step3, "Wave", 2 }, -- trigger 3
+-- })
+-- -- Replaces trigger 2.
 -- Stopwatch.Get("RaceTimer"):SetTimeTrigger(2, 8.0, LevelFuncs.PlayAlarm)
--- Stopwatch.Get("RaceTimer"):SetTimeTrigger(3, 12.5, LevelFuncs.ShowHint, "Last lap")
+--
+-- -- Replaces trigger 3 with a new callback and extra arguments, but the same trigger time.
+-- Stopwatch.Get("RaceTimer"):SetTimeTrigger(3, 4.00, LevelFuncs.ShowHint, "Last lap")
 function Stopwatch:SetTimeTrigger(index, triggerData)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTrigger")
     if not stopwatch then
