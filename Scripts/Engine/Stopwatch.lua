@@ -256,18 +256,34 @@ local function ValidateArrayTable(values, invalidArrayMessage, nilValueMessage, 
     return valueCount
 end
 
+local function CollectTimeTriggerArgs(stopwatchName, callerName, ...)
+    local argCount = select("#", ...)
+    if argCount == 0 then
+        return true, nil
+    end
+
+    local args = {}
+    for i = 1, argCount do
+        local value = select(i, ...)
+        if IsNull(value) then
+            LogMessage("Error in Stopwatch:" .. callerName .. "(): args must not contain nil values for '" .. stopwatchName .. "'.", logLevelError)
+            return false, nil
+        end
+        args[i] = value
+    end
+
+    return true, args
+end
+
 local function NormalizePublicTimeTriggerCallback(callbackSpec, messagePrefix, logLevel)
     if IsLevelFunc(callbackSpec) then
         return callbackSpec, nil
     end
-    if not IsTable(callbackSpec) then
-        LogMessage(messagePrefix .. "callback must be a LevelFunc or an array table whose first value is a LevelFunc.", logLevel)
-        return nil
-    end
 
+    local invalidCallbackMessage = messagePrefix .. "callback must be a LevelFunc or an array table whose first value is a LevelFunc."
     local callbackValueCount = ValidateArrayTable(
         callbackSpec,
-        messagePrefix .. "callback must be a LevelFunc or an array table whose first value is a LevelFunc.",
+        invalidCallbackMessage,
         messagePrefix .. "callback table must not contain nil values.",
         logLevel
     )
@@ -2028,17 +2044,11 @@ function Stopwatch:AddTimeTrigger(seconds, func, ...)
         at = seconds,
         func = func,
     }
-    local argCount = select("#", ...)
-    if argCount > 0 then
-        local args = {}
-        for i = 1, argCount do
-            local value = select(i, ...)
-            if IsNull(value) then
-                LogMessage("Error in Stopwatch:AddTimeTrigger(): args must not contain nil values for '" .. self.name .. "'.", logLevelError)
-                return
-            end
-            args[i] = value
-        end
+    local argsOk, args = CollectTimeTriggerArgs(self.name, "AddTimeTrigger", ...)
+    if not argsOk then
+        return
+    end
+    if args then
         triggerData.args = args
     end
 
@@ -2142,17 +2152,11 @@ function Stopwatch:SetTimeTrigger(index, seconds, func, ...)
         at = seconds,
         func = func,
     }
-    local argCount = select("#", ...)
-    if argCount > 0 then
-        local args = {}
-        for i = 1, argCount do
-            local value = select(i, ...)
-            if IsNull(value) then
-                LogMessage("Error in Stopwatch:SetTimeTrigger(): args must not contain nil values for '" .. self.name .. "'.", logLevelError)
-                return
-            end
-            args[i] = value
-        end
+    local argsOk, args = CollectTimeTriggerArgs(self.name, "SetTimeTrigger", ...)
+    if not argsOk then
+        return
+    end
+    if args then
         triggerData.args = args
     end
 
