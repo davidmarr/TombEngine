@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR5/Emitter/tr5_bats_emitter.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/collide_item.h"
 #include "Game/control/control.h"
 #include "Game/effects/effects.h"
@@ -13,6 +13,7 @@
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Math;
 
 constexpr auto BAT_LARA_DAMAGE = 2;
@@ -34,7 +35,7 @@ void InitializeLittleBats(short itemNumber)
 		item->Pose.Position.x += CLICK(2);
 
 	if (Objects[ID_BATS_EMITTER].loaded)
-		ZeroMemory(Bats, NUM_BATS * sizeof(BatData));
+		memset(Bats, 0, NUM_BATS * sizeof(BatData));
 
 	//LOWORD(item) = sub_402F27(ebx0, Bats, 0, 1920);
 }

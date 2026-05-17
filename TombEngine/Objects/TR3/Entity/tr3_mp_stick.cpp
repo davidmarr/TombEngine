@@ -155,7 +155,7 @@ namespace TEN::Entities::Creatures::TR3
 
 			angle = CreatureTurn(item, creature->MaxTurn);
 
-			auto* enemy = creature->Enemy;
+			auto* enemy = creature->Enemy.Get();
 			creature->Enemy = LaraItem;
 
 			if (item->HitStatus || ((laraAI.distance < pow(BLOCK(1), 2) ||
@@ -343,7 +343,7 @@ namespace TEN::Entities::Creatures::TR3
 					extraTorsoRot.y = AI.angle;
 				}
 
-				if (creature->Enemy->IsLara())
+				if (creature->Enemy.IsLara())
 				{
 					if (!creature->Flags && item->TouchBits.Test(MPStickPunchAttackJoints))
 					{
@@ -378,7 +378,7 @@ namespace TEN::Entities::Creatures::TR3
 					extraTorsoRot.y = AI.angle;
 				}
 
-				if (creature->Enemy->IsLara())
+				if (creature->Enemy.IsLara())
 				{
 					if (!creature->Flags && item->TouchBits.Test(MPStickPunchAttackJoints))
 					{
@@ -416,7 +416,7 @@ namespace TEN::Entities::Creatures::TR3
 					extraTorsoRot.y = AI.angle;
 				}
 
-				if (creature->Enemy->IsLara())
+				if (creature->Enemy.IsLara())
 				{
 					if (creature->Flags != 2 && item->TouchBits.Test(MPStickPunchAttackJoints))
 					{
@@ -448,10 +448,10 @@ namespace TEN::Entities::Creatures::TR3
 				if (AI.ahead)
 					extraTorsoRot.y = AI.angle;
 
-				if (creature->Enemy->IsLara())
+				if (creature->Enemy.IsLara())
 				{
 					if (creature->Flags != 1 && item->TouchBits.Test(MPStickKickAttackJoints) &&
-						item->Animation.FrameNumber > GetAnimData(item).frameBase + 8)
+						item->Animation.FrameNumber > 8)
 					{
 						DoDamage(creature->Enemy, 150);
 						CreatureEffect(item, MPStickBite2, DoBloodSplat);
@@ -462,7 +462,7 @@ namespace TEN::Entities::Creatures::TR3
 				else
 				{
 					if (!creature->Flags != 1 && creature->Enemy &&
-						item->Animation.FrameNumber > GetAnimData(item).frameBase + 8)
+						item->Animation.FrameNumber > 8)
 					{
 						if (Vector3i::Distance(item->Pose.Position, creature->Enemy->Pose.Position) <= BLOCK(0.25f))
 						{

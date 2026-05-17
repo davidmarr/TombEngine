@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR3/Entity/SealMutant.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/control/lot.h"
 #include "Game/effects/effects.h"
@@ -77,7 +77,7 @@ namespace TEN::Entities::Creatures::TR3
 		float gravity = 0.0f;
 		if (creature.Enemy != nullptr)
 		{
-			if (creature.Enemy->IsLara())
+			if (creature.Enemy.IsLara())
 			{
 				const auto& player = GetLaraInfo(*creature.Enemy);
 				if (player.Control.IsLow)
@@ -127,12 +127,12 @@ namespace TEN::Entities::Creatures::TR3
 			}
 			else if (TestAnimFrameRange(item, 1, 124))
 			{
-				const auto& anim = GetAnimData(item.Animation.AnimNumber);
+				const auto& anim = GetAnimData(item);
 
-				gasVel = item.Animation.FrameNumber - (anim.frameBase + 1);
+				gasVel = item.Animation.FrameNumber - 1;
 				if (gasVel > 24.0f)
 				{
-					gasVel = item.Animation.FrameNumber - (anim.frameEnd - 8);
+					gasVel = item.Animation.FrameNumber - (anim.EndFrameNumber - 8);
 					if (gasVel <= 0.0f)
 						gasVel = 1.0f;
 
@@ -152,7 +152,7 @@ namespace TEN::Entities::Creatures::TR3
 
 		if (item.HitPoints <= 0)
 		{
-			const auto& anim = GetAnimData(item.Animation.AnimNumber);
+			const auto& anim = GetAnimData(item);
 
 			if (item.Animation.ActiveState != SEAL_MUTANT_STATE_DEATH)
 			{
@@ -166,10 +166,10 @@ namespace TEN::Entities::Creatures::TR3
 					TriggerFireFlame(pos.x, pos.y, pos.z, FlameType::Medium);
 				}
 
-				int burnTimer = item.Animation.FrameNumber - anim.frameBase;
+				int burnTimer = item.Animation.FrameNumber;
 				if (burnTimer > SEAL_MUTANT_BURN_END_TIME)
 				{
-					burnTimer = item.Animation.FrameNumber - anim.frameEnd;
+					burnTimer = item.Animation.FrameNumber - anim.EndFrameNumber;
 					if (burnTimer > SEAL_MUTANT_BURN_END_TIME)
 						burnTimer = SEAL_MUTANT_BURN_END_TIME;
 				}
@@ -184,10 +184,10 @@ namespace TEN::Entities::Creatures::TR3
 			}
 			else if (TestAnimFrameRange(item, 1, 124))
 			{
-				gasVel = item.Animation.FrameNumber - (anim.frameBase + 1);
+				gasVel = item.Animation.FrameNumber - 1;
 				if (gasVel > 24.0f)
 				{
-					gasVel = item.Animation.FrameNumber - (anim.frameEnd - 8);
+					gasVel = item.Animation.FrameNumber - (anim.EndFrameNumber - 8);
 					if (gasVel <= 0.0f)
 						gasVel = 1.0f;
 
@@ -213,7 +213,7 @@ namespace TEN::Entities::Creatures::TR3
 			CreatureAIInfo(&item, &ai);
 
 			GetCreatureMood(&item, &ai, ai.zoneNumber == ai.enemyZone);
-			if (creature.Enemy != nullptr && creature.Enemy->IsLara())
+			if (creature.Enemy.IsLara())
 			{
 				const auto& player = GetLaraInfo(*creature.Enemy);
 				if (player.Status.Poison >= LARA_POISON_MAX)
@@ -223,7 +223,7 @@ namespace TEN::Entities::Creatures::TR3
 			CreatureMood(&item, &ai, ai.zoneNumber == ai.enemyZone);
 			headingAngle = CreatureTurn(&item, creature.MaxTurn);
 			
-			auto* target = creature.Enemy;
+			auto* target = creature.Enemy.Get();
 			creature.Enemy = LaraItem;
 			if (ai.distance < SEAL_MUTANT_ALERT_RANGE || item.HitStatus || TargetVisible(&item, &ai))
 				AlertAllGuards(itemNumber);
@@ -317,7 +317,7 @@ namespace TEN::Entities::Creatures::TR3
 					}
 
 					SpawnSealMutantPoisonGas(item, gasVel);
-					if (creature.Enemy != nullptr && !creature.Enemy->IsLara())
+					if (creature.Enemy && !creature.Enemy.IsLara())
 						creature.Enemy->HitStatus = true;
 				}
 

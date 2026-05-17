@@ -5,6 +5,7 @@
 #include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
+#include "Game/Lara/lara_fire.h"
 #include "Game/Lara/lara_flare.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_one_gun.h"
@@ -22,10 +23,12 @@
 #include "Objects/TR4/Vehicles/jeep.h"
 #include "Objects/TR4/Vehicles/motorbike.h"
 #include "Specific/level.h"
+#include "Specific/trutils.h"
 
 using namespace TEN::Collision::Point;
 using namespace TEN::Entities::Player;
 using namespace TEN::Hud;
+using namespace TEN::Utils;
 
 // Globals
 int					PlayerHitPoints		  = 0;
@@ -57,13 +60,28 @@ void InitializeLara(bool restore)
 	if (LaraItem == nullptr || LaraItem->Index == NO_VALUE)
 		return;
 
-	ZeroMemory(&Lara, sizeof(LaraInfo));
+	memset(&Lara, 0, sizeof(LaraInfo));
+
+	// Initialize or restore skin defaults.
+	if (restore)
+	{
+		Lara.Skin = PlayerBackup.Skin;
+	}
+	else
+	{
+		Lara.Skin.Skin				= ID_LARA_SKIN;
+		Lara.Skin.SkinJoints		= ID_LARA_SKIN_JOINTS;
+		Lara.Skin.SkinScream		= ID_LARA_SCREAM;
+		Lara.Skin.HairPrimary		= ID_HAIR_PRIMARY;
+		Lara.Skin.HairSecondary		= ID_HAIR_SECONDARY;
+	}
 
 	LaraItem->Data = &Lara;
 	LaraItem->Collidable = false;
 	
 	Lara.Context = PlayerContext(*LaraItem, LaraCollision);
 
+	LaraItem->HitPoints = LARA_HEALTH_MAX;
 	Lara.Status.Air = LARA_AIR_MAX;
 	Lara.Status.Exposure = LARA_EXPOSURE_MAX;
 	Lara.Status.Poison = 0;
@@ -100,12 +118,12 @@ void InitializeLara(bool restore)
 	g_Hud.StatusBars.Initialize(*LaraItem);
 }
 
-void InitializeLaraMeshes(ItemInfo* item)
+void InitializeLaraMeshes(ItemInfo* item, bool clearHolsters)
 {
 	auto& player = GetLaraInfo(*item);
 
 	// Override base mesh and mesh indices to player skin if it exists.
-	auto& obj = Objects[(Objects[ID_LARA_SKIN].loaded ? ID_LARA_SKIN : ID_LARA)];
+	auto& obj = Objects[(Objects[player.Skin.Skin].loaded ? player.Skin.Skin : ID_LARA)];
 
 	item->Model.BaseMesh = obj.meshIndex;
 	item->Model.SkinIndex = obj.skinIndex;
@@ -113,9 +131,12 @@ void InitializeLaraMeshes(ItemInfo* item)
 	for (int i = 0; i < NUM_LARA_MESHES; i++)
 		item->Model.MeshIndex[i] = item->Model.BaseMesh + i;
 
-	player.Control.Weapon.HolsterInfo.LeftHolster =
-	player.Control.Weapon.HolsterInfo.RightHolster = 
-	player.Control.Weapon.HolsterInfo.BackHolster = HolsterSlot::Empty;
+	if (clearHolsters)
+	{
+		player.Control.Weapon.HolsterInfo.LeftHolster =
+		player.Control.Weapon.HolsterInfo.RightHolster =
+		player.Control.Weapon.HolsterInfo.BackHolster = HolsterSlot::Empty;
+	}
 }
 
 void InitializeLaraAnims(ItemInfo* item)
@@ -177,7 +198,7 @@ void InitializeLaraStartPosition(ItemInfo& playerItem)
 		if (playerItem.RoomNumber != item.RoomNumber)
 			ItemNewRoom(playerItem.Index, item.RoomNumber);
 
-		TENLog("Player start position has been set according to start position of object with ID " + std::to_string(item.TriggerFlags) + ".", LogLevel::Info);
+		TENLog(fmt::format("Player start position has been set according to start position of object with ID {}.", item.TriggerFlags), LogLevel::Info);
 		break;
 	}
 
@@ -195,7 +216,7 @@ void InitializePlayerVehicle(ItemInfo& playerItem)
 		return;
 
 	// Restore vehicle.
-	TENLog("Transferring vehicle " + GetObjectName(PlayerVehicleObjectID) + " from the previous level.");
+	TENLog(fmt::format("Transferring vehicle {} from the previous level.", GetObjectName(PlayerVehicleObjectID)));
 	vehicle->Pose = playerItem.Pose;
 	SetLaraVehicle(&playerItem, vehicle);
 	playerItem.Animation = PlayerAnim;
@@ -310,8 +331,6 @@ void InitializeLaraDefaultInventory(ItemInfo& item)
 
 	auto& player = GetLaraInfo(item);
 
-	item.HitPoints = LARA_HEALTH_MAX;
-
 	if (Objects[ID_FLARE_INV_ITEM].loaded)
 		player.Inventory.TotalFlares = DEFAULT_FLARE_COUNT;
 
@@ -352,6 +371,8 @@ void InitializeLaraDefaultInventory(ItemInfo& item)
 
 	if (player.Weapons[(int)LaraWeaponType::Pistol].Present)
 	{
+		InitializeNewWeapon(item);
+		player.LeftArm.AnimNumber = player.RightArm.AnimNumber = 1;
 		player.Control.Weapon.HolsterInfo.LeftHolster =
 		player.Control.Weapon.HolsterInfo.RightHolster = HolsterSlot::Pistols;
 	}

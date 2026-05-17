@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR5/Entity/tr5_imp.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/control/control.h"
 #include "Game/effects/effects.h"
@@ -15,6 +15,7 @@
 #include "Objects/Generic/Object/burning_torch.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Entities::Generic;
 using namespace TEN::Math;
 
@@ -128,7 +129,7 @@ namespace TEN::Entities::Creatures::TR5
 			fx.speed = BLOCK(0.25f);
 
 		fx.fallspeed = 0;
-		fx.color = Vector4::One;
+		fx.color = NEUTRAL_COLOR;
 		fx.counter = 0;
 		fx.flag1 = 2;
 		fx.flag2 = 0x2000;
@@ -138,7 +139,7 @@ namespace TEN::Entities::Creatures::TR5
 	{
 		const auto& creature = *GetCreatureInfo(&item);
 
-		if (creature.Enemy->IsLara())
+		if (creature.Enemy.IsLara())
 		{
 			const auto& player = *GetLaraInfo(creature.Enemy);
 
@@ -172,15 +173,15 @@ namespace TEN::Entities::Creatures::TR5
 		switch (item.TriggerFlags)
 		{
 		case IMP_OCB_ROLL:
-			SetAnimation(&item, IMP_ANIM_ROLL);
+			SetAnimation(item, IMP_ANIM_ROLL);
 			break;
 
 		case IMP_OCB_CLIMB_UP:
-			SetAnimation(&item, IMP_ANIM_VAULT_UP_1_STEP);
+			SetAnimation(item, IMP_ANIM_VAULT_UP_1_STEP);
 			break;
 
 		default:
-			SetAnimation(&item, IMP_ANIM_IDLE);
+			SetAnimation(item, IMP_ANIM_IDLE);
 			break;
 		}
 	}
@@ -224,8 +225,11 @@ namespace TEN::Entities::Creatures::TR5
 
 			CreatureAIInfo(item, &ai);
 
-			int elevation = (item->Pose.Position.y - creature->Enemy->Pose.Position.y) + CLICK(1.5f);
-			if (creature->Enemy->IsLara())
+			int elevation = CLICK(1.5f);
+			if (creature->Enemy)
+				elevation += (item->Pose.Position.y - creature->Enemy->Pose.Position.y);
+
+			if (creature->Enemy.IsLara())
 			{
 				if (creature->Enemy->Animation.ActiveState == LS_CROUCH_IDLE ||
 					creature->Enemy->Animation.ActiveState == LS_CROUCH_ROLL ||
@@ -393,7 +397,7 @@ namespace TEN::Entities::Creatures::TR5
 			case IMP_STATE_STONE_ATTACK:
 				RotateTowardTarget(*item, ai, IMP_ATTACK_TURN_RATE_MAX);
 				
-				if (item->Animation.FrameNumber == GetFrameIndex(item, 40))
+				if (item->Animation.FrameNumber == 40)
 					DoImpStoneAttack(item);
 
 				break;

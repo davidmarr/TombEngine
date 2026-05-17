@@ -3,7 +3,6 @@
 
 #include <OISKeyboard.h>
 
-#include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Game/camera.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/floordata.h"
@@ -22,10 +21,13 @@
 #include "Game/savegame.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
+#include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
+#include "Scripting/Include/ScriptInterfaceGame.h"
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Sound/sound.h"
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
+#include "Specific/trutils.h"
 
 #include "Objects/TR2/Vehicles/skidoo.h"
 #include "Objects/TR3/Vehicles/big_gun.h"
@@ -45,6 +47,7 @@ using namespace TEN::Entities::Player;
 using namespace TEN::Gui;
 using namespace TEN::Input;
 using namespace TEN::Math;
+using namespace TEN::Utils;
 
 // -----------------------------
 // HELPER FUNCTIONS
@@ -836,6 +839,19 @@ void HandlePlayerFlyCheat(ItemInfo& item)
 	dbFlyCheat = !KeyMap[OIS::KeyCode::KC_O];
 }
 
+void HandlePlayerExtraAnim(ItemInfo& item)
+{
+	if (item.Animation.AnimObjectID != GAME_OBJECT_ID::ID_LARA_EXTRA_ANIMS)
+		return;
+
+	auto& anim = GetAnimData(item);
+	if (anim.NextAnimNumber != 0 || anim.NextFrameNumber != 0)
+		return;
+
+	if (TestLastFrame(item))
+		SetAnimation(item, LA_STAND_SOLID);
+}
+
 void HandlePlayerWetnessDrips(ItemInfo& item)
 {
 	auto& player = *GetLaraInfo(&item);
@@ -966,20 +982,22 @@ void HandlePlayerElevationChange(ItemInfo* item, CollisionInfo* coll)
 	{
 		if (CanStepUp(*item, *coll))
 		{
-			item->Animation.TargetState = LS_STEP_UP;
 			item->DisableInterpolation = true;
 
-			if (GetStateDispatch(item, GetAnimData(*item)))
+			const auto* dispatch = GetStateDispatch(*item, LS_STEP_UP);
+			if (dispatch != nullptr)
 			{
+				SetStateDispatch(*item, *dispatch);
 				item->Pose.Position.y += coll->Middle.Floor;
 				return;
 			}
 		}
 		else if (CanStepDown(*item, *coll))
 		{
-			item->Animation.TargetState = LS_STEP_DOWN;
-			if (GetStateDispatch(item, GetAnimData(*item)))
+			const auto* dispatch = GetStateDispatch(*item, LS_STEP_DOWN);
+			if (dispatch != nullptr)
 			{
+				SetStateDispatch(*item, *dispatch);
 				item->Pose.Position.y += coll->Middle.Floor;
 				return;
 			}
@@ -1005,7 +1023,7 @@ void DoLaraCrawlToHangSnap(ItemInfo* item, CollisionInfo* coll)
 	// Bridges behave differently.
 	if (coll->Middle.Bridge < 0)
 	{
-		TranslateItem(item, item->Pose.Orientation.y, -LARA_RADIUS_CRAWL);
+		item->Pose.Translate(item->Pose.Orientation.y, -LARA_RADIUS_CRAWL);
 		item->Pose.Orientation.y += ANGLE(180.0f);
 	}
 }
@@ -1111,7 +1129,7 @@ LaraInfo& GetLaraInfo(ItemInfo& item)
 		return *player;
 	}
 
-	TENLog(std::string("Attempted to fetch LaraInfo data from entity with object ID ") + std::to_string(item.ObjectNumber), LogLevel::Warning);
+	TENLog(fmt::format("Attempted to fetch LaraInfo data from {} moveable.", GetObjectName(item.ObjectNumber)), LogLevel::Warning);
 
 	auto& firstLaraItem = *FindItem(ID_LARA);
 	auto* player = (LaraInfo*&)firstLaraItem.Data;
@@ -1126,7 +1144,7 @@ const LaraInfo& GetLaraInfo(const ItemInfo& item)
 		return *player;
 	}
 
-	TENLog(std::string("Attempted to fetch LaraInfo data from entity with object ID ") + std::to_string(item.ObjectNumber), LogLevel::Warning);
+	TENLog(fmt::format("Attempted to fetch LaraInfo data from {} moveable..", GetObjectName(item.ObjectNumber)), LogLevel::Warning);
 
 	const auto& firstPlayerItem = *FindItem(ID_LARA);
 	const auto* player = (LaraInfo*&)firstPlayerItem.Data;
@@ -1138,7 +1156,7 @@ LaraInfo*& GetLaraInfo(ItemInfo* item)
 	if (item->ObjectNumber == ID_LARA)
 		return (LaraInfo*&)item->Data;
 
-	TENLog(std::string("Attempted to fetch LaraInfo data from entity with object ID ") + std::to_string(item->ObjectNumber), LogLevel::Warning);
+	TENLog(fmt::format("Attempted to fetch LaraInfo data from {} moveable.", GetObjectName(item->ObjectNumber)), LogLevel::Warning);
 
 	auto& firstPlayerItem = *FindItem(ID_LARA);
 	return (LaraInfo*&)firstPlayerItem.Data;
@@ -1638,15 +1656,25 @@ void SetLaraVehicle(ItemInfo* item, ItemInfo* vehicle)
 
 	if (vehicle == nullptr)
 	{
-		if (lara->Context.Vehicle != NO_VALUE)
-			g_Level.Items[lara->Context.Vehicle].Active = false;
+		auto previousVehicle = lara->Context.Vehicle;
+
+		if (previousVehicle == NO_VALUE)
+			return;
+
+		g_GameScript->OnVehicleLeave(previousVehicle, false);
+
+		auto vehicleObjectNumber = g_Level.Items[previousVehicle].ObjectNumber;
+		if (vehicleObjectNumber != ID_SPEEDBOAT && vehicleObjectNumber != ID_RUBBER_BOAT) // Leave boat vehicles active for inertia.
+			g_Level.Items[previousVehicle].Active = false;
 
 		lara->Context.Vehicle = NO_VALUE;
+		g_GameScript->OnVehicleLeave(previousVehicle, true);
 	}
 	else
 	{
-		g_Level.Items[vehicle->Index].Active = true;
 		lara->Context.Vehicle = vehicle->Index;
+		g_Level.Items[vehicle->Index].Active = true;
+		g_GameScript->OnVehicleEnter(vehicle->Index, true);
 	}
 }
 

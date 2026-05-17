@@ -157,8 +157,8 @@ namespace TEN::Entities::TR4
 				{
 					if (item->TouchBits.Test(SmallScorpionAttackJoints))
 					{
-						if (item->Animation.FrameNumber > GetAnimData(item).frameBase + 20 &&
-							item->Animation.FrameNumber < GetAnimData(item).frameBase + 32)
+						if (item->Animation.FrameNumber > 20 &&
+							item->Animation.FrameNumber < 32)
 						{
 							short rotation;
 							CreatureBiteInfo biteInfo;
@@ -173,7 +173,7 @@ namespace TEN::Entities::TR4
 							// Stinger attack
 							else
 							{
-								if (creature->Enemy->IsLara())
+								if (creature->Enemy.IsLara())
 									GetLaraInfo(creature->Enemy)->Status.Poison += SMALL_SCORPION_STINGER_POISON_POTENCY;
 
 								DoDamage(creature->Enemy, SMALL_SCORPION_STINGER_ATTACK_DAMAGE);

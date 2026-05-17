@@ -234,6 +234,9 @@ namespace TEN::Entities::Creatures::TR3
 		}
 		else
 		{
+			if (creature.Enemy == nullptr)
+				return;
+
 			auto target = GameVector(Geometry::TranslatePoint(origin.ToVector3(), pos - origin.ToVector3(), PUNA_ATTACK_RANGE), creature.Enemy->RoomNumber);
 
 			auto origin1 = GameVector(Geometry::TranslatePoint(origin.ToVector3(), pos - origin.ToVector3(), PUNA_ATTACK_RANGE / 4), creature.Enemy->RoomNumber);
@@ -280,7 +283,7 @@ namespace TEN::Entities::Creatures::TR3
 		auto& item = g_Level.Items[itemNumber];
 
 		InitializeCreature(itemNumber);
-		SetAnimation(&item, PUNA_ANIM_IDLE);
+		SetAnimation(item, PUNA_ANIM_IDLE);
 		CheckForRequiredObjects(item);
 
 		// Save Puna's default angle. It will be used while waiting (i.e. an active lizard is nearby).
@@ -320,7 +323,7 @@ namespace TEN::Entities::Creatures::TR3
 		{
 			if (item.Animation.ActiveState != PUNA_STATE_DEATH)
 			{
-				SetAnimation(&item, PUNA_ANIM_DEATH);
+				SetAnimation(item, PUNA_ANIM_DEATH);
 				SoundEffect(SFX_TR3_PUNA_BOSS_DEATH, &item.Pose);
 				item.ItemFlags[(int)BossItemFlags::DeathCount] = 1;
 				creature.MaxTurn = 0;
@@ -332,11 +335,11 @@ namespace TEN::Entities::Creatures::TR3
 			if (deathCount < 2048)
 				item.ItemFlags[(int)BossItemFlags::DeathCount] += 32;
 
-			int frameEnd =  GetAnimData(object, PUNA_ANIM_DEATH).frameEnd;
-			if (item.Animation.FrameNumber >= frameEnd)
+			int endFrameNumber = GetAnimData(object, PUNA_ANIM_DEATH).EndFrameNumber;
+			if (item.Animation.FrameNumber >= endFrameNumber)
 			{
 				// Avoid having the object stop working.
-				item.Animation.FrameNumber = frameEnd;
+				item.Animation.FrameNumber = endFrameNumber;
 
 				if (item.GetFlagField((int)BossItemFlags::ExplodeCount) < PUNA_EXPLOSION_NUM_MAX)
 					item.ItemFlags[(int)BossItemFlags::ExplodeCount]++;
@@ -345,7 +348,7 @@ namespace TEN::Entities::Creatures::TR3
 					item.ItemFlags[7]++;
 
 				// Do explosion effect.
-				ExplodeBoss(itemNumber, item, PUNA_EXPLOSION_NUM_MAX, PUNA_EFFECT_COLOR, PUNA_EXPLOSION_MAIN_COLOR, PUNA_EXPLOSION_SECOND_COLOR);
+				ExplodeBoss(item, PUNA_EXPLOSION_NUM_MAX, PUNA_EFFECT_COLOR, PUNA_EXPLOSION_MAIN_COLOR, PUNA_EXPLOSION_SECOND_COLOR);
 				return;
 			}
 		}
@@ -458,7 +461,7 @@ namespace TEN::Entities::Creatures::TR3
 				item.SetFlagField((int)BossItemFlags::ShieldIsEnabled, 0);
 				creature.MaxTurn = 0;
 
-				if (item.Animation.FrameNumber == GetFrameIndex(&item, 14))
+				if (item.Animation.FrameNumber == 14)
 					SpawnPunaLightning(item, targetPos.ToVector3(), PunaBossHeadBite, false);
 
 				break;
@@ -467,7 +470,7 @@ namespace TEN::Entities::Creatures::TR3
 				item.SetFlagField((int)BossItemFlags::ShieldIsEnabled, 0);
 				creature.MaxTurn = 0;
 
-				if (item.Animation.FrameNumber == GetFrameIndex(&item, 30))
+				if (item.Animation.FrameNumber == 30)
 				{
 					if (item.TestFlags((int)BossItemFlags::Object, (short)BossFlagValue::Lizard) &&
 						item.TestFlagField((int)BossItemFlags::AttackType, (int)PunaAttackType::SummonLightning) &&

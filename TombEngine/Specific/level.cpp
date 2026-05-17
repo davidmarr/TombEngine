@@ -1,11 +1,9 @@
 #include "framework.h"
 #include "Specific/level.h"
 
-#include <process.h>
 #include <lz4.h>
 
-#include "Game/animation.h"
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/control/control.h"
 #include "Game/control/volume.h"
@@ -27,15 +25,16 @@
 #include "Scripting/Include/ScriptInterfaceGame.h"
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Sound/sound.h"
+#include "Specific/EngineMain.h"
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
-#include "Specific/winmain.h"
 
 using namespace TEN::Physics;
 using TEN::Renderer::g_Renderer;
 
 using namespace TEN::Entities::Doors;
 using namespace TEN::Input;
+using namespace TEN::SpotCam;
 using namespace TEN::Utils;
 
 constexpr auto DUMMY_LEVEL_NAME = "dummy.ten";
@@ -82,7 +81,7 @@ const std::vector<GAME_OBJECT_ID> BRIDGE_OBJECT_IDS =
 	ID_BRIDGE_CUSTOM
 };
 
-LEVEL g_Level;
+LevelData g_Level;
 
 std::vector<int> MoveablesIds;
 std::vector<int> SpriteSequencesIds;
@@ -375,100 +374,183 @@ void LoadObjects()
 		g_Level.Meshes.push_back(mesh);
 	}
 
-	int animCount = ReadCount();
-	TENLog("Animation count: " + std::to_string(animCount), LogLevel::Info);
-
-	g_Level.Anims.resize(animCount);
-	for (int i = 0; i < animCount; i++)
-	{
-		auto* anim = &g_Level.Anims[i];
-
-		anim->FramePtr = ReadInt32();
-		anim->Interpolation = ReadInt32();
-		anim->ActiveState = ReadInt32();
-		anim->VelocityStart = ReadVector3();
-		anim->VelocityEnd = ReadVector3();
-		anim->frameBase = ReadInt32();
-		anim->frameEnd = ReadInt32();
-		anim->JumpAnimNum = ReadInt32();
-		anim->JumpFrameNum = ReadInt32();
-		anim->NumStateDispatches = ReadInt32();
-		anim->StateDispatchIndex = ReadInt32();
-		anim->NumCommands = ReadInt32();
-		anim->CommandIndex = ReadInt32();
-	}
-
-	int changeCount = ReadCount();
-	g_Level.Changes.resize(changeCount);
-	ReadBytes(g_Level.Changes.data(), sizeof(StateDispatchData) * changeCount);
-
-	int rangeCount = ReadCount();
-	g_Level.Ranges.resize(rangeCount);
-	ReadBytes(g_Level.Ranges.data(), sizeof(StateDispatchRangeData) * rangeCount);
-
-	int commandCount = ReadCount();
-	g_Level.Commands.resize(commandCount);
-	ReadBytes(g_Level.Commands.data(), sizeof(int) * commandCount);
-
 	int boneCount = ReadCount();
 	g_Level.Bones.resize(boneCount);
 	ReadBytes(g_Level.Bones.data(), 4 * boneCount);
 
-	int frameCount = ReadCount();
-	g_Level.Frames.resize(frameCount);
-	for (int i = 0; i < frameCount; i++)
-	{
-		auto* frame = &g_Level.Frames[i];
-
-		frame->BoundingBox.X1 = ReadInt16();
-		frame->BoundingBox.X2 = ReadInt16();
-		frame->BoundingBox.Y1 = ReadInt16();
-		frame->BoundingBox.Y2 = ReadInt16();
-		frame->BoundingBox.Z1 = ReadInt16();
-		frame->BoundingBox.Z2 = ReadInt16();
-
-		// NOTE: Braces are necessary to ensure correct value init order.
-		frame->Offset = Vector3{ (float)ReadInt16(), (float)ReadInt16(), (float)ReadInt16() };
-
-		int angleCount = ReadInt16();
-		frame->BoneOrientations.resize(angleCount);
-		for (int j = 0; j < angleCount; j++)
-		{
-			auto* q = &frame->BoneOrientations[j];
-			q->x = ReadFloat();
-			q->y = ReadFloat();
-			q->z = ReadFloat();
-			q->w = ReadFloat();
-		}
-	}
-
 	int modelCount = ReadCount();
 	TENLog("Model count: " + std::to_string(modelCount), LogLevel::Info);
 
+	// Load moveables.
 	for (int i = 0; i < modelCount; i++)
 	{
-		int objNum = ReadInt32();
-		MoveablesIds.push_back(objNum);
+		int objectID = ReadInt32();
+		MoveablesIds.push_back(objectID);
 
-		if (objNum >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS)
+		if (objectID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS)
+			throw std::exception(("Unsupported object slot " + std::to_string(objectID) + " is detected in a level. Make sure to delete unsupported objects from wads.").c_str());
+
+		auto& object = Objects[objectID];
+		object.loaded = true;
+		object.skinIndex = ReadInt32();
+		object.nmeshes = ReadInt32();
+		object.meshIndex = ReadInt32();
+		object.boneIndex = ReadInt32();
+
+		// Load animations.
+		int animCount = ReadCount();
+		object.Animations.resize(animCount);
+		for (auto& anim : object.Animations)
 		{
-			throw std::exception(("Unsupported object slot " + std::to_string(objNum) + 
-								  " is detected in a level. Make sure you delete unsupported objects from your wads.").c_str());
-		}
+			anim.StateID = ReadInt32();
+			anim.Interpolation = ReadInt32();
+			anim.EndFrameNumber = ReadInt32();
+			anim.NextAnimNumber = ReadInt32();
+			anim.NextFrameNumber = ReadInt32();
+			/*anim.BlendFrameCount = */ReadCount();
 
-		Objects[objNum].loaded = true;
-		Objects[objNum].skinIndex = ReadInt32();
-		Objects[objNum].nmeshes   = ReadInt32();
-		Objects[objNum].meshIndex = ReadInt32();
-		Objects[objNum].boneIndex = ReadInt32();
-		Objects[objNum].frameBase = ReadInt32();
-		Objects[objNum].animIndex = ReadInt32();
+			/*auto blendCurveStart = */ReadVector2();
+			/*auto blendCurveEnd = */ReadVector2();
+			/*auto blendCurveStartHandle = */ReadVector2();
+			/*auto blendCurveEndHandle = */ReadVector2();
+			//anim.BlendCurve = BezierCurve2D(blendCurveStart, blendCurveEnd, blendCurveStartHandle, blendCurveEndHandle);
+
+			auto fixedMotionCurveXStart = ReadVector2();
+			auto fixedMotionCurveXEnd = ReadVector2();
+			/*auto fixedMotionCurveXStartHandle = */ReadVector2();
+			/*auto fixedMotionCurveXEndHandle = */ReadVector2();
+			//anim.FixedMotionCurveX = BezierCurve2D(fixedMotionCurveXStart, fixedMotionCurveXEnd, fixedMotionCurveXStartHandle, fixedMotionCurveXEndHandle);
+
+			auto fixedMotionCurveYStart = ReadVector2();
+			auto fixedMotionCurveYEnd = ReadVector2();
+			/*auto fixedMotionCurveYStartHandle = */ReadVector2();
+			/*auto fixedMotionCurveYEndHandle = */ReadVector2();
+			//anim.FixedMotionCurveY = BezierCurve2D(fixedMotionCurveYStart, fixedMotionCurveYEnd, fixedMotionCurveYStartHandle, fixedMotionCurveYEndHandle);
+
+			auto fixedMotionCurveZStart = ReadVector2();
+			auto fixedMotionCurveZEnd = ReadVector2();
+			/*auto fixedMotionCurveZStartHandle = */ReadVector2();
+			/*auto fixedMotionCurveZEndHandle = */ReadVector2();
+			//anim.FixedMotionCurveZ = BezierCurve2D(fixedMotionCurveZStart, fixedMotionCurveZEnd, fixedMotionCurveZStartHandle, fixedMotionCurveZEndHandle);
+
+			anim.VelocityStart = Vector3(fixedMotionCurveXStart.y, fixedMotionCurveYStart.y, fixedMotionCurveZStart.y);
+			anim.VelocityEnd = Vector3(fixedMotionCurveXEnd.y, fixedMotionCurveYEnd.y, fixedMotionCurveZEnd.y);
+
+			// Load keyframes.
+			int frameCount = ReadCount();
+			anim.Keyframes.resize(frameCount);
+			for (auto& keyframe : anim.Keyframes)
+			{
+				auto center = ReadVector3();
+				auto extents = ReadVector3();
+				keyframe.Aabb = BoundingBox(center, extents);
+				keyframe.BoundingBox = GameBoundingBox(keyframe.Aabb);
+
+				keyframe.RootOffset = ReadVector3();
+
+				int boneCount = ReadCount();
+				keyframe.BoneOrientations.resize(boneCount);
+				for (auto& orient : keyframe.BoneOrientations)
+					orient = ReadVector4();
+			}
+
+			// Load state dispatches.
+			int dispatchCount = ReadCount();
+			anim.Dispatches.resize(dispatchCount);
+			for (auto& dispatch : anim.Dispatches)
+			{
+				dispatch.StateID = ReadInt32();
+				dispatch.FrameNumberRange.first = ReadInt32(); //dispatch.FrameNumberLow = ReadInt32();
+				dispatch.FrameNumberRange.second = ReadInt32(); //dispatch.FrameNumberHigh = ReadInt32();
+				dispatch.NextAnimNumber = ReadInt32();
+				dispatch.NextFrameNumber/*Low*/ = ReadInt32();
+				/*dispatch.NextFrameNumberHigh = */ReadInt32();
+				/*dispatch.BlendFrameCount = */ReadInt32();
+
+				auto start = ReadVector2();
+				auto end = ReadVector2();
+				auto startHandle = ReadVector2();
+				auto endHandle = ReadVector2();
+				//dispatch.BlendCurve = BezierCurve2D(start, startHandle, endHandle, end);
+			}
+
+			// Load animation commands.
+			int commandCount = ReadCount();
+			if (commandCount != 0)
+			{
+				anim.Commands.reserve(commandCount);
+
+				for (int i = 0; i < commandCount; i++)
+				{
+					auto type = (AnimCommandType)ReadInt32();
+
+					// Interpret raw animation command data.
+					auto command = AnimData::AnimCommandPtr{};
+					switch (type)
+					{
+						default:
+						case AnimCommandType::None:
+							continue;
+
+						case AnimCommandType::MoveOrigin:
+						{
+							auto relOffset = ReadVector3();
+							command = std::make_shared<MoveOriginCommand>(relOffset);
+						}
+							break;
+
+						case AnimCommandType::JumpVelocity:
+						{
+							auto jumpVel = ReadVector3();
+							command = std::make_shared<JumpVelocityCommand>(jumpVel);
+						}
+							break;
+
+						case AnimCommandType::AttackReady:
+							command = std::make_shared<AttackReadyCommand>();
+							break;
+
+						case AnimCommandType::Deactivate:
+							command = std::make_shared<DeactivateCommand>();
+							break;
+
+						case AnimCommandType::SoundEffect:
+						{
+							int soundID = ReadInt32();
+							int frameNumber = ReadInt32();
+							auto envCond = (SoundEffectEnvCondition)ReadInt32();
+							command = std::make_shared<SoundEffectCommand>(soundID, frameNumber, envCond);
+						}
+							break;
+
+						case AnimCommandType::FlipEffect:
+						{
+							int flipEffectID = ReadInt32();
+							int frameNumber = ReadInt32();
+							command = std::make_shared<FlipEffectCommand>(flipEffectID, frameNumber);
+						}
+							break;
+
+						case AnimCommandType::DisableInterpolation:
+						{
+							int frameNumber = ReadInt32();
+							command = std::make_shared<DisableInterpolationCommand>(frameNumber);
+						}
+							break;
+					}
+
+					anim.Commands.push_back(std::move(command));
+				}
+			}
+
+			anim.Flags = ReadInt32();
+		}
 	}
 
 	InitializeObjects();
 
 	int staticCount = ReadCount();
-	TENLog("Statics: " + std::to_string(staticCount), LogLevel::Info);
+	TENLog("Static count: " + std::to_string(staticCount), LogLevel::Info);
 
 	for (int i = 0; i < staticCount; i++)
 	{
@@ -521,11 +603,35 @@ void LoadCameras()
 		g_GameScriptEntities->AddName(camera.Name, camera);
 	}
 
-	NumberSpotcams = ReadCount();
+	int numSpotcams = ReadCount();
+	TENLog("Flyby camera count: " + std::to_string(numSpotcams), LogLevel::Info);
 
-	// TODO: Read properly!
-	if (NumberSpotcams != 0)
-		ReadBytes(SpotCam, NumberSpotcams * sizeof(SPOTCAM));
+	g_Level.SpotCams.resize(numSpotcams);
+	for (int i = 0; i < numSpotcams; i++)
+	{
+		auto& cam = g_Level.SpotCams[i];
+		cam.Position.x = ReadInt32();
+		cam.Position.y = ReadInt32();
+		cam.Position.z = ReadInt32();
+		cam.Target.x   = ReadInt32();
+		cam.Target.y   = ReadInt32();
+		cam.Target.z   = ReadInt32();
+
+		cam.Sequence   = ReadInt32();
+		cam.Camera     = ReadInt32();
+
+		cam.FOV        = ReadInt16();
+		cam.Roll       = ReadInt16();
+		cam.Timer      = ReadInt16();
+		cam.Speed      = ReadInt16();
+		cam.Flags      = ReadInt16();
+		cam.RoomNumber = ReadInt32();
+
+		cam.DOF.Mode     = (DOFMode)ReadInt32();
+		cam.DOF.Distance = ReadFloat();
+		cam.DOF.Range    = ReadFloat();
+		cam.DOF.Strength = ReadFloat();
+	}
 
 	int sinkCount = ReadCount();
 	TENLog("Sink count: " + std::to_string(sinkCount), LogLevel::Info);
@@ -1136,11 +1242,6 @@ void FreeLevel(bool partial)
 	g_Level.Meshes.resize(0);
 	g_Level.PathfindingBoxes.resize(0);
 	g_Level.Overlaps.resize(0);
-	g_Level.Anims.resize(0);
-	g_Level.Changes.resize(0);
-	g_Level.Ranges.resize(0);
-	g_Level.Commands.resize(0);
-	g_Level.Frames.resize(0);
 	g_Level.Sprites.resize(0);
 	g_Level.Mirrors.resize(0);
 	g_Level.SoundDetails.resize(0);
@@ -1157,12 +1258,11 @@ void FreeLevel(bool partial)
 	FreeSamples();
 }
 
-size_t ReadFileEx(void* ptr, size_t size, size_t count, FILE* stream)
+static void ReadBytes(std::ifstream& stream, void* dest, std::streamsize byteCount)
 {
-	_lock_file(stream);
-	size_t result = fread(ptr, size, count, stream);
-	_unlock_file(stream);
-	return result;
+	stream.read(reinterpret_cast<char*>(dest), byteCount);
+	if (!stream)
+		throw std::runtime_error("Unexpected end of level file or read error.");
 }
 
 void LoadSoundSources()
@@ -1253,7 +1353,7 @@ void LoadEvent(EventSet& eventSet)
 	if (eventType >= (int)EventType::Count)
 	{
 		TENLog("Unknown event type detected for event set " + eventSet.Name + ". Fall back to default.", LogLevel::Warning);
-		eventType = (int)EventType::Enter;
+		eventType = (int)EventType::VolumeEnter;
 	}
 
 	auto& evt = eventSet.Events[eventType];
@@ -1308,67 +1408,89 @@ void LoadEventSets()
 	}
 }
 
-FILE* FileOpen(const char* fileName)
+static bool Decompress(char* dest, char* compressedRegion, unsigned int totalUncompressedSize)
 {
-	FILE* ptr = fopen(fileName, "rb");
-	return ptr;
+	char* regionPtr = compressedRegion;
+
+	unsigned int numChunks = *(unsigned int*)regionPtr;
+	regionPtr += sizeof(unsigned int);
+
+	char* destPtr = dest;
+	unsigned int totalDecompressed = 0;
+
+	for (unsigned int i = 0; i < numChunks; i++)
+	{
+		unsigned int chunkUncompressed = *(unsigned int*)regionPtr;
+		regionPtr += sizeof(unsigned int);
+		unsigned int chunkCompressed = *(unsigned int*)regionPtr;
+		regionPtr += sizeof(unsigned int);
+
+		int result = LZ4_decompress_safe(regionPtr, destPtr, chunkCompressed, chunkUncompressed);
+
+		if (result != (int)chunkUncompressed)
+			return false;
+
+		regionPtr += chunkCompressed;
+		destPtr += chunkUncompressed;
+		totalDecompressed += chunkUncompressed;
+	}
+
+	return totalDecompressed == totalUncompressedSize;
 }
 
-void FileClose(FILE* ptr)
+static std::streamoff GetRemainingSize(std::ifstream& stream)
 {
-	fclose(ptr);
-}
-
-bool Decompress(byte* dest, byte* src, unsigned long compressedSize, unsigned long uncompressedSize)
-{
-	int decompressedSize = LZ4_decompress_safe(
-		reinterpret_cast<const char*>(src),
-		reinterpret_cast<char*>(dest),
-		static_cast<int>(compressedSize),
-		static_cast<int>(uncompressedSize)
-	);
-
-	return decompressedSize == static_cast<int>(uncompressedSize);
-}
-
-long GetRemainingSize(FILE* filePtr)
-{
-	long current_position = ftell(filePtr);
-
-	if (fseek(filePtr, 0, SEEK_END) != 0)
+	auto current = stream.tellg();
+	if (current < 0)
 		return NO_VALUE;
 
-	long size = ftell(filePtr);
+	stream.seekg(0, std::ios::end);
+	auto end = stream.tellg();
 
-	if (fseek(filePtr, current_position, SEEK_SET) != 0)
+	stream.seekg(current, std::ios::beg);
+	if (!stream)
 		return NO_VALUE;
 
-	return size;
+	return static_cast<std::streamoff>(end - current);
 }
 
-bool ReadCompressedBlock(FILE* filePtr, bool skip)
+static bool ReadCompressedBlock(std::ifstream& stream, bool skip)
 {
-	int compressedSize = 0;
-	int uncompressedSize = 0;
+	long long compressedSize = 0;
+	long long uncompressedSize = 0;
 
-	ReadFileEx(&uncompressedSize, 1, 4, filePtr);
-	ReadFileEx(&compressedSize, 1, 4, filePtr);
+	ReadBytes(stream, &uncompressedSize, sizeof(long long));
+	ReadBytes(stream, &compressedSize, sizeof(long long));
+
+#ifndef PLATFORM_64BIT
+	// Safeguard against incompatible block size.
+	if (uncompressedSize > INT_MAX || compressedSize > INT_MAX)
+		throw std::runtime_error("Level data block exceeds 2 GB and can't be loaded by a 32-bit version of the engine.");
+#endif
 
 	// Safeguard against changed file format.
-	long remainingSize = GetRemainingSize(filePtr);
+	auto remainingSize = GetRemainingSize(stream);
 	if (uncompressedSize <= 0 || compressedSize <= 0 || compressedSize > remainingSize)
-		throw std::exception{ "Data block size is incorrect. Probably old level version?" };
+		throw std::runtime_error("Data block size is incorrect. Probably old level version?");
 
-	if (skip) 
+	if (skip)
 	{
-		fseek(filePtr, compressedSize, SEEK_CUR);
+		stream.seekg(compressedSize, std::ios::cur);
 		return false;
 	}
 
 	auto compressedBuffer = (char*)malloc(compressedSize);
-	ReadFileEx(compressedBuffer, compressedSize, 1, filePtr);
+	ReadBytes(stream, compressedBuffer, compressedSize);
 	DataPtr = (char*)malloc(uncompressedSize);
-	Decompress((byte*)DataPtr, (byte*)compressedBuffer, compressedSize, uncompressedSize);
+
+	if (!Decompress(DataPtr, compressedBuffer, uncompressedSize))
+	{
+		free(compressedBuffer);
+		free(DataPtr);
+		DataPtr = nullptr;
+		throw std::runtime_error("LZ4 decompression failed.");
+	}
+
 	free(compressedBuffer);
 
 	CurrentDataPtr = DataPtr;
@@ -1396,15 +1518,14 @@ void UpdateProgress(float progress, bool skip = false)
 
 bool LoadLevel(const std::string& path, bool partial)
 {
-	FILE* filePtr = nullptr;
+	auto fsPath = std::filesystem::path(path);
+	auto stream = std::ifstream(fsPath, std::ios::binary);
 	bool loadedSuccessfully = false;
 
 	try
 	{
-		filePtr = FileOpen(path.c_str());
-
-		if (!filePtr)
-			throw std::exception{ (std::string{ "Unable to read level file: " } + path).c_str() };
+		if (!stream)
+			throw std::runtime_error("Unable to read level file: " + path);
 
 		char header[4];
 		unsigned char version[4];
@@ -1412,13 +1533,13 @@ bool LoadLevel(const std::string& path, bool partial)
 		int levelHash = 0;
 
 		// Read file header
-		ReadFileEx(&header, 1, 4, filePtr);
-		ReadFileEx(&version, 1, 4, filePtr);
-		ReadFileEx(&systemHash, 1, 4, filePtr);
-		ReadFileEx(&levelHash, 1, 4, filePtr);
+		ReadBytes(stream, &header, 4);
+		ReadBytes(stream, &version, 4);
+		ReadBytes(stream, &systemHash, 4);
+		ReadBytes(stream, &levelHash, 4);
 
 		// Check file header.
-		if (std::string(header) != "TEN")
+		if (std::string(header, 3) != "TEN")
 			throw std::invalid_argument("Level file header is not valid! Must be TEN. Probably old level version?");
 
 		// Check level file integrity to allow or disallow fast reload.
@@ -1432,7 +1553,7 @@ bool LoadLevel(const std::string& path, bool partial)
 		// Store information about last loaded level file.
 		LastLevelFilePath = path;
 		LastLevelHash = levelHash;
-		LastLevelTimestamp = std::filesystem::last_write_time(path);
+		LastLevelTimestamp = std::filesystem::last_write_time(fsPath);
 
 		// Only check version if this is not a dummy level, because dummy level is rarely updated.
 		if (path.find(DUMMY_LEVEL_NAME) == std::string_view::npos)
@@ -1440,7 +1561,7 @@ bool LoadLevel(const std::string& path, bool partial)
 			TENLog("Level compiler version: " + std::to_string(version[0]) + "." + std::to_string(version[1]) + "." + std::to_string(version[2]), LogLevel::Info);
 
 			// Check if level version is higher than engine version
-			auto assemblyVersion = TEN::Utils::GetProductOrFileVersion(true);
+			auto assemblyVersion = g_Platform->GetProductOrFileVersion(true);
 			for (int i = 0; i < assemblyVersion.size(); i++)
 			{
 				if (i >= 3)
@@ -1477,7 +1598,7 @@ bool LoadLevel(const std::string& path, bool partial)
 		UpdateProgress(0);
 
 		// Media block
-		if (ReadCompressedBlock(filePtr, partial))
+		if (ReadCompressedBlock(stream, partial))
 		{
 			LoadTextures();
 			UpdateProgress(30);
@@ -1489,7 +1610,7 @@ bool LoadLevel(const std::string& path, bool partial)
 		}
 
 		// Geometry block
-		if (ReadCompressedBlock(filePtr, partial))
+		if (ReadCompressedBlock(stream, partial))
 		{
 			LoadRooms();
 			UpdateProgress(50);
@@ -1509,7 +1630,7 @@ bool LoadLevel(const std::string& path, bool partial)
 		}
 
 		// Dynamic data block
-		if (ReadCompressedBlock(filePtr, false))
+		if (ReadCompressedBlock(stream, false))
 		{
 			LoadDynamicRoomData();
 			LoadItems();
@@ -1560,10 +1681,7 @@ bool LoadLevel(const std::string& path, bool partial)
 		SystemNameHash = 0;
 	}
 
-	// Now the entire level is decompressed, we can close it
-	FileClose(filePtr);
-	filePtr = nullptr;
-
+	// std::ifstream closes automatically on scope exit.
 	return loadedSuccessfully;
 }
 
@@ -1721,7 +1839,7 @@ bool LoadLevelFile(int levelIndex)
 		if (levelIndex == 0)
 		{
 			levelPath = assetDir + DUMMY_LEVEL_NAME;
-			GenerateDummyLevel(levelPath);
+			g_Platform->CreateDummyTitleLevel(levelPath);
 			TENLog("Title level file not found, using dummy level.", LogLevel::Info);
 			isDummyLevel = true;
 		}
@@ -1740,8 +1858,8 @@ bool LoadLevelFile(int levelIndex)
 						levelIndex == CurrentLevel && timestamp == LastLevelTimestamp && levelPath == LastLevelFilePath);
 
 	// If fast reload is in action, draw last game frame instead of loading screen.
-	auto loadingScreenPath = TEN::Utils::ToWString(assetDir + level.LoadScreenFileName);
-	g_Renderer.SetLoadingScreen(fastReload ? std::wstring{} : loadingScreenPath);
+	auto loadingScreenPath = assetDir + level.LoadScreenFileName;
+	g_Renderer.SetLoadingScreen(fastReload ? std::string{} : loadingScreenPath);
 
 	BackupLara();
 	StopAllSounds();
@@ -1813,7 +1931,7 @@ void GetCarriedItems()
 		const auto& object = Objects[item.ObjectNumber];
 
 		if (object.intelligent ||
-			(item.ObjectNumber >= ID_SEARCH_OBJECT1 && item.ObjectNumber <= ID_SEARCH_OBJECT3) ||
+			(item.ObjectNumber >= ID_SEARCH_OBJECT1 && item.ObjectNumber <= ID_SEARCH_OBJECT4) ||
 			(item.ObjectNumber == ID_SARCOPHAGUS))
 		{
 			for (short linkNumber = g_Level.Rooms[item.RoomNumber].itemNumber; linkNumber != NO_VALUE; linkNumber = g_Level.Items[linkNumber].NextItem)
@@ -1822,13 +1940,19 @@ void GetCarriedItems()
 
 				if (abs(item2.Pose.Position.x - item.Pose.Position.x) < CLICK(2) &&
 					abs(item2.Pose.Position.z - item.Pose.Position.z) < CLICK(2) &&
-					abs(item2.Pose.Position.y - item.Pose.Position.y) < CLICK(1) &&
-					Objects[item2.ObjectNumber].isPickup)
+					abs(item2.Pose.Position.y - item.Pose.Position.y) < CLICK(1))
 				{
-					item2.CarriedItem = item.CarriedItem;
-					item.CarriedItem = linkNumber;
-					RemoveDrawnItem(linkNumber);
-					item2.RoomNumber = NO_VALUE;
+					bool isSearchObjectWithExplosion = !object.intelligent && (item2.ObjectNumber == ID_EXPLOSION || item2.ObjectNumber == ID_GRENADE);
+
+					if (Objects[item2.ObjectNumber].isPickup || isSearchObjectWithExplosion)
+					{
+						item2.CarriedItem = item.CarriedItem;
+						item.CarriedItem = linkNumber;
+						RemoveDrawnItem(linkNumber);
+
+						if (!isSearchObjectWithExplosion)
+							item2.RoomNumber = NO_VALUE;
+					}
 				}
 			}
 		}

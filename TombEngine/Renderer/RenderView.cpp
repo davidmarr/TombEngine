@@ -6,8 +6,8 @@ namespace TEN::Renderer
 	RenderView::RenderView(CAMERA_INFO* cam, float roll, float fov, float nearPlane, float farPlane, int w, int h) : Camera(cam, roll, fov, nearPlane, farPlane, w, h) 
 	{
 		Viewport = {};
-		Viewport.TopLeftX = 0;
-		Viewport.TopLeftY = 0;
+		Viewport.X = 0;
+		Viewport.Y = 0;
 		Viewport.Width = w;
 		Viewport.Height = h;
 		Viewport.MinDepth = 0;
@@ -18,8 +18,8 @@ namespace TEN::Renderer
 	{
 
 		Viewport = {};
-		Viewport.TopLeftX = 0;
-		Viewport.TopLeftY = 0;
+		Viewport.X = 0;
+		Viewport.Y = 0;
 		Viewport.Width = w;
 		Viewport.Height = h;
 		Viewport.MinDepth = 0;
@@ -62,9 +62,16 @@ namespace TEN::Renderer
 		RoomNumber = cam->pos.RoomNumber;
 		WorldPosition = Vector3(cam->pos.x, cam->pos.y, cam->pos.z);
 
-		Vector3 target = Vector3(cam->target.x, cam->target.y, cam->target.z);
-		if ((target - WorldPosition) == Vector3::Zero)
+		auto target = Vector3(cam->target.x, cam->target.y, cam->target.z);
+		
+		// Safety clamps to avoid NaNs in view direction calculation.
+		auto rawDirection = target - WorldPosition;
+
+		if (rawDirection == Vector3::Zero)
 			target.y -= 10;
+
+		if (std::abs(rawDirection.x) < EPSILON && std::abs(rawDirection.z) < EPSILON)
+			target.x -= 1;
 
 		WorldDirection = target - WorldPosition;
 		WorldDirection.Normalize();

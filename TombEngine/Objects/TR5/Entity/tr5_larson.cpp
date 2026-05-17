@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR5/Entity/tr5_larson.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/control/box.h"
 #include "Game/control/control.h"
@@ -17,6 +17,7 @@
 #include "Math/Math.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Math;
 
 namespace TEN::Entities::Creatures::TR5
@@ -94,7 +95,7 @@ namespace TEN::Entities::Creatures::TR5
 			// HACK: Reset Lara enemy in case no AI_AMBUSH object is present.
 			// Technically it's illegal, but TEN code forces enemy to Lara after calling GetAITarget, resulting
 			// in Larson never running away.
-			if (item->AIBits & AMBUSH && creature->Enemy->ObjectNumber != GAME_OBJECT_ID::ID_AI_AMBUSH)
+			if (item->AIBits & AMBUSH && creature->Enemy && creature->Enemy->ObjectNumber != GAME_OBJECT_ID::ID_AI_AMBUSH)
 				creature->Enemy = nullptr;
 
 			if (AI.ahead)
@@ -107,7 +108,7 @@ namespace TEN::Entities::Creatures::TR5
 			{
 				// Set Larson to attack if player is moving fast enough and close enough, or if Larson was hit,
 				// or if player is directly visible.
-				if ((AI.distance < LARSON_ALERT_RANGE && creature->Enemy->Animation.Velocity.z > 20.0f) ||
+				if ((AI.distance < LARSON_ALERT_RANGE && creature->Enemy && creature->Enemy->Animation.Velocity.z > 20.0f) ||
 					(TargetVisible(item, &AI) != 0) ||
 					item->HitStatus)
 				{
@@ -115,7 +116,7 @@ namespace TEN::Entities::Creatures::TR5
 					creature->Alerted = true;
 
 					// creature->Enemy will contain AI object when Larson is patrolling or guarding, so we reset it.
-					if (!creature->Enemy->IsLara())
+					if (!creature->Enemy.IsLara())
 						creature->Enemy = nullptr;
 				}
 			}
@@ -301,7 +302,7 @@ namespace TEN::Entities::Creatures::TR5
 					item->Pose.Orientation.y += AI.angle;
 				}
 				
-				if (item->Animation.FrameNumber == GetAnimData(item).frameBase)
+				if (item->Animation.FrameNumber == 0)
 				{
 					if (item->ObjectNumber == ID_PIERRE)
 					{
@@ -334,7 +335,7 @@ namespace TEN::Entities::Creatures::TR5
 		{
 			// When Larson dies, it activates trigger at start position
 			if (item->ObjectNumber == ID_LARSON &&
-				item->Animation.FrameNumber == GetAnimData(item).frameEnd)
+				TestLastFrame(*item))
 			{
 				short roomNumber = item->ItemFlags[2] & 0xFF;
 				short floorHeight = item->ItemFlags[2] & 0xFF00;
@@ -354,11 +355,11 @@ namespace TEN::Entities::Creatures::TR5
 		{
 			// Death.
 			if (item->ObjectNumber == ID_PIERRE)
-				item->Animation.AnimNumber = Objects[ID_PIERRE].animIndex + ANIMATION_TR5_PIERRE_DIE;
+				item->Animation.AnimNumber = ANIMATION_TR5_PIERRE_DIE;
 			else
-				item->Animation.AnimNumber = Objects[ID_LARSON].animIndex + ANIMATION_TR5_LARSON_DIE;
+				item->Animation.AnimNumber = ANIMATION_TR5_LARSON_DIE;
 
-			item->Animation.FrameNumber = GetAnimData(item).frameBase;
+			item->Animation.FrameNumber = 0;
 			item->Animation.ActiveState = STATE_TR5_LARSON_DIE;
 		}
 

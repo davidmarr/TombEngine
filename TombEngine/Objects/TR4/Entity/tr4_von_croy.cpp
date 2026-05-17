@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR4/Entity/tr4_von_croy.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Point.h"
 #include "Game/control/box.h"
@@ -17,6 +17,7 @@
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Point;
 using namespace TEN::Math;
 
@@ -143,7 +144,7 @@ namespace TEN::Entities::TR4
 		SetAnimation(item, VON_CROY_ANIM_KNIFE_EQUIP_UNEQUIP);
 		item->SetMeshSwapFlags(VonCroyKnifeSwapJoints);
 
-		ZeroMemory(VonCroyPassedWaypoints, sizeof(VonCroyPassedWaypoints));
+		memset(VonCroyPassedWaypoints, 0, sizeof(VonCroyPassedWaypoints));
 	}
 
 	void VonCroyControl(short itemNumber)
@@ -264,15 +265,15 @@ namespace TEN::Entities::TR4
 		}
 
 		// If a target is found, it becomes the enemy.
-		ItemInfo* enemy = creature->Enemy;
+		auto* enemy = creature->Enemy.Get();
 		if (foundTarget != nullptr)
 			creature->Enemy = foundTarget;
 
 		AI_INFO AI;
 
 		// HACK: Even the most advanced zone in TR must have a step height of 1024, so we need to recreate zones when step difference is higher.
-		if (item->Animation.AnimNumber == Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_DOWN_2_BLOCKS ||
-			item->Animation.AnimNumber == Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_UP_AFTER_JUMP)
+		if (item->Animation.AnimNumber == VON_CROY_ANIM_CLIMB_DOWN_2_BLOCKS ||
+			item->Animation.AnimNumber == VON_CROY_ANIM_CLIMB_UP_AFTER_JUMP)
 		{
 			short oldRoom = item->RoomNumber;
 			item->Pose.Position.x += dx;
@@ -280,7 +281,7 @@ namespace TEN::Entities::TR4
 
 			GetFloor(item->Pose.Position.x, item->Pose.Position.y, item->Pose.Position.z, &item->RoomNumber);
 
-			if (item->Animation.FrameNumber == GetAnimData(item).frameBase + VON_CROY_ANIM_RUN_FORWARD)
+			if (item->Animation.FrameNumber == VON_CROY_ANIM_RUN_FORWARD)
 				CreateZone(item);
 
 			CreatureAIInfo(item, &AI);
@@ -296,7 +297,7 @@ namespace TEN::Entities::TR4
 		CreatureMood(item, &AI, true);
 
 		AI_INFO laraAI;
-		if (creature->Enemy->IsLara())
+		if (creature->Enemy.IsLara())
 			memcpy(&laraAI, &AI, sizeof(AI_INFO));
 		else
 		{
@@ -406,8 +407,8 @@ namespace TEN::Entities::TR4
 			}
 			else if (canJump1block || canJump2blocks)
 			{
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_IDLE_TO_JUMP;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_IDLE_TO_JUMP;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_JUMP;
 				creature->MaxTurn = 0;
 				creature->LOT.IsJumping = true;
@@ -440,7 +441,7 @@ namespace TEN::Entities::TR4
 			else
 			{
 				if (creature->Enemy != nullptr && creature->Enemy->HitPoints > 0 &&
-					AI.distance < pow(1024, 2) && !creature->Enemy->IsLara() &&
+					AI.distance < pow(1024, 2) && !creature->Enemy.IsLara() &&
 					creature->Enemy->ObjectNumber != ID_AI_FOLLOW)
 				{
 					if (AI.bite)
@@ -506,7 +507,7 @@ namespace TEN::Entities::TR4
 					if (!foundTarget || AI.distance >= pow(BLOCK(1.5f), 2) &&
 						(item->TestMeshSwapFlags(18) || AI.distance >= pow(BLOCK(3), 2)))
 					{
-						if (creature->Enemy->IsLara())
+						if (creature->Enemy.IsLara())
 						{
 							if (AI.distance >= pow(BLOCK(2), 2))
 							{
@@ -627,7 +628,7 @@ namespace TEN::Entities::TR4
 			break;
 
 		case VON_CROY_STATE_TOGGLE_KNIFE:
-			if (item->Animation.FrameNumber == GetAnimData(item).frameBase)
+			if (item->Animation.FrameNumber == 0)
 			{
 				item->SetMeshSwapFlags(VonCroyKnifeSwapJoints, item->TestMeshSwapFlags(VonCroyKnifeSwapJoints));
 			}
@@ -635,7 +636,7 @@ namespace TEN::Entities::TR4
 			break;
 
 		case VON_CROY_STATE_LOOK_BEFORE_JUMP:
-			if (item->Animation.FrameNumber == GetAnimData(item).frameBase)
+			if (item->Animation.FrameNumber == 0)
 			{
 				item->Pose = enemy->Pose;
 
@@ -644,8 +645,8 @@ namespace TEN::Entities::TR4
 					creature->MaxTurn = 0;
 					item->Animation.ActiveState = VON_CROY_STATE_JUMP;
 					item->Animation.TargetState = VON_CROY_STATE_JUMP_2_BLOCKS;
-					item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_IDLE_TO_JUMP;
-					item->Animation.FrameNumber = GetAnimData(item).frameBase;
+					item->Animation.AnimNumber = VON_CROY_ANIM_IDLE_TO_JUMP;
+					item->Animation.FrameNumber = 0;
 					creature->LOT.IsJumping = true;
 				}
 
@@ -658,8 +659,8 @@ namespace TEN::Entities::TR4
 			break;
 
 		case VON_CROY_STATE_JUMP_2_BLOCKS:
-			if (item->Animation.AnimNumber == Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_JUMP_2_BLOCKS ||
-				item->Animation.FrameNumber > (GetAnimData(item).frameBase + 5))
+			if (item->Animation.AnimNumber == VON_CROY_ANIM_JUMP_2_BLOCKS ||
+				item->Animation.FrameNumber > 5)
 			{
 				creature->LOT.IsJumping = true;
 				//if (canJump3blocks)
@@ -674,9 +675,9 @@ namespace TEN::Entities::TR4
 			break;
 
 		case VON_CROY_STATE_ENABLE_TRAP:
-			if (item->Animation.FrameNumber == GetAnimData(item).frameBase)
+			if (item->Animation.FrameNumber == 0)
 				item->Pose = enemy->Pose;
-			else if (item->Animation.FrameNumber == GetAnimData(item).frameBase + 120)
+			else if (item->Animation.FrameNumber == 120)
 			{
 				TestTriggers(creature->AITarget, true);
 
@@ -701,8 +702,8 @@ namespace TEN::Entities::TR4
 
 			if (!creature->Flags && enemy != nullptr)
 			{
-				if (item->Animation.FrameNumber > GetAnimData(item).frameBase + 20 &&
-					item->Animation.FrameNumber > GetAnimData(item).frameBase + 45)
+				if (item->Animation.FrameNumber > 20 &&
+					item->Animation.FrameNumber < 45)
 				{
 					if (abs(item->Pose.Position.x - enemy->Pose.Position.x) < CLICK(2) &&
 						abs(item->Pose.Position.y - enemy->Pose.Position.y) < CLICK(2) &&
@@ -765,12 +766,12 @@ namespace TEN::Entities::TR4
 			ClampRotation(item->Pose, AI.angle, ANGLE(6.0f));
 
 			if ((enemy == nullptr || enemy->Flags != 0) ||
-				item->Animation.FrameNumber <= GetAnimData(item).frameBase + 21)
+				item->Animation.FrameNumber <= 21)
 			{
 				if (creature->Flags == 0 && enemy != nullptr)
 				{
-					if (item->Animation.FrameNumber > GetAnimData(item).frameBase + 15 &&
-						item->Animation.FrameNumber < GetAnimData(item).frameBase + 26)
+					if (item->Animation.FrameNumber > 15 &&
+						item->Animation.FrameNumber < 26)
 					{
 						if (abs(item->Pose.Position.x - enemy->Pose.Position.x) < CLICK(2) &&
 							abs(item->Pose.Position.y - enemy->Pose.Position.y) < CLICK(2) &&
@@ -809,9 +810,9 @@ namespace TEN::Entities::TR4
 				joint2 = AI.angle / 2;
 			}
 
-			if (item->Animation.AnimNumber == Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_START_POINT)
+			if (item->Animation.AnimNumber == VON_CROY_ANIM_START_POINT)
 			{
-				if (item->Animation.FrameNumber != GetAnimData(item).frameBase)
+				if (item->Animation.FrameNumber != 0)
 					break;
 			}
 			else
@@ -830,8 +831,8 @@ namespace TEN::Entities::TR4
 
 		case VON_CROY_STATE_STANDING_JUMP_GRAB:
 			flags = true;
-			if (item->Animation.AnimNumber != Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_UP_AFTER_JUMP ||
-				item->Animation.FrameNumber != GetAnimData(item).frameBase)
+			if (item->Animation.AnimNumber != VON_CROY_ANIM_CLIMB_UP_AFTER_JUMP ||
+				item->Animation.FrameNumber != 0)
 			{
 				flags = false;
 			}
@@ -873,56 +874,57 @@ namespace TEN::Entities::TR4
 			switch (CreatureVault(itemNumber, angle, 2, 260))
 			{
 			case 2:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_2_BLOCKS;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_2_BLOCKS;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_CLIMB_2_BLOCKS;
 				creature->MaxTurn = 0;
 				break;
 
 			case 3:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_3_BLOCKS;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_3_BLOCKS;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_CLIMB_3_BLOCKS;
 				creature->MaxTurn = 0;
 				break;
 
 			case 4:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_4_BLOCKS;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_4_BLOCKS;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_CLIMB_4_BLOCKS;
 				creature->MaxTurn = 0;
 				break;
 
 			case 7:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_JUMP_TO_HANG;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_JUMP_TO_HANG;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_GRAB_LADDER;
 				creature->MaxTurn = 0;
 				break;
+
 			case -7:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_DOWN_2_BLOCKS;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_DOWN_2_BLOCKS;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_STEP_DOWN_HIGH;
 				creature->MaxTurn = 0;
 				break;
 
 			case -4:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_DOWN_1_BLOCK;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_DOWN_1_BLOCK;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_JUMP_DOWN_4_CLICKS;
 				creature->MaxTurn = 0;
 				break;
 
 			case -3:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_OFF_3_CLICKS;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_OFF_3_CLICKS;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_JUMP_DOWN_3_CLICKS;
 				creature->MaxTurn = 0;
 				break;
 
 			case -2:
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + VON_CROY_ANIM_CLIMB_OFF_2_CLICKS;
-				item->Animation.FrameNumber = GetAnimData(item).frameBase;
+				item->Animation.AnimNumber = VON_CROY_ANIM_CLIMB_OFF_2_CLICKS;
+				item->Animation.FrameNumber = 0;
 				item->Animation.ActiveState = VON_CROY_STATE_JUMP_DOWN_2_CLICKS;
 				creature->MaxTurn = 0;
 				break;

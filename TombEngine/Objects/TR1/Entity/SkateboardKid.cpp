@@ -1,15 +1,19 @@
 #include "framework.h"
 #include "Objects/TR1/Entity/SkateboardKid.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/control/lot.h"
 #include "Game/misc.h"
 #include "Game/people.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
+#include "Specific/trutils.h"
+#include "Sound/sound.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Math;
+using namespace TEN::Utils;
 
 namespace TEN::Entities::Creatures::TR1
 {
@@ -117,7 +121,7 @@ namespace TEN::Entities::Creatures::TR1
 
 		if (item.ItemFlags[0] == NO_VALUE)
 		{
-			TENLog("Failed to do the skateboard kid control (itemNumber: " + std::to_string(itemNumber) + "), the skateboard itemNumber is missing, probably failed to be created !");
+			TENLog(fmt::format("Failed to handle skateboard kid control (moveable {}). The skateboard is missing.", itemNumber));
 			return;
 		}
 
@@ -160,6 +164,9 @@ namespace TEN::Entities::Creatures::TR1
 			CreatureMood(&item, &ai, false);
 
 			headingAngle = CreatureTurn(&item, creature.MaxTurn);
+
+			if (item.HitStatus)
+				SoundEffect(SFX_TR1_SKATEBOARDKID_HIT, &item.Pose);
 
 			switch (item.Animation.ActiveState)
 			{
@@ -220,12 +227,11 @@ namespace TEN::Entities::Creatures::TR1
 			}
 		}
 
-		skateItem.Animation.AnimNumber = Objects[ID_SKATEBOARD].animIndex + (item.Animation.AnimNumber - Objects[ID_SKATEBOARD_KID].animIndex);
-		skateItem.Animation.FrameNumber = GetAnimData(item).frameBase + (item.Animation.FrameNumber - GetAnimData(item).frameBase);
+		SyncItemAnimation(skateItem, item);
 		skateItem.Pose.Position = item.Pose.Position;
 		skateItem.Pose.Orientation = item.Pose.Orientation;
 		UpdateItemRoom(item.ItemFlags[0]);
-		AnimateItem(&skateItem);
+		AnimateItem(skateItem);
 
 		CreatureJoint(&item, 0, extraHeadRot.y);
 		CreatureJoint(&item, 1, extraTorsoRot.x);

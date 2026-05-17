@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR3/Entity/tr3_flamethrower.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/control/box.h"
 #include "Game/control/lot.h"
@@ -17,6 +17,7 @@
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Math;
 
 namespace TEN::Entities::Creatures::TR3
@@ -125,9 +126,9 @@ namespace TEN::Entities::Creatures::TR3
 			CreatureMood(item, &AI, true);
 
 			angle = CreatureTurn(item, creature->MaxTurn);
-			auto* realEnemy = creature->Enemy;
+			auto* enemy = creature->Enemy.Get();
 
-			bool canAttack = ((realEnemy != nullptr && !realEnemy->IsLara()) || creature->HurtByLara);
+			bool canAttack = ((enemy && !enemy->IsLara()) || creature->HurtByLara);
 
 			if (item->HitStatus || laraAI.distance < FLAMETHROWER_AWARE_RANGE || TargetVisible(item, &laraAI))
 			{
@@ -289,8 +290,8 @@ namespace TEN::Entities::Creatures::TR3
 				else
 				{
 					ThrowFire(itemNumber, FlamethrowerBite, Vector3i(0, (Random::GenerateInt() & 63) + 12, 0));
-					if (realEnemy && realEnemy->ObjectNumber == ID_SEAL_MUTANT)
-						realEnemy->ItemFlags[0]++;
+					if (enemy && enemy->ObjectNumber == ID_SEAL_MUTANT)
+						enemy->ItemFlags[0]++;
 				}
 
 				SoundEffect(SFX_TR4_FLAME_EMITTER, &item->Pose);
@@ -321,8 +322,8 @@ namespace TEN::Entities::Creatures::TR3
 				else
 				{
 					ThrowFire(itemNumber, FlamethrowerBite, Vector3i(0, (GetRandomControl() & 63) + 12, 0));
-					if (realEnemy && realEnemy->ObjectNumber == ID_SEAL_MUTANT)
-						realEnemy->ItemFlags[0]++;
+					if (enemy && enemy->ObjectNumber == ID_SEAL_MUTANT)
+						enemy->ItemFlags[0]++;
 				}
 
 				SoundEffect(SFX_TR4_FLAME_EMITTER, &item->Pose);

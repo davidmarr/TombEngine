@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR4/Entity/tr4_hammerhead.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/effects/effects.h"
 #include "Game/itemdata/creature_info.h"
@@ -10,6 +10,8 @@
 #include "Game/misc.h"
 #include "Game/Setup.h"
 #include "Specific/level.h"
+
+using namespace TEN::Animation;
 
 namespace TEN::Entities::TR4
 {
@@ -88,7 +90,7 @@ namespace TEN::Entities::TR4
 			AI_INFO AI;
 			CreatureAIInfo(item, &AI);
 
-			if (!creature->Enemy->IsLara())
+			if (!creature->Enemy.IsLara())
 				phd_atan(LaraItem->Pose.Position.z - item->Pose.Position.z, LaraItem->Pose.Position.x - item->Pose.Position.x);
 
 			GetCreatureMood(item, &AI, true);

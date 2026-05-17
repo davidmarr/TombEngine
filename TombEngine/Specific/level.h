@@ -1,20 +1,19 @@
 #pragma once
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/event.h"
 #include "Game/items.h"
 #include "Game/itemdata/creature_info.h"
 #include "Game/room.h"
+#include "Game/spotcam.h"
 #include "Renderer/RendererEnums.h"
 #include "Sound/sound.h"
-#include "Specific/IO/ChunkId.h"
-#include "Specific/IO/ChunkReader.h"
-#include "Specific/IO/LEB128.h"
-#include "Specific/IO/Streams.h"
 #include "Specific/LevelCameraInfo.h"
 #include "Specific/newtypes.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Control::Volumes;
+using namespace TEN::SpotCam;
 
 struct ChunkId;
 struct LEB128;
@@ -124,8 +123,7 @@ struct MirrorData
 	bool ReflectSprites	  = false;
 };
 
-// LevelData
-struct LEVEL
+struct LevelData
 {
 	// Object
 
@@ -133,14 +131,6 @@ struct LEVEL
 	std::vector<ItemInfo> Items	   = {};
 	std::vector<MESH>	  Meshes   = {};
 	std::vector<int>	  Bones	   = {};
-
-	// Animation
-
-	std::vector<AnimData>				Anims	 = {};
-	std::vector<AnimFrame>				Frames	 = {};
-	std::vector<StateDispatchData>		Changes	 = {};
-	std::vector<StateDispatchRangeData> Ranges	 = {};
-	std::vector<int>					Commands = {};
 
 	// Collision
 
@@ -163,6 +153,7 @@ struct LEVEL
 	// Misc.
 
 	std::vector<LevelCameraInfo> Cameras   = {};
+	std::vector<SpotCamInfo>	 SpotCams  = {};
 	std::vector<EventSet>		 GlobalEventSets = {};
 	std::vector<EventSet>		 VolumeEventSets = {};
 	std::vector<int>			 LoopedEventSetIndices = {};
@@ -186,16 +177,11 @@ extern const std::vector<GAME_OBJECT_ID> BRIDGE_OBJECT_IDS;
 
 extern std::vector<int> MoveablesIds;
 extern std::vector<int> SpriteSequencesIds;
-extern LEVEL g_Level;
+extern LevelData g_Level;
 extern int SystemNameHash;
 extern int LastLevelHash;
 
 inline std::future<bool> LevelLoadTask;
-
-size_t ReadFileEx(void* ptr, size_t size, size_t count, FILE* stream);
-FILE* FileOpen(const char* fileName);
-void FileClose(FILE* ptr);
-bool Decompress(byte* dest, byte* src, unsigned long compressedSize, unsigned long uncompressedSize);
 
 bool LoadLevelFile(int levelIndex);
 void FreeLevel(bool partial);

@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR1/Entity/tr1_giant_mutant.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/control/box.h"
 #include "Game/effects/effects.h"
@@ -15,6 +15,7 @@
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Math;
 
 namespace TEN::Entities::Creatures::TR1
@@ -104,6 +105,9 @@ namespace TEN::Entities::Creatures::TR1
 			CreatureMood(item, &ai, true);
 
 			headingAngle = (short)phd_atan(creature->Target.z - item->Pose.Position.z, creature->Target.x - item->Pose.Position.x) - item->Pose.Orientation.y;
+
+			if (item->HitStatus)
+				SoundEffect(SFX_TR1_GIANT_MUTANT_HIT, &item->Pose);
 
 			if (item->TouchBits.TestAny())
 				DoDamage(creature->Enemy, MUTANT_CONTACT_DAMAGE);

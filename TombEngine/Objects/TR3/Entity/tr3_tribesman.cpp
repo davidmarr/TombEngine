@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Objects/TR3/Entity/tr3_tribesman.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/effects/effects.h"
 #include "Game/itemdata/creature_info.h"
@@ -16,6 +16,7 @@
 #include "Sound/sound.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Entities::Traps;
 using namespace TEN::Math;
 
@@ -318,9 +319,9 @@ namespace TEN::Entities::Creatures::TR3
 			case TRIBESMAN_STATE_RUN_AXE_ATTACK_HIGH:
 				item->ItemFlags[0] = 1;
 				creature->MaxTurn = ANGLE(4.0f);
-				creature->Flags = item->Animation.FrameNumber - GetAnimData(item).frameBase;
+				creature->Flags = item->Animation.FrameNumber;
 
-				if (creature->Enemy->IsLara())
+				if (creature->Enemy.IsLara())
 				{
 					if (item->TouchBits.Test(TribesmanAxeAttackJoints) &&
 						creature->Flags >= TribesmanAxeHit[item->Animation.ActiveState][0] &&
@@ -653,7 +654,7 @@ namespace TEN::Entities::Creatures::TR3
 					item->Pose.Orientation.y += ANGLE(2.0f);
 				}
 
-				if (item->Animation.FrameNumber == GetAnimData(item).frameBase + 15)
+				if (item->Animation.FrameNumber == 15)
 				{
 					item->Animation.TargetState = TRIBESMAN_STATE_CROUCH_IDLE;
 					TribesmanShotDart(item);
@@ -662,7 +663,7 @@ namespace TEN::Entities::Creatures::TR3
 				break;
 
 			case TRIBESMAN_STATE_AXE_ATTACK_HIGH_CONTINUE:
-				if (creature->Enemy->IsLara())
+				if (creature->Enemy.IsLara())
 				{
 					if (!(creature->Flags & 0xf000) &&
 						item->TouchBits.Test(TribesmanDartAttackJoints))
