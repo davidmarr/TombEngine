@@ -42,6 +42,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Flow.Settings.Graphics.flameHeatHaze` option to toggle heat haze effects for flames.
 * Added `Flow.Settings.UI.menuBackgroundBlur` option to specify amount of blur for the inventory and pause backgrounds.
 * Added `Lara.SetSkin` to swap classic outfits.
+* Added `Objects.Creature` class to fetch and set various enemy AI state parameters.
 * Added `View.GetDOF` and `View.SetDOF` functions to get or set depth of field parameters.
 * Added `View.GetPostProcessTint` to get currently set post process tint.
 * Added `View.GetPostProcess` and `View.SetPostProcess` to set/get postprocess mode and strength.

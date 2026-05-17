@@ -918,6 +918,7 @@ const std::vector<byte> SaveGame::Build()
 			creatureBuilder.add_fly_rate(creature->FlyRate);
 			creatureBuilder.add_monkey_swing_ahead(creature->MonkeySwingAhead);
 			creatureBuilder.add_mood((int)creature->Mood);
+			creatureBuilder.add_forced_mood(creature->ForcedMood.has_value() ? (int)creature->ForcedMood.value() : NO_VALUE);
 			creatureBuilder.add_patrol(creature->Patrol);
 			creatureBuilder.add_poisoned(creature->Poisoned);
 			creatureBuilder.add_reached_goal(creature->ReachedGoal);
@@ -2900,6 +2901,7 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			creature->FlyRate = savedCreature->fly_rate();
 			creature->MonkeySwingAhead = savedCreature->monkey_swing_ahead();
 			creature->Mood = (MoodType)savedCreature->mood();
+			creature->ForcedMood = savedCreature->forced_mood() == NO_VALUE ? std::nullopt : std::optional((MoodType)savedCreature->forced_mood());
 			creature->Patrol = savedCreature->patrol();
 			creature->Poisoned = savedCreature->poisoned();
 			creature->ReachedGoal = savedCreature->reached_goal();

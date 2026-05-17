@@ -285,6 +285,27 @@ static constexpr char ScriptReserved_EnableHomeLevel[]			= "EnableHomeLevel";
 static constexpr char ScriptReserved_EnableLoadSave[]			= "EnableLoadSave";
 static constexpr char ScriptReserved_EnablePointFilter[]		= "EnablePointFilter";
 
+// Creature Functions
+static constexpr char ScriptReserved_Creature[]				= "Creature";
+static constexpr char ScriptReserved_GetMood[]				= "GetMood";
+static constexpr char ScriptReserved_SetMood[]				= "SetMood";
+static constexpr char ScriptReserved_GetCreatureTarget[]	= "GetTarget";
+static constexpr char ScriptReserved_GetTargetPosition[]	= "GetTargetPosition";
+static constexpr char ScriptReserved_SetCreatureTarget[]	= "SetTarget";
+static constexpr char ScriptReserved_GetAlerted[]			= "GetAlerted";
+static constexpr char ScriptReserved_SetAlerted[]			= "SetAlerted";
+static constexpr char ScriptReserved_GetFriendly[]			= "GetFriendly";
+static constexpr char ScriptReserved_SetFriendly[]			= "SetFriendly";
+static constexpr char ScriptReserved_GetHurtByPlayer[]		= "GetHurtByPlayer";
+static constexpr char ScriptReserved_SetHurtByPlayer[]		= "SetHurtByPlayer";
+static constexpr char ScriptReserved_GetPoisoned[]			= "GetPoisoned";
+static constexpr char ScriptReserved_SetPoisoned[]			= "SetPoisoned";
+static constexpr char ScriptReserved_GetAtGoal[]			= "GetAtGoal";
+static constexpr char ScriptReserved_SetAtGoal[]			= "SetAtGoal";
+static constexpr char ScriptReserved_GetJumping[]			= "GetJumping";
+static constexpr char ScriptReserved_GetMonkeying[]			= "GetMonkeying";
+static constexpr char ScriptReserved_MoodType[]				= "MoodType";
+
 // Flow Functions
 static constexpr char ScriptReserved_SetStrings[]			= "SetStrings";
 static constexpr char ScriptReserved_GetString[]			= "GetString";
@@ -491,7 +512,6 @@ static constexpr char ScriptReserved_LaraObject[] = "LaraObject";
 // =========
 
 constexpr char ScriptReserved_Collision[]					= "Collision";
-
 constexpr char ScriptReserved_Probe[]						= "Probe";
 constexpr char ScriptReserved_ProbeGetCeilingHeight[]		= "GetCeilingHeight";
 constexpr char ScriptReserved_ProbeGetCeilingMaterialType[]	= "GetCeilingMaterialType";
