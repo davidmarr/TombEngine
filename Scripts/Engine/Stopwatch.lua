@@ -1158,9 +1158,9 @@ function Stopwatch:Stop(displayTime)
         end
     end
     local ds = stopwatchStrings[self.name]
-    if ds then
+    if ds and wasActive then
         if displayTime ~= nil then
-            if not IsNumber(displayTime) or displayTime <= 0 then
+            if not IsNumber(displayTime) or displayTime < 0 then
                 LogMessage("Warning in Stopwatch:Stop(): wrong value (" .. tostring(displayTime) .. ") for displayTime, the stopwatch display will be hidden immediately.", logLevelWarning)
                 HideString(ds)
             else
@@ -1176,7 +1176,7 @@ function Stopwatch:Stop(displayTime)
     end
 end
 
---- Reset the stopwatch to zero and stop it.
+--- Reset the stopwatch to zero and stop it. Laps are cleared, interval scheduling is reset, and future timeTriggers are rebuilt from zero.
 --
 -- If `ON_RESET` is configured, it is called after elapsed time, laps, active state, and display state have been reset.
 -- @usage
@@ -1386,7 +1386,7 @@ function Stopwatch:GetMaxTimeInSeconds()
 end
 
 --- Get the maximum time of the stopwatch formatted as a string.
--- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = true}] table|bool timeFormat The format to use for the time string. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.<br>
+-- @tparam[opt={minutes = true&#44; seconds = true&#44; centiseconds = false}] table|bool timeFormat The format to use for the time string. Omit it or pass `nil` to use the default format. Pass `false` to return an empty string. Invalid values log a warning and also use the default format. See `timeFormat` for details.<br>
 -- @treturn[1] string The formatted maximum time string.
 -- @treturn[2] nil If no maximum time is set.
 -- @usage
