@@ -1130,7 +1130,7 @@ end
 --- Stop the stopwatch.
 -- If the stopwatch is active, this calls `ON_STOP` from @{Stopwatch.CallbackTypes} after the stopwatch has already been marked as stopped.
 -- For same-frame ordering and overlap with other callbacks, see @{Callbacks|Callbacks overview}.
--- @tparam[opt=nil] float displayTime If provided, the stopwatch display will remain visible for this many seconds after stopping. Must be a positive number. If not provided or nil, the display is hidden immediately.
+-- @tparam[opt=nil] float displayTime If provided, the stopwatch display will remain visible for this many seconds after stopping. Must be zero or a positive number. If not provided or nil, the display is hidden immediately.
 -- @usage
 -- -- Example 1: Stop the stopwatch and hide the display immediately
 -- Stopwatch.Get("MyStopwatch"):Stop()
