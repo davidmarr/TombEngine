@@ -1176,7 +1176,7 @@ function Stopwatch:Stop(displayTime)
     end
 end
 
---- Reset the stopwatch to zero and stop it. Laps are cleared, interval scheduling is reset, and future timeTriggers are rebuilt from zero.
+--- Reset the stopwatch to zero and stop it. Laps are cleared, interval scheduling is rebased from zero (the configured interval time is preserved), and future timeTriggers are rebuilt from zero.
 --
 -- If `ON_RESET` is configured, it is called after elapsed time, laps, active state, and display state have been reset.
 -- @usage
