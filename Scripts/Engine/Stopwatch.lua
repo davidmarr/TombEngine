@@ -652,6 +652,8 @@ end
 --
 -- Use @{Stopwatch:GetLapTime}, @{Stopwatch:GetLapTimeInSeconds}, and @{Stopwatch:GetLapTimeFormatted} for per-segment values.
 --
+-- Use @{Stopwatch:GetAllLapTimes}, @{Stopwatch:GetAllLapTimesInSeconds}, and @{Stopwatch:GetAllLapTimesFormatted} to retrieve all lap delta times at once.
+--
 -- Use @{Stopwatch:GetSplitTime}, @{Stopwatch:GetSplitTimeInSeconds}, and @{Stopwatch:GetSplitTimeFormatted} for cumulative values from start.
 --
 -- Use @{Stopwatch:GetLapCount} to count recorded laps and @{Stopwatch:ClearLaps} to clear them without resetting elapsed time.
@@ -1071,13 +1073,16 @@ end
 -- Stopwatch.Get("MyStopwatch"):Stop()
 
 --- Start or resume the stopwatch.
--- If `reset` is true, elapsed time, laps, interval scheduling, and future timeTriggers are rebuilt from zero before starting.
--- @tparam[opt=false] bool reset If true, resets the stopwatch to zero before starting. If false or not provided, the stopwatch will continue from its current time.
+-- @tparam[opt=false] bool reset<br>
+-- If `true`, resets elapsed time to zero, clears laps, rebases interval scheduling
+-- (the configured interval time is preserved), and rebuilds future timeTriggers before starting.
+--
+-- If `false` or not provided, the stopwatch will continue from its current time.<br>
 -- @usage
 -- -- Example 1: Start the stopwatch
 -- Stopwatch.Get("MyStopwatch"):Start()
 --
--- -- Example 2: Start the stopwatch and reset its time to zero
+-- -- Example 2: Start the stopwatch and reset elapsed time and laps
 -- Stopwatch.Get("MyStopwatch"):Start(true)
 function Stopwatch:Start(reset)
     local stopwatch = GetStopwatchOrWarn(self.name, "Start")
@@ -1226,6 +1231,10 @@ end
 --- Check if the stopwatch is currently ticking.
 -- Returns `true` if the stopwatch is active and not paused.
 -- @treturn bool True if the stopwatch is ticking, false otherwise.
+-- @usage
+-- if Stopwatch.Get("MyStopwatch"):IsTicking() then
+--     -- Do something that should only happen while the stopwatch is ticking
+-- end
 function Stopwatch:IsTicking()
     local stopwatch = GetStopwatchOrWarn(self.name, "IsTicking")
     return stopwatch and stopwatch.active and not stopwatch.paused or false
