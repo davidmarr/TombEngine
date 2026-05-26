@@ -1074,8 +1074,7 @@ end
 
 --- Start or resume the stopwatch.
 -- @tparam[opt=false] bool reset<br>
--- If `true`, resets elapsed time to zero, clears laps, rebases interval scheduling
--- (the configured interval time is preserved), and rebuilds future timeTriggers before starting.
+-- If `true`, resets elapsed time to zero, clears laps, rebases interval scheduling (the configured interval time is preserved), and rebuilds future timeTriggers before starting.
 --
 -- If `false` or not provided, the stopwatch will continue from its current time.<br>
 -- @usage
