@@ -346,6 +346,27 @@ local function NormalizeTimeTriggerData(triggerData, messagePrefix, logLevel)
     return normalizedTrigger
 end
 
+local function NormalizeTimeTriggerFromParts(stopwatchName, callerName, seconds, func, ...)
+    local argsOk, args = CollectTimeTriggerArgs(stopwatchName, callerName, ...)
+    if not argsOk then
+        return nil
+    end
+
+    local triggerData = {
+        at = seconds,
+        func = func,
+    }
+    if args then
+        triggerData.args = args
+    end
+
+    return NormalizeTimeTriggerData(
+        triggerData,
+        "Error in Stopwatch:" .. callerName .. "(): triggerData for '" .. stopwatchName .. "' ",
+        logLevelError
+    )
+end
+
 local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, holeListMessage, incompletePairMessage, itemMessagePrefix, itemMessageSuffix, logLevel)
     if IsNull(timeTriggers) then
         return {}
@@ -494,6 +515,24 @@ local function InvalidateScheduledState(stopwatch)
         stopwatch.scheduledStateInvalidated = true
         stopwatch.scheduledDispatchInterrupted = true
     end
+end
+
+local function ClearScheduledDispatchFlags(stopwatch)
+    stopwatch.scheduledDispatchInterrupted = false
+    stopwatch.scheduledStateInvalidated = false
+end
+
+local function ResetScheduledRuntimeState(stopwatch)
+    stopwatch.pendingStopCallback = false
+    stopwatch.scheduledCallbackDepth = 0
+    ClearScheduledDispatchFlags(stopwatch)
+end
+
+local function ShouldAbortScheduledDispatch(stopwatch, name)
+    return stopwatch.scheduledDispatchInterrupted or
+        stopwatches[name] ~= stopwatch or
+        not stopwatch.active or
+        stopwatch.paused
 end
 
 local function BeginScheduledCallbackDispatch(stopwatch)
@@ -934,10 +973,7 @@ Stopwatch.Create = function(stopwatchData)
 
     -- Runtime-only bookkeeping rebuilt from the persisted state when needed.
     stopwatchEntry.lastRenderedFrameCount = nil
-    stopwatchEntry.pendingStopCallback = false
-    stopwatchEntry.scheduledCallbackDepth = 0
-    stopwatchEntry.scheduledDispatchInterrupted = false
-    stopwatchEntry.scheduledStateInvalidated = false
+    ResetScheduledRuntimeState(stopwatchEntry)
 
     -- assign callbacks from stopwatchData fields
     for _, cb in ipairs(CALLBACKFIELDS) do
@@ -2048,22 +2084,13 @@ function Stopwatch:AddTimeTrigger(seconds, func, ...)
     if not stopwatch then
         return
     end
-    local triggerData = {
-        at = seconds,
-        func = func,
-    }
-    local argsOk, args = CollectTimeTriggerArgs(self.name, "AddTimeTrigger", ...)
-    if not argsOk then
-        return
-    end
-    if args then
-        triggerData.args = args
-    end
 
-    local normalizedTrigger = NormalizeTimeTriggerData(
-        triggerData,
-        "Error in Stopwatch:AddTimeTrigger(): triggerData for '" .. self.name .. "' ",
-        logLevelError
+    local normalizedTrigger = NormalizeTimeTriggerFromParts(
+        self.name,
+        "AddTimeTrigger",
+        seconds,
+        func,
+        ...
     )
     if not normalizedTrigger then
         return
@@ -2156,22 +2183,12 @@ function Stopwatch:SetTimeTrigger(index, seconds, func, ...)
         return
     end
 
-    local triggerData = {
-        at = seconds,
-        func = func,
-    }
-    local argsOk, args = CollectTimeTriggerArgs(self.name, "SetTimeTrigger", ...)
-    if not argsOk then
-        return
-    end
-    if args then
-        triggerData.args = args
-    end
-
-    local normalizedTrigger = NormalizeTimeTriggerData(
-        triggerData,
-        "Error in Stopwatch:SetTimeTrigger(): triggerData for '" .. self.name .. "' ",
-        logLevelError
+    local normalizedTrigger = NormalizeTimeTriggerFromParts(
+        self.name,
+        "SetTimeTrigger",
+        seconds,
+        func,
+        ...
     )
     if not normalizedTrigger then
         return
@@ -2239,8 +2256,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
         if s.active then
             local proxy = nil
 
-            s.scheduledDispatchInterrupted = false
-            s.scheduledStateInvalidated = false
+            ClearScheduledDispatchFlags(s)
 
             -- Scheduled callbacks are processed in timeline order: interval first,
             -- then absolute time triggers, and maxTime is decided from the final
@@ -2256,7 +2272,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                         for _ = lastCount + 1, currentCount do
                             proxy = EnsureStopwatchProxy(proxy, name)
                             fn(proxy)
-                            if s.scheduledDispatchInterrupted or stopwatches[name] ~= s or not s.active or s.paused then
+                            if ShouldAbortScheduledDispatch(s, name) then
                                 break
                             end
                         end
@@ -2293,7 +2309,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
 
                         proxy = EnsureStopwatchProxy(proxy, name)
                         FireTimeTriggerCallback(triggerData, proxy)
-                        if s.scheduledDispatchInterrupted or stopwatches[name] ~= s or not s.active or s.paused then
+                        if ShouldAbortScheduledDispatch(s, name) then
                             break
                         end
                     end
@@ -2333,10 +2349,7 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
     for name, s in pairs(stopwatches) do
         -- These flags are runtime-only bookkeeping. They must not survive loads,
         -- because resuming inside a half-finished callback would be invalid.
-        s.pendingStopCallback = false
-        s.scheduledCallbackDepth = 0
-        s.scheduledDispatchInterrupted = false
-        s.scheduledStateInvalidated = false
+        ResetScheduledRuntimeState(s)
         if not IsTable(s.timeTriggers) then
             s.timeTriggers = {}
         end
