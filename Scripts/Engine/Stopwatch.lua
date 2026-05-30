@@ -297,7 +297,8 @@ local function NormalizePublicTimeTriggerCallback(callbackSpec, messagePrefix, l
 
     local func = callbackSpec[1]
     if callbackValueCount == 1 then
-        return func, nil
+        LogMessage(messagePrefix .. "callback table must include at least one extra argument; use the LevelFunc directly when no extra arguments are needed.", logLevel)
+        return nil
     end
 
     local args = {}
@@ -737,6 +738,8 @@ end
 --
 -- - if the callback needs no extra arguments, write the function directly;
 -- - if the callback needs extra arguments, write a table whose first value is the function and the following values are its arguments.
+-- - a callback table must contain at least one extra argument; do not write `{ LevelFuncs.MyFunc }`.
+-- - `nil` cannot be used as an extra argument. Internal `nil` values create holes and are rejected. Trailing `nil` values are removed by Lua before Stopwatch can see them.
 --
 -- Write complete pairs, one after another, with no values left out.
 --
@@ -770,6 +773,24 @@ end
 --        name = "sequenceTimer",
 --        timeTriggers = {
 --            1.00, { "Door opened", LevelFuncs.Step1 }
+--        }
+--    })
+--
+-- Bad: callback table without extra arguments. Use `LevelFuncs.Step1` directly instead.
+--
+--    Stopwatch.Create({
+--        name = "sequenceTimer",
+--        timeTriggers = {
+--            1.00, { LevelFuncs.Step1 }
+--        }
+--    })
+--
+-- Bad: nil extra argument.
+--
+--    Stopwatch.Create({
+--        name = "sequenceTimer",
+--        timeTriggers = {
+--            1.00, { LevelFuncs.Step1, nil, "Door opened" }
 --        }
 --    })
 --
@@ -2105,6 +2126,7 @@ end
 -- Validation is atomic: if one trigger is invalid, the existing list is left unchanged.
 -- Pass one compact public list in the same format described in @{TimeTriggers|Time triggers overview}: `seconds, callback, seconds, callback, ...`.
 -- Each callback entry can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires.
+-- Callback tables must contain at least one extra argument and cannot contain `nil` values.
 -- If multiple entries resolve to the same frame, they are all kept and fire in list order.
 -- Passing an empty table clears the list.
 -- @tparam table triggers A compact list of `seconds, callback` pairs.
@@ -2393,7 +2415,7 @@ end
 -- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
 -- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. For same-frame interactions with onStop and onMaxTime, see @{Callbacks|Callbacks overview}.<br>
 -- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Values must be positive. They are rounded to 2 decimal places first; after rounding, they must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}. Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.<br>
--- @tfield[opt=nil] table timeTriggers A compact list of `seconds, callback` pairs: `seconds, callback, seconds, callback, ...`. Each callback can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if the list is invalid, the whole field is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
+-- @tfield[opt=nil] table timeTriggers A compact list of `seconds, callback` pairs: `seconds, callback, seconds, callback, ...`. Each callback can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires. Callback tables must contain at least one extra argument and cannot contain `nil` values. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if the list is invalid, the whole field is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
 
 ---
 -- Time format configuration for displaying the stopwatch time.
