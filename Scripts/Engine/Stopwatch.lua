@@ -732,33 +732,38 @@ end
 -- Time triggers are written as pairs inside a list:
 --
 -- - `seconds, LevelFuncs.MyFunc`
+--
+-- or
+--
 -- - `seconds, { LevelFuncs.MyFunc, arg1, arg2, ... }`
 --
 -- In other words:
 --
--- - if the callback needs no extra arguments, write the function directly;
--- - if the callback needs extra arguments, write a table whose first value is the function and the following values are its arguments.
--- - a callback table must contain at least one extra argument; do not write `{ LevelFuncs.MyFunc }`.
--- - `nil` cannot be used as an extra argument. Internal `nil` values create holes and are rejected. Trailing `nil` values are removed by Lua before Stopwatch can see them.
+-- - if the callback needs no extra arguments, write the _function directly_;
+-- - if the callback needs extra arguments, write a _table whose first value is the function and the following values are its arguments_.
 --
--- Write complete pairs, one after another, with no values left out.
+-- <br>Please note:
 --
--- Good:
+-- - Write complete pairs, one after another, with no values left out.
+-- - A callback table must contain at least one extra argument; do not write `{ LevelFuncs.MyFunc }`.
+-- - The value `nil` is not allowed as an extra argument. Internal `nil` values create holes and are rejected. Trailing `nil` values are removed by Lua before Stopwatch can see them.
+--
+-- Each _seconds, callback_ pair counts as one trigger in the list.
+--
+-- In the example, `1.00, LevelFuncs.Step1` is _trigger 1_, `2.50, { LevelFuncs.Step2, "Door Open" }` is _trigger 2_, and `4.00, { LevelFuncs.Step3, "Wave", 2 }` is _trigger 3_.
 --
 --    Stopwatch.Create({
 --        name = "sequenceTimer",
 --        timeTriggers = {
---            1.00, LevelFuncs.Step1,
---            2.50, { LevelFuncs.Step2, "Door opened" },
---            4.00, { LevelFuncs.Step3, "Wave", 2 }
+--            1.00, LevelFuncs.Step1,                    -- trigger 1
+--            2.50, { LevelFuncs.Step2, "Door opened" }, -- trigger 2
+--            4.00, { LevelFuncs.Step3, "Wave", 2 }      -- trigger 3
 --        }
 --    })
 --
--- Each complete `seconds, callback` pair counts as one trigger in the public list.
--- In the example above, `1.00, LevelFuncs.Step1` is trigger 1, `2.50, { LevelFuncs.Step2, "Door opened" }` is trigger 2, and `4.00, { LevelFuncs.Step3, "Wave", 2 }` is trigger 3.
+-- Common mistakes:
 --
--- Bad: incomplete pair.
---
+--    -- incomplete pair.
 --    Stopwatch.Create({
 --        name = "sequenceTimer",
 --        timeTriggers = {
@@ -766,27 +771,24 @@ end
 --            2.50
 --        }
 --    })
---
--- Bad: when using a table, the first value must be the callback function.
---
+--    
+--    -- when using a table, the first value must be the callback function.
 --    Stopwatch.Create({
 --        name = "sequenceTimer",
 --        timeTriggers = {
 --            1.00, { "Door opened", LevelFuncs.Step1 }
 --        }
 --    })
---
--- Bad: callback table without extra arguments. Use `LevelFuncs.Step1` directly instead.
---
+--    
+--    -- callback table without extra arguments. Use LevelFuncs.Step1 directly instead.
 --    Stopwatch.Create({
 --        name = "sequenceTimer",
 --        timeTriggers = {
 --            1.00, { LevelFuncs.Step1 }
 --        }
 --    })
---
--- Bad: nil extra argument.
---
+--    
+--    -- nil extra argument.
 --    Stopwatch.Create({
 --        name = "sequenceTimer",
 --        timeTriggers = {
@@ -2132,8 +2134,8 @@ end
 -- @tparam table triggers A compact list of `seconds, callback` pairs.
 -- @usage
 -- Stopwatch.Get("RaceTimer"):SetTimeTriggers({
---     3.0, LevelFuncs.SpawnWave,
---     6.5, { LevelFuncs.ShowHint, "Second wave incoming" },
+--     3.0, LevelFuncs.SpawnWave,                            -- trigger 1
+--     6.5, { LevelFuncs.ShowHint, "Second wave incoming" }, -- trigger 2
 -- })
 function Stopwatch:SetTimeTriggers(triggers)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetTimeTriggers")
