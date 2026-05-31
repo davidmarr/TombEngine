@@ -208,6 +208,32 @@ local function GetLapDeltaFrames(laps, index)
     return laps[index]:GetFrameCount() - prevFrames
 end
 
+local function GetValidatedLap(laps, stopwatchName, callerName, index)
+    local lapCount = #laps
+    local invalidIndexMessage = "Error in Stopwatch:" .. callerName .. "(): invalid index (" .. tostring(index) .. ") for '" .. stopwatchName .. "' stopwatch (lap count: " .. tostring(lapCount) .. ")."
+    if not ValidatePositiveIndex(index, lapCount, invalidIndexMessage, logLevelError) then
+        return nil, nil
+    end
+    return laps, laps[index]
+end
+
+local function ExportLapDeltas(laps, converter)
+    local result = {}
+    for i = 1, #laps do
+        result[i] = converter(GetLapDeltaFrames(laps, i))
+    end
+    return result
+end
+
+local function ExportFormattedLapDeltas(laps, timeFormat)
+    local result = {}
+    for i = 1, #laps do
+        local deltaTime = Time(GetLapDeltaFrames(laps, i))
+        result[i] = GenerateTimeFormattedString(deltaTime, timeFormat)
+    end
+    return result
+end
+
 local function ValidateFrameSeconds(seconds, invalidValueMessage, tooSmallMessage, logLevel)
     if not IsNumber(seconds) or seconds <= 0 then
         LogMessage(invalidValueMessage, logLevel)
@@ -1786,8 +1812,8 @@ function Stopwatch:GetLapTime(index)
     if not stopwatch then
         return nil
     end
-    local laps = stopwatch.laps
-    if not ValidatePositiveIndex(index, #laps, "Error in Stopwatch:GetLapTime(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError) then
+    local laps = GetValidatedLap(stopwatch.laps, self.name, "GetLapTime", index)
+    if not laps then
         return nil
     end
     return Time(GetLapDeltaFrames(laps, index))
@@ -1805,8 +1831,8 @@ function Stopwatch:GetLapTimeInSeconds(index)
     if not stopwatch then
         return nil
     end
-    local laps = stopwatch.laps
-    if not ValidatePositiveIndex(index, #laps, "Error in Stopwatch:GetLapTimeInSeconds(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError) then
+    local laps = GetValidatedLap(stopwatch.laps, self.name, "GetLapTimeInSeconds", index)
+    if not laps then
         return nil
     end
     return FramesToSeconds(GetLapDeltaFrames(laps, index))
@@ -1826,8 +1852,8 @@ function Stopwatch:GetLapTimeFormatted(index, timeFormat)
     if not stopwatch then
         return nil
     end
-    local laps = stopwatch.laps
-    if not ValidatePositiveIndex(index, #laps, "Error in Stopwatch:GetLapTimeFormatted(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError) then
+    local laps = GetValidatedLap(stopwatch.laps, self.name, "GetLapTimeFormatted", index)
+    if not laps then
         return nil
     end
     timeFormat = NormalizeTimeFormat(timeFormat, "Warning in Stopwatch:GetLapTimeFormatted(): wrong value for timeFormat, default format will be used.")
@@ -1848,11 +1874,11 @@ function Stopwatch:GetSplitTime(index)
     if not stopwatch then
         return nil
     end
-    local laps = stopwatch.laps
-    if not ValidatePositiveIndex(index, #laps, "Error in Stopwatch:GetSplitTime(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError) then
+    local _, lap = GetValidatedLap(stopwatch.laps, self.name, "GetSplitTime", index)
+    if not lap then
         return nil
     end
-    return laps[index]
+    return lap
 end
 
 --- Get the cumulative split time at a specific lap in seconds.
@@ -1867,11 +1893,11 @@ function Stopwatch:GetSplitTimeInSeconds(index)
     if not stopwatch then
         return nil
     end
-    local laps = stopwatch.laps
-    if not ValidatePositiveIndex(index, #laps, "Error in Stopwatch:GetSplitTimeInSeconds(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError) then
+    local _, lap = GetValidatedLap(stopwatch.laps, self.name, "GetSplitTimeInSeconds", index)
+    if not lap then
         return nil
     end
-    return FramesToSeconds(laps[index]:GetFrameCount())
+    return FramesToSeconds(lap:GetFrameCount())
 end
 
 --- Get the cumulative split time at a specific lap formatted as a string.
@@ -1887,12 +1913,12 @@ function Stopwatch:GetSplitTimeFormatted(index, timeFormat)
     if not stopwatch then
         return nil
     end
-    local laps = stopwatch.laps
-    if not ValidatePositiveIndex(index, #laps, "Error in Stopwatch:GetSplitTimeFormatted(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' stopwatch (lap count: " .. tostring(#laps) .. ").", logLevelError) then
+    local _, lap = GetValidatedLap(stopwatch.laps, self.name, "GetSplitTimeFormatted", index)
+    if not lap then
         return nil
     end
     timeFormat = NormalizeTimeFormat(timeFormat, "Warning in Stopwatch:GetSplitTimeFormatted(): wrong value for timeFormat, default format will be used.")
-    return GenerateTimeFormattedString(laps[index], timeFormat)
+    return GenerateTimeFormattedString(lap, timeFormat)
 end
 
 --- Get all lap delta times as an array of Time objects.
@@ -1907,12 +1933,7 @@ function Stopwatch:GetAllLapTimes()
     if not stopwatch then
         return nil
     end
-    local laps   = stopwatch.laps
-    local result = {}
-    for i = 1, #laps do
-        result[i] = Time(GetLapDeltaFrames(laps, i))
-    end
-    return result
+    return ExportLapDeltas(stopwatch.laps, Time)
 end
 
 --- Get all lap delta times as an array of floats in seconds.
@@ -1927,12 +1948,7 @@ function Stopwatch:GetAllLapTimesInSeconds()
     if not stopwatch then
         return nil
     end
-    local laps   = stopwatch.laps
-    local result = {}
-    for i = 1, #laps do
-        result[i] = FramesToSeconds(GetLapDeltaFrames(laps, i))
-    end
-    return result
+    return ExportLapDeltas(stopwatch.laps, FramesToSeconds)
 end
 
 --- Get all lap delta times as an array of formatted strings.
@@ -1950,12 +1966,7 @@ function Stopwatch:GetAllLapTimesFormatted(timeFormat)
         return nil
     end
     timeFormat = NormalizeTimeFormat(timeFormat, "Warning in Stopwatch:GetAllLapTimesFormatted(): wrong value for timeFormat, default format will be used.")
-    local laps   = stopwatch.laps
-    local result = {}
-    for i = 1, #laps do
-        result[i] = GenerateTimeFormattedString(Time(GetLapDeltaFrames(laps, i)), timeFormat)
-    end
-    return result
+    return ExportFormattedLapDeltas(stopwatch.laps, timeFormat)
 end
 
 --- Clear all recorded laps. Does not affect the elapsed time or the active state of the stopwatch.
