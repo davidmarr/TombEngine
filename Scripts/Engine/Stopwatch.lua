@@ -440,6 +440,15 @@ local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, holeLi
     return normalizedTriggers
 end
 
+local function NormalizePublicCallback(callbackSpec, messagePrefix, logLevel)
+    local func, args = NormalizePublicTimeTriggerCallback(callbackSpec, messagePrefix, logLevel)
+    if not func then return nil end
+    return {
+        func = func,
+        args = args
+    }
+end
+
 local function DefaultIfNil(value, defaultValue)
     if IsNull(value) then
         return defaultValue
@@ -492,9 +501,15 @@ local function CreateStopwatchProxy(name)
 end
 
 local function FireCallback(s, callbackType, proxy)
-    local fn = s.callbacks[callbackType]
-    if fn then
-        fn(proxy)
+    local cbData = s.callbacks[callbackType]
+    if cbData then
+        local func = cbData.func
+        local args = cbData.args
+        if args then
+            func(proxy, unpack(args))
+        else
+            func(proxy)
+        end
     end
 end
 
@@ -1000,14 +1015,13 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.lastRenderedFrameCount = nil
     ResetScheduledRuntimeState(stopwatchEntry)
 
-    -- assign callbacks from stopwatchData fields
+    -- assign callbacks from stopwatchData fields (now supporting varargs style tables)
     for _, cb in ipairs(CALLBACKFIELDS) do
-        local fn = stopwatchData[cb.field]
-        if not IsNull(fn) then
-            if IsLevelFunc(fn) then
+        local val = stopwatchData[cb.field]
+        if not IsNull(val) then
+            local fn = NormalizePublicCallback(val, CreateWarningPrefix .. "callback " .. cb.field .. " ", logLevelWarning)
+            if fn then
                 stopwatchEntry.callbacks[cb.key] = fn
-            else
-                LogMessage(CreateWarningPrefix .. "wrong value for " .. cb.field .. " in '" .. name .. "', it must be a LevelFunc. Callback will be ignored.", logLevelWarning)
             end
         end
     end
@@ -1946,30 +1960,37 @@ function Stopwatch:ClearLaps()
 end
 
 --- Set a callback function for a specific event.
--- The callback must be a `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.
--- Each callback receives the stopwatch as its first argument, so it can use the public Stopwatch methods.
+-- The callback must be a `LevelFuncs` function or an array table with the function and its arguments.
+-- Each callback receives the stopwatch as its first argument.
 -- For callback ordering and same-frame overlap rules, see @{Callbacks|Callbacks overview}.
 -- @tparam CallbackTypes callbackType The callback type.
--- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch)`.
+-- @tparam function|table func A `LevelFuncs` function or `{LevelFuncs.MyFunc, arg1, arg2}`.
+-- @param[opt] ... Positional extra arguments (only if the second argument is a bare function).
 -- @usage
--- LevelFuncs.OnLapRecorded = function(sw)
---     TEN.Util.PrintLog("Lap " .. sw:GetLapCount() .. ": " .. sw:GetLapTimeFormatted(sw:GetLapCount()), TEN.Util.LogLevel.INFO)
--- end
--- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnLapRecorded)
-function Stopwatch:SetCallback(callbackType, func)
+-- -- Example: Callback without extra arguments
+-- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_START, LevelFuncs.Started)
+--
+-- -- Example: Callback with arguments via varargs
+-- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.Lapped, "Checkpoint", 1)
+function Stopwatch:SetCallback(callbackType, func, ...)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetCallback")
-    if not stopwatch then
-        return
-    end
+    if not stopwatch then return end
+
     if not TableHasValue(Stopwatch.CallbackTypes, callbackType) then
-        LogMessage("Error in Stopwatch:SetCallback(): invalid callbackType for '" .. self.name .. "'. Use a Stopwatch.CallbackTypes constant.", logLevelError)
+        LogMessage("Error in Stopwatch:SetCallback(): invalid callbackType for '" .. self.name .. "'.", logLevelError)
         return
     end
-    if not IsLevelFunc(func) then
-        LogMessage("Error in Stopwatch:SetCallback(): func must be a LevelFunc for '" .. self.name .. "'.", logLevelError)
-        return
+
+    local normalized = NormalizePublicCallback(func, "Error in Stopwatch:SetCallback(): callback ", logLevelError)
+    if not normalized then return end
+
+    -- Support for varargs style: sw:SetCallback(type, func, arg1, arg2)
+    if select("#", ...) > 0 then
+        local ok, extraArgs = CollectTimeTriggerArgs(self.name, "SetCallback", ...)
+        if ok then normalized.args = extraArgs end
     end
-    stopwatch.callbacks[callbackType] = func
+
+    stopwatch.callbacks[callbackType] = normalized
 end
 
 --- Remove a callback function for a specific event.
@@ -2280,13 +2301,13 @@ end
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is paused.
 -- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table textOptions A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
--- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_START` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESUME` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_PAUSE` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_STOP` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] function onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_LAP` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] function|table onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` reference or a table with arguments. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
+-- @tfield[opt=nil] function|table onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` reference or a table with arguments.<br>
+-- @tfield[opt=nil] function|table onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` reference or a table with arguments.<br>
+-- @tfield[opt=nil] function|table onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` reference or a table with arguments. For overlap behavior, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] function|table onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Must be a `LevelFuncs` reference or a table with arguments.<br>
+-- @tfield[opt=nil] function|table onLap Callback called when a lap is recorded. Must be a `LevelFuncs` reference or a table with arguments.<br>
+-- @tfield[opt=nil] function|table onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` reference or a table with arguments.<br>
 -- @tfield[opt=nil] table timeTriggers A compact list of `seconds, callback` pairs: `seconds, callback, seconds, callback, ...`. Each callback can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires. Callback tables must contain at least one extra argument and cannot contain `nil` values. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if the list is invalid, the whole field is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
 
 ---
