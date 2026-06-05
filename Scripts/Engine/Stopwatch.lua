@@ -1,23 +1,27 @@
 -----<style>table.function_list td.name {min-width: 400px;}</style>
---- Frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused.
+--- Frame-based stopwatch that counts up. It updates once per frame at 30 FPS, so time changes in steps of 1/30 second (about 0.03s). Stopwatches are updated automatically every frame. A stopwatch is ticking when it is active and not paused. Stopwatch state is stored in `LevelVars`, so elapsed time, active state, laps, callbacks, interval triggers, and time triggers are preserved by save/load. Display strings are recreated automatically after loading.
 --
 -- Require the module before using Stopwatch in a script:
---	local Stopwatch = require("Engine.Stopwatch")
+--      local Stopwatch = require("Engine.Stopwatch")
 --
 -- Example usage:
---	-- Create simple stopwatch
---	Stopwatch.Create({ name = "MyStopwatch" })
+--      -- Without timeFormat, the stopwatch runs silently in the background with no on-screen display.
+--      -- Add timeFormat to make it visible.
+--      Stopwatch.Create({
+--          name       = "MyStopwatch",
+--          timeFormat = { seconds = true, centiseconds = true }
+--      })
 --
---	-- Create LevelFuncs to start, pause and stop the stopwatch
---	LevelFuncs.StartMyStopwatch = function()
---        Stopwatch.Get("MyStopwatch"):Start()
---	end
---	LevelFuncs.PauseMyStopwatch = function()
---        Stopwatch.Get("MyStopwatch"):Pause()
---	end
---	LevelFuncs.StopMyStopwatch = function()
---        Stopwatch.Get("MyStopwatch"):Stop()
---	end
+--      -- Create LevelFuncs to start, pause and stop the stopwatch
+--      LevelFuncs.StartMyStopwatch = function()
+--          Stopwatch.Get("MyStopwatch"):Start()
+--      end
+--      LevelFuncs.PauseMyStopwatch = function()
+--          Stopwatch.Get("MyStopwatch"):Pause()
+--      end
+--      LevelFuncs.StopMyStopwatch = function()
+--          Stopwatch.Get("MyStopwatch"):Stop()
+--      end
 -- @luautil Stopwatch
 
 local Type = require("Engine.Type")
@@ -33,17 +37,17 @@ local stopwatches = LevelVars.Engine.Stopwatch.stopwatches
 local stopwatchStrings = {} -- DisplayString objects, not serializable in LevelVars
 
 -- Utility functions and enums from TEN 
-local LogMessage		  = TEN.Util.PrintLog
-local logLevelError		  = TEN.Util.LogLevel.ERROR
-local logLevelWarning	  = TEN.Util.LogLevel.WARNING
-local PercentToScreen	  = TEN.Util.PercentToScreen
-local DisplayString		  = TEN.Strings.DisplayString
-local ShowString		  = TEN.Strings.ShowString
-local HideString		  = TEN.Strings.HideString
+local LogMessage                  = TEN.Util.PrintLog
+local logLevelError               = TEN.Util.LogLevel.ERROR
+local logLevelWarning     = TEN.Util.LogLevel.WARNING
+local PercentToScreen     = TEN.Util.PercentToScreen
+local DisplayString               = TEN.Strings.DisplayString
+local ShowString                  = TEN.Strings.ShowString
+local HideString                  = TEN.Strings.HideString
 local DisplayStringOption = TEN.Strings.DisplayStringOption
-local Time				  = TEN.Time
-local Vec2				  = TEN.Vec2
-local Color				  = TEN.Color
+local Time                                = TEN.Time
+local Vec2                                = TEN.Vec2
+local Color                               = TEN.Color
 
 local ZERO = Time()
 local DEFAULT_TEXT_OPTIONS = {DisplayStringOption.CENTER, DisplayStringOption.SHADOW, DisplayStringOption.VERTICAL_CENTER}
@@ -64,14 +68,13 @@ local COMPARISON_OPS =
     [5] = function(a, b) return a >= b end,   -- 5: greater than or equal
 }
 local CALLBACKFIELDS = {
-    { field = "onStart",    key = "OnStart"    },
-    { field = "onResume",   key = "OnResume"   },
-    { field = "onPause",    key = "OnPause"    },
-    { field = "onStop",     key = "OnStop"     },
-    { field = "onReset",    key = "OnReset"    },
-    { field = "onLap",      key = "OnLap"      },
-    { field = "onMaxTime",  key = "OnMaxTime"  },
-    { field = "onInterval", key = "OnInterval" },
+    { field = "onStart",   key = "OnStart"   },
+    { field = "onResume",  key = "OnResume"  },
+    { field = "onPause",   key = "OnPause"   },
+    { field = "onStop",    key = "OnStop"    },
+    { field = "onReset",   key = "OnReset"   },
+    { field = "onLap",     key = "OnLap"     },
+    { field = "onMaxTime", key = "OnMaxTime" },
 }
 local CreateErrorPrefix = "Error in Stopwatch.Create(): "
 local CreateWarningPrefix = "Warning in Stopwatch.Create(): "
@@ -84,9 +87,9 @@ local unpack = table.unpack
 local setmetatable = setmetatable
 
 -- Utility functions from Engine.Util that are used in this module
-local CheckTimeFormat 			  = Utility.CheckTimeFormat
+local CheckTimeFormat                     = Utility.CheckTimeFormat
 local GenerateTimeFormattedString = Utility.GenerateTimeFormattedString
-local TableHasValue			      = Utility.TableHasValue
+local TableHasValue                           = Utility.TableHasValue
 
 -- Type checking functions from Engine.Type that are used in this module
 local IsVec2 = Type.IsVec2
@@ -107,7 +110,6 @@ Stopwatch.CallbackTypes = {
     ON_PAUSE    = "OnPause",
     ON_STOP     = "OnStop",
     ON_MAX_TIME = "OnMaxTime",
-    ON_INTERVAL = "OnInterval",
 }
 
 Stopwatch.Operators = {
@@ -120,7 +122,7 @@ Stopwatch.Operators = {
 }
 
 local function Round2Decimal(second)
-	return floor(second * 100 + 0.5) / 100
+    return floor(second * 100 + 0.5) / 100
 end
 
 local function SecondsToFrames(seconds)
@@ -136,9 +138,9 @@ local function FramesToSeconds(frames)
 end
 
 local CheckOperator = function(operator)
-	if not TableHasValue(Stopwatch.Operators, operator) then
-		return nil
-	end
+    if not TableHasValue(Stopwatch.Operators, operator) then
+        return nil
+    end
     return COMPARISON_OPS[operator]
 end
 
@@ -171,13 +173,15 @@ local function ExportPublicTimeTriggerCallback(triggerData)
     return callbackSpec
 end
 
-local function ExportPublicTimeTriggerList(timeTriggers)
+-- Exports a flat seconds/callback list from an internal trigger array.
+-- timeField selects the time value to read from each entry ("at" for time triggers, "period" for interval triggers).
+local function ExportPublicTriggerList(triggers, timeField)
     local exported = {}
     local exportIndex = 1
-    for i = 1, #timeTriggers do
-        local triggerData = timeTriggers[i]
-        exported[exportIndex] = triggerData.at
-        exported[exportIndex + 1] = ExportPublicTimeTriggerCallback(triggerData)
+    for i = 1, #triggers do
+        local t = triggers[i]
+        exported[exportIndex] = t[timeField]
+        exported[exportIndex + 1] = ExportPublicTimeTriggerCallback(t)
         exportIndex = exportIndex + 2
     end
     return exported
@@ -442,6 +446,43 @@ local function NormalizeTimeTriggerList(timeTriggers, invalidListMessage, holeLi
     return normalizedTriggers
 end
 
+-- Normalizes a flat seconds/callback list into interval trigger entries.
+-- Reuses time trigger normalization and renames 'at' to 'period'; each entry
+-- also receives a lastCount field initialized to 0.
+local function NormalizeIntervalTriggerList(triggerList, invalidListMessage, holeListMessage, incompletePairMessage, itemMessagePrefix, itemMessageSuffix, logLevel)
+    local normalized = NormalizeTimeTriggerList(
+        triggerList,
+        invalidListMessage,
+        holeListMessage,
+        incompletePairMessage,
+        itemMessagePrefix,
+        itemMessageSuffix,
+        logLevel
+    )
+    if not normalized then
+        return nil
+    end
+    for i = 1, #normalized do
+        local t = normalized[i]
+        t.period = t.at
+        t.at = nil
+        t.lastCount = 0
+    end
+    return normalized
+end
+
+-- Normalizes a single interval trigger from positional arguments (seconds, func, ...).
+local function NormalizeIntervalTriggerFromParts(stopwatchName, callerName, seconds, func, ...)
+    local normalized = NormalizeTimeTriggerFromParts(stopwatchName, callerName, seconds, func, ...)
+    if not normalized then
+        return nil
+    end
+    normalized.period = normalized.at
+    normalized.at = nil
+    normalized.lastCount = 0
+    return normalized
+end
+
 local function DefaultIfNil(value, defaultValue)
     if IsNull(value) then
         return defaultValue
@@ -493,10 +534,21 @@ local function CreateStopwatchProxy(name)
     return setmetatable({name = name}, Stopwatch)
 end
 
+-- Single dispatch helper for any { func, args } data object (event callbacks,
+-- time triggers, and interval triggers all share this storage shape).
+local function FireCallbackData(cbData, proxy)
+    if cbData.args then
+        cbData.func(proxy, unpack(cbData.args))
+    else
+        cbData.func(proxy)
+    end
+end
+
+-- Fires a named event callback stored in s.callbacks[callbackType].
 local function FireCallback(s, callbackType, proxy)
-    local fn = s.callbacks[callbackType]
-    if fn then
-        fn(proxy)
+    local cbData = s.callbacks[callbackType]
+    if cbData then
+        FireCallbackData(cbData, proxy)
     end
 end
 
@@ -507,6 +559,16 @@ local function EnsureStopwatchProxy(proxy, name)
     return proxy
 end
 
+-- Logs a warning for each time trigger whose time exceeds maxTimeFrames.
+-- Triggers beyond maxTime are stored but will not fire unless maxTime is extended.
+local function WarnTimeTriggersBeyondMaxTime(triggers, maxTimeFrames, callerPrefix, stopwatchName)
+    for _, trigger in ipairs(triggers) do
+        if SecondsToFrames(trigger.at) > maxTimeFrames then
+            LogMessage(callerPrefix .. "time trigger at " .. trigger.at .. "s for '" .. stopwatchName .. "' exceeds maxTime and will not fire unless maxTime is extended.", logLevelWarning)
+        end
+    end
+end
+
 local FlushPendingStopCallback = function(stopwatch, name, proxy)
     -- Stop() may be called from inside a scheduled callback. In that case the
     -- stopwatch must become inactive immediately, but OnStop must be delayed until
@@ -515,15 +577,6 @@ local FlushPendingStopCallback = function(stopwatch, name, proxy)
     if stopwatch.pendingStopCallback then
         stopwatch.pendingStopCallback = false
         FireCallback(stopwatch, "OnStop", EnsureStopwatchProxy(proxy, name))
-    end
-end
-
-local function FireTimeTriggerCallback(triggerData, proxy)
-    local args = triggerData.args
-    if args then
-        triggerData.func(proxy, unpack(args))
-    else
-        triggerData.func(proxy)
     end
 end
 
@@ -573,22 +626,38 @@ local function EndScheduledCallbackDispatch(stopwatch, name, proxy)
     end
 end
 
+-- Rebuilds the compiled interval trigger cache and recalculates each trigger's
+-- lastCount from the current elapsed time so missed intervals are not replayed.
+local function CompileIntervalTriggers(intervalTriggers)
+    local compiled = {}
+    for i = 1, #intervalTriggers do
+        local t = intervalTriggers[i]
+        compiled[i] = {
+            periodFrames = SecondsToFrames(t.period),
+            trigger = t,
+        }
+    end
+    return compiled
+end
 
-local function RealignIntervalCount(stopwatch)
-    -- Interval callbacks are catch-up based on how many thresholds have been crossed.
-    -- When elapsed time or interval length changes manually, we rebase the counter to
-    -- the current frame count so missed intervals are not replayed retroactively.
-    if stopwatch.intervalFrames then
-        local frames = stopwatch.elapsedTime:GetFrameCount()
-        stopwatch.lastIntervalCount = floor(frames / stopwatch.intervalFrames)
-    else
-        stopwatch.lastIntervalCount = 0
+local function RealignIntervalCounts(stopwatch)
+    -- When elapsed time or the trigger list changes, rebase each interval counter
+    -- to the current frame so past thresholds are not replayed retroactively.
+    local frames = stopwatch.elapsedTime:GetFrameCount()
+    local triggers = stopwatch.intervalTriggers
+    if not triggers then return end
+    for i = 1, #triggers do
+        local t = triggers[i]
+        local periodFrames = SecondsToFrames(t.period)
+        t.lastCount = floor(frames / periodFrames)
     end
 end
 
-local function ApplyIntervalFrames(stopwatch, frames)
-    stopwatch.intervalFrames = frames
-    RealignIntervalCount(stopwatch)
+local function RebuildIntervalTriggers(stopwatch)
+    local intervalTriggers = stopwatch.intervalTriggers or {}
+    stopwatch.intervalTriggers = intervalTriggers
+    stopwatch.compiledIntervalTriggers = CompileIntervalTriggers(intervalTriggers)
+    RealignIntervalCounts(stopwatch)
 end
 
 local function CompileTimeTriggers(timeTriggers)
@@ -658,7 +727,7 @@ end
 --
 -- Stopwatch is frame-based and updates at 30 FPS. Time arguments are written in seconds.
 -- Values are rounded to 2 decimal places before validation and conversion to game frames.
--- After rounding, timing values such as `maxTime`, `intervalTime`, and time trigger `at`
+-- After rounding, timing values such as `maxTime`, interval trigger periods, and time trigger `at`
 -- must be at least `0.03` seconds, which is 1 frame at 30 FPS.
 --
 -- Examples:
@@ -676,7 +745,7 @@ end
 -- The actual stopwatch state (elapsed time, laps, callbacks, and so on) is stored separately and
 -- looked up by name every time you call a method.
 --
--- The stopwatch object passed to callbacks and time triggers works the same way.
+-- The stopwatch object passed to callbacks, time triggers, and interval triggers works the same way.
 --
 -- What this means in practice:
 --
@@ -693,9 +762,9 @@ end
 -- on the method.
 -- Use @{Stopwatch.IfExists} if you need to check whether a stopwatch still exists before using it.
 --
--- If @{Stopwatch.Delete} or @{Stopwatch.Create} (overwrite) is called during a callback
--- or time trigger, any remaining callbacks and triggers scheduled for that stopwatch on
--- the same frame are skipped. See @{CallbackTriggerOrder|Callback and trigger order}.
+-- If @{Stopwatch.Delete} or @{Stopwatch.Create} (overwrite) is called during a callback,
+-- time trigger, or interval trigger, any remaining callbacks and triggers scheduled for
+-- that stopwatch on the same frame are skipped. See @{CallbackTriggerOrder|Callback and trigger order}.
 
 ---
 -- Laps and splits.
@@ -731,15 +800,30 @@ end
 --
 -- A callback in this module is a function that Stopwatch calls for you when a specific event happens. The stopwatch is passed as the first argument, so the callback can read or change it.
 --
--- The callback names used below, such as `ON_START` and `ON_INTERVAL`, are the constants listed in @{Stopwatch.CallbackTypes}.
+-- The callback names used below, such as `ON_START` and `ON_LAP`, are the constants listed in @{Stopwatch.CallbackTypes}.
 --
 -- You can assign callbacks when creating a stopwatch through @{StopwatchData}, or later with @{Stopwatch:SetCallback}.
 --
+-- Each callback can be assigned with or without extra arguments.
+--
+-- Without extra arguments, pass the `LevelFuncs` function directly:
+--
+--    onLap = LevelFuncs.MyFunc — called as MyFunc(stopwatch)
+--
+-- <br>With extra arguments, pass a table whose first value is the `LevelFuncs` function and whose
+--   remaining values are passed after the stopwatch:
+--
+--    onLap = { LevelFuncs.MyFunc, "Checkpoint", 3 } — called as MyFunc(stopwatch, "Checkpoint", 3)
+--
+-- <br>The same rule applies to @{Stopwatch:SetCallback}: pass the function first, then any extra arguments as positional parameters:
+--
+--    Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.MyFunc, "Checkpoint", 3)
+--
 -- Most callbacks are immediate: they run when the related stopwatch method actually causes that event.
 --
--- `ON_INTERVAL` and `ON_MAX_TIME` are the exceptions. They are checked automatically while the stopwatch is active and not paused. `ON_INTERVAL` also needs a valid interval configured through `intervalTime` or @{Stopwatch:SetIntervalTime}.
+-- `ON_MAX_TIME` is the exception: it is checked automatically while the stopwatch is active and not paused.
 --
--- Time triggers are a separate feature and are documented in @{TimeTriggers|Time triggers}. For the exact same-frame order between `ON_INTERVAL`, time triggers, and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}. For rules on how callback functions must be defined, see @{LevelFuncsRules|LevelFuncs rules}.
+-- Interval triggers are a separate repeating-callback feature and are documented in @{IntervalTriggers|Interval triggers}. For the exact same-frame order between interval triggers, time triggers, and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}. For rules on how callback functions must be defined, see @{LevelFuncsRules|LevelFuncs rules}.
 --
 -- <br>General rules:
 --
@@ -772,7 +856,7 @@ end
 --
 -- - Write complete pairs, one after another, with no values left out.
 -- - A callback table must contain at least one extra argument; do not write `{ LevelFuncs.MyFunc }`.
--- - The value `nil` is not allowed as an extra argument. Internal `nil` values create holes and are rejected. Trailing `nil` values are removed by Lua before Stopwatch can see them.
+-- - For restrictions on extra arguments (including `nil`), see @{LevelFuncsRules|LevelFuncs rules}.
 --
 -- Each _seconds, callback_ pair counts as one trigger in the list.
 --
@@ -826,7 +910,7 @@ end
 --
 -- Time trigger callbacks follow the same authoring rules described in @{LevelFuncsRules|LevelFuncs rules}.
 --
--- Time triggers are checked automatically while the stopwatch is active and not paused. For ordering relative to `ON_INTERVAL` and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}.
+-- Time triggers are checked automatically while the stopwatch is active and not paused. For ordering relative to interval triggers and `ON_MAX_TIME`, see @{CallbackTriggerOrder|Callback and trigger order}.
 --
 -- If more than one trigger falls on the same frame, they are called in the same order they appear in the list.
 --
@@ -837,21 +921,130 @@ end
 -- Time triggers fire once on the current timeline. If elapsed time is moved backwards, or the stopwatch is restarted from zero with `Stopwatch:Start(true)` or @{Stopwatch:Reset}, future time triggers are armed again from that new time.
 --
 -- If elapsed time is moved forward, past time triggers are not replayed; the next future trigger is recalculated from the new time.
+
+---
+-- Interval triggers overview.
+-- @summaryonly
+-- @note IntervalTriggers "Interval triggers"
 --
+-- An interval trigger is a repeating event: its callback is called every time the stopwatch
+-- advances by a configured number of seconds. Unlike time triggers, which fire once at a fixed
+-- absolute time, interval triggers keep firing for as long as the stopwatch is ticking.
+--
+-- Multiple interval triggers can be registered on the same stopwatch, each with its own period
+-- and callback. They are defined as pairs inside a list, using the same format as time triggers:
+--
+-- - `seconds, LevelFuncs.MyFunc`
+--
+-- or
+--
+-- - `seconds, { LevelFuncs.MyFunc, arg1, arg2, ... }`
+--
+-- In other words:
+--
+-- - if the callback needs no extra arguments, write the _function directly_;
+-- - if the callback needs extra arguments, write a _table whose first value is the function and the following values are its arguments_.
+--
+-- <br>Please note:
+--
+-- - Write complete pairs, one after another, with no values left out.
+-- - A callback table must contain at least one extra argument; do not write `{ LevelFuncs.MyFunc }`.
+-- - For restrictions on extra arguments (including `nil`), see @{LevelFuncsRules|LevelFuncs rules}.
+--
+-- Each _seconds, callback_ pair counts as one interval trigger in the list. The first value
+-- of each pair is the period (how often the trigger fires, not an absolute time).
+--
+--    Stopwatch.Create({
+--        name = "raceTimer",
+--        intervalTriggers = {
+--            0.03, LevelFuncs.UpdateHUD,            -- trigger 1: fires every frame while ticking
+--            1.00, LevelFuncs.LogElapsed,           -- trigger 2: fires every second
+--            0.50, { LevelFuncs.PlaySound, "beep" } -- trigger 3: fires every 0.5 seconds
+--        }
+--    })
+--
+-- Each period is rounded to 2 decimal places and converted to the nearest frame at 30 FPS.
+-- After rounding, the minimum period is `0.03` seconds (1 frame). See @{FramePrecision|Frame precision}.
+--
+-- <br>**When to use interval triggers vs LevelFuncs.OnLoop**
+--
+-- Use interval triggers when a function needs to repeat on a fixed schedule _while the stopwatch is
+-- active and ticking_. They are tied to the stopwatch lifetime: they stop when the stopwatch stops,
+-- pause when it pauses, and rebase automatically when elapsed time changes.
+--
+-- `LevelFuncs.OnLoop` runs every frame unconditionally, regardless of any stopwatch state. If a
+-- function has no connection to a specific running stopwatch, use `OnLoop` instead.
+--
+-- A period of `0.03` is appropriate when per-frame execution is needed _for the duration of the
+-- stopwatch only_. If the same function should also run when the stopwatch is stopped or paused,
+-- register it with `OnLoop` directly.
+--
+-- <br>Interval trigger callbacks follow the same authoring rules described in @{LevelFuncsRules|LevelFuncs rules}.
+--
+-- Interval triggers are checked automatically while the stopwatch is active and not paused.
+-- Each trigger is tracked independently: two triggers with different periods advance their own
+-- counters and do not affect each other.
+--
+-- On the same frame, interval triggers fire in their listed order before any time triggers.
+-- For the full same-frame sequence, see @{CallbackTriggerOrder|Callback and trigger order}.
+--
+-- If elapsed time is moved manually (via @{Stopwatch:SetElapsedTime}, @{Stopwatch:Start} with reset,
+-- or @{Stopwatch:Reset}), all interval counters are rebased from the new elapsed time so that
+-- past thresholds are not replayed retroactively.
 
 ---
 -- LevelFuncs rules.
 -- @summaryonly
 -- @note LevelFuncsRules "LevelFuncs rules"
 --
--- Stopwatch callbacks and time trigger functions must be functions stored in `LevelFuncs`.
+-- Stopwatch callbacks, time trigger functions, and interval trigger functions must be functions stored in `LevelFuncs`.
 -- Do not pass a local anonymous function directly.
 --
 -- Define the LevelFuncs function before assigning it to a stopwatch through `Stopwatch.Create`,
--- `Stopwatch:SetCallback`, or a time trigger. If it is assigned before it exists, the value passed
--- to Stopwatch is `nil` and the callback will not be registered.
+-- `Stopwatch:SetCallback`, a time trigger, or an interval trigger. If it is assigned before it exists,
+-- the value passed to Stopwatch is `nil` and the callback will not be registered.
 --
--- **Bad**: `LevelFuncs.OnRaceTimerLap` is `nil` at this point.
+-- <br>**Function signature**
+--
+-- Every function called by Stopwatch always receives **the stopwatch itself** as its **first argument**,
+-- so you can call any of its methods directly from inside the function.
+-- If extra arguments were registered (via the `{ LevelFunc, arg1, arg2, ... }` table syntax or
+-- via `SetCallback`'s varargs), they are passed **after** the stopwatch, in the same order they were registered.
+--
+-- Without extra arguments:
+--
+--    LevelFuncs.OnLap = function(stopwatch)
+--        TEN.Util.PrintLog("Laps: " .. stopwatch:GetLapCount(), TEN.Util.LogLevel.INFO)
+--    end
+--    Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnLap)
+--
+-- With extra arguments (the stopwatch is still always first):
+--
+--    LevelFuncs.OnLap = function(stopwatch, zone, number)
+--        TEN.Util.PrintLog("Reached " .. zone .. " #" .. number, TEN.Util.LogLevel.INFO)
+--    end
+--    Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnLap, "finish", 3)
+--    -- called as: LevelFuncs.OnLap(stopwatch, "finish", 3)
+--
+-- The same rule applies to time triggers and interval triggers:
+--
+--    LevelFuncs.OnWave = function(stopwatch, waveNumber)
+--        TEN.Util.PrintLog("Wave " .. waveNumber, TEN.Util.LogLevel.INFO)
+--    end
+--    Stopwatch.Get("RaceTimer"):AddTimeTrigger(5.0, LevelFuncs.OnWave, 2)
+--    -- called as: LevelFuncs.OnWave(stopwatch, 2)
+--
+-- <br>**Extra arguments and nil**
+--
+-- Extra arguments cannot be `nil`. If you need to pass an optional value, use a placeholder
+-- (such as an empty string `""` or the number `0`) and handle it inside the function.
+--
+-- In a callback table, gaps between arguments are also not allowed. Note that Lua silently
+-- drops trailing `nil` values before Stopwatch can see them, so they will not be registered.
+--
+-- <br>**Definition order**
+--
+-- **Bad**: `LevelFuncs.OnRaceTimerLap` has not been defined yet at this point.
 --
 --    Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnRaceTimerLap)
 --
@@ -860,6 +1053,7 @@ end
 --    end
 --
 -- **Good**: define the function first, then assign it.
+--
 --    LevelFuncs.OnRaceTimerLap = function(stopwatch)
 --        TEN.Util.PrintLog("Lap " .. stopwatch:GetLapCount(), TEN.Util.LogLevel.INFO)
 --    end
@@ -876,15 +1070,15 @@ end
 -- If everything happens on the same frame, the order is:
 --
 --    time ---->
---    [frame update] -> [ON_INTERVAL] -> [timeTrigger 1] -> [timeTrigger 2] -> [ON_MAX_TIME]
+--    [frame update] -> [intervalTrigger 1] -> [intervalTrigger 2] -> [timeTrigger 1] -> [timeTrigger 2] -> [ON_MAX_TIME]
 --
--- If more than one timeTrigger is due on that frame, they run in the order they appear in `timeTriggers`.
+-- Interval triggers fire in their listed order. If more than one time trigger is due on that frame, they run in the order they appear in `timeTriggers`.
 --
--- <br>_Stop() behavior:_<br>`Stopwatch:Stop` does not force an extra `ON_INTERVAL` callback.
+-- <br>_Stop() behavior:_<br>`Stopwatch:Stop` does not force an extra interval trigger callback.
 --
--- If <code>Stopwatch:Stop</code> is called on a frame where an interval is also due, `ON_INTERVAL` runs only if that frame had already been checked before <code>Stopwatch:Stop</code> was called.
+-- If <code>Stopwatch:Stop</code> is called on a frame where an interval trigger is also due, it runs only if that frame had already been checked before <code>Stopwatch:Stop</code> was called.
 --
--- If <code>Stopwatch:Stop</code> is called inside `ON_INTERVAL` or inside a timeTrigger callback, the current callback finishes first. Then `ON_STOP` is called, and the rest of that frame's scheduled work is skipped.
+-- If <code>Stopwatch:Stop</code> is called inside an interval trigger or inside a timeTrigger callback, the current callback finishes first. Then `ON_STOP` is called, and the rest of that frame's scheduled work is skipped.
 --
 --    time ---->
 --    [same frame] -> [current callback finishes] -> [ON_STOP] -> [rest skipped]
@@ -892,18 +1086,10 @@ end
 -- If a scheduled callback changes elapsed time or changes the time trigger setup during that same update, the remaining scheduled callbacks for that frame are skipped.
 --
 -- <br>_More than one stopwatch:_<br>The order shown above applies to scheduled work inside one stopwatch.
--- If two different stopwatches have callbacks or time triggers due on the same frame, the order in which those stopwatches are processed is not guaranteed.
+-- If two different stopwatches have callbacks or triggers due on the same frame, the order in which those stopwatches are processed is not guaranteed.
 -- Do not write code that depends on one stopwatch running its events before another on the same frame.
 --
 -- <br>_Reaching maxTime:_<br>Reaching `maxTime` stops the stopwatch and calls `ON_MAX_TIME`, but it does not also call `ON_STOP`.
-
----
--- Save/load behavior.
--- @summaryonly
--- @note Persistence "Save/load behavior"
---
--- Stopwatch state is stored in `LevelVars`, so elapsed time, active state, laps, callbacks, intervals, and time triggers are preserved by save/load.
--- Display strings are recreated automatically after loading.
 
 ----
 -- Functions
@@ -934,19 +1120,24 @@ end
 --     textOptions = options,
 -- })
 --
--- -- Example 3: creation of a stopwatch with callbacks assigned at creation time
+-- -- Example 3: creation of a stopwatch with callbacks and interval triggers
 -- LevelFuncs.OnLapRecorded = function(sw)
 --     TEN.Util.PrintLog("Lap " .. sw:GetLapCount(), TEN.Util.LogLevel.INFO)
 -- end
 -- LevelFuncs.OnTick = function(sw)
 --     TEN.Util.PrintLog("Elapsed: " .. sw:GetElapsedTimeInSeconds() .. "s", TEN.Util.LogLevel.INFO)
 -- end
+-- LevelFuncs.OnBeep = function(sw, sound)
+--     TEN.Util.PrintLog(sound, TEN.Util.LogLevel.INFO)
+-- end
 -- Stopwatch.Create({
---     name         = "RaceTimer",
---     timeFormat   = { minutes = true, seconds = true, centiseconds = true },
---     onLap        = LevelFuncs.OnLapRecorded,
---     onInterval   = LevelFuncs.OnTick,
---     intervalTime = 1.0,
+--     name            = "RaceTimer",
+--     timeFormat      = { minutes = true, seconds = true, centiseconds = true },
+--     onLap           = LevelFuncs.OnLapRecorded,
+--     intervalTriggers = {
+--         1.00, LevelFuncs.OnTick,
+--         0.50, { LevelFuncs.OnBeep, "beep" },
+--     },
 -- })
 Stopwatch.Create = function(stopwatchData)
     if not IsTable(stopwatchData) then
@@ -975,7 +1166,7 @@ Stopwatch.Create = function(stopwatchData)
 
     -- check timeFormat
     local timeFormat = stopwatchData.timeFormat or false
-        stopwatchEntry.timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch.Create(): wrong value for timeFormat, timeFormat for '" .. name .. "' stopwatch will be set to false")
+    stopwatchEntry.timeFormat = CheckTimeFormat(timeFormat, "Warning in Stopwatch.Create(): wrong value for timeFormat, timeFormat for '" .. name .. "' stopwatch will be set to false")
 
 
     -- check maxTime
@@ -993,16 +1184,16 @@ Stopwatch.Create = function(stopwatchData)
     end
 
     -- check position
-        stopwatchEntry.position = ResolveOrDefault(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '" .. name .. "', set to default")
+    stopwatchEntry.position = ResolveOrDefault(stopwatchData.position, IsVec2(stopwatchData.position), DEFAULT_POSITION, "wrong position for '" .. name .. "', set to default")
 
     -- check scale
-        stopwatchEntry.scale = ResolveOrDefault(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '" .. name .. "', set to 1")
+    stopwatchEntry.scale = ResolveOrDefault(stopwatchData.scale, IsNumber(stopwatchData.scale) and stopwatchData.scale > 0, 1, "wrong scale for '" .. name .. "', set to 1")
 
     -- check color
-        stopwatchEntry.color = ResolveOrDefault(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '" .. name .. "', set to default")
+    stopwatchEntry.color = ResolveOrDefault(stopwatchData.color, IsColor(stopwatchData.color), DEFAULT_COLOR, "wrong color for '" .. name .. "', set to default")
 
     -- check pausedColor
-        stopwatchEntry.pausedColor = ResolveOrDefault(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '" .. name .. "', set to default")
+    stopwatchEntry.pausedColor = ResolveOrDefault(stopwatchData.pausedColor, IsColor(stopwatchData.pausedColor), DEFAULT_PAUSED_COLOR, "wrong pausedColor for '" .. name .. "', set to default")
 
     -- check textOptions
     local warning1Message = CreateWarningPrefix .. "textOptions must be a table. Stopwatch '" .. name .. "' will use default textOptions."
@@ -1016,33 +1207,48 @@ Stopwatch.Create = function(stopwatchData)
     stopwatchEntry.paused = false
     stopwatchEntry.laps = {}
     stopwatchEntry.callbacks = {}
-    stopwatchEntry.intervalFrames = nil
-    stopwatchEntry.lastIntervalCount = 0
+    stopwatchEntry.intervalTriggers = {}
     stopwatchEntry.timeTriggers = {}
 
     -- Runtime-only bookkeeping rebuilt from the persisted state when needed.
     stopwatchEntry.lastRenderedFrameCount = nil
     ResetScheduledRuntimeState(stopwatchEntry)
 
-    -- assign callbacks from stopwatchData fields
+    -- assign callbacks from stopwatchData fields.
+    -- Each field accepts either a bare LevelFunc (no extra args) or a table
+    -- { LevelFunc, arg1, arg2, ... } (with extra args passed to the callback).
     for _, cb in ipairs(CALLBACKFIELDS) do
-        local fn = stopwatchData[cb.field]
-        if not IsNull(fn) then
-            if IsLevelFunc(fn) then
-                stopwatchEntry.callbacks[cb.key] = fn
-            else
-                LogMessage(CreateWarningPrefix .. "wrong value for " .. cb.field .. " in '" .. name .. "', it must be a LevelFunc. Callback will be ignored.", logLevelWarning)
+        local cbSpec = stopwatchData[cb.field]
+        if not IsNull(cbSpec) then
+            local func, args = NormalizePublicTimeTriggerCallback(
+                cbSpec,
+                CreateWarningPrefix .. "wrong value for " .. cb.field .. " in '" .. name .. "': ",
+                logLevelWarning
+            )
+            if func then
+                local cbData = { func = func }
+                if args then
+                    cbData.args = args
+                end
+                stopwatchEntry.callbacks[cb.key] = cbData
             end
         end
     end
-    if not IsNull(stopwatchData.intervalTime) then
-        local invalidValueMessage = CreateWarningPrefix .. "wrong value for intervalTime in '" .. name .. "', it must be a positive number."
-        local tooSmallMessage = CreateWarningPrefix .. "intervalTime too small for '" .. name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
-        local frames = ValidateFrameSeconds(stopwatchData.intervalTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
-        if frames then
-            ApplyIntervalFrames(stopwatchEntry, frames)
-        end
+
+    -- assign interval triggers from stopwatchData
+    local intervalTriggers = NormalizeIntervalTriggerList(
+        stopwatchData.intervalTriggers,
+        CreateWarningPrefix .. "intervalTriggers for '" .. name .. "' must be an array table.",
+        CreateWarningPrefix .. "intervalTriggers for '" .. name .. "' must not contain holes; indices must be consecutive starting at 1.",
+        CreateWarningPrefix .. "intervalTriggers for '" .. name .. "' must contain complete seconds/callback pairs.",
+        CreateWarningPrefix .. "intervalTriggers",
+        " for '" .. name .. "'",
+        logLevelWarning
+    )
+    if intervalTriggers then
+        stopwatchEntry.intervalTriggers = intervalTriggers
     end
+    RebuildIntervalTriggers(stopwatchEntry)
 
     local timeTriggers = NormalizeTimeTriggerList(
         stopwatchData.timeTriggers,
@@ -1057,6 +1263,9 @@ Stopwatch.Create = function(stopwatchData)
         stopwatchEntry.timeTriggers = timeTriggers
     end
     RebuildTimeTriggers(stopwatchEntry)
+    if stopwatchEntry.maxTime then
+        WarnTimeTriggersBeyondMaxTime(stopwatchEntry.timeTriggers, stopwatchEntry.maxTime:GetFrameCount(), CreateWarningPrefix, name)
+    end
 
     if stopwatchEntry.timeFormat then
         local initText = GenerateTimeFormattedString(ZERO, stopwatchEntry.timeFormat)
@@ -1146,20 +1355,22 @@ end
 --
 -- - Laps and splits.
 --
--- - Callbacks and interval configuration.
+-- - Callbacks.
+--
+-- - Interval triggers.
 --
 -- - Absolute time triggers.
 --
 -- Use @{Stopwatch.Get} before calling methods when the stopwatch may not exist.
 -- @usage
---	-- Examples of some methods
+--      -- Examples of some methods
 -- Stopwatch.Get("MyStopwatch"):Start()
 -- Stopwatch.Get("MyStopwatch"):Pause()
 -- Stopwatch.Get("MyStopwatch"):Stop()
 
 --- Start or resume the stopwatch.
 -- @tparam[opt=false] bool reset<br>
--- If `true`, resets elapsed time to zero, clears laps, rebases interval scheduling (the configured interval time is preserved), and rebuilds future timeTriggers before starting.
+-- If `true`, resets elapsed time to zero, clears laps, rebases all interval trigger counters, and rebuilds future timeTriggers before starting.
 --
 -- If `false` or not provided, the stopwatch will continue from its current time.<br>
 -- @usage
@@ -1184,7 +1395,7 @@ function Stopwatch:Start(reset)
     if reset then
         stopwatch.elapsedTime = ZERO
         stopwatch.laps = {}
-        stopwatch.lastIntervalCount = 0
+        RebuildIntervalTriggers(stopwatch)
         RebuildTimeTriggers(stopwatch)
     end
     -- Starting again clears any deferred OnStop left behind by Stop() inside a
@@ -1265,7 +1476,7 @@ function Stopwatch:Stop(displayTime)
     end
 end
 
---- Reset the stopwatch to zero and stop it. Laps are cleared, interval scheduling is rebased from zero (the configured interval time is preserved), and future timeTriggers are rebuilt from zero.
+--- Reset the stopwatch to zero and stop it. Laps are cleared, all interval trigger counters are rebased from zero, and future timeTriggers are rebuilt from zero.
 --
 -- If `ON_RESET` is configured, it is called after elapsed time, laps, active state, and display state have been reset.
 -- @usage
@@ -1280,7 +1491,7 @@ function Stopwatch:Reset()
     stopwatch.active = false
     stopwatch.paused = false
     stopwatch.laps = {}
-    stopwatch.lastIntervalCount = 0
+    RebuildIntervalTriggers(stopwatch)
     RebuildTimeTriggers(stopwatch)
     stopwatch.lastRenderedFrameCount = ZERO:GetFrameCount()
     stopwatch.pendingStopCallback = false
@@ -1366,7 +1577,7 @@ end
 --- Set the elapsed time of the stopwatch.
 -- @tparam float newTime The new time for the stopwatch in seconds with 2 decimal places<br>
 -- Negative values are not allowed; 0 is allowed. Time stays frame-based: the input is rounded to 2 decimal places before conversion to game frames. See @{FramePrecision|Time values and frame precision}.
--- If an `ON_INTERVAL` callback from @{Stopwatch.CallbackTypes} is configured, the next interval callback is recalculated from the new elapsed time.
+-- All interval trigger counters are recalculated from the new elapsed time so that past thresholds are not replayed.
 -- The next due timeTrigger is also recalculated from the new elapsed time. Past triggers are not replayed immediately; moving time backwards re-arms future triggers from the new position.
 -- @usage
 -- Stopwatch.Get("MyStopwatch"):SetElapsedTime(30.5) -- Set time to 30.5 seconds
@@ -1382,7 +1593,7 @@ function Stopwatch:SetElapsedTime(newTime)
         stopwatch.elapsedTime = SecondsToTime(newTime)
         -- Manual time jumps must immediately rebase interval scheduling and, if shown,
         -- refresh the display without waiting for the next frame.
-        RealignIntervalCount(stopwatch)
+        RealignIntervalCounts(stopwatch)
         RealignTimeTriggerCursor(stopwatch)
         if stopwatch.timeFormat then
             SyncDisplayText(stopwatch, self.name)
@@ -1520,6 +1731,7 @@ function Stopwatch:SetMaxTime(maxTime)
         if frames then
             InvalidateScheduledState(stopwatch)
             stopwatch.maxTime = Time(frames)
+            WarnTimeTriggersBeyondMaxTime(stopwatch.timeTriggers or {}, frames, "Warning in Stopwatch:SetMaxTime(): ", self.name)
         end
     end
 end
@@ -1982,27 +2194,24 @@ end
 
 --- Set a callback function for a specific event.
 -- The callback must be a `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.
--- Each callback receives the stopwatch as its first argument, so it can use the public Stopwatch methods.
--- For `ON_INTERVAL` in @{Stopwatch.CallbackTypes}, you can optionally pass the interval time in seconds as the third argument. If you omit it, the current interval is kept. If no interval is currently configured, the callback is stored but remains inactive until you set one with @{Stopwatch:SetIntervalTime}. If you pass `intervalTime`, it is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS), otherwise the `ON_INTERVAL` callback is not changed. See @{FramePrecision|Time values and frame precision}.
+-- Each callback receives the stopwatch as its first argument. Any extra arguments passed here are forwarded
+-- after the stopwatch each time the callback fires.
 -- For callback ordering and same-frame overlap rules, see @{Callbacks|Callbacks overview}.
--- @tparam CallbackTypes callbackType The callback type.
--- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch)`.
--- @tparam[opt=nil] float intervalTime Only for `ON_INTERVAL`: the interval in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). If invalid, the `ON_INTERVAL` callback is not changed. Ignored for all other callback types.
+-- @tparam CallbackTypes callbackType The callback type. Use a constant from @{Stopwatch.CallbackTypes}.
+-- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
+-- @param ... Optional extra arguments stored with the callback and passed after the stopwatch each time it fires. `nil` values are not allowed.
 -- @usage
 -- LevelFuncs.OnLapRecorded = function(sw)
---     TEN.Util.PrintLog("Lap " .. sw:GetLapCount() .. ": " .. sw:GetLapTimeFormatted(sw:GetLapCount()), TEN.Util.LogLevel.INFO)
+--     TEN.Util.PrintLog("Lap " .. sw:GetLapCount(), TEN.Util.LogLevel.INFO)
 -- end
 -- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnLapRecorded)
 --
--- -- ON_INTERVAL: callback called every second
--- LevelFuncs.OnTick = function(sw)
---     TEN.Util.PrintLog("Elapsed: " .. sw:GetElapsedTimeInSeconds() .. "s", TEN.Util.LogLevel.INFO)
+-- -- With extra arguments forwarded to the callback
+-- LevelFuncs.OnCheckpoint = function(sw, zone, number)
+--     TEN.Util.PrintLog("Reached " .. zone .. " checkpoint " .. number, TEN.Util.LogLevel.INFO)
 -- end
--- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_INTERVAL, LevelFuncs.OnTick, 1.0)
---
--- -- ON_INTERVAL: callback called every frame (~0.03s)
--- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_INTERVAL, LevelFuncs.OnTick, 0.03)
-function Stopwatch:SetCallback(callbackType, func, intervalTime)
+-- Stopwatch.Get("RaceTimer"):SetCallback(Stopwatch.CallbackTypes.ON_LAP, LevelFuncs.OnCheckpoint, "finish", 3)
+function Stopwatch:SetCallback(callbackType, func, ...)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetCallback")
     if not stopwatch then
         return
@@ -2015,28 +2224,19 @@ function Stopwatch:SetCallback(callbackType, func, intervalTime)
         LogMessage("Error in Stopwatch:SetCallback(): func must be a LevelFunc for '" .. self.name .. "'.", logLevelError)
         return
     end
-    local intervalFrames = nil
-    if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and not IsNull(intervalTime) then
-        local invalidValueMessage = "Warning in Stopwatch:SetCallback(): wrong value (" .. tostring(intervalTime) .. ") for intervalTime in '" .. self.name .. "', it must be a positive number. ON_INTERVAL callback will not be changed."
-        local tooSmallMessage = "Warning in Stopwatch:SetCallback(): intervalTime too small for '" .. self.name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS). ON_INTERVAL callback will not be changed."
-        intervalFrames = ValidateFrameSeconds(intervalTime, invalidValueMessage, tooSmallMessage, logLevelWarning)
-        if not intervalFrames then
-            return
-        end
+    local argsOk, args = CollectTimeTriggerArgs(self.name, "SetCallback", ...)
+    if not argsOk then
+        return
     end
-    -- ON_INTERVAL updates are atomic: an invalid new interval leaves the previous
-    -- callback and schedule untouched instead of half-updating them.
-    stopwatch.callbacks[callbackType] = func
-    if callbackType == Stopwatch.CallbackTypes.ON_INTERVAL and intervalFrames then
-        InvalidateScheduledState(stopwatch)
-        ApplyIntervalFrames(stopwatch, intervalFrames)
+    local cbData = { func = func }
+    if args then
+        cbData.args = args
     end
+    stopwatch.callbacks[callbackType] = cbData
 end
 
 --- Remove a callback function for a specific event.
--- For `ON_INTERVAL` in @{Stopwatch.CallbackTypes}, only the callback function is removed; the interval time is kept.
--- Use @{Stopwatch:SetIntervalTime} with no arguments to remove both the interval time and the callback.
--- @tparam CallbackTypes callbackType The callback type.
+-- @tparam CallbackTypes callbackType The callback type. Use a constant from @{Stopwatch.CallbackTypes}.
 -- @usage
 -- Stopwatch.Get("RaceTimer"):RemoveCallback(Stopwatch.CallbackTypes.ON_LAP)
 function Stopwatch:RemoveCallback(callbackType)
@@ -2051,54 +2251,142 @@ function Stopwatch:RemoveCallback(callbackType)
     stopwatch.callbacks[callbackType] = nil
 end
 
---- Get the current interval time for `ON_INTERVAL` in @{Stopwatch.CallbackTypes}.
--- @treturn[1] float The interval time in seconds.
--- @treturn[2] nil If no interval is configured.
+--- Replace the entire interval trigger list.
+-- Validation is atomic: if any entry is invalid, the existing list is left unchanged.
+-- Pass one compact list in the same format described in @{IntervalTriggers|Interval triggers overview}: `seconds, callback, seconds, callback, ...`.
+-- Each callback entry can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires.
+-- Callback tables must contain at least one extra argument and cannot contain `nil` values.
+-- Passing an empty table clears the list.
+-- All interval counters are rebased from the current elapsed time after the list is replaced.
+-- @tparam table triggers A compact list of `seconds, callback` pairs.
 -- @usage
--- local interval = Stopwatch.Get("RaceTimer"):GetIntervalTime()
-function Stopwatch:GetIntervalTime()
-    local stopwatch = GetStopwatchOrWarn(self.name, "GetIntervalTime")
+-- Stopwatch.Get("RaceTimer"):SetIntervalTriggers({
+--     0.03, LevelFuncs.UpdateHUD,
+--     1.00, { LevelFuncs.LogElapsed, "race" },
+-- })
+function Stopwatch:SetIntervalTriggers(triggers)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetIntervalTriggers")
     if not stopwatch then
-        return nil
+        return
     end
-    local frames = stopwatch.intervalFrames
-    if frames then
-        return FramesToSeconds(frames)
+    local normalized = NormalizeIntervalTriggerList(
+        triggers,
+        "Error in Stopwatch:SetIntervalTriggers(): intervalTriggers must be an array table for '" .. self.name .. "'.",
+        "Error in Stopwatch:SetIntervalTriggers(): intervalTriggers for '" .. self.name .. "' must not contain holes; indices must be consecutive starting at 1.",
+        "Error in Stopwatch:SetIntervalTriggers(): intervalTriggers for '" .. self.name .. "' must contain complete seconds/callback pairs.",
+        "Error in Stopwatch:SetIntervalTriggers(): intervalTriggers",
+        " for '" .. self.name .. "'",
+        logLevelError
+    )
+    if not normalized then
+        return
+    end
+    InvalidateScheduledState(stopwatch)
+    stopwatch.intervalTriggers = normalized
+    RebuildIntervalTriggers(stopwatch)
+end
+
+--- Get a copy of the current interval trigger list in listed order.
+-- The returned value uses the same compact format described in @{IntervalTriggers|Interval triggers overview}: `seconds, callback, seconds, callback, ...`.
+-- If a trigger has no extra arguments, its callback is returned as the bare `LevelFuncs` function. If it has extra arguments, its callback is returned as a table whose first value is the `LevelFuncs` function followed by the stored arguments.
+-- Editing the returned table or any returned callback table does not affect the stopwatch until you pass data back through @{Stopwatch:SetIntervalTriggers}.
+-- Returned callback tables are shallow copies. Nested tables inside the stored extra arguments remain shared references.
+-- Returned periods are the normalized values stored by the stopwatch, rounded to 2 decimal places.
+-- @treturn table A compact list of `seconds, callback` pairs in listed order.
+-- @usage
+-- local triggers = Stopwatch.Get("RaceTimer"):GetIntervalTriggers()
+function Stopwatch:GetIntervalTriggers()
+    local stopwatch = GetStopwatchOrWarn(self.name, "GetIntervalTriggers")
+    if stopwatch then
+        return ExportPublicTriggerList(stopwatch.intervalTriggers or {}, "period")
     end
     return nil
 end
 
---- Set the interval time for `ON_INTERVAL` in @{Stopwatch.CallbackTypes}.
--- Omit the argument or pass nil to remove the interval time and the `ON_INTERVAL` callback together.
--- Changing the interval recalculates the next callback from the current elapsed time. Interval callbacks that would have happened in the past are not replayed.
--- @tparam[opt] float seconds The interval in seconds. Must be positive. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
+--- Add a new interval trigger to the stopwatch.
+-- The trigger is appended to the list. The interval counter for the new trigger is initialized from the current elapsed time so it does not fire retroactively.
+-- The callback shape matches @{Stopwatch:SetIntervalTriggers}: pass the `LevelFuncs` function first, followed by any optional positional extra arguments.
+-- For ordering and overlap rules, see @{IntervalTriggers|Interval triggers overview}.
+-- @tparam float seconds The period in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
+-- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
+-- @param ... Optional positional extra arguments stored with the trigger and passed to the callback when it fires. `nil` values are not allowed.
 -- @usage
--- -- Callback called every 5 seconds
--- Stopwatch.Get("RaceTimer"):SetIntervalTime(5.0)
---
--- -- Remove interval and its callback
--- Stopwatch.Get("RaceTimer"):SetIntervalTime()
-function Stopwatch:SetIntervalTime(seconds)
-    local stopwatch = GetStopwatchOrWarn(self.name, "SetIntervalTime")
+-- Stopwatch.Get("RaceTimer"):AddIntervalTrigger(1.0, LevelFuncs.LogElapsed)
+-- Stopwatch.Get("RaceTimer"):AddIntervalTrigger(0.5, LevelFuncs.PlayBeep, "high")
+function Stopwatch:AddIntervalTrigger(seconds, func, ...)
+    local stopwatch = GetStopwatchOrWarn(self.name, "AddIntervalTrigger")
     if not stopwatch then
         return
     end
-    if IsNull(seconds) then
-        -- Removing the schedule also removes OnInterval; a dormant interval callback
-        -- without a schedule tends to be misleading during debugging.
-        InvalidateScheduledState(stopwatch)
-        stopwatch.intervalFrames = nil
-        stopwatch.lastIntervalCount = 0
-        stopwatch.callbacks["OnInterval"] = nil
-    else
-        local invalidValueMessage = "Warning in Stopwatch:SetIntervalTime(): wrong value (" .. tostring(seconds) .. ") for seconds, it must be a positive number."
-        local tooSmallMessage = "Warning in Stopwatch:SetIntervalTime(): interval too small for '" .. self.name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
-        local frames = ValidateFrameSeconds(seconds, invalidValueMessage, tooSmallMessage, logLevelWarning)
-        if frames then
-            InvalidateScheduledState(stopwatch)
-            ApplyIntervalFrames(stopwatch, frames)
-        end
+    local normalized = NormalizeIntervalTriggerFromParts(self.name, "AddIntervalTrigger", seconds, func, ...)
+    if not normalized then
+        return
     end
+    InvalidateScheduledState(stopwatch)
+    insert(stopwatch.intervalTriggers, normalized)
+    RebuildIntervalTriggers(stopwatch)
+end
+
+--- Replace one interval trigger by index.
+-- Validation is atomic: on invalid input the existing trigger is left unchanged.
+-- Pass the period first, then the `LevelFuncs` function, then any optional positional extra arguments.
+-- The replaced trigger's counter is rebased from the current elapsed time.
+-- @tparam int index The 1-based trigger index in the list.
+-- @tparam float seconds The new period in seconds. It is rounded to 2 decimal places first; after rounding, it must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}.
+-- @tparam function func A `LevelFuncs` function. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Signature: `function(stopwatch, ...)`.
+-- @param ... Optional positional extra arguments stored with the trigger and passed to the callback when it fires. `nil` values are not allowed.
+-- @usage
+-- -- Replace trigger 2 with a new 2-second period and callback
+-- Stopwatch.Get("RaceTimer"):SetIntervalTrigger(2, 2.0, LevelFuncs.SlowLog)
+-- -- Replace trigger 1, keeping the same period but changing the callback and adding an argument
+-- Stopwatch.Get("RaceTimer"):SetIntervalTrigger(1, 0.03, LevelFuncs.UpdateHUD, "fast")
+function Stopwatch:SetIntervalTrigger(index, seconds, func, ...)
+    local stopwatch = GetStopwatchOrWarn(self.name, "SetIntervalTrigger")
+    if not stopwatch then
+        return
+    end
+    local triggerCount = #stopwatch.intervalTriggers
+    if not ValidatePositiveIndex(index, triggerCount, "Error in Stopwatch:SetIntervalTrigger(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' (interval trigger count: " .. tostring(triggerCount) .. ").", logLevelError) then
+        return
+    end
+    local normalized = NormalizeIntervalTriggerFromParts(self.name, "SetIntervalTrigger", seconds, func, ...)
+    if not normalized then
+        return
+    end
+    InvalidateScheduledState(stopwatch)
+    stopwatch.intervalTriggers[index] = normalized
+    RebuildIntervalTriggers(stopwatch)
+end
+
+--- Remove one interval trigger by index.
+-- @tparam int index The 1-based trigger index in the list.
+-- @usage
+-- Stopwatch.Get("RaceTimer"):RemoveIntervalTrigger(2)
+function Stopwatch:RemoveIntervalTrigger(index)
+    local stopwatch = GetStopwatchOrWarn(self.name, "RemoveIntervalTrigger")
+    if not stopwatch then
+        return
+    end
+    local triggerCount = #stopwatch.intervalTriggers
+    if not ValidatePositiveIndex(index, triggerCount, "Error in Stopwatch:RemoveIntervalTrigger(): invalid index (" .. tostring(index) .. ") for '" .. self.name .. "' (interval trigger count: " .. tostring(triggerCount) .. ").", logLevelError) then
+        return
+    end
+    InvalidateScheduledState(stopwatch)
+    remove(stopwatch.intervalTriggers, index)
+    RebuildIntervalTriggers(stopwatch)
+end
+
+--- Remove all interval triggers from the stopwatch.
+-- @usage
+-- Stopwatch.Get("RaceTimer"):ClearIntervalTriggers()
+function Stopwatch:ClearIntervalTriggers()
+    local stopwatch = GetStopwatchOrWarn(self.name, "ClearIntervalTriggers")
+    if not stopwatch then
+        return
+    end
+    InvalidateScheduledState(stopwatch)
+    stopwatch.intervalTriggers = {}
+    RebuildIntervalTriggers(stopwatch)
 end
 
 --- Add a new absolute time trigger to the stopwatch.
@@ -2133,6 +2421,9 @@ function Stopwatch:AddTimeTrigger(seconds, func, ...)
     InvalidateScheduledState(stopwatch)
     insert(stopwatch.timeTriggers, normalizedTrigger)
     RebuildTimeTriggers(stopwatch)
+    if stopwatch.maxTime then
+        WarnTimeTriggersBeyondMaxTime({ normalizedTrigger }, stopwatch.maxTime:GetFrameCount(), "Warning in Stopwatch:AddTimeTrigger(): ", self.name)
+    end
 end
 
 --- Replace the entire time trigger list.
@@ -2169,6 +2460,9 @@ function Stopwatch:SetTimeTriggers(triggers)
     InvalidateScheduledState(stopwatch)
     stopwatch.timeTriggers = normalizedTriggers
     RebuildTimeTriggers(stopwatch)
+    if stopwatch.maxTime then
+        WarnTimeTriggersBeyondMaxTime(normalizedTriggers, stopwatch.maxTime:GetFrameCount(), "Warning in Stopwatch:SetTimeTriggers(): ", self.name)
+    end
 end
 
 --- Get a copy of the current time trigger list in public order.
@@ -2183,7 +2477,7 @@ end
 function Stopwatch:GetTimeTriggers()
     local stopwatch = GetStopwatchOrWarn(self.name, "GetTimeTriggers")
     if stopwatch then
-        return ExportPublicTimeTriggerList(stopwatch.timeTriggers or {})
+        return ExportPublicTriggerList(stopwatch.timeTriggers or {}, "at")
     end
     return nil
 end
@@ -2232,6 +2526,9 @@ function Stopwatch:SetTimeTrigger(index, seconds, func, ...)
     InvalidateScheduledState(stopwatch)
     stopwatch.timeTriggers[index] = normalizedTrigger
     RebuildTimeTriggers(stopwatch)
+    if stopwatch.maxTime then
+        WarnTimeTriggersBeyondMaxTime({ normalizedTrigger }, stopwatch.maxTime:GetFrameCount(), "Warning in Stopwatch:SetTimeTrigger(): ", self.name)
+    end
 end
 
 --- Remove one time trigger by public index.
@@ -2277,8 +2574,8 @@ LevelFuncs.Engine.Stopwatch.IncrementTime = function()
 end
 
 LevelFuncs.Engine.Stopwatch.UpdateAll = function()
-    -- Per-frame reconciliation: derive interval callbacks, display refresh, and
-    -- maxTime termination from the current frame state.
+    -- Per-frame reconciliation: derive interval trigger callbacks, time trigger callbacks,
+    -- display refresh, and maxTime termination from the current frame state.
     for name, s in pairs(stopwatches) do
         local ds = nil
         if s.timeFormat then
@@ -2293,32 +2590,42 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
 
             ClearScheduledDispatchFlags(s)
 
-            -- Scheduled callbacks are processed in timeline order: interval first,
+            -- Scheduled callbacks are processed in timeline order: interval triggers first,
             -- then absolute time triggers, and maxTime is decided from the final
             -- stopwatch state that remains after those callbacks finish.
-            if s.intervalFrames and not s.paused then
+            if not s.paused and s.compiledIntervalTriggers and #s.compiledIntervalTriggers > 0 then
                 local frames = s.elapsedTime:GetFrameCount()
-                local currentCount = floor(frames / s.intervalFrames)
-                local lastCount = s.lastIntervalCount or 0
-                if currentCount > lastCount then
-                    local fn = s.callbacks["OnInterval"]
-                    if fn then
-                        BeginScheduledCallbackDispatch(s)
-                        for _ = lastCount + 1, currentCount do
-                            proxy = EnsureStopwatchProxy(proxy, name)
-                            fn(proxy)
-                            if ShouldAbortScheduledDispatch(s, name) then
-                                break
+                -- Pre-check: only enter the dispatch block if at least one trigger is due.
+                local anyDue = false
+                for _, compiled in ipairs(s.compiledIntervalTriggers) do
+                    if floor(frames / compiled.periodFrames) > (compiled.trigger.lastCount or 0) then
+                        anyDue = true
+                        break
+                    end
+                end
+                if anyDue then
+                    BeginScheduledCallbackDispatch(s)
+                    for _, compiled in ipairs(s.compiledIntervalTriggers) do
+                        local trigger = compiled.trigger
+                        local currentCount = floor(frames / compiled.periodFrames)
+                        local lastCount = trigger.lastCount or 0
+                        if currentCount > lastCount then
+                            for _ = lastCount + 1, currentCount do
+                                proxy = EnsureStopwatchProxy(proxy, name)
+                                FireCallbackData(trigger, proxy)
+                                if ShouldAbortScheduledDispatch(s, name) then
+                                    break
+                                end
+                            end
+                            if not s.scheduledStateInvalidated then
+                                trigger.lastCount = currentCount
                             end
                         end
-                        EndScheduledCallbackDispatch(s, name, proxy)
+                        if ShouldAbortScheduledDispatch(s, name) then
+                            break
+                        end
                     end
-                    if not s.scheduledStateInvalidated then
-                        -- The interval counter is updated even when no callback is set
-                        -- so that later callback assignment starts from the current
-                        -- schedule instead of replaying old thresholds.
-                        s.lastIntervalCount = currentCount
-                    end
+                    EndScheduledCallbackDispatch(s, name, proxy)
                 end
             end
 
@@ -2343,7 +2650,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
                         s.nextTimeTriggerIndex = nextTriggerIndex
 
                         proxy = EnsureStopwatchProxy(proxy, name)
-                        FireTimeTriggerCallback(triggerData, proxy)
+                        FireCallbackData(triggerData, proxy)
                         if ShouldAbortScheduledDispatch(s, name) then
                             break
                         end
@@ -2385,6 +2692,12 @@ LevelFuncs.Engine.Stopwatch.Reload = function()
         -- These flags are runtime-only bookkeeping. They must not survive loads,
         -- because resuming inside a half-finished callback would be invalid.
         ResetScheduledRuntimeState(s)
+        if not IsTable(s.intervalTriggers) then
+            s.intervalTriggers = {}
+        end
+        -- Rebuild compiled interval cache; RealignIntervalCounts recalculates
+        -- each lastCount from the persisted elapsedTime so intervals resume correctly.
+        RebuildIntervalTriggers(s)
         if not IsTable(s.timeTriggers) then
             s.timeTriggers = {}
         end
@@ -2419,15 +2732,14 @@ end
 -- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color color The color of the displayed stopwatch when it is active.
 -- @tfield[opt=Color(255&#44; 255&#44; 0&#44; 255)] Color pausedColor The color of the displayed stopwatch when it is paused.
 -- @tfield[opt=<br>{<br>TEN.Strings.DisplayStringOption.CENTER&#44;<br> TEN.Strings.DisplayStringOption.SHADOW&#44;<br> TEN.Strings.DisplayStringOption.VERTICAL_CENTER<br>}] table textOptions A table containing values from @{Strings.DisplayStringOption} to set the text options. Vertical center option is always added automatically if not present.<br>
--- @tfield[opt=nil] function onStart Callback called when the stopwatch is started. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_START` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onResume Callback called when the stopwatch is resumed after a pause. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESUME` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onPause Callback called when the stopwatch is paused. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_PAUSE` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_STOP` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] function onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onLap Callback called when a lap is recorded. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_LAP` from @{Stopwatch.CallbackTypes} after creation.<br>
--- @tfield[opt=nil] function onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` from @{Stopwatch.CallbackTypes} after creation. For overlap behavior with onInterval and onStop, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] function onInterval Callback called repeatedly at a fixed interval while the stopwatch is ticking. Must be a `LevelFuncs` function reference. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts. Requires a valid `intervalTime`; if `intervalTime` is missing or invalid, the callback is stored but is not called until a valid interval is configured via @{Stopwatch:SetIntervalTime}. For same-frame interactions with onStop and onMaxTime, see @{Callbacks|Callbacks overview}.<br>
--- @tfield[opt=nil] float intervalTime The firing interval in seconds for the `onInterval` callback. Values must be positive. They are rounded to 2 decimal places first; after rounding, they must be at least `0.03` seconds (1 frame at 30 FPS). See @{FramePrecision|Time values and frame precision}. Has no effect without `onInterval`; however, the interval is stored and will be used as soon as a callback is assigned via @{Stopwatch:SetCallback}.<br>
+-- @tfield[opt=nil] function|table onStart Callback called when the stopwatch is started. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. See @{Stopwatch.LevelFuncsRules|LevelFuncs rules} and @{Callbacks|Callbacks overview} in Key concepts. Equivalent to calling @{Stopwatch:SetCallback} with `ON_START` after creation.<br>
+-- @tfield[opt=nil] function|table onResume Callback called when the stopwatch is resumed after a pause. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESUME` after creation.<br>
+-- @tfield[opt=nil] function|table onPause Callback called when the stopwatch is paused. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. Equivalent to calling @{Stopwatch:SetCallback} with `ON_PAUSE` after creation.<br>
+-- @tfield[opt=nil] function|table onStop Callback called when @{Stopwatch:Stop} stops an active stopwatch. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. Equivalent to calling @{Stopwatch:SetCallback} with `ON_STOP` after creation. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] function|table onReset Callback called after the stopwatch is reset to zero, stopped, and its laps are cleared. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. Equivalent to calling @{Stopwatch:SetCallback} with `ON_RESET` after creation.<br>
+-- @tfield[opt=nil] function|table onLap Callback called when a lap is recorded. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. Equivalent to calling @{Stopwatch:SetCallback} with `ON_LAP` after creation.<br>
+-- @tfield[opt=nil] function|table onMaxTime Callback called when the stopwatch reaches its configured maxTime and automatically stops. Pass a `LevelFuncs` function directly, or a table `{ LevelFuncs.Func, arg1, ... }` to forward extra arguments. Equivalent to calling @{Stopwatch:SetCallback} with `ON_MAX_TIME` after creation. For overlap behavior with interval triggers and onStop, see @{Callbacks|Callbacks overview}.<br>
+-- @tfield[opt=nil] table intervalTriggers A compact list of `seconds, callback` pairs defining repeating interval triggers: `seconds, callback, seconds, callback, ...`. Each callback can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires. Callback tables must contain at least one extra argument and cannot contain `nil` values. Each `seconds` value is the period (how often the trigger repeats). Validation is atomic during creation: if the list is invalid, the whole field is ignored and the stopwatch starts with no interval triggers. See @{IntervalTriggers|Interval triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
 -- @tfield[opt=nil] table timeTriggers A compact list of `seconds, callback` pairs: `seconds, callback, seconds, callback, ...`. Each callback can be either a `LevelFuncs` function or a table whose first value is the `LevelFuncs` function and whose remaining values are the extra arguments passed when the trigger fires. Callback tables must contain at least one extra argument and cannot contain `nil` values. These define absolute one-shot cue points on the stopwatch timeline and are stored in public order. Validation is atomic during creation: if the list is invalid, the whole field is ignored and the stopwatch starts with no timeTriggers. See @{TimeTriggers|Time triggers overview}, @{FramePrecision|Time values and frame precision}, and @{Stopwatch.LevelFuncsRules|LevelFuncs rules} in Key concepts.<br>
 
 ---
@@ -2464,8 +2776,7 @@ end
 -- @tfield "OnResume" ON_RESUME Callback called when the stopwatch is resumed via @{Stopwatch:Start} after being paused.
 -- @tfield "OnReset" ON_RESET Callback called after @{Stopwatch:Reset} resets elapsed time to zero, clears laps, and stops the stopwatch.
 -- @tfield "OnStop" ON_STOP Callback called when the stopwatch is stopped via @{Stopwatch:Stop}. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with other callbacks, see @{Callbacks|Callbacks overview}.
--- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with `ON_INTERVAL` and `ON_STOP`, see @{Callbacks|Callbacks overview}.
--- @tfield "OnInterval" ON_INTERVAL Callback called repeatedly at the configured interval while the stopwatch is ticking. The interval is configured via @{Stopwatch:SetIntervalTime} or @{Stopwatch:SetCallback}. For same-frame interactions with `ON_STOP` and `ON_MAX_TIME`, see @{Callbacks|Callbacks overview}.
+-- @tfield "OnMaxTime" ON_MAX_TIME Callback called when the stopwatch reaches the configured maxTime and automatically stops. The stopwatch is already stopped when the callback is called, so you do not need to stop it manually inside the callback. For overlap behavior with interval triggers and `ON_STOP`, see @{Callbacks|Callbacks overview}.
 
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Stopwatch.IncrementTime)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_LOOP, LevelFuncs.Engine.Stopwatch.UpdateAll)
