@@ -37,17 +37,17 @@ local stopwatches = LevelVars.Engine.Stopwatch.stopwatches
 local stopwatchStrings = {} -- DisplayString objects, not serializable in LevelVars
 
 -- Utility functions and enums from TEN 
-local LogMessage                  = TEN.Util.PrintLog
-local logLevelError               = TEN.Util.LogLevel.ERROR
+local LogMessage          = TEN.Util.PrintLog
+local logLevelError       = TEN.Util.LogLevel.ERROR
 local logLevelWarning     = TEN.Util.LogLevel.WARNING
 local PercentToScreen     = TEN.Util.PercentToScreen
-local DisplayString               = TEN.Strings.DisplayString
-local ShowString                  = TEN.Strings.ShowString
-local HideString                  = TEN.Strings.HideString
+local DisplayString       = TEN.Strings.DisplayString
+local ShowString          = TEN.Strings.ShowString
+local HideString          = TEN.Strings.HideString
 local DisplayStringOption = TEN.Strings.DisplayStringOption
-local Time                                = TEN.Time
-local Vec2                                = TEN.Vec2
-local Color                               = TEN.Color
+local Time                = TEN.Time
+local Vec2                = TEN.Vec2
+local Color               = TEN.Color
 
 local ZERO = Time()
 local DEFAULT_TEXT_OPTIONS = {DisplayStringOption.CENTER, DisplayStringOption.SHADOW, DisplayStringOption.VERTICAL_CENTER}
