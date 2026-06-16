@@ -1397,6 +1397,7 @@ function Stopwatch:Start(reset)
         stopwatch.laps = {}
         RebuildIntervalTriggers(stopwatch)
         RebuildTimeTriggers(stopwatch)
+        InvalidateScheduledState(stopwatch)
     end
     -- Starting again clears any deferred OnStop left behind by Stop() inside a
     -- scheduled callback.
@@ -2660,7 +2661,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             end
 
             local instanceAlive = stopwatches[name] == s
-            local reachedMaxTime = instanceAlive and not s.scheduledDispatchInterrupted and s.active and s.maxTime and s.elapsedTime >= s.maxTime
+            local reachedMaxTime = instanceAlive and not s.scheduledDispatchInterrupted and s.active and not s.paused and s.maxTime and s.elapsedTime >= s.maxTime
 
             if instanceAlive and s.timeFormat and (s.active or reachedMaxTime) then
                 if ds then
