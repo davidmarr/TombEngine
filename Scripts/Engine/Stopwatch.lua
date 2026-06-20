@@ -338,6 +338,10 @@ local function NormalizePublicTimeTriggerCallback(callbackSpec, messagePrefix, l
     return func, args
 end
 
+-- Shared validation for time triggers and interval triggers.
+-- Both systems use the same internal shape { at, func, args } during
+-- normalization. Interval triggers rename 'at' to 'period' afterwards
+-- via NormalizeIntervalTriggerFromParts / NormalizeIntervalTriggerList.
 local function NormalizeTimeTriggerData(triggerData, messagePrefix, logLevel)
     if not IsTable(triggerData) then
         LogMessage(messagePrefix .. "must be a table.", logLevel)
@@ -580,6 +584,27 @@ local FlushPendingStopCallback = function(stopwatch, name, proxy)
     end
 end
 
+-- Two-tier dispatch abort mechanism.
+--
+-- Tier 1 — scheduledDispatchInterrupted:
+--   Set by Stop(), Pause(), and InvalidateScheduledState() when a state-changing
+--   method is called from inside a scheduled callback. The dispatch loop checks
+--   this flag via ShouldAbortScheduledDispatch() after every callback invocation
+--   and breaks immediately when set. This prevents the loop from processing
+--   triggers that belong to a now-invalid timeline.
+--
+-- Tier 2 — scheduledStateInvalidated:
+--   Set by InvalidateScheduledState() when elapsed time or the trigger list is
+--   mutated during dispatch. This flag prevents the dispatch loop from writing
+--   back stale lastCount values (interval triggers) that were already overwritten
+--   by RealignIntervalCounts() during the mutation. Without this guard, a
+--   trigger's counter would be updated to the current frame count AFTER it had
+--   already been realigned, silently consuming one firing on the next frame.
+--
+-- Both flags are cleared at the start of each frame by ClearScheduledDispatchFlags().
+-- They are also reset to safe defaults by ResetScheduledRuntimeState() on reload,
+-- because resuming inside a half-finished callback would be invalid.
+
 local function IsScheduledCallbackRunning(stopwatch)
     return stopwatch.scheduledCallbackDepth and stopwatch.scheduledCallbackDepth > 0
 end
@@ -609,6 +634,11 @@ local function ResetScheduledRuntimeState(stopwatch)
 end
 
 local function ShouldAbortScheduledDispatch(stopwatch, name)
+    -- stopwatches[name] ~= stopwatch detects Delete() or Create()-overwrite
+    -- during dispatch. Delete() sets stopwatches[name] = nil, overwrite replaces
+    -- the stored table with a fresh one. In both cases the local 'stopwatch'
+    -- reference no longer matches the global table entry, so the dispatch loop
+    -- must abort — the stopwatch it was processing no longer exists.
     return stopwatch.scheduledDispatchInterrupted or
         stopwatches[name] ~= stopwatch or
         not stopwatch.active or
@@ -626,8 +656,11 @@ local function EndScheduledCallbackDispatch(stopwatch, name, proxy)
     end
 end
 
--- Rebuilds the compiled interval trigger cache and recalculates each trigger's
--- lastCount from the current elapsed time so missed intervals are not replayed.
+-- Rebuilds a compiled cache from the public interval trigger list.
+-- Each compiled entry holds a pre-computed periodFrames and a direct reference
+-- to the original trigger object (not a clone). The dispatch loop reads
+-- periodFrames from the compiled cache and writes lastCount back through the
+-- .trigger reference, so both sides stay in sync.
 local function CompileIntervalTriggers(intervalTriggers)
     local compiled = {}
     for i = 1, #intervalTriggers do
@@ -643,6 +676,13 @@ end
 local function RealignIntervalCounts(stopwatch)
     -- When elapsed time or the trigger list changes, rebase each interval counter
     -- to the current frame so past thresholds are not replayed retroactively.
+    --
+    -- Important: when called during scheduled dispatch (e.g. from inside a
+    -- callback), the caller MUST have already called InvalidateScheduledState().
+    -- This sets scheduledStateInvalidated, which prevents the dispatch loop from
+    -- writing back stale lastCount values after this function has already
+    -- realigned them. Without this guard, a pending trigger's counter would be
+    -- silently consumed, causing it to miss its firing on the next frame.
     local frames = stopwatch.elapsedTime:GetFrameCount()
     local triggers = stopwatch.intervalTriggers
     if not triggers then return end
@@ -681,6 +721,16 @@ local function CompileTimeTriggers(timeTriggers)
 end
 
 local function RealignTimeTriggerCursor(stopwatch)
+    -- Time triggers use a cursor (nextTimeTriggerIndex) instead of per-trigger
+    -- counters. The cursor points to the first trigger whose frame is strictly
+    -- after the current elapsed time. This function recalculates the cursor
+    -- from scratch by scanning the compiled trigger list in frame order.
+    --
+    -- Unlike interval triggers, time triggers are one-shot: once the cursor
+    -- advances past a trigger, it will never be checked again. This means
+    -- RealignTimeTriggerCursor only needs to skip past triggers whose time
+    -- has already been reached — future triggers are naturally preserved
+    -- because their frame > currentFrame.
     local compiledTriggers = stopwatch.compiledTimeTriggers or {}
     local currentFrame = stopwatch.elapsedTime:GetFrameCount()
     local nextTriggerIndex = 1
