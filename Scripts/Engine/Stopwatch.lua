@@ -346,8 +346,8 @@ local function NormalizeTimeTriggerData(triggerData, messagePrefix, logLevel)
 
     if not ValidateFrameSeconds(
         triggerData.at,
-        messagePrefix .. "field 'at' must be a positive number.",
-        messagePrefix .. "field 'at' is too small. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS).",
+        messagePrefix .. "seconds must be a positive number.",
+        messagePrefix .. "seconds value is too small. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS).",
         logLevel
     ) then
         return nil
