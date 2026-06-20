@@ -987,6 +987,7 @@ end
 --
 -- On the same frame, interval triggers fire in their listed order before any time triggers.
 -- For the full same-frame sequence, see @{CallbackTriggerOrder|Callback and trigger order}.
+-- For same-frame ordering and rules about modifying the trigger list from inside an interval trigger callback, see @{CallbackTriggerOrder|Callback and trigger order}.
 --
 -- If elapsed time is moved manually (via @{Stopwatch:SetElapsedTime}, @{Stopwatch:Start} with reset,
 -- or @{Stopwatch:Reset}), all interval counters are rebased from the new elapsed time so that
@@ -1083,7 +1084,16 @@ end
 --    time ---->
 --    [same frame] -> [current callback finishes] -> [ON_STOP] -> [rest skipped]
 --
--- If a scheduled callback changes elapsed time or changes the time trigger setup during that same update, the remaining scheduled callbacks for that frame are skipped.
+-- <br>_Modifying triggers from inside a callback:_<br>If a scheduled callback changes the
+-- stopwatch timeline, or modifies the interval trigger list or time trigger
+-- list (for example by calling @{Stopwatch:AddIntervalTrigger},
+-- @{Stopwatch:SetIntervalTriggers}, @{Stopwatch:SetElapsedTime}, or
+-- @{Stopwatch:SetTimeTriggers}), the current callback still finishes normally,
+-- but the rest of that frame's scheduled work — remaining interval triggers,
+-- time triggers, and `ON_MAX_TIME` — is skipped.
+--
+--    time ---->
+--    [intervalTrigger A fires] -> [A adds/removes a trigger] -> [A finishes] -> [rest skipped]
 --
 -- <br>_More than one stopwatch:_<br>The order shown above applies to scheduled work inside one stopwatch.
 -- If two different stopwatches have callbacks or triggers due on the same frame, the order in which those stopwatches are processed is not guaranteed.
