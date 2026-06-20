@@ -986,7 +986,6 @@ end
 -- counters and do not affect each other.
 --
 -- On the same frame, interval triggers fire in their listed order before any time triggers.
--- For the full same-frame sequence, see @{CallbackTriggerOrder|Callback and trigger order}.
 -- For same-frame ordering and rules about modifying the trigger list from inside an interval trigger callback, see @{CallbackTriggerOrder|Callback and trigger order}.
 --
 -- If elapsed time is moved manually (via @{Stopwatch:SetElapsedTime}, @{Stopwatch:Start} with reset,
