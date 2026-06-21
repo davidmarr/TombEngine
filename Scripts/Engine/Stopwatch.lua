@@ -623,8 +623,14 @@ local function InvalidateScheduledState(stopwatch)
 end
 
 local function ClearScheduledDispatchFlags(stopwatch)
+    -- Reset per-frame dispatch state. scheduledCallbackDepth should always be
+    -- 0 at the start of a frame; if it isn't, the previous frame's dispatch
+    -- was aborted by an unhandled error (e.g. a LevelFunc callback crashed).
+    -- Resetting it here ensures the stopwatch can recover and fire normally
+    -- on subsequent frames.
     stopwatch.scheduledDispatchInterrupted = false
     stopwatch.scheduledStateInvalidated = false
+    stopwatch.scheduledCallbackDepth = 0
 end
 
 local function ResetScheduledRuntimeState(stopwatch)
