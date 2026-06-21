@@ -636,6 +636,7 @@ end
 local function ResetScheduledRuntimeState(stopwatch)
     stopwatch.pendingStopCallback = false
     stopwatch.scheduledCallbackDepth = 0
+    stopwatch.maxTimeFired = false
     ClearScheduledDispatchFlags(stopwatch)
 end
 
@@ -1460,6 +1461,7 @@ function Stopwatch:Start(reset)
     if reset then
         stopwatch.elapsedTime = ZERO
         stopwatch.laps = {}
+        stopwatch.maxTimeFired = false
         RebuildIntervalTriggers(stopwatch)
         RebuildTimeTriggers(stopwatch)
         InvalidateScheduledState(stopwatch)
@@ -1557,6 +1559,7 @@ function Stopwatch:Reset()
     stopwatch.active = false
     stopwatch.paused = false
     stopwatch.laps = {}
+    stopwatch.maxTimeFired = false
     RebuildIntervalTriggers(stopwatch)
     RebuildTimeTriggers(stopwatch)
     stopwatch.lastRenderedFrameCount = ZERO:GetFrameCount()
@@ -1790,6 +1793,7 @@ function Stopwatch:SetMaxTime(maxTime)
     if IsNull(maxTime) then
         InvalidateScheduledState(stopwatch)
         stopwatch.maxTime = nil
+        stopwatch.maxTimeFired = false
     else
         local invalidValueMessage = "Error in Stopwatch:SetMaxTime(): wrong value (" .. tostring(maxTime) .. ") for maxTime, it must be a positive number or nil."
         local tooSmallMessage = "Error in Stopwatch:SetMaxTime(): maxTime too small for '" .. self.name .. "'. Minimum is " .. MIN_FRAME_SECONDS .. "s (1 frame at 30 FPS)."
@@ -1797,6 +1801,7 @@ function Stopwatch:SetMaxTime(maxTime)
         if frames then
             InvalidateScheduledState(stopwatch)
             stopwatch.maxTime = Time(frames)
+            stopwatch.maxTimeFired = false
             WarnTimeTriggersBeyondMaxTime(stopwatch.timeTriggers or {}, frames, "Warning in Stopwatch:SetMaxTime(): ", self.name)
         end
     end
@@ -2726,7 +2731,7 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             end
 
             local instanceAlive = stopwatches[name] == s
-            local reachedMaxTime = instanceAlive and not s.scheduledDispatchInterrupted and s.active and not s.paused and s.maxTime and s.elapsedTime >= s.maxTime
+            local reachedMaxTime = instanceAlive and not s.scheduledDispatchInterrupted and s.active and not s.paused and s.maxTime and not s.maxTimeFired and s.elapsedTime >= s.maxTime
 
             if instanceAlive and s.timeFormat and (s.active or reachedMaxTime) then
                 if ds then
@@ -2742,6 +2747,9 @@ LevelFuncs.Engine.Stopwatch.UpdateAll = function()
             if reachedMaxTime then
                 -- maxTime is a hard stop with its own callback. It intentionally does
                 -- not cascade into OnStop; that distinction is part of the API contract.
+                -- Once maxTime fires it is consumed for this timeline; Start(true) or
+                -- Reset() re-arm it.
+                s.maxTimeFired = true
                 s.active = false
                 s.paused = false
                 proxy = EnsureStopwatchProxy(proxy, name)
