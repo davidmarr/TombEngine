@@ -67,7 +67,8 @@ local COMPARISON_OPS =
     [4] = function(a, b) return a > b end,    -- 4: greater than
     [5] = function(a, b) return a >= b end,   -- 5: greater than or equal
 }
-local CALLBACKFIELDS = {
+local CALLBACKFIELDS =
+{
     { field = "onStart",   key = "OnStart"   },
     { field = "onResume",  key = "OnResume"  },
     { field = "onPause",   key = "OnPause"   },
@@ -102,7 +103,8 @@ local IsTable = Type.IsTable
 local IsNull = Type.IsNull
 local IsLevelFunc = Type.IsLevelFunc
 
-Stopwatch.CallbackTypes = {
+Stopwatch.CallbackTypes =
+{
     ON_LAP      = "OnLap",
     ON_RESET    = "OnReset",
     ON_START    = "OnStart",
@@ -112,7 +114,8 @@ Stopwatch.CallbackTypes = {
     ON_MAX_TIME = "OnMaxTime",
 }
 
-Stopwatch.Operators = {
+Stopwatch.Operators =
+{
     EQUAL = 0,
     NOT_EQUAL = 1,
     LESS = 2,
