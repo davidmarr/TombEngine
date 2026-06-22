@@ -137,7 +137,7 @@ local function FramesToSeconds(frames)
     return floor(frames / FPS * 100) / 100
 end
 
-local CheckOperator = function(operator)
+local function CheckOperator(operator)
     if not TableHasValue(Stopwatch.Operators, operator) then
         return nil
     end
@@ -506,7 +506,7 @@ local function ResolveOrDefault(value, isValid, defaultValue, warningMsg)
     return defaultValue
 end
 
-local CheckTextOptions = function(optionsTable, warning1Message, warning2Message)
+local function CheckTextOptions(optionsTable, warning1Message, warning2Message)
     if IsNull(optionsTable) then
         return CloneArray(DEFAULT_TEXT_OPTIONS)
     end
@@ -573,7 +573,7 @@ local function WarnTimeTriggersBeyondMaxTime(triggers, maxTimeFrames, callerPref
     end
 end
 
-local FlushPendingStopCallback = function(stopwatch, name, proxy)
+local function FlushPendingStopCallback(stopwatch, name, proxy)
     -- Stop() may be called from inside a scheduled callback. In that case the
     -- stopwatch must become inactive immediately, but OnStop must be delayed until
     -- the outer scheduled callback finishes so callback ordering stays predictable
