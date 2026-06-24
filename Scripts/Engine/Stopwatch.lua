@@ -637,6 +637,9 @@ local function ClearScheduledDispatchFlags(stopwatch)
 end
 
 local function ResetScheduledRuntimeState(stopwatch)
+    -- Clears all per-run flags to safe defaults. Called on Create() and Reload()
+    -- so that a saved stopwatch never resumes mid-dispatch. maxTimeFired is reset
+    -- here so that after loading a save the stopwatch can reach maxTime again.
     stopwatch.pendingStopCallback = false
     stopwatch.scheduledCallbackDepth = 0
     stopwatch.maxTimeFired = false
@@ -656,10 +659,16 @@ local function ShouldAbortScheduledDispatch(stopwatch, name)
 end
 
 local function BeginScheduledCallbackDispatch(stopwatch)
+    -- Increments the dispatch depth counter so that state-changing methods
+    -- (Stop, Pause, InvalidateScheduledState) can detect they are running
+    -- inside a scheduled callback and react accordingly.
     stopwatch.scheduledCallbackDepth = (stopwatch.scheduledCallbackDepth or 0) + 1
 end
 
 local function EndScheduledCallbackDispatch(stopwatch, name, proxy)
+    -- Decrements the dispatch depth counter. When the outermost dispatch
+    -- unwinds (depth reaches 0), any deferred OnStop callback that was
+    -- requested by Stop() during dispatch is flushed.
     stopwatch.scheduledCallbackDepth = stopwatch.scheduledCallbackDepth - 1
     if stopwatch.scheduledCallbackDepth == 0 then
         FlushPendingStopCallback(stopwatch, name, proxy)
