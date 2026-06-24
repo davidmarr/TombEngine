@@ -1873,25 +1873,22 @@ function Stopwatch:GetPosition()
 end
 
 --- Sets the position of the stopwatch on screen.
--- @tparam[opt=50] float x The X position in percentage (0 to 100).
--- @tparam[opt=90] float y The Y position in percentage (0 to 100).
+-- @tparam[opt=TEN.Vec2(50&#44; 90)] Vec2 newPos The new position for the stopwatch.
 -- @usage
 -- -- Example: Set position to (75%, 10%)
--- Stopwatch.Get("MyStopwatch"):SetPosition(75, 10)
+-- Stopwatch.Get("MyStopwatch"):SetPosition(TEN.Vec2(75, 10))
 --
 -- -- Example: Set position to default (50%, 90%)
 -- Stopwatch.Get("MyStopwatch"):SetPosition()
-function Stopwatch:SetPosition(x, y)
-    x = DefaultIfNil(x, 50)
-    y = DefaultIfNil(y, 90)
+function Stopwatch:SetPosition(newPos)
+    newPos = DefaultIfNil(newPos, DEFAULT_POSITION)
     local stopwatch = GetStopwatchOrWarn(self.name, "SetPosition")
     if not stopwatch then
         return
     end
-    if not IsNumber(x) or not IsNumber(y) then
-        LogMessage("Error in Stopwatch:SetPosition(): x and y must be numbers.", logLevelError)
+    if not IsVec2(newPos) then
+        LogMessage("Error in Stopwatch:SetPosition(): newPos must be a Vec2 object.", logLevelError)
     else
-        local newPos = Vec2(x, y)
         stopwatch.position = newPos
         local ds = stopwatchStrings[self.name]
         if ds then
