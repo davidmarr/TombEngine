@@ -239,9 +239,10 @@ Type.IsEnumValue = function (variable, enumTable, showError)
         showError = true
     end
 
-    local metatable = debug.getmetatable(enumTable)
+    local isTable = Type.IsTable(enumTable)
+    local metatable = isTable and debug.getmetatable(enumTable) or nil
 
-    if not Type.IsTable(enumTable)
+    if not isTable
         or type(variable) ~= "number"
         or not metatable
         or metatable.__type ~= "readonly" then
