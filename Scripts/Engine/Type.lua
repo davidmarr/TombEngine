@@ -239,7 +239,7 @@ Type.IsEnumValue = function (variable, enumTable, showError)
         showError = true
     end
 
-    local isTable = Type.IsTable(enumTable)
+    local isTable = type(enumTable) == "table"
     local metatable = isTable and debug.getmetatable(enumTable) or nil
 
     if not isTable
