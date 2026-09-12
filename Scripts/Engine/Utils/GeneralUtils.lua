@@ -558,7 +558,7 @@ end
 GeneralUtils.CompareValues = function(operand, reference, operator, errorContext)
     errorContext = GetOrDefault(errorContext, "GeneralUtils.CompareValues")
     if not IsString(errorContext) then
-        ErrorLog("Error in StringUtils.CompareValues: errorContext is not a string.")
+        ErrorLog("Error in GeneralUtils.CompareValues: errorContext is not a string.")
         return false
     end
     -- Validate operator
