@@ -25,6 +25,7 @@ local StringUtils = {}
 local Type= require("Engine.Type")
 local Utility = require("Engine.Util")
 
+local next = next
 local floor = math.floor
 local sort = table.sort
 local huge = math.huge

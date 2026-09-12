@@ -24,6 +24,8 @@ local Type = require("Engine.Type")
 local Utility = require("Engine.Util")
 local TableUtils = require("Engine.Utils.TableUtils")
 
+local next = next
+
 local MAX_DEPTH = Utility.Constants.MAX_DEPTH
 local MAX_ELEMENTS = Utility.Constants.MAX_ELEMENTS
 
@@ -483,10 +485,9 @@ GeneralUtils.IsEmpty = function(value)
 
     -- Check for empty table
     if IsTable(value) then
-        for _ in next, value do
-            return false  -- Has at least one element
+        if next(value) == nil then -- no elements in the table
+            return true
         end
-        return true  -- No elements
     end
 
     -- All other values (numbers, booleans, TEN types, etc.) are not empty
