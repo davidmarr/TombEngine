@@ -58,6 +58,7 @@ local IsBoolean = Type.IsBoolean
 local InfoLog = Utility.InfoLog
 local ErrorLog = Utility.ErrorLog
 local WarningLog = Utility.WarningLog
+local GetOrDefault = Utility.GetOrDefault
 
 -- State for deep table copy (used by CloneValue).
 --
@@ -335,18 +336,13 @@ end
 -- local enabled = false
 -- local result = GeneralUtils.GetOrDefault(enabled, true)  -- Result: false (correct!)
 --
--- -- Example with 0 (another falsy value in 'or'):
--- local damage = 0
--- local finalDamage = damage or 10  -- Result: 10 (wrong! 0 is valid)
--- local finalDamage = GeneralUtils.GetOrDefault(damage, 10)  -- Result: 0 (correct!)
---
 -- -- Example with nil (works like 'or'):
 -- local speed = nil
 -- local finalSpeed = GeneralUtils.GetOrDefault(speed, 100)  -- Result: 100 (correct!)
 --
 -- -- Example with configuration:
 -- local config = { volume = 0, mute = false }
--- local volume = GeneralUtils.GetOrDefault(config.volume, 100)  -- Result: 0 (not 100!)
+-- local volume = config.volume or 100
 -- local mute = GeneralUtils.GetOrDefault(config.mute, true)     -- Result: false (not true!)
 --
 -- -- Practical use: optional function parameters
@@ -354,19 +350,14 @@ end
 --     speed = GeneralUtils.GetOrDefault(speed, 10)  -- Default to 10 if not provided
 --     player.speed = speed
 -- end
--- SetPlayerSpeed(0)      -- Sets speed to 0 (not 10!)
 -- SetPlayerSpeed(false)  -- Sets speed to false (valid in some contexts)
 -- SetPlayerSpeed(nil)    -- Sets speed to 10 (default)
 --
 -- -- Example with table field:
 -- local settings = { showHUD = false }  -- User explicitly disabled HUD
 -- local showHUD = GeneralUtils.GetOrDefault(settings.showHUD, true)  -- Result: false (respects user choice)
-GeneralUtils.GetOrDefault = function(value, defaultValue)
-    if IsNull(value) then
-        return defaultValue
-    end
-    return value
-end
+-- @function GetOrDefault
+GeneralUtils.GetOrDefault = GetOrDefault
 
 --- Validate a value and return a default if it fails validation or is nil.
 -- Unlike GetOrDefault, this also checks a condition and logs a warning on failure.
@@ -565,7 +556,11 @@ end
 --     -- Trigger door open sequence
 -- end
 GeneralUtils.CompareValues = function(operand, reference, operator, errorContext)
-    errorContext = errorContext or "GeneralUtils.CompareValues"
+    errorContext = GetOrDefault(errorContext, "GeneralUtils.CompareValues")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.CompareValues: errorContext is not a string.")
+        return false
+    end
     -- Validate operator
     local op = CheckOperator(operator)
     if not op then
