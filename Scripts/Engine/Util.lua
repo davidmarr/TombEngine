@@ -168,6 +168,14 @@ Util.ShortenTENCalls = function()
 	print("Util.ShortenTENCalls is deprecated; its functionality is now performed automatically by TombEngine.")
 end
 
+-- GetOrDefault: returns the value if it is not nil, otherwise returns the defaultValue.
+Util.GetOrDefault = function(value, defaultValue)
+    if value == nil then
+        return defaultValue
+    end
+    return value
+end
+
 -- Interpolates {key} placeholders using values from vars table.
 -- Unknown keys are left unchanged (not replaced with empty string).
 Util.Format = function (str, vars)
@@ -273,7 +281,7 @@ end
 
 -- Get the maximum positive integer index in a table.
 -- Used by array-like operations that must work with sparse tables.
--- Used by: StringUtils.lua,
+-- Used by: TableUtils.lua,
 Util.GetMaxNumericIndex = function(tbl)
     local maxIndex = 0
     for key, _ in next, tbl do

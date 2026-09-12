@@ -26,12 +26,14 @@ local Type= require("Engine.Type")
 local Utility = require("Engine.Util")
 
 local floor = math.floor
+local sort = table.sort
+local huge = math.huge
 local IsNumber = Type.IsNumber
 local IsString = Type.IsString
 local IsTable = Type.IsTable
-local GetMaxNumericIndex = Utility.GetMaxNumericIndex
 local ErrorLog = Utility.ErrorLog
 local Format = Utility.Format
+local GetOrDefault = Utility.GetOrDefault
 
 --- Split a string into a table using a specified delimiter.
 -- Empty fields between consecutive delimiters are preserved (e.g. `"a,,b"` → `{"a", "", "b"}`).
@@ -63,13 +65,17 @@ local Format = Utility.Format
 --     return parts
 -- end
 StringUtils.SplitString = function(inputStr, delimiter, errorContext)
-    errorContext = errorContext or "StringUtils.SplitString"
+    errorContext = GetOrDefault(errorContext, "StringUtils.SplitString")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.SplitString: errorContext is not a string.")
+        return {}
+    end
     if not IsString(inputStr) then
         ErrorLog("Error in {context}: inputStr is not a string.", {context = errorContext})
         return {}
     end
 
-	delimiter = delimiter or " "
+	delimiter = GetOrDefault(delimiter, " ")
     if not IsString(delimiter) then
         ErrorLog("Error in {context}: delimiter is not a string.", {context = errorContext})
         return {}
@@ -187,13 +193,17 @@ end
 -- local msg = StringUtils.Format("Error {code{value}}", {})
 -- -- Result: "Error {code{value}}" (key "code{value}" not found)
 StringUtils.Format = function(str, vars, errorContext)
-    errorContext = errorContext or "StringUtils.Format"
+    errorContext = GetOrDefault(errorContext, "StringUtils.Format")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.Format: errorContext is not a string.")
+        return str, false
+    end
     if not IsString(str) then
         ErrorLog("Error in {context}: str is not a string.", {context = errorContext})
         return str, false
     end
 
-    vars = vars or {}
+    vars = GetOrDefault(vars, {})
     if not IsTable(vars) then
         ErrorLog("Error in {context}: vars is not a table.", {context = errorContext})
         return str, false
@@ -203,9 +213,8 @@ StringUtils.Format = function(str, vars, errorContext)
 end
 
 --- Join array elements into a single string with a separator.
--- Iterates over sequential integer keys (1 to the highest numeric index).
--- Each element is converted to a string via `tostring()`.   Elements with a `nil` value are skipped (not included in the result).
--- Non-array keys (string keys) are ignored — only integer indices are processed.
+-- Iterates over existing positive integer keys in ascending numeric order. Missing indices are skipped. Non-numeric and non-positive keys are ignored.
+-- Each element is converted to a string via `tostring()`. Elements with a `nil` value are skipped (not included in the result).
 -- The separator is treated as literal text (special characters like `.`, `%`, `{` are safe).
 -- @tparam table tbl The array-like table to join.
 -- @tparam[opt=", " (comma space)] string separator The separator inserted between elements.
@@ -257,10 +266,15 @@ end
 -- local result = StringUtils.Join({"a", "b", "c"}, "%%")
 -- -- Result: "a%%b%%c"
 --
--- -- Inverse of SplitString:
--- local parts = StringUtils.SplitString("apple,banana,cherry", ",")
--- local rejoined = StringUtils.Join(parts, ",")
--- -- Result: "apple,banana,cherry"
+-- -- Advanced: join a large sparse array
+-- local t = {
+--     [1] = "first",
+--     [5] = "fifth",
+--     [500000000] = "last"
+-- }
+-- local result = StringUtils.Join(t)
+--
+-- Result: "first, fifth, last"
 --
 -- -- Practical: build a path
 -- local path = StringUtils.Join({"rooms", "level1", "secret_area"}, "/")
@@ -278,33 +292,42 @@ end
 --     return path
 -- end
 StringUtils.Join = function(tbl, separator, errorContext)
-    errorContext = errorContext or "StringUtils.Join"
+    errorContext = GetOrDefault(errorContext, "StringUtils.Join")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.Join: errorContext is not a string.")
+        return ""
+    end
     if not IsTable(tbl) then
         ErrorLog("Error in {context}: tbl is not a table.", {context = errorContext})
         return ""
     end
-
-    separator = separator or ", "
+    separator = GetOrDefault(separator, ", ")
     if not IsString(separator) then
         ErrorLog("Error in {context}: separator is not a string.", {context = errorContext})
         return ""
     end
 
-    local maxIndex = GetMaxNumericIndex(tbl)
-    if maxIndex == 0 then
+    local parts = {} -- Collect numeric keys first, then reuse the same array as the string-parts array after sorting.
+    local keyCount = 0
+
+    for key in next, tbl do
+        if type(key) == "number"
+            and key > 0
+            and key < huge
+            and floor(key) == key then
+            keyCount = keyCount + 1
+            parts[keyCount] = key
+        end
+    end
+    if keyCount == 0 then
         return ""
     end
 
-    local parts = {}
-    local count = 0
-    for i = 1, maxIndex do
-        local val = tbl[i]
-        if val ~= nil then
-            count = count + 1
-            parts[count] = tostring(val)
-        end
-    end
+    sort(parts)
 
+    for i = 1, keyCount do
+        parts[i] = tostring(tbl[parts[i]])
+    end
     return table.concat(parts, separator)
 end
 
@@ -386,7 +409,11 @@ end
 --     return cleaned
 -- end
 StringUtils.Trim = function(str, chars, errorContext)
-    errorContext = errorContext or "StringUtils.Trim"
+    errorContext = GetOrDefault(errorContext, "StringUtils.Trim")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.Trim: errorContext is not a string.")
+        return ""
+    end
     if not IsString(str) then
         ErrorLog("Error in {context}: str is not a string.", {context = errorContext})
         return ""
@@ -506,7 +533,11 @@ end
 -- end
 -- -- Result: {"key_gold", "key_silver", "key_bronze"}
 StringUtils.StartsWith = function(str, prefix, errorContext)
-    errorContext = errorContext or "StringUtils.StartsWith"
+    errorContext = GetOrDefault(errorContext, "StringUtils.StartsWith")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.StartsWith: errorContext is not a string.")
+        return false
+    end
     if not IsString(str) then
         ErrorLog("Error in {context}: str is not a string.", {context = errorContext})
         return false
@@ -592,7 +623,11 @@ end
 -- end
 -- -- Result: {"main.lua", "utils.lua"}
 StringUtils.EndsWith = function(str, suffix, errorContext)
-    errorContext = errorContext or "StringUtils.EndsWith"
+    errorContext = GetOrDefault(errorContext, "StringUtils.EndsWith")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.EndsWith: errorContext is not a string.")
+        return false
+    end
     if not IsString(str) then
         ErrorLog("Error in {context}: str is not a string.", {context = errorContext})
         return false
@@ -689,7 +724,11 @@ end
 --     -- Highlight item as important
 -- end
 StringUtils.Contains = function(str, substring, errorContext)
-    errorContext = errorContext or "StringUtils.Contains"
+    errorContext = GetOrDefault(errorContext, "StringUtils.Contains")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.Contains: errorContext is not a string.")
+        return false
+    end
     if not IsString(str) then
         ErrorLog("Error in {context}: str is not a string.", {context = errorContext})
         return false
@@ -780,7 +819,11 @@ end
 -- local unixPath = StringUtils.Replace(winPath, "\\", "/")
 -- -- Result: "scripts/levels/egypt/main.lua"
 StringUtils.Replace = function(str, search, replacement, count, errorContext)
-    errorContext = errorContext or "StringUtils.Replace"
+    errorContext = GetOrDefault(errorContext, "StringUtils.Replace")
+    if not IsString(errorContext) then
+        ErrorLog("Error in StringUtils.Replace: errorContext is not a string.")
+        return str
+    end
     if not IsString(str) then
         ErrorLog("Error in {context}: str is not a string.", {context = errorContext})
         return str
