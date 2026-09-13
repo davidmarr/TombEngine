@@ -34,6 +34,7 @@ local ColorToOKLchRaw = Utility.ColorToOKLchRaw
 local OKLchToColorRaw = Utility.OKLchToColorRaw
 local ErrorLog = Utility.ErrorLog
 local WarningLog = Utility.WarningLog
+local GetOrDefault = Utility.GetOrDefault
 local IsNumber = Type.IsNumber
 local IsColor = Type.IsColor
 local IsString = Type.IsString
@@ -61,8 +62,12 @@ local min = math.min
 --     return frames
 -- end
 ConversionUtils.SecondsToFrames = function(seconds, fps, errorContext)
-    fps = fps or FPS
-    errorContext = errorContext or "ConversionUtils.SecondsToFrames"
+    fps = GetOrDefault(fps, FPS)
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.SecondsToFrames")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.SecondsToFrames: errorContext is not a string.")
+        return 0, false
+    end
     if not IsNumber(seconds) or not IsNumber(fps) or seconds <= 0 or fps <= 0 then
         ErrorLog("Error in {context}: seconds and fps must be positive numbers.", {context = errorContext })
         return 0, false
@@ -97,8 +102,13 @@ end
 --     return seconds
 -- end
 ConversionUtils.FramesToSeconds = function(frames, fps, errorContext)
-    fps = fps or FPS
+    fps = GetOrDefault(fps, FPS)
     errorContext = errorContext or "ConversionUtils.FramesToSeconds"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.FramesToSeconds")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.FramesToSeconds: errorContext is not a string.")
+        return 0, false
+    end
     if not IsNumber(frames) or frames < 0 then
         ErrorLog("Error in {context}: frames must be positive numbers", {context = errorContext})
         return 0, false
@@ -148,7 +158,11 @@ end
 -- -- Result of calling with invalid input:
 -- SetAnimationDuration(-1) -- Logs: "Error in SetAnimationDuration: seconds must be greater than or equal to 0."
 ConversionUtils.SecondsToTime = function (seconds, minimum, errorContext)
-    errorContext = errorContext or "ConversionUtils.SecondsToTime"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.SecondsToTime")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.SecondsToTime: errorContext is not a string.")
+        return Time(), false
+    end
     if not IsNumber(seconds) or seconds < 0 then
         ErrorLog("Error in {context}: seconds must be a positive number.", {context = errorContext })
         return Time(), false
@@ -198,7 +212,11 @@ end
 -- -- Safe approach with default fallback:
 -- local color = ConversionUtils.HexToColor(hexString) or TEN.Color(255, 255, 255, 255)
 ConversionUtils.HexToColor = function(hex, errorContext)
-    errorContext = errorContext or "ConversionUtils.HexToColor"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.HexToColor")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.HexToColor: errorContext is not a string.")
+        return nil
+    end
     if not IsString(hex) then
         ErrorLog("Error in {context}: hex must be a string.", {context = errorContext})
         return nil
@@ -263,7 +281,11 @@ end
 -- -- Safe approach with default fallback:
 -- local hsl = ConversionUtils.ColorToHSL(color) or { h = 0, s = 0, l = 0, a = 1.0 }
 ConversionUtils.ColorToHSL = function(color, errorContext)
-    errorContext = errorContext or "ConversionUtils.ColorToHSL"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.ColorToHSL")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.ColorToHSL: errorContext is not a string.")
+        return nil
+    end
     if not IsColor(color) then
         ErrorLog("Error in {context}: color must be a Color object.", {context = errorContext})
         return nil
@@ -323,7 +345,11 @@ end
 -- local orange = ConversionUtils.HSLtoColor({h = 400, s = 1, l = 0.5}) -- h=400 wrapped to 40°
 -- sprite:SetColor(orange)  -- Always safe with a warning message, no nil check needed
 ConversionUtils.HSLtoColor = function(hsl, errorContext)
-    errorContext = errorContext or "ConversionUtils.HSLtoColor"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.HSLtoColor")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.HSLtoColor: errorContext is not a string.")
+        return nil
+    end
     if not IsTable(hsl) then
         ErrorLog("Error in {context}: expected an HSLData table.", {context = errorContext})
         return nil
@@ -340,7 +366,7 @@ ConversionUtils.HSLtoColor = function(hsl, errorContext)
         return nil
     end
     if h < 0 or h > 360 then
-        WarningLog("Warning in {context}: h = {h} is outside range [0, 360]. Wrapping to [0, 360).", {context = errorContext, h = h})
+        WarningLog("Warning in {context}: h = {h} is outside range [0, 360]. Wrapping to (0, 360).", {context = errorContext, h = h})
         h = h % 360
     end
     if s < 0 or s > 1 then
@@ -403,7 +429,11 @@ end
 -- -- Safe approach with default fallback:
 -- local oklch = ConversionUtils.ColorToOKLch(color) or { l = 0.5, c = 0, h = 0, a = 1.0 }
 ConversionUtils.ColorToOKLch = function(color, errorContext)
-    errorContext = errorContext or "ConversionUtils.ColorToOKLch"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.ColorToOKLch")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.ColorToOKLch: errorContext is not a string.")
+        return nil
+    end
     if not IsColor(color) then
         ErrorLog("Error in {context}: color must be a Color object.", {context = errorContext})
         return nil
@@ -520,7 +550,11 @@ end
 -- -- l=-0.2 clamped to 0, c=0.9 clamped to 0.4, h=400 wrapped to 40°
 -- sprite:SetColor(color)  -- Always safe with a warning message, no nil check needed
 ConversionUtils.OKLchToColor = function(oklch, errorContext)
-    errorContext = errorContext or "ConversionUtils.OKLchToColor"
+    errorContext = GetOrDefault(errorContext, "ConversionUtils.OKLchToColor")
+    if not IsString(errorContext) then
+        ErrorLog("Error in ConversionUtils.OKLchToColor: errorContext is not a string.")
+        return nil
+    end
     if not IsTable(oklch) then
         ErrorLog("Error in {context}: expected an OKLchData table.", {context = errorContext})
         return nil
