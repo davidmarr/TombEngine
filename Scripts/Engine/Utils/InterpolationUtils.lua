@@ -157,6 +157,7 @@ local ElasticRaw = Utility.ElasticRaw
 local BounceRaw = Utility.BounceRaw
 local SlamRaw = Utility.SlamRaw
 
+local GetOrDefault = Utility.GetOrDefault
 local ErrorLog = Utility.ErrorLog
 local WarningLog = Utility.WarningLog
 
@@ -164,6 +165,7 @@ local IsNumber = Type.IsNumber
 local IsColor = Type.IsColor
 local IsBoolean = Type.IsBoolean
 local IsTable = Type.IsTable
+local IsString = Type.IsString
 
 local max = math.max
 local min = math.min
@@ -333,7 +335,11 @@ end
 -- -- ✗ Cinematic camera (use Smootherstep)
 -- -- ✗ Natural phenomena like fog, wind (use Smoothstep/Smootherstep)
 InterpolationUtils.Lerp = function(a, b, t, errorContext)
-    errorContext = errorContext or "InterpolationUtils.Lerp"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.Lerp")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.Lerp: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
@@ -437,13 +443,17 @@ end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.MoveBridge)
 InterpolationUtils.Smoothstep = function (a, b, t, edge0, edge1, errorContext)
-    errorContext = errorContext or "InterpolationUtils.Smoothstep"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.Smoothstep")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.Smoothstep: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
     -- Default edge0 and edge1 if not provided
-    edge0 = edge0 or 0
-    edge1 = edge1 or 1
+    edge0 = GetOrDefault(edge0, 0)
+    edge1 = GetOrDefault(edge1, 1)
 
     if not IsNumber(t) then
         ErrorLog("Error in {context}: t must be a number.", {context = errorContext})
@@ -713,13 +723,17 @@ end
 -- -- Smootherstep is ~15% more expensive computationally than Smoothstep
 -- -- (requires evaluating a degree-5 polynomial vs degree-3)
 InterpolationUtils.Smootherstep = function (a, b, t, edge0, edge1, errorContext)
-    errorContext = errorContext or "InterpolationUtils.Smootherstep"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.Smootherstep")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.Smootherstep: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
     -- Default edge0 and edge1 if not provided
-    edge0 = edge0 or 0
-    edge1 = edge1 or 1
+    edge0 = GetOrDefault(edge0, 0)
+    edge1 = GetOrDefault(edge1, 1)
 
     if not IsNumber(t) then
         ErrorLog("Error in {context}: t must be a number.", {context = errorContext})
@@ -827,7 +841,11 @@ end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.MoveElevator)
 InterpolationUtils.EaseInOut = function(a, b, t, errorContext)
-    errorContext = errorContext or "InterpolationUtils.EaseInOut"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.EaseInOut")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.EaseInOut: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
@@ -950,7 +968,11 @@ end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.AnimatePickup)
 InterpolationUtils.Elastic = function(a, b, t, amplitude, period, errorContext)
-    errorContext = errorContext or "InterpolationUtils.Elastic"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.Elastic")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.Elastic: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
@@ -960,8 +982,8 @@ InterpolationUtils.Elastic = function(a, b, t, amplitude, period, errorContext)
     end
 
     -- Set default values and validate optional parameters
-    amplitude = amplitude or 1.0
-    period = period or 0.3
+    amplitude = GetOrDefault(amplitude, 1.0)
+    period = GetOrDefault(period, 0.3)
 
     if not IsNumber(amplitude) or not IsNumber(period) then
         ErrorLog("Error in {context}: amplitude and period must be numbers.", {context = errorContext})
@@ -1084,7 +1106,11 @@ end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.PopInIndicator)
 InterpolationUtils.Bounce = function(a, b, t, errorContext)
-    errorContext = errorContext or "InterpolationUtils.Bounce"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.Bounce")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.Bounce: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
@@ -1220,9 +1246,13 @@ end
 -- end
 -- TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.RotateCompassNeedle)
 InterpolationUtils.LerpAngle = function(a, b, t, minValue, maxValue, errorContext)
-    errorContext = errorContext or "InterpolationUtils.LerpAngle"
-    minValue = minValue or 0
-    maxValue = maxValue or 360
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.LerpAngle")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.LerpAngle: errorContext is not a string.")
+        return a
+    end
+    minValue = GetOrDefault(minValue, 0)
+    maxValue = GetOrDefault(maxValue, 360)
 
     if not (IsNumber(a) and IsNumber(b) and IsNumber(t)) then
         ErrorLog("Error in {context}: a, b, and t must be numbers.", {context = errorContext})
@@ -1403,7 +1433,11 @@ end
 -- -- SlamPresets.Elastic        (bounces=4, bounciness=0.5) - default elastic bounce
 -- -- SlamPresets.VeryElastic    (bounces=6, bounciness=0.7) - strong elastic oscillation
 InterpolationUtils.Slam = function(a, b, t, bounces, bounciness, errorContext)
-    errorContext = errorContext or "InterpolationUtils.Slam"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.Slam")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.Slam: errorContext is not a string.")
+        return a
+    end
     if not ValidateAB(a, b, errorContext) then
         return a
     end
@@ -1413,8 +1447,8 @@ InterpolationUtils.Slam = function(a, b, t, bounces, bounciness, errorContext)
     end
 
     -- Set default values and validate optional parameters
-    bounces = bounces or 4
-    bounciness = bounciness or 0.5
+    bounces = GetOrDefault(bounces, 4)
+    bounciness = GetOrDefault(bounciness, 0.5)
 
     if not IsNumber(bounces) or not IsNumber(bounciness) then
         ErrorLog("Error in {context}: bounces and bounciness must be numbers.", {context = errorContext})
@@ -1532,7 +1566,11 @@ end
 -- local blue = TEN.Color(0, 0, 255)
 -- BlendFogColor(red, blue, 0.5) -- smooth HSL blend; any error logs as "Error in BlendFogColor: ..."
 InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options, errorContext)
-    errorContext = errorContext or "InterpolationUtils.InterpolateColor"
+    errorContext = GetOrDefault(errorContext, "InterpolationUtils.InterpolateColor")
+    if not IsString(errorContext) then
+        ErrorLog("Error in InterpolationUtils.InterpolateColor: errorContext is not a string.")
+        return colorA
+    end
     -- Validate input parameters
     if not IsColor(colorA) or not IsColor(colorB) then
         ErrorLog("Error in {context}: colorA and colorB must be TEN.Color.", {context = errorContext})
@@ -1546,7 +1584,7 @@ InterpolationUtils.InterpolateColor = function(colorA, colorB, t, space, options
 
     t = max(0, min(1, t))  -- Clamp t to [0, 1]
 
-    space = space or InterpolationUtils.Spaces.RGB
+    space = GetOrDefault(space, InterpolationUtils.Spaces.RGB)
 
     if not IsNumber(space) or (space ~= InterpolationUtils.Spaces.RGB and space ~= InterpolationUtils.Spaces.HSL and space ~= InterpolationUtils.Spaces.OKLch) then
         WarningLog("Warning in {context}: invalid colorSpace, using RGB.", {context = errorContext})
