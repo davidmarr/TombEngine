@@ -64,6 +64,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed JUMP_SWITCH not activating event sets.
 * Fixed SNOWMOBILE death being too sensitive to vertical velocity.
 * Fixed BATS_EMITTER targeting issues.
+* Fixed CROCODILE not swimming in certain water room configurations.
 * Fixed MONKEY not picking up SMALLMEDI_ITEM and KEY_ITEM4 (latter is possible by using AI_MODIFY on the monkey).
 * Fixed SOPHIA_LEIGH_BOSS pathfinding and knockback effect.
 * Fixed TEETH_SPIKES behaviour for OCB 1 and move static TR1-3 mode to pre-activated trigger bit flags.
